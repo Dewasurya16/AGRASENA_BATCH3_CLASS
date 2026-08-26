@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -10,9 +11,9 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-  title: 'Web Kelas - Class Backup & Resource Hub',
+  title: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI X Agrasena',
   description:
-    'Platform backup materi perkuliahan, jadwal harian, penugasan, dan showcase karya mahasiswa dengan desain modern, bersih, dan intuitif.',
+    'Platform backup materi perkuliahan, jadwal harian, penugasan, Cloud IDE, dan bank soal ujian MOOC 120 JP.',
 }
 
 export default function RootLayout({
@@ -21,11 +22,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="id" className={`${outfit.variable} light`}>
-      <body className="min-h-screen bg-[#F4F6FA] text-[#131E29] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830]">
-        <div className="relative flex min-h-screen flex-col">
-          {children}
-        </div>
+    <html lang="id" className={outfit.variable} suppressHydrationWarning>
+      <body className="min-h-screen bg-[#F4F6FA] dark:bg-[#0B0D11] text-[#131E29] dark:text-[#F1F5F9] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830] transition-colors duration-200">
+        <ThemeProvider>
+          <div className="relative flex min-h-screen flex-col">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -78,6 +78,28 @@ export const RAW_DAYS_DATA = [
 ]
 
 /**
+ * Menghitung hari diklat ke-N secara otomatis berdasarkan kalender tanggal berjalan
+ */
+export function getCurrentDiklatDay(): number {
+  const now = new Date()
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+  const currentMonthStr = monthNames[now.getMonth()]
+  const targetDateStr = `${now.getDate()} ${currentMonthStr}`
+
+  // Cari apakah tanggal hari ini cocok dengan tanggal di kalender kurikulum 35 hari
+  const matched = RAW_DAYS_DATA.find((d) => d.date.startsWith(targetDateStr))
+  if (matched) {
+    return matched.day
+  }
+
+  // Jika sebelum tanggal mulai diklat (24 Agu 2026) -> Hari 1
+  const diklatStartDate = new Date(2026, 7, 24)
+  if (now < diklatStartDate) return 1
+
+  return 3 // Default Hari 3
+}
+
+/**
  * Maps live manual schedules from Supabase to the 35 days structure.
  */
 export function getAutoRoadmapData(
@@ -87,7 +109,8 @@ export function getAutoRoadmapData(
   days: RoadmapDayDetail[]
   summary: RoadmapProgressSummary
 } {
-  const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : 3
+  const autoDay = getCurrentDiklatDay()
+  const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : autoDay
   const totalDays = 35
   const completedDays = Math.max(0, currentDay - 1)
   const progressPercentage = Math.round((currentDay / totalDays) * 100)

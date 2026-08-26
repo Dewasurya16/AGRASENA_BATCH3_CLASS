@@ -3,6 +3,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { ModernNavbar } from "@/components/public/modern-navbar"
+import { AIAssistantWidget } from "@/components/public/ai-assistant-widget"
 import { AnimatedBackground } from "@/components/ui/animated-background"
 import { Shield, BookOpen, ExternalLink, Heart, Sparkles } from "lucide-react"
 import Link from "next/link"
@@ -31,13 +32,13 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* 4. Sleek Modern Minimalist Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 bg-white/70 backdrop-blur-md py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6B7C93]">
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-[#12161F]/80 backdrop-blur-md py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6B7C93] dark:text-slate-400">
           <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-lg overflow-hidden">
               <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
             </div>
-            <span className="font-semibold text-[#131E29]">
+            <span className="font-semibold text-[#131E29] dark:text-slate-200">
               Dibuat dengan senang hati oleh Dewa Sinar Surya,S.Kom
             </span>
           </div>
@@ -47,22 +48,25 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href="https://pengembangan.kejaksaan.go.id/dashboard"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-[#0D3830] transition flex items-center gap-1"
+              className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition flex items-center gap-1"
             >
               <span>Portal LMS</span>
               <ExternalLink className="h-3 w-3" />
             </a>
             <span>•</span>
-            <Link href="/schedules" className="hover:text-[#0D3830] transition">
+            <Link href="/schedules" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
               Roadmap 35 Hari
             </Link>
             <span>•</span>
-            <Link href="/materials" className="hover:text-[#0D3830] transition">
+            <Link href="/materials" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
               Modul 120 JP
             </Link>
           </div>
         </div>
       </footer>
+
+      {/* 5. Floating AI Assistant Widget */}
+      <AIAssistantWidget />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { PublicShell } from "@/components/public/public-shell"
 import { SchedulesList } from "@/components/public/schedules-list"
+import { LiveSessionBanner } from "@/components/public/live-session-banner"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -27,7 +28,10 @@ export default async function SchedulesPage() {
 
   return (
     <PublicShell>
-      <SchedulesList schedules={schedules} />
+      <div className="space-y-6">
+        <LiveSessionBanner todaySchedules={schedules} />
+        <SchedulesList schedules={schedules} />
+      </div>
     </PublicShell>
   )
 }

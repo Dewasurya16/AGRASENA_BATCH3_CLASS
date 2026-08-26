@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   FileText,
@@ -12,7 +13,9 @@ import {
   ExternalLink,
   RotateCcw,
   Sparkles,
-  Award
+  Award,
+  UploadCloud,
+  Shield
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
@@ -35,6 +38,20 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [selectedSubject, setSelectedSubject] = React.useState("Semua")
   const [selectedWeek, setSelectedWeek] = React.useState("Semua")
   const [previewMaterial, setPreviewMaterial] = React.useState<MaterialItem | null>(null)
+  const [readerTab, setReaderTab] = React.useState<"pdf" | "notes">("pdf")
+  const [studyNotes, setStudyNotes] = React.useState<Record<string, string>>({})
+
+  // Load study notes from localStorage
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prakom_study_notes")
+      if (saved) {
+        setStudyNotes(JSON.parse(saved))
+      }
+    } catch {
+      // Ignore
+    }
+  }, [])
 
   const subjects = ["Semua", ...Array.from(new Set(items.map((m) => m.subject_name)))]
   const weeks = ["Semua", "Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"]
@@ -210,24 +227,89 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
         </motion.div>
       )}
 
-      {/* Modal PDF Preview */}
+      {/* Modal PDF Preview & Personal Study Notes */}
       {previewMaterial && (
         <Modal
           isOpen={Boolean(previewMaterial)}
           onClose={() => setPreviewMaterial(null)}
           title={previewMaterial.title}
-          description={`${previewMaterial.subject_name} • Modul Bahan Ajar`}
+          description={`${previewMaterial.subject_name} • Modul Bahan Ajar (Prakom 625)`}
           className="max-w-4xl"
         >
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-100 overflow-hidden h-[60vh]">
-              <iframe
-                src={previewMaterial.file_url}
-                className="w-full h-full"
-                title={previewMaterial.title}
-              />
+          <div className="space-y-4 pt-1">
+            {/* View Switcher Tabs */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setReaderTab("pdf")}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    readerTab === "pdf"
+                      ? "bg-[#18181B] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Dokumen PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReaderTab("notes")}
+                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    readerTab === "notes"
+                      ? "bg-[#0D3830] text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  <BookOpen className="h-3.5 w-3.5 text-[#A7F3D0]" />
+                  <span>Catatan Belajar Pribadi</span>
+                  {studyNotes[previewMaterial.id]?.trim() && (
+                    <span className="h-2 w-2 rounded-full bg-[#FF7643]" />
+                  )}
+                </button>
+              </div>
+
+              <span className="text-[11px] font-mono text-slate-500 font-semibold hidden sm:inline-block">
+                {previewMaterial.file_size ? formatFileSize(previewMaterial.file_size) : "PDF Dokumen"}
+              </span>
             </div>
 
+            {/* Content Area */}
+            {readerTab === "pdf" ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-100 overflow-hidden h-[60vh]">
+                <iframe
+                  src={previewMaterial.file_url}
+                  className="w-full h-full"
+                  title={previewMaterial.title}
+                />
+              </div>
+            ) : (
+              <div className="space-y-3 h-[60vh] flex flex-col">
+                <div className="rounded-2xl bg-[#FFF9F5] p-3.5 border border-[#FFEADA] text-xs text-[#EA580C] font-semibold flex items-center justify-between">
+                  <span>💡 Catatan belajar ini tersimpan otomatis di browser Anda.</span>
+                  <span className="text-[10px] bg-white px-2 py-0.5 rounded-full font-bold border border-[#FFEADA]">Auto-Saved</span>
+                </div>
+                <textarea
+                  value={studyNotes[previewMaterial.id] || ""}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setStudyNotes((prev) => {
+                      const updated = { ...prev, [previewMaterial.id]: val }
+                      try {
+                        localStorage.setItem("prakom_study_notes", JSON.stringify(updated))
+                      } catch {
+                        // Ignore
+                      }
+                      return updated
+                    })
+                  }}
+                  placeholder="Tuliskan rangkuman, poin penting, pertanyaan diskusi, atau catatan persiapan tugas di sini..."
+                  className="flex-1 w-full rounded-2xl border-2 border-slate-200 bg-[#F8FAFC] p-4 text-xs font-medium text-[#18181B] focus:border-[#0D3830] focus:bg-white focus:outline-none resize-none leading-relaxed"
+                />
+              </div>
+            )}
+
+            {/* Modal Bottom Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
               <span className="text-xs text-[#8C9BAE] font-mono truncate">
                 Storage: class-materials/{previewMaterial.file_name}
@@ -239,7 +321,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   rel="noopener noreferrer"
                 >
                   <Button variant="secondary" size="md" icon={<ExternalLink className="h-4 w-4" />}>
-                    Tab Baru
+                    Buka Tab Baru
                   </Button>
                 </a>
                 <a
@@ -249,7 +331,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   download={previewMaterial.file_name}
                 >
                   <Button variant="orange" size="md" icon={<Download className="h-4 w-4" />}>
-                    Unduh Berkas PDF
+                    Unduh PDF
                   </Button>
                 </a>
               </div>

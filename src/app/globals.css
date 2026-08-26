@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --bg-main: #F4F6FA;
@@ -24,6 +26,16 @@
     --pastel-purple: #F3E8FF;
     --pastel-purple-text: #7E22CE;
   }
+
+  .dark,
+  [data-theme="dark"] {
+    --bg-main: #0B0D11;
+    --card-bg: #13171F;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    color-scheme: dark;
+  }
   
   body {
     background-color: var(--bg-main);
@@ -33,9 +45,21 @@
   }
 }
 
+/* Base Body Colors */
+.dark body,
+[data-theme="dark"] body {
+  background-color: #0B0D11;
+  color: #F1F5F9;
+}
+
 /* Custom Soft Shadows */
 .soft-card-shadow {
   box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+}
+
+.dark .soft-card-shadow,
+[data-theme="dark"] .soft-card-shadow {
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.3);
 }
 
 .soft-card-hover {

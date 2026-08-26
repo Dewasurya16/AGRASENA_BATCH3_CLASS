@@ -166,67 +166,80 @@ export async function deleteSchedule(id: string) {
 
 // 3. MATERIAL UPLOAD (SUPABASE STORAGE: class-materials)
 export async function uploadMaterial(formData: FormData) {
-  const title = formData.get('title') as string
-  const subject_name = formData.get('subject_name') as string
-  const week_number = Number(formData.get('week_number'))
-  const description = formData.get('description') as string
-  const file = formData.get('file') as File
+  try {
+    const title = (formData.get('title') as string)?.trim()
+    const subject_name = (formData.get('subject_name') as string)?.trim()
+    const week_number = Number(formData.get('week_number'))
+    const description = (formData.get('description') as string)?.trim()
+    const file = formData.get('file') as File | null
 
-  if (!title || !subject_name || !week_number || !file || file.size === 0) {
-    return { error: 'Judul, mata kuliah, minggu pertemuan, dan berkas PDF wajib diisi.' }
-  }
+    if (!title || !subject_name || !week_number || !file || file.size === 0) {
+      return { error: 'Judul, mata kuliah, minggu pertemuan, dan berkas PDF wajib diisi.' }
+    }
 
-  if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-    return { error: 'Hanya file format PDF yang diperbolehkan.' }
-  }
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      return { error: 'Hanya file format PDF yang diperbolehkan.' }
+    }
 
-  if (file.size > 25 * 1024 * 1024) {
-    return { error: 'Ukuran file maksimal adalah 25MB.' }
-  }
+    if (file.size > 50 * 1024 * 1024) {
+      return { error: 'Ukuran file maksimal adalah 50MB. File Anda: ' + (file.size / (1024 * 1024)).toFixed(1) + 'MB.' }
+    }
 
-  const supabase = await createClient()
+    if (!isSupabaseConfigured()) {
+      return { error: 'Konfigurasi Supabase Storage belum tersedia. Mohon periksa file .env.local.' }
+    }
 
-  // Clean filename
-  const cleanName = file.name
-    .toLowerCase()
-    .replace(/[^a-z0-9.]/g, '-')
-    .replace(/-+/g, '-')
-  const filePath = `materials/${Date.now()}_${cleanName}`
+    const supabase = await createClient()
 
-  const { error: uploadError } = await supabase.storage
-    .from('class-materials')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
+    // Clean filename
+    const cleanName = file.name
+      .toLowerCase()
+      .replace(/[^a-z0-9.]/g, '-')
+      .replace(/-+/g, '-')
+    const filePath = `materials/${Date.now()}_${cleanName}`
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const { error: uploadError } = await supabase.storage
+      .from('class-materials')
+      .upload(filePath, buffer, {
+        contentType: file.type || 'application/pdf',
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      return { error: 'Gagal mengunggah file ke Supabase Storage: ' + uploadError.message }
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('class-materials')
+      .getPublicUrl(filePath)
+
+    const { error: dbError } = await supabase.from('materials').insert({
+      title,
+      subject_name,
+      week_number,
+      description: description || null,
+      file_url: publicUrlData.publicUrl,
+      file_name: file.name,
+      file_size: file.size,
+      file_type: file.type || 'application/pdf',
     })
 
-  if (uploadError) {
-    return { error: 'Gagal mengunggah file ke Supabase Storage: ' + uploadError.message }
+    if (dbError) {
+      return { error: 'File terunggah tetapi gagal menyimpan metadata: ' + dbError.message }
+    }
+
+    revalidatePath('/', 'layout')
+    revalidatePath('/materials')
+    revalidatePath('/admin/dashboard')
+    return { success: 'Modul PDF berhasil diunggah ke Supabase Storage!' }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem saat mengunggah berkas.'
+    return { error: 'Gagal memproses upload: ' + errorMsg }
   }
-
-  const { data: publicUrlData } = supabase.storage
-    .from('class-materials')
-    .getPublicUrl(filePath)
-
-  const { error: dbError } = await supabase.from('materials').insert({
-    title,
-    subject_name,
-    week_number,
-    description: description || null,
-    file_url: publicUrlData.publicUrl,
-    file_name: file.name,
-    file_size: file.size,
-    file_type: file.type,
-  })
-
-  if (dbError) {
-    return { error: 'File terunggah tetapi gagal menyimpan metadata: ' + dbError.message }
-  }
-
-  revalidatePath('/', 'layout')
-  revalidatePath('/materials')
-  revalidatePath('/admin/dashboard')
-  return { success: 'Modul PDF berhasil diunggah ke Supabase Storage!' }
 }
 
 export async function deleteMaterial(id: string, fileName?: string) {

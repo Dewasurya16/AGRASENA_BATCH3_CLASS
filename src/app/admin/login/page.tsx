@@ -2,20 +2,15 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { GraduationCap, Lock, Mail, ArrowRight, ShieldCheck, Sparkles, ArrowLeft, KeyRound, Check, Loader2 } from "lucide-react"
+import { GraduationCap, Lock, Mail, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
 import { adminLogin } from "../actions"
 import Link from "next/link"
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = React.useState("admin@kejaksaan.go.id")
-  const [password, setPassword] = React.useState("adminprakom625")
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
-
-  const handleQuickFill = () => {
-    setEmail("admin@kejaksaan.go.id")
-    setPassword("adminprakom625")
-  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -31,8 +26,7 @@ export default function AdminLoginPage() {
       } else if (res?.success) {
         window.location.href = '/admin/dashboard'
       }
-    } catch (err: any) {
-      // In case of error
+    } catch {
       setError('Terjadi kendala saat masuk. Silakan coba lagi.')
       setLoading(false)
     }
@@ -76,27 +70,6 @@ export default function AdminLoginPage() {
             </p>
           </div>
 
-          {/* Quick Preset Admin Card */}
-          <div className="rounded-2xl bg-[#E6F7ED] p-3.5 border border-[#A7F3D0] space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[#0D824B] flex items-center gap-1">
-                <KeyRound className="h-3.5 w-3.5" />
-                Akun Admin Resmi:
-              </span>
-              <button
-                type="button"
-                onClick={handleQuickFill}
-                className="text-[10px] font-black text-[#0D824B] hover:underline cursor-pointer bg-white px-2.5 py-0.5 rounded-full border border-[#A7F3D0] shadow-2xs"
-              >
-                Gunakan Akun Ini
-              </button>
-            </div>
-            <div className="text-xs font-mono text-[#18181B] space-y-0.5">
-              <div>Email: <span className="font-bold text-[#0D824B]">admin@kejaksaan.go.id</span></div>
-              <div>Password: <span className="font-bold text-[#0D824B]">adminprakom625</span></div>
-            </div>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
@@ -113,7 +86,7 @@ export default function AdminLoginPage() {
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE]" />
                 <input
                   name="email"
-                  type="text"
+                  type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

@@ -40,8 +40,11 @@ import {
   Eye,
   Check,
   Tag,
-  Loader2
+  Loader2,
+  MessageCircle,
+  FileSpreadsheet
 } from "lucide-react"
+import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 
 interface AdminDashboardClientProps {
   initialMaterials: any[]
@@ -62,15 +65,38 @@ export function AdminDashboardClient({
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
 
+  // Upload State
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+  const [uploadProgressStatus, setUploadProgressStatus] = React.useState<string | null>(null)
+
   // Active Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false)
   const [isScheduleModalOpen, setIsScheduleModalOpen] = React.useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false)
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = React.useState(false)
+  const [isWAModalOpen, setIsWAModalOpen] = React.useState(false)
 
   const showFeedback = (type: "success" | "error", text: string) => {
     setFeedback({ type, text })
     setTimeout(() => setFeedback(null), 4000)
+  }
+
+  const handleExportJSON = () => {
+    const backupData = {
+      materials: initialMaterials,
+      schedules: initialSchedules,
+      tasks: initialTasks,
+      announcements: initialAnnouncements,
+      exportedAt: new Date().toISOString(),
+    }
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `backup-diklat-prakom-batch3-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    showFeedback("success", "Berkas backup data (JSON) berhasil diunduh!")
   }
 
   const handleManualRefresh = () => {
@@ -82,127 +108,190 @@ export function AdminDashboardClient({
   // CRUD Handlers
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsLoading(true)
-    const formData = new FormData(e.currentTarget)
-    const res = await uploadMaterial(formData)
-    setIsLoading(false)
+    if (selectedFile && selectedFile.size > 50 * 1024 * 1024) {
+      showFeedback("error", `Ukuran file melebihi batas 50MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB). Silakan kompres PDF terlebih dahulu.`)
+      return
+    }
 
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else if (res?.success) {
-      showFeedback("success", res.success)
-      setIsUploadModalOpen(false)
-      router.refresh()
+    setIsLoading(true)
+    const sizeInMB = selectedFile ? (selectedFile.size / (1024 * 1024)).toFixed(1) : "0"
+    setUploadProgressStatus(`Mengunggah berkas PDF (${sizeInMB} MB) ke Supabase Storage...`)
+
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await uploadMaterial(formData)
+
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setIsUploadModalOpen(false)
+        setSelectedFile(null)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Terjadi kesalahan jaringan saat mengunggah berkas."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
+      setUploadProgressStatus(null)
     }
   }
 
   const handleDeleteMaterial = async (id: string, fileName?: string) => {
     if (!confirm("Yakin ingin menghapus materi ini dari database Supabase?")) return
     setIsLoading(true)
-    const res = await deleteMaterial(id, fileName)
-    setIsLoading(false)
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else {
-      showFeedback("success", "Materi berhasil dihapus.")
-      router.refresh()
+    try {
+      const res = await deleteMaterial(id, fileName)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Materi berhasil dihapus.")
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menghapus materi."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleScheduleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    const formData = new FormData(e.currentTarget)
-    const res = await createSchedule(formData)
-    setIsLoading(false)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await createSchedule(formData)
 
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else if (res?.success) {
-      showFeedback("success", res.success)
-      setIsScheduleModalOpen(false)
-      router.refresh()
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setIsScheduleModalOpen(false)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan jadwal."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleDeleteSchedule = async (id: string) => {
     if (!confirm("Yakin ingin menghapus jadwal ini?")) return
     setIsLoading(true)
-    const res = await deleteSchedule(id)
-    setIsLoading(false)
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else {
-      showFeedback("success", "Jadwal berhasil dihapus.")
-      router.refresh()
+    try {
+      const res = await deleteSchedule(id)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Jadwal berhasil dihapus.")
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menghapus jadwal."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    const formData = new FormData(e.currentTarget)
-    const res = await createTask(formData)
-    setIsLoading(false)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await createTask(formData)
 
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else if (res?.success) {
-      showFeedback("success", res.success)
-      setIsTaskModalOpen(false)
-      router.refresh()
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setIsTaskModalOpen(false)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan tugas."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleDeleteTask = async (id: string) => {
     if (!confirm("Yakin ingin menghapus tugas ini?")) return
     setIsLoading(true)
-    const res = await deleteTask(id)
-    setIsLoading(false)
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else {
-      showFeedback("success", "Tugas berhasil dihapus.")
-      router.refresh()
+    try {
+      const res = await deleteTask(id)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Tugas berhasil dihapus.")
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menghapus tugas."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleUpdateTaskStatus = async (id: string, currentStatus: string) => {
-    const nextStatus = currentStatus === "completed" ? "todo" : "completed"
-    const res = await updateTaskStatus(id, nextStatus as any)
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else {
-      router.refresh()
+    try {
+      const nextStatus = currentStatus === "completed" ? "todo" : "completed"
+      const res = await updateTaskStatus(id, nextStatus as any)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui status tugas."
+      showFeedback("error", errorMsg)
     }
   }
 
   const handleAnnouncementSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
-    const formData = new FormData(e.currentTarget)
-    const res = await createAnnouncement(formData)
-    setIsLoading(false)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await createAnnouncement(formData)
 
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else if (res?.success) {
-      showFeedback("success", res.success)
-      setIsAnnouncementModalOpen(false)
-      router.refresh()
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setIsAnnouncementModalOpen(false)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan pengumuman."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleDeleteAnnouncement = async (id: string) => {
     if (!confirm("Yakin ingin menghapus pengumuman ini?")) return
     setIsLoading(true)
-    const res = await deleteAnnouncement(id)
-    setIsLoading(false)
-    if (res?.error) {
-      showFeedback("error", res.error)
-    } else {
-      showFeedback("success", "Pengumuman berhasil dihapus.")
-      router.refresh()
+    try {
+      const res = await deleteAnnouncement(id)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Pengumuman berhasil dihapus.")
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal menghapus pengumuman."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -230,7 +319,21 @@ export function AdminDashboardClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
+          <button
+            onClick={() => setIsWAModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] px-3.5 py-2 text-xs font-black text-[#0D824B] border border-[#A7F3D0] hover:bg-[#D1F2DF] transition cursor-pointer"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            <span>Broadcast WA</span>
+          </button>
+          <button
+            onClick={handleExportJSON}
+            className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#18181B] border border-slate-200 hover:bg-slate-50 transition cursor-pointer"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-[#FF7643]" />
+            <span>Backup Data (JSON)</span>
+          </button>
           <button
             onClick={handleManualRefresh}
             disabled={isRefreshing}
@@ -658,7 +761,16 @@ export function AdminDashboardClient({
       </div>
 
       {/* 1. Modal Upload Modul PDF */}
-      <Modal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} title="Upload Modul PDF (Supabase Storage)">
+      <Modal
+        isOpen={isUploadModalOpen}
+        onClose={() => {
+          if (!isLoading) {
+            setIsUploadModalOpen(false)
+            setSelectedFile(null)
+          }
+        }}
+        title="Upload Modul PDF (Supabase Storage)"
+      >
         <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
             <label className="text-xs font-black text-[#18181B]">Judul Modul / Materi *</label>
@@ -684,13 +796,78 @@ export function AdminDashboardClient({
             <Input name="description" placeholder="Penjelasan singkat modul dan panduan belajar..." className="text-xs" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Pilih Berkas PDF *</label>
-            <input name="file" type="file" accept=".pdf,application/pdf" required className="w-full text-xs text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#18181B] file:px-4 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-[#27272A]" />
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-[#18181B]">Pilih Berkas PDF (Maks. 50MB) *</label>
+              {selectedFile && (
+                <span className={`text-[11px] font-bold ${selectedFile.size > 50 * 1024 * 1024 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                </span>
+              )}
+            </div>
+            <input
+              name="file"
+              type="file"
+              accept=".pdf,application/pdf"
+              required
+              disabled={isLoading}
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null
+                setSelectedFile(f)
+              }}
+              className="w-full text-xs text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#18181B] file:px-4 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-[#27272A] file:cursor-pointer disabled:opacity-50"
+            />
+            {selectedFile && selectedFile.size > 50 * 1024 * 1024 && (
+              <p className="text-[11px] font-bold text-rose-500">
+                Peringatan: Ukuran file ({(selectedFile.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 50MB.
+              </p>
+            )}
+            {selectedFile && selectedFile.size <= 50 * 1024 * 1024 && (
+              <p className="text-[11px] font-semibold text-[#0D824B]">
+                ✓ Berkas PDF siap diunggah ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+              </p>
+            )}
           </div>
+
+          {isLoading && (
+            <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 space-y-2.5">
+              <div className="flex items-center gap-2.5 text-xs font-bold text-amber-900">
+                <Loader2 className="h-4 w-4 animate-spin text-amber-600 shrink-0" />
+                <span>{uploadProgressStatus || "Sedang mengunggah berkas PDF..."}</span>
+              </div>
+              <div className="w-full bg-amber-200/70 rounded-full h-2 overflow-hidden">
+                <div className="bg-amber-600 h-2 rounded-full animate-pulse w-full" />
+              </div>
+              <p className="text-[10px] text-amber-700 leading-relaxed">
+                Mengirim berkas ke Supabase Storage. File besar (20MB+) memerlukan waktu beberapa detik. Mohon jangan menutup browser hingga selesai.
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsUploadModalOpen(false)} className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B]">Batal</button>
-            <button type="submit" disabled={isLoading} className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50">
-              {isLoading ? "Mengunggah..." : "Simpan ke Supabase"}
+            <button
+              type="button"
+              onClick={() => {
+                setIsUploadModalOpen(false)
+                setSelectedFile(null)
+              }}
+              disabled={isLoading}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 disabled:opacity-50 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || (selectedFile !== null && selectedFile.size > 50 * 1024 * 1024)}
+              className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Mengunggah Berkas...</span>
+                </>
+              ) : (
+                "Simpan ke Supabase"
+              )}
             </button>
           </div>
         </form>
@@ -818,6 +995,9 @@ export function AdminDashboardClient({
           </div>
         </form>
       </Modal>
+
+      {/* 5. Modal Broadcast WhatsApp */}
+      <WhatsAppShareModal isOpen={isWAModalOpen} onClose={() => setIsWAModalOpen(false)} />
 
     </div>
   )
