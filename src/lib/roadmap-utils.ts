@@ -100,6 +100,44 @@ export function getCurrentDiklatDay(): number {
 }
 
 /**
+ * Resolves the explicit Day Number (1 - 35) for a given schedule or task record.
+ * Uses strict regex parsing to prevent Day 3 matching Day 2 or Day 4 matching Day 3.
+ */
+export function getScheduleDayNumber(s: { subject_name?: string | null; day?: string | null }): number | null {
+  const subject = String(s.subject_name || "").trim()
+  const dayStr = String(s.day || "").trim()
+
+  // 1. Check for explicit [Hari X] tag in subject_name
+  const tagMatch = subject.match(/\[\s*hari\s*(\d+)\s*\]/i)
+  if (tagMatch) {
+    const num = parseInt(tagMatch[1], 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  // 2. Check for explicit "Hari X" or "Hari ke-X" or "Hari ke X" in day field
+  const dayFieldMatch = dayStr.match(/hari\s*(?:ke[-\s]*)?(\d+)/i)
+  if (dayFieldMatch) {
+    const num = parseInt(dayFieldMatch[1], 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  // 3. Check if day field is purely a number e.g. "3" or 3
+  if (/^\d+$/.test(dayStr)) {
+    const num = parseInt(dayStr, 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  // 4. Check for standalone "Hari X" in subject_name
+  const subjectDayMatch = subject.match(/\bhari\s*(?:ke[-\s]*)?(\d+)\b/i)
+  if (subjectDayMatch) {
+    const num = parseInt(subjectDayMatch[1], 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  return null
+}
+
+/**
  * Maps live manual schedules from Supabase to the 35 days structure.
  */
 export function getAutoRoadmapData(
@@ -133,21 +171,18 @@ export function getAutoRoadmapData(
       badgeLabel2 = "JADWAL HARI INI"
     }
 
-    // Match sessions from Supabase for this day
+    // Match sessions from Supabase for this day with STRICT day identification
     const matchedSessions = supabaseSchedules
       .filter((s) => {
-        const subject = String(s.subject_name || "").toLowerCase()
-        const dayStr = String(s.day || "").toLowerCase().trim()
-        const targetDay = `hari ${item.day}`
-        const targetTag = `[hari ${item.day}]`
-
-        // Check if subject explicitly contains [Hari X] or Hari X
-        if (subject.includes(targetTag) || subject.includes(targetDay)) {
-          return true
+        const explicitDay = getScheduleDayNumber(s)
+        if (explicitDay !== null) {
+          // If explicit day was found, it must STRICTLY match this day number
+          return explicitDay === item.day
         }
 
-        // If day string explicitly matches
-        if (dayStr === targetDay || dayStr === String(item.day)) {
+        // Fallback: If no day number is found, check if day name matches
+        const dayStr = String(s.day || "").toLowerCase().trim()
+        if (dayStr && (dayStr === item.dayOfWeek.toLowerCase() || dayStr === `hari ${item.day}`)) {
           return true
         }
 

@@ -14,6 +14,34 @@ function isSupabaseConfigured(): boolean {
   return Boolean(url && key && !url.includes('your-project-id'))
 }
 
+function formatSubjectWithDay(subject: string, rawDaySelection: string): { formattedSubject: string; dayOfWeek: string } {
+  let targetDayNumber = ''
+  let dayOfWeek = 'Senin'
+
+  if (rawDaySelection.includes('|')) {
+    const parts = rawDaySelection.split('|')
+    targetDayNumber = parts[0].trim()
+    dayOfWeek = parts[1].trim()
+  } else if (rawDaySelection.toLowerCase().startsWith('hari ')) {
+    targetDayNumber = rawDaySelection.trim()
+  } else {
+    dayOfWeek = rawDaySelection
+  }
+
+  const validDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
+  const finalDayOfWeek = validDays.find((d) => d.toLowerCase() === dayOfWeek.toLowerCase()) || 'Senin'
+
+  // Remove existing [Hari X] from subject if present to avoid multiple duplicates
+  let cleanSubject = subject.replace(/\[\s*hari\s*\d+\s*\]\s*/gi, '').trim()
+
+  let formattedSubject = cleanSubject
+  if (targetDayNumber) {
+    formattedSubject = `[${targetDayNumber}] ${cleanSubject}`
+  }
+
+  return { formattedSubject, dayOfWeek: finalDayOfWeek }
+}
+
 // 1. ADMIN AUTH ACTIONS
 export async function adminSignIn(formData: FormData) {
   const email = (formData.get('email') as string)?.trim()
@@ -90,49 +118,27 @@ export async function adminSignOut() {
   redirect('/admin/login')
 }
 
-// 2. SCHEDULE ACTIONS
+// 2. SCHEDULE ACTIONS (CREATE, UPDATE, DELETE)
 export async function createSchedule(formData: FormData) {
-  const subject_name = formData.get('subject_name') as string
-  const rawDaySelection = (formData.get('day_selection') || formData.get('day')) as string
+  const subject_name = (formData.get('subject_name') as string)?.trim()
+  const rawDaySelection = ((formData.get('day_selection') || formData.get('day')) as string)?.trim()
   const start_time = formData.get('start_time') as string
   const end_time = formData.get('end_time') as string
-  const lecturer = formData.get('lecturer') as string
-  const room = formData.get('room') as string
+  const lecturer = (formData.get('lecturer') as string)?.trim()
+  const room = (formData.get('room') as string)?.trim()
   const meeting_link = formData.get('meeting_link') as string
 
   if (!subject_name || !rawDaySelection || !start_time || !end_time || !lecturer || !room) {
     return { error: 'Semua kolom bertanda bintang wajib diisi.' }
   }
 
-  // Parse Day Selection: e.g. "Hari 1|Senin" or "Hari 1" or "Senin"
-  let targetDayNumber = ''
-  let dayOfWeek = 'Senin'
-
-  if (rawDaySelection.includes('|')) {
-    const parts = rawDaySelection.split('|')
-    targetDayNumber = parts[0].trim()
-    dayOfWeek = parts[1].trim()
-  } else if (rawDaySelection.toLowerCase().startsWith('hari ')) {
-    targetDayNumber = rawDaySelection.trim()
-  } else {
-    dayOfWeek = rawDaySelection
-  }
-
-  const validDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
-  const finalDayOfWeek = validDays.find((d) => d.toLowerCase() === dayOfWeek.toLowerCase()) || 'Senin'
-
-  // Prepend [Hari X] tag if selected so it matches 35 days roadmap
-  let formattedSubject = subject_name
-  if (targetDayNumber && !formattedSubject.toLowerCase().includes(`[${targetDayNumber.toLowerCase()}]`)) {
-    formattedSubject = `[${targetDayNumber}] ${subject_name}`
-  }
-
+  const { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
   const finalMeetingLink = meeting_link?.trim() || RUANG_DIKLAT_URL
 
   const supabase = await createClient()
   const { error } = await supabase.from('schedules').insert({
     subject_name: formattedSubject,
-    day: finalDayOfWeek as any,
+    day: dayOfWeek as any,
     start_time,
     end_time,
     lecturer,
@@ -150,6 +156,47 @@ export async function createSchedule(formData: FormData) {
   return { success: 'Sesi kegiatan berhasil disimpan ke database Supabase!' }
 }
 
+export async function updateSchedule(formData: FormData) {
+  const id = formData.get('id') as string
+  const subject_name = (formData.get('subject_name') as string)?.trim()
+  const rawDaySelection = ((formData.get('day_selection') || formData.get('day')) as string)?.trim()
+  const start_time = formData.get('start_time') as string
+  const end_time = formData.get('end_time') as string
+  const lecturer = (formData.get('lecturer') as string)?.trim()
+  const room = (formData.get('room') as string)?.trim()
+  const meeting_link = formData.get('meeting_link') as string
+
+  if (!id || !subject_name || !rawDaySelection || !start_time || !end_time || !lecturer || !room) {
+    return { error: 'Semua kolom bertanda bintang wajib diisi.' }
+  }
+
+  const { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
+  const finalMeetingLink = meeting_link?.trim() || RUANG_DIKLAT_URL
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('schedules')
+    .update({
+      subject_name: formattedSubject,
+      day: dayOfWeek as any,
+      start_time,
+      end_time,
+      lecturer,
+      room,
+      meeting_link: finalMeetingLink,
+    })
+    .eq('id', id)
+
+  if (error) {
+    return { error: 'Gagal memperbarui jadwal: ' + error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/schedules')
+  revalidatePath('/admin/dashboard')
+  return { success: 'Jadwal sesi perkuliahan berhasil diperbarui!' }
+}
+
 export async function deleteSchedule(id: string) {
   if (!isSupabaseConfigured()) {
     revalidatePath('/', 'layout')
@@ -164,7 +211,7 @@ export async function deleteSchedule(id: string) {
   return { success: 'Jadwal berhasil dihapus.' }
 }
 
-// 3. MATERIAL UPLOAD (SUPABASE STORAGE: class-materials)
+// 3. MATERIAL ACTIONS (UPLOAD, UPDATE, DELETE)
 export async function uploadMaterial(formData: FormData) {
   try {
     const title = (formData.get('title') as string)?.trim()
@@ -242,6 +289,38 @@ export async function uploadMaterial(formData: FormData) {
   }
 }
 
+export async function updateMaterial(formData: FormData) {
+  const id = formData.get('id') as string
+  const title = (formData.get('title') as string)?.trim()
+  const subject_name = (formData.get('subject_name') as string)?.trim()
+  const week_number = Number(formData.get('week_number'))
+  const description = (formData.get('description') as string)?.trim()
+
+  if (!id || !title || !subject_name || !week_number) {
+    return { error: 'ID, judul, mata kuliah, dan minggu pertemuan wajib diisi.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('materials')
+    .update({
+      title,
+      subject_name,
+      week_number,
+      description: description || null,
+    })
+    .eq('id', id)
+
+  if (error) {
+    return { error: 'Gagal memperbarui materi: ' + error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/materials')
+  revalidatePath('/admin/dashboard')
+  return { success: 'Informasi modul materi berhasil diperbarui!' }
+}
+
 export async function deleteMaterial(id: string, fileName?: string) {
   const supabase = await createClient()
 
@@ -262,16 +341,16 @@ export async function deleteMaterial(id: string, fileName?: string) {
   return { success: 'Modul materi berhasil dihapus.' }
 }
 
-// 4. TASK ACTIONS
+// 4. TASK ACTIONS (CREATE, UPDATE, DELETE)
 export async function createTask(formData: FormData) {
-  const title = formData.get('title') as string
-  const subject_name = formData.get('subject_name') as string
-  const description = formData.get('description') as string
+  const title = (formData.get('title') as string)?.trim()
+  const subject_name = (formData.get('subject_name') as string)?.trim()
+  const description = (formData.get('description') as string)?.trim()
   const due_date = formData.get('due_date') as string
-  const submission_link = formData.get('submission_link') as string
+  const submission_link = (formData.get('submission_link') as string)?.trim()
 
   if (!title || !subject_name || !due_date) {
-    return { error: 'Judul, mata kuliah, dan tenggat waktu wajib diisi.' }
+    return { error: 'Judul, tahapan diklat, dan tenggat waktu wajib diisi.' }
   }
 
   const supabase = await createClient()
@@ -294,6 +373,42 @@ export async function createTask(formData: FormData) {
   return { success: 'Tugas baru berhasil disimpan ke database!' }
 }
 
+export async function updateTask(formData: FormData) {
+  const id = formData.get('id') as string
+  const title = (formData.get('title') as string)?.trim()
+  const subject_name = (formData.get('subject_name') as string)?.trim()
+  const description = (formData.get('description') as string)?.trim()
+  const due_date = formData.get('due_date') as string
+  const submission_link = (formData.get('submission_link') as string)?.trim()
+  const status = (formData.get('status') as string) || 'todo'
+
+  if (!id || !title || !subject_name || !due_date) {
+    return { error: 'ID, judul, tahapan diklat, dan tenggat waktu wajib diisi.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('tasks')
+    .update({
+      title,
+      subject_name,
+      description: description || null,
+      due_date: new Date(due_date).toISOString(),
+      submission_link: submission_link || 'https://pengembangan.kejaksaan.go.id/dashboard',
+      status: status as any,
+    })
+    .eq('id', id)
+
+  if (error) {
+    return { error: 'Gagal memperbarui tugas: ' + error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/tasks')
+  revalidatePath('/admin/dashboard')
+  return { success: 'Data tugas berhasil diperbarui!' }
+}
+
 export async function updateTaskStatus(id: string, status: 'todo' | 'in_progress' | 'completed') {
   const supabase = await createClient()
   const { error } = await supabase.from('tasks').update({ status }).eq('id', id)
@@ -314,12 +429,12 @@ export async function deleteTask(id: string) {
   return { success: 'Tugas berhasil dihapus.' }
 }
 
-// 5. ANNOUNCEMENT ACTIONS
+// 5. ANNOUNCEMENT ACTIONS (CREATE, UPDATE, DELETE)
 export async function createAnnouncement(formData: FormData) {
-  const title = formData.get('title') as string
-  const content = formData.get('content') as string
+  const title = (formData.get('title') as string)?.trim()
+  const content = (formData.get('content') as string)?.trim()
   const is_urgent = formData.get('is_urgent') === 'on'
-  const author = (formData.get('author') as string) || 'Pengurus Diklat'
+  const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
 
   if (!title || !content) {
     return { error: 'Judul dan isi pengumuman wajib diisi.' }
@@ -342,6 +457,38 @@ export async function createAnnouncement(formData: FormData) {
   revalidatePath('/announcements')
   revalidatePath('/admin/dashboard')
   return { success: 'Pengumuman berhasil dipublikasikan ke database!' }
+}
+
+export async function updateAnnouncement(formData: FormData) {
+  const id = formData.get('id') as string
+  const title = (formData.get('title') as string)?.trim()
+  const content = (formData.get('content') as string)?.trim()
+  const is_urgent = formData.get('is_urgent') === 'on'
+  const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
+
+  if (!id || !title || !content) {
+    return { error: 'ID, judul, dan isi pengumuman wajib diisi.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('announcements')
+    .update({
+      title,
+      content,
+      is_urgent,
+      author,
+    })
+    .eq('id', id)
+
+  if (error) {
+    return { error: 'Gagal memperbarui pengumuman: ' + error.message }
+  }
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/announcements')
+  revalidatePath('/admin/dashboard')
+  return { success: 'Pengumuman berhasil diperbarui!' }
 }
 
 export async function deleteAnnouncement(id: string) {

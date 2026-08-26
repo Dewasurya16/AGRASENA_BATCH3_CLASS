@@ -6,13 +6,17 @@ import { useRouter } from "next/navigation"
 import {
   adminSignOut,
   createSchedule,
+  updateSchedule,
   deleteSchedule,
   uploadMaterial,
+  updateMaterial,
   deleteMaterial,
   createTask,
+  updateTask,
   updateTaskStatus,
   deleteTask,
   createAnnouncement,
+  updateAnnouncement,
   deleteAnnouncement,
 } from "@/app/admin/actions"
 import { Modal } from "@/components/ui/modal"
@@ -24,6 +28,8 @@ import {
   UploadCloud,
   Plus,
   Trash2,
+  Edit,
+  Pencil,
   Clock,
   CheckCircle2,
   LogOut,
@@ -45,6 +51,7 @@ import {
   FileSpreadsheet
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
+import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 
 interface AdminDashboardClientProps {
   initialMaterials: any[]
@@ -69,12 +76,18 @@ export function AdminDashboardClient({
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [uploadProgressStatus, setUploadProgressStatus] = React.useState<string | null>(null)
 
-  // Active Modals
+  // Create Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false)
   const [isScheduleModalOpen, setIsScheduleModalOpen] = React.useState(false)
   const [isTaskModalOpen, setIsTaskModalOpen] = React.useState(false)
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = React.useState(false)
   const [isWAModalOpen, setIsWAModalOpen] = React.useState(false)
+
+  // Edit Modals & State
+  const [editingSchedule, setEditingSchedule] = React.useState<any | null>(null)
+  const [editingTask, setEditingTask] = React.useState<any | null>(null)
+  const [editingMaterial, setEditingMaterial] = React.useState<any | null>(null)
+  const [editingAnnouncement, setEditingAnnouncement] = React.useState<any | null>(null)
 
   const showFeedback = (type: "success" | "error", text: string) => {
     setFeedback({ type, text })
@@ -105,7 +118,7 @@ export function AdminDashboardClient({
     setTimeout(() => setIsRefreshing(false), 600)
   }
 
-  // CRUD Handlers
+  // --- CRUD: MATERIALS ---
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (selectedFile && selectedFile.size > 50 * 1024 * 1024) {
@@ -138,6 +151,27 @@ export function AdminDashboardClient({
     }
   }
 
+  const handleUpdateMaterialSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await updateMaterial(formData)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setEditingMaterial(null)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui materi."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleDeleteMaterial = async (id: string, fileName?: string) => {
     if (!confirm("Yakin ingin menghapus materi ini dari database Supabase?")) return
     setIsLoading(true)
@@ -157,6 +191,7 @@ export function AdminDashboardClient({
     }
   }
 
+  // --- CRUD: SCHEDULES ---
   const handleScheduleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -173,6 +208,28 @@ export function AdminDashboardClient({
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan jadwal."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdateScheduleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await updateSchedule(formData)
+
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setEditingSchedule(null)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui jadwal."
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
@@ -198,6 +255,7 @@ export function AdminDashboardClient({
     }
   }
 
+  // --- CRUD: TASKS ---
   const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -214,6 +272,28 @@ export function AdminDashboardClient({
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan tugas."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdateTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await updateTask(formData)
+
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setEditingTask(null)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui tugas."
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
@@ -254,6 +334,7 @@ export function AdminDashboardClient({
     }
   }
 
+  // --- CRUD: ANNOUNCEMENTS ---
   const handleAnnouncementSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -270,6 +351,28 @@ export function AdminDashboardClient({
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan pengumuman."
+      showFeedback("error", errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdateAnnouncementSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const res = await updateAnnouncement(formData)
+
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else if (res?.success) {
+        showFeedback("success", res.success)
+        setEditingAnnouncement(null)
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui pengumuman."
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
@@ -310,7 +413,7 @@ export function AdminDashboardClient({
                 Dashboard Pengurus Diklat
               </h1>
               <span className="rounded-full bg-[#E6F7ED] px-2.5 py-0.5 text-[10px] font-black text-[#0D824B] border border-[#A7F3D0]">
-                Live Supabase CRUD
+                Live Supabase CRUD + Edit
               </span>
             </div>
             <p className="text-xs text-[#6B7C93]">
@@ -518,7 +621,7 @@ export function AdminDashboardClient({
                 <FileText className="h-10 w-10 text-slate-300 mx-auto" />
                 <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Modul di Database</h4>
                 <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Semua dummy telah dibersihkan. Klik tombol di bawah untuk mengunggah berkas PDF materi pertama Anda.
+                  Klik tombol di bawah untuk mengunggah berkas PDF materi pertama Anda.
                 </p>
                 <button
                   onClick={() => setIsUploadModalOpen(true)}
@@ -554,6 +657,13 @@ export function AdminDashboardClient({
                         </a>
                       )}
                       <button
+                        onClick={() => setEditingMaterial(m)}
+                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span>Edit</span>
+                      </button>
+                      <button
                         onClick={() => handleDeleteMaterial(m.id, m.file_name)}
                         className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
                       >
@@ -574,7 +684,7 @@ export function AdminDashboardClient({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-black text-[#18181B]">Jadwal Perkuliahan (Supabase Database)</h3>
-                <p className="text-xs text-[#6B7C93]">Kelola jam sesi dan pemateri live</p>
+                <p className="text-xs text-[#6B7C93]">Kelola jadwal per hari (Hari 1 s.d. 35) dan link media belajar</p>
               </div>
               <button
                 onClick={() => setIsScheduleModalOpen(true)}
@@ -590,7 +700,7 @@ export function AdminDashboardClient({
                 <Calendar className="h-10 w-10 text-slate-300 mx-auto" />
                 <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Sesi Jadwal di Database</h4>
                 <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Semua dummy telah dibersihkan. Klik tombol di bawah untuk menambahkan sesi jadwal diklat baru.
+                  Klik tombol di bawah untuk menambahkan sesi jadwal diklat baru.
                 </p>
                 <button
                   onClick={() => setIsScheduleModalOpen(true)}
@@ -602,25 +712,41 @@ export function AdminDashboardClient({
               </div>
             ) : (
               <div className="space-y-3">
-                {initialSchedules.map((s) => (
-                  <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#18181B] px-2.5 py-0.5 text-[10px] font-black text-white">{s.day}</span>
-                        <span className="text-xs font-semibold text-[#6B7C93]">{s.start_time} - {s.end_time}</span>
+                {initialSchedules.map((s) => {
+                  const resolvedDayNum = getScheduleDayNumber(s)
+                  const displayDayTag = resolvedDayNum ? `Hari ${resolvedDayNum}` : s.day
+
+                  return (
+                    <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-[#18181B] px-2.5 py-0.5 text-[10px] font-black text-white">
+                            {displayDayTag}
+                          </span>
+                          <span className="text-xs font-semibold text-[#6B7C93]">{s.start_time} - {s.end_time} WIB</span>
+                        </div>
+                        <h5 className="font-bold text-sm text-[#18181B]">{s.subject_name}</h5>
+                        <p className="text-xs text-[#6B7C93]">Pengampu: {s.lecturer} • Ruang: {s.room}</p>
                       </div>
-                      <h5 className="font-bold text-sm text-[#18181B]">{s.subject_name}</h5>
-                      <p className="text-xs text-[#6B7C93]">Pengampu: {s.lecturer} • Ruang: {s.room}</p>
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <button
+                          onClick={() => setEditingSchedule(s)}
+                          className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          <span>Edit Jadwal</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSchedule(s.id)}
+                          className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Hapus</span>
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteSchedule(s.id)}
-                      className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline self-end sm:self-auto cursor-pointer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Hapus</span>
-                    </button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -648,7 +774,7 @@ export function AdminDashboardClient({
                 <BookOpen className="h-10 w-10 text-slate-300 mx-auto" />
                 <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Tugas di Database</h4>
                 <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Semua dummy telah dibersihkan. Klik tombol di bawah untuk membuat penugasan mandiri pertama.
+                  Klik tombol di bawah untuk membuat penugasan mandiri pertama.
                 </p>
                 <button
                   onClick={() => setIsTaskModalOpen(true)}
@@ -673,6 +799,9 @@ export function AdminDashboardClient({
                       </div>
                       <h5 className="font-bold text-sm text-[#18181B]">{t.title}</h5>
                       <p className="text-xs text-[#6B7C93]">{t.subject_name}</p>
+                      {t.description && (
+                        <p className="text-xs text-[#52647C] line-clamp-2">{t.description}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 self-end sm:self-auto">
                       <button
@@ -680,6 +809,13 @@ export function AdminDashboardClient({
                         className="text-xs font-bold text-[#0D824B] hover:underline cursor-pointer"
                       >
                         {t.status === "completed" ? "Tandai Belum Selesai" : "Tandai Selesai"}
+                      </button>
+                      <button
+                        onClick={() => setEditingTask(t)}
+                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteTask(t.id)}
@@ -718,7 +854,7 @@ export function AdminDashboardClient({
                 <Sparkles className="h-10 w-10 text-slate-300 mx-auto" />
                 <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Pengumuman di Database</h4>
                 <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Semua dummy telah dibersihkan. Klik tombol di bawah untuk membuat pengumuman atau broadcast kelas baru.
+                  Klik tombol di bawah untuk membuat pengumuman atau broadcast kelas baru.
                 </p>
                 <button
                   onClick={() => setIsAnnouncementModalOpen(true)}
@@ -744,13 +880,22 @@ export function AdminDashboardClient({
                       <h5 className="font-bold text-sm text-[#18181B]">{a.title}</h5>
                       <p className="text-xs text-[#52647C] line-clamp-2">{a.content}</p>
                     </div>
-                    <button
-                      onClick={() => handleDeleteAnnouncement(a.id)}
-                      className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline self-end sm:self-auto cursor-pointer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Hapus</span>
-                    </button>
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                      <button
+                        onClick={() => setEditingAnnouncement(a)}
+                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAnnouncement(a.id)}
+                        className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -759,6 +904,10 @@ export function AdminDashboardClient({
         )}
 
       </div>
+
+      {/* ==========================================================
+          MODALS: TAMBAH (CREATE)
+         ========================================================== */}
 
       {/* 1. Modal Upload Modul PDF */}
       <Modal
@@ -837,9 +986,6 @@ export function AdminDashboardClient({
               <div className="w-full bg-amber-200/70 rounded-full h-2 overflow-hidden">
                 <div className="bg-amber-600 h-2 rounded-full animate-pulse w-full" />
               </div>
-              <p className="text-[10px] text-amber-700 leading-relaxed">
-                Mengirim berkas ke Supabase Storage. File besar (20MB+) memerlukan waktu beberapa detik. Mohon jangan menutup browser hingga selesai.
-              </p>
             </div>
           )}
 
@@ -860,14 +1006,7 @@ export function AdminDashboardClient({
               disabled={isLoading || (selectedFile !== null && selectedFile.size > 50 * 1024 * 1024)}
               className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Mengunggah Berkas...</span>
-                </>
-              ) : (
-                "Simpan ke Supabase"
-              )}
+              {isLoading ? "Mengunggah..." : "Simpan ke Supabase"}
             </button>
           </div>
         </form>
@@ -878,7 +1017,7 @@ export function AdminDashboardClient({
         <form onSubmit={handleScheduleSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
             <label className="text-xs font-black text-[#18181B]">Mata Kuliah / Topik Sesi *</label>
-            <Input name="subject_name" required placeholder="Contoh: Arsitektur Sistem Informasi & Data Terdistribusi" className="text-xs" />
+            <Input name="subject_name" required placeholder="Contoh: Arsitektur Sistem Informasi & SPBE" className="text-xs" />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1.5 col-span-3 sm:col-span-1">
@@ -995,6 +1134,372 @@ export function AdminDashboardClient({
           </div>
         </form>
       </Modal>
+
+      {/* ==========================================================
+          MODALS: EDIT (UPDATE)
+         ========================================================== */}
+
+      {/* Edit Modal: Schedules */}
+      {editingSchedule && (
+        <Modal
+          isOpen={Boolean(editingSchedule)}
+          onClose={() => setEditingSchedule(null)}
+          title="Edit Sesi Jadwal Diklat"
+        >
+          <form onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
+            <input type="hidden" name="id" value={editingSchedule.id} />
+            
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Mata Kuliah / Topik Sesi *</label>
+              <Input
+                name="subject_name"
+                required
+                defaultValue={editingSchedule.subject_name.replace(/\[\s*hari\s*\d+\s*\]\s*/gi, '').trim()}
+                placeholder="Contoh: Manajemen Layanan TI & SPBE"
+                className="text-xs"
+              />
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5 col-span-3 sm:col-span-1">
+                <label className="text-xs font-black text-[#18181B]">Pilih Hari Diklat (1 - 35) *</label>
+                <select
+                  name="day_selection"
+                  required
+                  defaultValue={`Hari ${getScheduleDayNumber(editingSchedule) || 1}`}
+                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-2 text-xs font-medium text-[#18181B]"
+                >
+                  {Array.from({ length: 35 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={`Hari ${d}`}>
+                      Hari {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Mulai *</label>
+                <Input
+                  name="start_time"
+                  type="time"
+                  defaultValue={editingSchedule.start_time || "08:00"}
+                  required
+                  className="text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Selesai *</label>
+                <Input
+                  name="end_time"
+                  type="time"
+                  defaultValue={editingSchedule.end_time || "15:30"}
+                  required
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Dosen / Pengampu *</label>
+                <Input
+                  name="lecturer"
+                  required
+                  defaultValue={editingSchedule.lecturer || ""}
+                  placeholder="Nama Pemateri"
+                  className="text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Ruang / Media *</label>
+                <Input
+                  name="room"
+                  required
+                  defaultValue={editingSchedule.room || "Ruang Diklat LMS"}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Link Pertemuan (LMS Ruang Diklat / Zoom)</label>
+              <Input
+                name="meeting_link"
+                defaultValue={editingSchedule.meeting_link || "https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat"}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingSchedule(null)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+              >
+                {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Modal: Tasks */}
+      {editingTask && (
+        <Modal
+          isOpen={Boolean(editingTask)}
+          onClose={() => setEditingTask(null)}
+          title="Edit Data Tugas & Uji Praktik"
+        >
+          <form onSubmit={handleUpdateTaskSubmit} className="space-y-4 pt-2">
+            <input type="hidden" name="id" value={editingTask.id} />
+            
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Judul Tugas *</label>
+              <Input
+                name="title"
+                required
+                defaultValue={editingTask.title}
+                placeholder="Contoh: Rangkuman Hari 3 — Tata Kelola TI"
+                className="text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
+                <select
+                  name="subject_name"
+                  required
+                  defaultValue={editingTask.subject_name || "Tahap 1 • MOOC"}
+                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
+                >
+                  <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
+                  <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
+                  <option value="Tahap 3 • Lab Prakom">Tahap 3 • Lab Prakom</option>
+                  <option value="Tahap 4 • Seminar">Tahap 4 • Seminar</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Tenggat Waktu (Deadline) *</label>
+                <Input
+                  name="due_date"
+                  type="datetime-local"
+                  required
+                  defaultValue={editingTask.due_date ? new Date(editingTask.due_date).toISOString().slice(0, 16) : ""}
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Status Pengerjaan</label>
+              <select
+                name="status"
+                defaultValue={editingTask.status || "todo"}
+                className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
+              >
+                <option value="todo">Belum Selesai (Aktif)</option>
+                <option value="completed">Selesai</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Link Pengumpulan (Portal LMS Kejaksaan)</label>
+              <Input
+                name="submission_link"
+                defaultValue={editingTask.submission_link || "https://pengembangan.kejaksaan.go.id/dashboard"}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Deskripsi & Instruksi Tugas</label>
+              <textarea
+                name="description"
+                rows={3}
+                defaultValue={editingTask.description || ""}
+                placeholder="Instruksi dan format penulisan laporan tugas..."
+                className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingTask(null)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+              >
+                {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Modal: Materials */}
+      {editingMaterial && (
+        <Modal
+          isOpen={Boolean(editingMaterial)}
+          onClose={() => setEditingMaterial(null)}
+          title="Edit Metadata Modul PDF"
+        >
+          <form onSubmit={handleUpdateMaterialSubmit} className="space-y-4 pt-2">
+            <input type="hidden" name="id" value={editingMaterial.id} />
+            
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Judul Modul / Materi *</label>
+              <Input
+                name="title"
+                required
+                defaultValue={editingMaterial.title}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
+                <select
+                  name="subject_name"
+                  required
+                  defaultValue={editingMaterial.subject_name}
+                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
+                >
+                  <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
+                  <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
+                  <option value="Tahap 3 • Lab Prakom">Tahap 3 • Lab Prakom</option>
+                  <option value="Tahap 4 • Seminar">Tahap 4 • Seminar</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-[#18181B]">Minggu Pertemuan *</label>
+                <Input
+                  name="week_number"
+                  type="number"
+                  min="1"
+                  max="10"
+                  defaultValue={editingMaterial.week_number || 1}
+                  required
+                  className="text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Deskripsi Singkat</label>
+              <Input
+                name="description"
+                defaultValue={editingMaterial.description || ""}
+                placeholder="Penjelasan singkat modul dan panduan belajar..."
+                className="text-xs"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingMaterial(null)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+              >
+                {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Modal: Announcements */}
+      {editingAnnouncement && (
+        <Modal
+          isOpen={Boolean(editingAnnouncement)}
+          onClose={() => setEditingAnnouncement(null)}
+          title="Edit Pengumuman Kelas"
+        >
+          <form onSubmit={handleUpdateAnnouncementSubmit} className="space-y-4 pt-2">
+            <input type="hidden" name="id" value={editingAnnouncement.id} />
+            
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Judul Pengumuman *</label>
+              <Input
+                name="title"
+                required
+                defaultValue={editingAnnouncement.title}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Nama Pengirim / Pembuat</label>
+              <Input
+                name="author"
+                defaultValue={editingAnnouncement.author || "Pengurus Diklat"}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-[#18181B]">Isi Pengumuman *</label>
+              <textarea
+                name="content"
+                rows={4}
+                required
+                defaultValue={editingAnnouncement.content}
+                className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_urgent_edit"
+                name="is_urgent"
+                defaultChecked={editingAnnouncement.is_urgent}
+                className="h-4 w-4 rounded border-slate-300 text-[#E11D48] focus:ring-0"
+              />
+              <label htmlFor="is_urgent_edit" className="text-xs font-bold text-[#E11D48]">
+                Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingAnnouncement(null)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+              >
+                {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* 5. Modal Broadcast WhatsApp */}
       <WhatsAppShareModal isOpen={isWAModalOpen} onClose={() => setIsWAModalOpen(false)} />

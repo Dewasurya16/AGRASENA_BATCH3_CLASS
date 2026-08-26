@@ -3,7 +3,7 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Video, Clock, ExternalLink, Sparkles, Radio, Calendar, User, MapPin, Moon, Sun, BookOpen } from "lucide-react"
-import { RAW_DAYS_DATA, getCurrentDiklatDay } from "@/lib/roadmap-utils"
+import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber } from "@/lib/roadmap-utils"
 
 export interface LiveSessionBannerProps {
   currentDayName?: string
@@ -66,11 +66,12 @@ export function LiveSessionBanner({
 
   // Find schedule that specifically matches today's day number (e.g. Hari 3)
   const matchedSchedule = todaySchedules.find((s) => {
-    const subj = String(s.subject_name || "").toLowerCase()
+    const explicitDay = getScheduleDayNumber(s)
+    if (explicitDay !== null) {
+      return explicitDay === activeDayNum
+    }
     const dayVal = String(s.day || "").toLowerCase()
-    const targetTag = `[hari ${activeDayNum}]`
-    const targetDay = `hari ${activeDayNum}`
-    return subj.includes(targetTag) || subj.includes(targetDay) || dayVal === targetDay || dayVal === String(activeDayNum)
+    return dayVal === `hari ${activeDayNum}` || dayVal === String(activeDayNum)
   })
 
   const activeSession = matchedSchedule || {
