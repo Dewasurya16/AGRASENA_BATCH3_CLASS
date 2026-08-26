@@ -18,6 +18,8 @@ import {
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
+  deleteVisitorLog,
+  clearAllVisitorLogs,
 } from "@/app/admin/actions"
 import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
@@ -48,16 +50,129 @@ import {
   Tag,
   Loader2,
   MessageCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Users,
+  Globe,
+  Smartphone,
+  Laptop,
+  Tablet,
+  Copy,
+  ExternalLink,
+  Search,
+  Filter,
+  BarChart3,
+  Database,
+  Activity,
+  CheckCheck,
+  Menu,
+  X,
+  ChevronRight,
+  TrendingUp,
+  FolderOpen,
+  ChevronLeft
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
+
+interface VisitorLog {
+  id: string
+  ip: string
+  user_agent?: string
+  device: string
+  os: string
+  browser: string
+  path: string
+  referrer: string
+  screen?: string
+  language?: string
+  created_at: string
+}
 
 interface AdminDashboardClientProps {
   initialMaterials: any[]
   initialSchedules: any[]
   initialTasks: any[]
   initialAnnouncements: any[]
+  initialVisitorLogs?: VisitorLog[]
+}
+
+const ITEMS_PER_PAGE = 5
+
+function PaginationControls({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize = ITEMS_PER_PAGE,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  pageSize?: number
+  onPageChange: (page: number) => void
+}) {
+  if (totalItems <= pageSize) return null
+
+  const startItem = (currentPage - 1) * pageSize + 1
+  const endItem = Math.min(currentPage * pageSize, totalItems)
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100 text-xs text-slate-500">
+      <div className="font-medium text-center sm:text-left">
+        Menampilkan <span className="font-bold text-slate-900">{startItem}</span> -{" "}
+        <span className="font-bold text-slate-900">{endItem}</span> dari{" "}
+        <span className="font-bold text-slate-900">{totalItems}</span> data (5 per halaman)
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+          disabled={currentPage === 1}
+          className="flex items-center gap-1 rounded-xl px-3 py-1.5 font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-2xs"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          <span>Sebelumnya</span>
+        </button>
+
+        <div className="flex items-center gap-1 px-1">
+          {Array.from({ length: totalPages }).map((_, idx) => {
+            const pageNum = idx + 1
+            if (totalPages > 7) {
+              if (pageNum !== 1 && pageNum !== totalPages && Math.abs(pageNum - currentPage) > 1) {
+                if (pageNum === 2 || pageNum === totalPages - 1) {
+                  return <span key={pageNum} className="px-1 text-slate-300">...</span>
+                }
+                return null
+              }
+            }
+
+            return (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`h-8 w-8 rounded-xl font-black text-xs transition cursor-pointer ${
+                  currentPage === pageNum
+                    ? "bg-slate-900 text-white shadow-2xs"
+                    : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                {pageNum}
+              </button>
+            )
+          })}
+        </div>
+
+        <button
+          onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="flex items-center gap-1 rounded-xl px-3 py-1.5 font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-2xs"
+        >
+          <span>Selanjutnya</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export function AdminDashboardClient({
@@ -65,12 +180,34 @@ export function AdminDashboardClient({
   initialSchedules,
   initialTasks,
   initialAnnouncements,
+  initialVisitorLogs = [],
 }: AdminDashboardClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = React.useState<"overview" | "materials" | "schedules" | "tasks" | "announcements">("overview")
+  const [activeTab, setActiveTab] = React.useState<
+    "overview" | "visitors" | "materials" | "schedules" | "tasks" | "announcements"
+  >("overview")
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Filters & Search State
+  const [visitorSearch, setVisitorSearch] = React.useState("")
+  const [visitorDeviceFilter, setVisitorDeviceFilter] = React.useState<string>("all")
+  const [copiedIp, setCopiedIp] = React.useState<string | null>(null)
+
+  const [materialSearch, setMaterialSearch] = React.useState("")
+  const [materialTahapFilter, setMaterialTahapFilter] = React.useState("all")
+
+  const [scheduleSearch, setScheduleSearch] = React.useState("")
+  const [taskFilter, setTaskFilter] = React.useState<"all" | "completed" | "pending">("all")
+
+  // Pagination Pages (5 per page)
+  const [visitorPage, setVisitorPage] = React.useState(1)
+  const [materialPage, setMaterialPage] = React.useState(1)
+  const [schedulePage, setSchedulePage] = React.useState(1)
+  const [taskPage, setTaskPage] = React.useState(1)
+  const [announcementPage, setAnnouncementPage] = React.useState(1)
 
   // Upload State
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
@@ -94,12 +231,230 @@ export function AdminDashboardClient({
     setTimeout(() => setFeedback(null), 4000)
   }
 
+  // Reset page when filter changes
+  React.useEffect(() => {
+    setVisitorPage(1)
+  }, [visitorSearch, visitorDeviceFilter])
+
+  React.useEffect(() => {
+    setMaterialPage(1)
+  }, [materialSearch, materialTahapFilter])
+
+  React.useEffect(() => {
+    setSchedulePage(1)
+  }, [scheduleSearch])
+
+  React.useEffect(() => {
+    setTaskPage(1)
+  }, [taskFilter])
+
+  // --- STATS & METRICS ---
+  const totalVisitors = initialVisitorLogs.length
+  const uniqueIps = React.useMemo(() => {
+    return new Set(initialVisitorLogs.map((v) => v.ip)).size
+  }, [initialVisitorLogs])
+
+  const todayVisitors = React.useMemo(() => {
+    const todayStr = new Date().toDateString()
+    return initialVisitorLogs.filter((v) => new Date(v.created_at).toDateString() === todayStr).length
+  }, [initialVisitorLogs])
+
+  const deviceStats = React.useMemo(() => {
+    const counts = { Desktop: 0, Mobile: 0, Tablet: 0, Bot: 0 }
+    initialVisitorLogs.forEach((v) => {
+      const dev = v.device || "Desktop"
+      if (dev.includes("Mobile")) counts.Mobile++
+      else if (dev.includes("Tablet")) counts.Tablet++
+      else if (dev.includes("Bot")) counts.Bot++
+      else counts.Desktop++
+    })
+    const total = initialVisitorLogs.length || 1
+    return {
+      desktop: counts.Desktop,
+      desktopPct: Math.round((counts.Desktop / total) * 100),
+      mobile: counts.Mobile,
+      mobilePct: Math.round((counts.Mobile / total) * 100),
+      tablet: counts.Tablet,
+      tabletPct: Math.round((counts.Tablet / total) * 100),
+      bot: counts.Bot,
+    }
+  }, [initialVisitorLogs])
+
+  const completedTasksCount = initialTasks.filter((t) => t.status === "completed").length
+  const totalMaterialSizeMB = initialMaterials.reduce((acc, m) => acc + (m.file_size || 0), 0) / (1024 * 1024)
+
+  // --- FILTERED & PAGINATED DATA LISTS (5 PER PAGE) ---
+  const filteredVisitorLogs = React.useMemo(() => {
+    return initialVisitorLogs.filter((log) => {
+      const matchesSearch =
+        visitorSearch === "" ||
+        (log.ip || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
+        (log.path || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
+        (log.browser || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
+        (log.os || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
+        (log.referrer || "").toLowerCase().includes(visitorSearch.toLowerCase())
+
+      const matchesDevice =
+        visitorDeviceFilter === "all" ||
+        (log.device || "").toLowerCase() === visitorDeviceFilter.toLowerCase()
+
+      return matchesSearch && matchesDevice
+    })
+  }, [initialVisitorLogs, visitorSearch, visitorDeviceFilter])
+
+  const totalVisitorPages = Math.ceil(filteredVisitorLogs.length / ITEMS_PER_PAGE) || 1
+  const paginatedVisitorLogs = React.useMemo(() => {
+    const start = (visitorPage - 1) * ITEMS_PER_PAGE
+    return filteredVisitorLogs.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredVisitorLogs, visitorPage])
+
+  const filteredMaterials = React.useMemo(() => {
+    return initialMaterials.filter((m) => {
+      const matchesSearch =
+        materialSearch === "" ||
+        (m.title || "").toLowerCase().includes(materialSearch.toLowerCase()) ||
+        (m.subject_name || "").toLowerCase().includes(materialSearch.toLowerCase()) ||
+        (m.description || "").toLowerCase().includes(materialSearch.toLowerCase())
+      const matchesTahap =
+        materialTahapFilter === "all" ||
+        (m.subject_name || "").toLowerCase().includes(materialTahapFilter.toLowerCase())
+      return matchesSearch && matchesTahap
+    })
+  }, [initialMaterials, materialSearch, materialTahapFilter])
+
+  const totalMaterialPages = Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE) || 1
+  const paginatedMaterials = React.useMemo(() => {
+    const start = (materialPage - 1) * ITEMS_PER_PAGE
+    return filteredMaterials.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredMaterials, materialPage])
+
+  const filteredSchedules = React.useMemo(() => {
+    return initialSchedules.filter((s) => {
+      return (
+        scheduleSearch === "" ||
+        (s.subject_name || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
+        (s.lecturer || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
+        (s.day || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
+        (s.room || "").toLowerCase().includes(scheduleSearch.toLowerCase())
+      )
+    })
+  }, [initialSchedules, scheduleSearch])
+
+  const totalSchedulePages = Math.ceil(filteredSchedules.length / ITEMS_PER_PAGE) || 1
+  const paginatedSchedules = React.useMemo(() => {
+    const start = (schedulePage - 1) * ITEMS_PER_PAGE
+    return filteredSchedules.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredSchedules, schedulePage])
+
+  const filteredTasks = React.useMemo(() => {
+    return initialTasks.filter((t) => {
+      if (taskFilter === "completed") return t.status === "completed"
+      if (taskFilter === "pending") return t.status !== "completed"
+      return true
+    })
+  }, [initialTasks, taskFilter])
+
+  const totalTaskPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE) || 1
+  const paginatedTasks = React.useMemo(() => {
+    const start = (taskPage - 1) * ITEMS_PER_PAGE
+    return filteredTasks.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredTasks, taskPage])
+
+  const totalAnnouncementPages = Math.ceil(initialAnnouncements.length / ITEMS_PER_PAGE) || 1
+  const paginatedAnnouncements = React.useMemo(() => {
+    const start = (announcementPage - 1) * ITEMS_PER_PAGE
+    return initialAnnouncements.slice(start, start + ITEMS_PER_PAGE)
+  }, [initialAnnouncements, announcementPage])
+
+  // --- ACTIONS ---
+  const handleCopyIp = (ip: string) => {
+    navigator.clipboard.writeText(ip)
+    setCopiedIp(ip)
+    setTimeout(() => setCopiedIp(null), 2000)
+  }
+
+  const handleExportVisitorsJSON = () => {
+    const blob = new Blob([JSON.stringify(initialVisitorLogs, null, 2)], {
+      type: "application/json",
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `visitor-logs-prakom-batch3-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    showFeedback("success", "Data log pengunjung berhasil diekspor ke JSON!")
+  }
+
+  const handleExportVisitorsCSV = () => {
+    if (initialVisitorLogs.length === 0) {
+      showFeedback("error", "Belum ada data pengunjung untuk diekspor.")
+      return
+    }
+    const headers = ["Waktu (UTC)", "IP Address", "Media Akses", "OS", "Browser", "Halaman (Path)", "Referrer"]
+    const rows = initialVisitorLogs.map((v) => [
+      `"${v.created_at}"`,
+      `"${v.ip}"`,
+      `"${v.device}"`,
+      `"${v.os}"`,
+      `"${v.browser}"`,
+      `"${v.path}"`,
+      `"${v.referrer}"`,
+    ])
+    const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `visitor-logs-prakom-batch3-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    showFeedback("success", "Data log pengunjung berhasil diekspor ke CSV!")
+  }
+
+  const handleDeleteVisitor = async (id: string) => {
+    if (!confirm("Hapus baris riwayat pengunjung ini?")) return
+    setIsLoading(true)
+    try {
+      const res = await deleteVisitorLog(id)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Log riwayat pengunjung berhasil dihapus.")
+        router.refresh()
+      }
+    } catch {
+      showFeedback("error", "Gagal menghapus log pengunjung.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClearAllVisitors = async () => {
+    if (!confirm("PERINGATAN: Yakin ingin membersihkan seluruh data riwayat kunjungan pengunjung?")) return
+    setIsLoading(true)
+    try {
+      const res = await clearAllVisitorLogs()
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", "Semua riwayat pengunjung berhasil dibersihkan.")
+        router.refresh()
+      }
+    } catch {
+      showFeedback("error", "Gagal membersihkan data pengunjung.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleExportJSON = () => {
     const backupData = {
       materials: initialMaterials,
       schedules: initialSchedules,
       tasks: initialTasks,
       announcements: initialAnnouncements,
+      visitorLogs: initialVisitorLogs,
       exportedAt: new Date().toISOString(),
     }
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" })
@@ -122,7 +477,10 @@ export function AdminDashboardClient({
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (selectedFile && selectedFile.size > 50 * 1024 * 1024) {
-      showFeedback("error", `Ukuran file melebihi batas 50MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB). Silakan kompres PDF terlebih dahulu.`)
+      showFeedback(
+        "error",
+        `Ukuran file melebihi batas 50MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB). Silakan kompres PDF terlebih dahulu.`
+      )
       return
     }
 
@@ -180,7 +538,7 @@ export function AdminDashboardClient({
       if (res?.error) {
         showFeedback("error", res.error)
       } else {
-        showFeedback("success", "Materi berhasil dihapus.")
+        showFeedback("success", "Materi berhasil dihapus dari database.")
         router.refresh()
       }
     } catch (err: unknown) {
@@ -192,7 +550,7 @@ export function AdminDashboardClient({
   }
 
   // --- CRUD: SCHEDULES ---
-  const handleScheduleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateScheduleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     try {
@@ -207,7 +565,7 @@ export function AdminDashboardClient({
         router.refresh()
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan jadwal."
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan jadwal baru."
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
@@ -237,14 +595,14 @@ export function AdminDashboardClient({
   }
 
   const handleDeleteSchedule = async (id: string) => {
-    if (!confirm("Yakin ingin menghapus jadwal ini?")) return
+    if (!confirm("Yakin ingin menghapus sesi jadwal ini?")) return
     setIsLoading(true)
     try {
       const res = await deleteSchedule(id)
       if (res?.error) {
         showFeedback("error", res.error)
       } else {
-        showFeedback("success", "Jadwal berhasil dihapus.")
+        showFeedback("success", "Sesi jadwal berhasil dihapus.")
         router.refresh()
       }
     } catch (err: unknown) {
@@ -256,7 +614,7 @@ export function AdminDashboardClient({
   }
 
   // --- CRUD: TASKS ---
-  const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     try {
@@ -271,7 +629,7 @@ export function AdminDashboardClient({
         router.refresh()
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan tugas."
+      const errorMsg = err instanceof Error ? err.message : "Gagal menyimpan tugas baru."
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
@@ -300,6 +658,24 @@ export function AdminDashboardClient({
     }
   }
 
+  const handleUpdateTaskStatus = async (id: string, currentStatus: string) => {
+    const nextStatus: "todo" | "completed" = currentStatus === "completed" ? "todo" : "completed"
+    setIsLoading(true)
+    try {
+      const res = await updateTaskStatus(id, nextStatus)
+      if (res?.error) {
+        showFeedback("error", res.error)
+      } else {
+        showFeedback("success", `Status tugas diubah menjadi ${nextStatus === "completed" ? "Selesai" : "Belum Selesai"}.`)
+        router.refresh()
+      }
+    } catch {
+      showFeedback("error", "Gagal memperbarui status tugas.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleDeleteTask = async (id: string) => {
     if (!confirm("Yakin ingin menghapus tugas ini?")) return
     setIsLoading(true)
@@ -319,23 +695,8 @@ export function AdminDashboardClient({
     }
   }
 
-  const handleUpdateTaskStatus = async (id: string, currentStatus: string) => {
-    try {
-      const nextStatus = currentStatus === "completed" ? "todo" : "completed"
-      const res = await updateTaskStatus(id, nextStatus as any)
-      if (res?.error) {
-        showFeedback("error", res.error)
-      } else {
-        router.refresh()
-      }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Gagal memperbarui status tugas."
-      showFeedback("error", errorMsg)
-    }
-  }
-
   // --- CRUD: ANNOUNCEMENTS ---
-  const handleAnnouncementSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateAnnouncementSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     try {
@@ -398,537 +759,1352 @@ export function AdminDashboardClient({
     }
   }
 
+  const formatWibDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr)
+      return (
+        new Intl.DateTimeFormat("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          timeZone: "Asia/Jakarta",
+        }).format(date) + " WIB"
+      )
+    } catch {
+      return dateStr
+    }
+  }
+
+  const getDeviceBadge = (device: string) => {
+    const devLower = (device || "").toLowerCase()
+    if (devLower.includes("mobile")) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 border border-blue-200/80">
+          <Smartphone className="h-3 w-3" />
+          <span>Smartphone</span>
+        </span>
+      )
+    }
+    if (devLower.includes("tablet")) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700 border border-purple-200/80">
+          <Tablet className="h-3 w-3" />
+          <span>Tablet</span>
+        </span>
+      )
+    }
+    if (devLower.includes("bot")) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 border border-amber-200/80">
+          <Bot className="h-3 w-3" />
+          <span>Bot / Crawler</span>
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 border border-emerald-200/80">
+        <Laptop className="h-3 w-3" />
+        <span>Desktop / PC</span>
+      </span>
+    )
+  }
+
+  // Navigation Items list
+  const navItems = [
+    { id: "overview", label: "Ringkasan", icon: BarChart3, count: null, color: "text-blue-600" },
+    {
+      id: "visitors",
+      label: "Statistik Pengunjung & IP",
+      icon: Users,
+      count: totalVisitors,
+      color: "text-emerald-600",
+      highlight: true,
+    },
+    { id: "materials", label: "Pustaka Modul PDF (120 JP)", icon: FileText, count: initialMaterials.length, color: "text-indigo-600" },
+    { id: "schedules", label: "Jadwal 35 Hari", icon: Calendar, count: initialSchedules.length, color: "text-sky-600" },
+    { id: "tasks", label: "Penugasan & Ujian", icon: BookOpen, count: initialTasks.length, color: "text-amber-600" },
+    { id: "announcements", label: "Pengumuman Kelas", icon: Sparkles, count: initialAnnouncements.length, color: "text-rose-600" },
+  ]
+
   return (
-    <div className="min-h-screen bg-[#FBFBFD] text-[#18181B] p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col lg:flex-row antialiased selection:bg-emerald-500/20 selection:text-emerald-900">
+      {/* ========================================================================= */}
+      {/* LEFT SIDEBAR NAVIGATION (Desktop & Mobile Drawer) */}
+      {/* ========================================================================= */}
       
-      {/* Top Header Navbar */}
-      <div className="mx-auto max-w-6xl rounded-3xl bg-white border-2 border-slate-200 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#18181B] text-white shadow-md">
-            <Shield className="h-6 w-6 text-[#FFD280]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black text-[#18181B] tracking-tight">
-                Dashboard Pengurus Diklat
-              </h1>
-              <span className="rounded-full bg-[#E6F7ED] px-2.5 py-0.5 text-[10px] font-black text-[#0D824B] border border-[#A7F3D0]">
-                Live Supabase CRUD + Edit
-              </span>
-            </div>
-            <p className="text-xs text-[#6B7C93]">
-              Kelola modul PDF, jadwal 35 hari, tugas mandiri, dan pengumuman kelas secara langsung
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto">
-          <button
-            onClick={() => setIsWAModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] px-3.5 py-2 text-xs font-black text-[#0D824B] border border-[#A7F3D0] hover:bg-[#D1F2DF] transition cursor-pointer"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            <span>Broadcast WA</span>
-          </button>
-          <button
-            onClick={handleExportJSON}
-            className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#18181B] border border-slate-200 hover:bg-slate-50 transition cursor-pointer"
-          >
-            <FileSpreadsheet className="h-3.5 w-3.5 text-[#FF7643]" />
-            <span>Backup Data (JSON)</span>
-          </button>
-          <button
-            onClick={handleManualRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#18181B] border border-slate-200 hover:bg-slate-50 transition cursor-pointer"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            <span>Sinkron Data</span>
-          </button>
-          <Link href="/">
-            <button className="flex items-center gap-1.5 rounded-full bg-[#F4F6FA] px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 transition cursor-pointer">
-              <Home className="h-3.5 w-3.5" />
-              <span>Lihat Web Utama</span>
-            </button>
-          </Link>
-          <form action={adminSignOut}>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded-full bg-[#FFEAE9] px-4 py-2 text-xs font-bold text-[#E11D48] hover:bg-[#FFD2D0] transition cursor-pointer"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              <span>Keluar</span>
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* Feedback Banner */}
-      {feedback && (
-        <div className="mx-auto max-w-6xl">
-          <div
-            className={`rounded-2xl p-4 text-xs font-bold border transition-all ${
-              feedback.type === "success"
-                ? "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]"
-                : "bg-[#FFEAE9] text-[#E11D48] border-[#FFCDCA]"
-            }`}
-          >
-            {feedback.text}
-          </div>
-        </div>
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs lg:hidden"
+        />
       )}
 
-      {/* Main Tabs Navigation */}
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
-          {[
-            { id: "overview", label: "Ringkasan", count: null },
-            { id: "materials", label: "Upload Materi PDF (120 JP)", count: initialMaterials.length },
-            { id: "schedules", label: "Jadwal 35 Hari", count: initialSchedules.length },
-            { id: "tasks", label: "Tugas & Uji Praktek", count: initialTasks.length },
-            { id: "announcements", label: "Pengumuman Kelas", count: initialAnnouncements.length },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-black transition-all cursor-pointer ${
-                activeTab === tab.id
-                  ? "bg-[#18181B] text-white shadow-sm"
-                  : "bg-white text-[#52647C] hover:bg-slate-100 border border-slate-200"
-              }`}
-            >
-              <span>{tab.label}</span>
-              {tab.count !== null && (
-                <span
-                  className={`rounded-full px-2 py-0.2 text-[10px] font-black ${
-                    activeTab === tab.id ? "bg-white text-[#18181B]" : "bg-slate-100 text-slate-700"
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Container Content */}
-      <div className="mx-auto max-w-6xl space-y-6">
-        
-        {/* Tab 1: Overview */}
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            
-            {/* 4 Summary Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="rounded-3xl bg-white border-2 border-slate-200 p-5 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#6B7C93]">Total Modul Terunggah</span>
-                  <FileText className="h-5 w-5 text-[#0D824B]" />
-                </div>
-                <div className="text-3xl font-black text-[#18181B]">{initialMaterials.length}</div>
-                <p className="text-[11px] text-[#0D824B] font-semibold">Tersimpan di Supabase</p>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full overflow-y-auto p-5 space-y-6">
+          {/* Brand Logo & Institution Info */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#0F172A] to-[#1E293B] text-white shadow-md">
+                <Shield className="h-6 w-6 text-[#FBBF24]" />
               </div>
-
-              <div className="rounded-3xl bg-white border-2 border-slate-200 p-5 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#6B7C93]">Sesi Jadwal Aktif</span>
-                  <Calendar className="h-5 w-5 text-[#0369A1]" />
+              <div>
+                <div className="text-xs font-black tracking-wider text-slate-900 uppercase">
+                  DIKLAT PRAKOM
                 </div>
-                <div className="text-3xl font-black text-[#18181B]">{initialSchedules.length}</div>
-                <p className="text-[11px] text-[#0369A1] font-semibold">Perkuliahan 35 Hari</p>
-              </div>
-
-              <div className="rounded-3xl bg-white border-2 border-slate-200 p-5 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#6B7C93]">Penugasan Mandiri</span>
-                  <BookOpen className="h-5 w-5 text-[#EA580C]" />
+                <div className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                  <span>Batch 3 Kejaksaan RI</span>
                 </div>
-                <div className="text-3xl font-black text-[#18181B]">{initialTasks.length}</div>
-                <p className="text-[11px] text-[#EA580C] font-semibold">Uji Praktek & LMS</p>
-              </div>
-
-              <div className="rounded-3xl bg-white border-2 border-slate-200 p-5 space-y-2 shadow-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#6B7C93]">Pengumuman Kelas</span>
-                  <Sparkles className="h-5 w-5 text-[#E11D48]" />
-                </div>
-                <div className="text-3xl font-black text-[#18181B]">{initialAnnouncements.length}</div>
-                <p className="text-[11px] text-[#E11D48] font-semibold">Broadcast Peserta</p>
               </div>
             </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
 
-            {/* Quick Actions Card */}
-            <div className="rounded-3xl bg-white border-2 border-slate-200 p-6 space-y-4 shadow-sm">
-              <h3 className="text-base font-black text-[#18181B]">Aksi Cepat Pengelolaan Data Live</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Database Live Ping Indicator */}
+          <div className="rounded-2xl bg-slate-50 border border-slate-200/70 p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[11px] font-bold text-slate-700">Supabase & Analytics</span>
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
+              LIVE
+            </span>
+          </div>
+
+          {/* Sidebar Navigation Items */}
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 pb-1">
+              Menu Utama
+            </div>
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeTab === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id as any)
+                    setIsSidebarOpen(false)
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-[#0F172A] text-white shadow-sm shadow-slate-900/10 font-black"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-4 w-4 ${isActive ? "text-amber-400" : item.color}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.count !== null && (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : item.highlight
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Quick System Tools */}
+          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 pb-1">
+              Pintasan Cepat
+            </div>
+            <button
+              onClick={() => setIsWAModalOpen(true)}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100/70 transition cursor-pointer"
+            >
+              <MessageCircle className="h-4 w-4 text-emerald-600" />
+              <span>Broadcast WhatsApp</span>
+            </button>
+            <button
+              onClick={handleExportJSON}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-amber-500" />
+              <span>Backup Database (JSON)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Sidebar Footer User Card */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                AD
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-black text-slate-900">Admin Diklat</div>
+                <div className="text-[10px] text-slate-500 font-medium">admin@kejaksaan.go.id</div>
+              </div>
+            </div>
+            <form action={adminSignOut}>
+              <button
+                type="submit"
+                title="Keluar dari Dashboard"
+                className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      {/* ========================================================================= */}
+      {/* MAIN CONTENT AREA */}
+      {/* ========================================================================= */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Sticky Topbar */}
+        <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 cursor-pointer"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  {activeTab === "overview" && "Ringkasan Operasional"}
+                  {activeTab === "visitors" && "Statistik & Riwayat Pengunjung"}
+                  {activeTab === "materials" && "Pustaka Berkas Modul PDF (120 JP)"}
+                  {activeTab === "schedules" && "Jadwal Perkuliahan 35 Hari"}
+                  {activeTab === "tasks" && "Penugasan & Uji Praktek"}
+                  {activeTab === "announcements" && "Pengumuman Kelas"}
+                </h2>
+              </div>
+              <p className="text-[11px] text-slate-500 hidden sm:block">
+                Portal Manajemen Diklat Prakom Kejaksaan RI Batch 3
+              </p>
+            </div>
+          </div>
+
+          {/* Top Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-blue-600 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">Sinkron Data</span>
+            </button>
+
+            <Link href="/" target="_blank">
+              <button className="flex items-center gap-1.5 rounded-full bg-slate-900 hover:bg-slate-800 px-3.5 py-1.5 text-xs font-black text-white transition shadow-2xs cursor-pointer">
+                <Globe className="h-3.5 w-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Web Publik</span>
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </button>
+            </Link>
+          </div>
+        </header>
+
+        {/* Dynamic Page Container */}
+        <div className="p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+          {/* Feedback Alert Banner */}
+          {feedback && (
+            <div
+              className={`rounded-2xl p-4 text-xs font-bold border transition-all flex items-center justify-between gap-3 ${
+                feedback.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {feedback.type === "success" ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+                )}
+                <span>{feedback.text}</span>
+              </div>
+              <button
+                onClick={() => setFeedback(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 1. OVERVIEW TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              {/* 5 KPI Hero Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* 1. Visitors KPI (Highlight Card) */}
+                <div
+                  onClick={() => setActiveTab("visitors")}
+                  className="group rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-800 p-5 text-white space-y-3 shadow-md relative overflow-hidden cursor-pointer hover:shadow-lg transition-all hover:scale-[1.01]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-100">Total Pengunjung</span>
+                    <Users className="h-5 w-5 text-emerald-200 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black">{totalVisitors}</div>
+                    <div className="text-[11px] text-emerald-100 font-semibold mt-0.5">
+                      {uniqueIps} IP Unik • {todayVisitors} Hari Ini
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
+                    <span>Lihat Statistik & IP</span>
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+
+                {/* 2. Materials */}
+                <div
+                  onClick={() => setActiveTab("materials")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Pustaka Modul</span>
+                    <FileText className="h-5 w-5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{initialMaterials.length}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      {totalMaterialSizeMB.toFixed(1)} MB di Storage
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-indigo-600">
+                    <span>Kelola Berkas PDF</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 3. Schedules */}
+                <div
+                  onClick={() => setActiveTab("schedules")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Jadwal Perkuliahan</span>
+                    <Calendar className="h-5 w-5 text-sky-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{initialSchedules.length}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      Total 35 Hari Sesi
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-sky-600">
+                    <span>Atur Agenda Diklat</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 4. Tasks */}
+                <div
+                  onClick={() => setActiveTab("tasks")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Tugas Mandiri</span>
+                    <BookOpen className="h-5 w-5 text-amber-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{initialTasks.length}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      {completedTasksCount} Selesai • {initialTasks.length - completedTasksCount} Pending
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-amber-600">
+                    <span>Lihat Penugasan</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 5. Announcements */}
+                <div
+                  onClick={() => setActiveTab("announcements")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Pengumuman Kelas</span>
+                    <Sparkles className="h-5 w-5 text-rose-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{initialAnnouncements.length}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      {initialAnnouncements.filter((a) => a.is_urgent).length} Mendesak / Urgent
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-rose-600">
+                    <span>Publikasikan Info</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Action Center */}
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black text-slate-900">
+                      Pusat Aksi Cepat
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Tambah materi, buat sesi jadwal baru, publikasikan tugas, atau kirim pengumuman
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <button
+                    onClick={() => setIsUploadModalOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 p-4 text-xs font-black text-emerald-800 border border-emerald-200 transition cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Upload Modul PDF</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsScheduleModalOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-sky-50 hover:bg-sky-100 p-4 text-xs font-black text-sky-800 border border-sky-200 transition cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Tambah Sesi Jadwal</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-amber-50 hover:bg-amber-100 p-4 text-xs font-black text-amber-800 border border-amber-200 transition cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Buat Tugas Baru</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsAnnouncementModalOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-rose-50 hover:bg-rose-100 p-4 text-xs font-black text-rose-800 border border-rose-200 transition cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Buat Pengumuman</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Traffic & Device Distribution Widget */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Media Distribution Bars */}
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-4 shadow-sm lg:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-emerald-600" />
+                      <h3 className="text-sm sm:text-base font-black text-slate-900">
+                        Distribusi Media Akses Pengunjung
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab("visitors")}
+                      className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Lihat Rincian IP</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 pt-2">
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                        <span className="flex items-center gap-1.5">
+                          <Laptop className="h-3.5 w-3.5 text-emerald-600" /> Desktop / Laptop ({deviceStats.desktop})
+                        </span>
+                        <span>{deviceStats.desktopPct}%</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                          style={{ width: `${deviceStats.desktopPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                        <span className="flex items-center gap-1.5">
+                          <Smartphone className="h-3.5 w-3.5 text-blue-600" /> Smartphone ({deviceStats.mobile})
+                        </span>
+                        <span>{deviceStats.mobilePct}%</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                          style={{ width: `${deviceStats.mobilePct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                        <span className="flex items-center gap-1.5">
+                          <Tablet className="h-3.5 w-3.5 text-purple-600" /> Tablet ({deviceStats.tablet})
+                        </span>
+                        <span>{deviceStats.tabletPct}%</span>
+                      </div>
+                      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                          style={{ width: `${deviceStats.tabletPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200/80 p-3.5 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-slate-500" />
+                      <span className="text-slate-600 font-medium">
+                        Integrasi <strong>@vercel/analytics</strong> & Pelacak IP Supabase aktif.
+                      </span>
+                    </div>
+                    <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                      Ready
+                    </span>
+                  </div>
+                </div>
+
+                {/* Database Metrics Preview */}
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-blue-600" />
+                    <h3 className="text-sm sm:text-base font-black text-slate-900">Status Database</h3>
+                  </div>
+
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                      <span className="text-slate-600 font-medium">Total Seluruh Data:</span>
+                      <span className="font-black text-slate-900">
+                        {initialMaterials.length +
+                          initialSchedules.length +
+                          initialTasks.length +
+                          initialAnnouncements.length +
+                          initialVisitorLogs.length}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                      <span className="text-slate-600 font-medium">Pengunjung Unik:</span>
+                      <span className="font-black text-emerald-700">{uniqueIps} IP</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                      <span className="text-slate-600 font-medium">Kunjungan Hari Ini:</span>
+                      <span className="font-black text-blue-700">{todayVisitors} Hits</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                      <span className="text-slate-600 font-medium">Total Modul Storage:</span>
+                      <span className="font-black text-indigo-700">{initialMaterials.length} PDF</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 2. VISITOR ANALYTICS TAB (5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "visitors" && (
+            <div className="space-y-6">
+              {/* 4 Visitor Stats Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Total Kunjungan (Hits)</span>
+                    <Eye className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div className="text-3xl font-black text-slate-900">{totalVisitors}</div>
+                  <p className="text-[11px] text-emerald-600 font-semibold">Terekam di Supabase</p>
+                </div>
+
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Pengunjung Unik (IP)</span>
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="text-3xl font-black text-slate-900">{uniqueIps}</div>
+                  <p className="text-[11px] text-blue-600 font-semibold">Alamat IP Berbeda</p>
+                </div>
+
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Kunjungan Hari Ini</span>
+                    <Calendar className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="text-3xl font-black text-slate-900">{todayVisitors}</div>
+                  <p className="text-[11px] text-amber-600 font-semibold">Akses Sesi Hari Ini</p>
+                </div>
+
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Media Akses Terbanyak</span>
+                    <Laptop className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="text-2xl font-black text-slate-900">
+                    {deviceStats.desktop >= deviceStats.mobile ? "Desktop" : "Mobile"}
+                  </div>
+                  <p className="text-[11px] text-purple-600 font-semibold">
+                    {deviceStats.desktopPct}% Desktop • {deviceStats.mobilePct}% Mobile
+                  </p>
+                </div>
+              </div>
+
+              {/* Main Visitor Logs Table & Toolbar Card */}
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      Riwayat Pengunjung & IP Live
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Menampilkan IP pengunjung, media akses (perangkat), browser, sistem operasi, dan halaman yang diakses (5 per halaman)
+                    </p>
+                  </div>
+
+                  {/* Toolbar Buttons */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleExportVisitorsCSV}
+                      className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                    >
+                      <Download className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>Ekspor CSV</span>
+                    </button>
+                    <button
+                      onClick={handleExportVisitorsJSON}
+                      className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+                    >
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Ekspor JSON</span>
+                    </button>
+                    {initialVisitorLogs.length > 0 && (
+                      <button
+                        onClick={handleClearAllVisitors}
+                        className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-600 border border-rose-200 hover:bg-rose-100 transition cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Bersihkan Log</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Search & Device Filter Row */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={visitorSearch}
+                      onChange={(e) => setVisitorSearch(e.target.value)}
+                      placeholder="Cari berdasarkan IP, Halaman (Path), Browser, OS, atau Referrer..."
+                      className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                      { id: "all", label: "Semua Media" },
+                      { id: "Desktop", label: "💻 Desktop" },
+                      { id: "Mobile", label: "📱 Mobile" },
+                      { id: "Tablet", label: "📟 Tablet" },
+                    ].map((filter) => (
+                      <button
+                        key={filter.id}
+                        onClick={() => setVisitorDeviceFilter(filter.id)}
+                        className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                          visitorDeviceFilter === filter.id
+                            ? "bg-slate-900 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Table or Empty State */}
+                {initialVisitorLogs.length === 0 ? (
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center space-y-3">
+                    <Users className="h-10 w-10 text-slate-300 mx-auto" />
+                    <h4 className="font-bold text-sm text-slate-900">Belum Ada Riwayat Kunjungan Terekam</h4>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                      Riwayat kunjungan akan otomatis terisi saat pengguna membuka halaman publik atau modul.
+                    </p>
+                  </div>
+                ) : filteredVisitorLogs.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 p-8 text-center space-y-2">
+                    <Search className="h-8 w-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-700">
+                      Tidak ditemukan log kunjungan yang sesuai dengan kata kunci &quot;{visitorSearch}&quot;
+                    </p>
+                    <button
+                      onClick={() => {
+                        setVisitorSearch("")
+                        setVisitorDeviceFilter("all")
+                      }}
+                      className="text-xs text-blue-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Reset Filter
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                          <tr>
+                            <th className="py-3 px-4">#</th>
+                            <th className="py-3 px-4">Waktu Akses (WIB)</th>
+                            <th className="py-3 px-4">Alamat IP</th>
+                            <th className="py-3 px-4">Media Akses</th>
+                            <th className="py-3 px-4">Sistem Operasi & Browser</th>
+                            <th className="py-3 px-4">Halaman (Path)</th>
+                            <th className="py-3 px-4">Referrer</th>
+                            <th className="py-3 px-4 text-center">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {paginatedVisitorLogs.map((log, idx) => {
+                            const globalIndex = (visitorPage - 1) * ITEMS_PER_PAGE + idx + 1
+                            return (
+                              <tr key={log.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-3.5 px-4 font-bold text-slate-400">{globalIndex}</td>
+                                <td className="py-3.5 px-4 font-semibold text-slate-700 whitespace-nowrap">
+                                  {formatWibDate(log.created_at)}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] border border-slate-200">
+                                      {log.ip || "127.0.0.1"}
+                                    </span>
+                                    <button
+                                      onClick={() => handleCopyIp(log.ip || "127.0.0.1")}
+                                      title="Salin Alamat IP"
+                                      className="p-1 text-slate-400 hover:text-slate-700 rounded hover:bg-slate-200 transition cursor-pointer"
+                                    >
+                                      {copiedIp === (log.ip || "127.0.0.1") ? (
+                                        <CheckCheck className="h-3 w-3 text-emerald-600" />
+                                      ) : (
+                                        <Copy className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  {getDeviceBadge(log.device)}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-slate-800">{log.browser || "Unknown Browser"}</span>
+                                    <span className="text-[11px] text-slate-500">{log.os || "Unknown OS"}</span>
+                                  </div>
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <span className="font-mono text-[11px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                    {log.path || "/"}
+                                  </span>
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-500 max-w-[150px] truncate" title={log.referrer}>
+                                  {log.referrer || "Direct"}
+                                </td>
+                                <td className="py-3.5 px-4 text-center">
+                                  {log.id && (
+                                    <button
+                                      onClick={() => handleDeleteVisitor(log.id)}
+                                      title="Hapus baris log ini"
+                                      className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition cursor-pointer"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <PaginationControls
+                      currentPage={visitorPage}
+                      totalPages={totalVisitorPages}
+                      totalItems={filteredVisitorLogs.length}
+                      onPageChange={setVisitorPage}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 3. MATERIALS TAB (GRID & 5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "materials" && (
+            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Pustaka Berkas Modul (120 JP)</h3>
+                  <p className="text-xs text-slate-500">
+                    Materi perkuliahan di Supabase Storage (Menampilkan 5 modul per halaman)
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#E6F7ED] hover:bg-[#D1FAE5] p-4 text-xs font-black text-[#0D824B] border border-[#A7F3D0] transition cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Upload Modul PDF</span>
                 </button>
+              </div>
 
+              {/* Search & Tahap Filter */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={materialSearch}
+                    onChange={(e) => setMaterialSearch(e.target.value)}
+                    placeholder="Cari judul modul atau mata kuliah..."
+                    className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  {[
+                    { id: "all", label: "Semua Tahap" },
+                    { id: "Tahap 1", label: "Tahap 1 MOOC" },
+                    { id: "Tahap 2", label: "Tahap 2 TMO" },
+                    { id: "Tahap 3", label: "Tahap 3 Lab" },
+                    { id: "Tahap 4", label: "Tahap 4 Seminar" },
+                  ].map((filter) => (
+                    <button
+                      key={filter.id}
+                      onClick={() => setMaterialTahapFilter(filter.id)}
+                      className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                        materialTahapFilter === filter.id
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {initialMaterials.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
+                  <FileText className="h-10 w-10 text-slate-300 mx-auto" />
+                  <h4 className="font-bold text-sm text-slate-900">Belum Ada Modul di Database</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Klik tombol di bawah untuk mengunggah berkas PDF materi pertama Anda.
+                  </p>
+                  <button
+                    onClick={() => setIsUploadModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Upload Berkas PDF Sekarang</span>
+                  </button>
+                </div>
+              ) : filteredMaterials.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200 p-8 text-center space-y-2">
+                  <Search className="h-8 w-8 text-slate-400 mx-auto" />
+                  <p className="text-xs font-bold text-slate-700">
+                    Tidak ditemukan modul yang sesuai dengan pencarian Anda.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Responsive Grid View */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedMaterials.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex flex-col justify-between rounded-2xl bg-slate-50/80 p-4 border border-slate-200/90 gap-3 hover:bg-white hover:shadow-xs transition"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="rounded-full bg-indigo-50 border border-indigo-200/70 px-2.5 py-0.5 text-[10px] font-black text-indigo-700">
+                              {m.subject_name || "Materi Diklat"}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500">
+                              Minggu {m.week_number} • {m.file_size ? `${(m.file_size / 1024 / 1024).toFixed(1)} MB` : "PDF"}
+                            </span>
+                          </div>
+                          <h5 className="font-black text-sm text-slate-900 leading-snug">{m.title}</h5>
+                          {m.description && (
+                            <p className="text-xs text-slate-600 line-clamp-2">{m.description}</p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                          <div className="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">
+                            {m.file_name}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {m.file_url && (
+                              <a
+                                href={m.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                <span>Unduh</span>
+                              </a>
+                            )}
+                            <button
+                              onClick={() => setEditingMaterial(m)}
+                              className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline cursor-pointer"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMaterial(m.id, m.file_name)}
+                              className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <PaginationControls
+                    currentPage={materialPage}
+                    totalPages={totalMaterialPages}
+                    totalItems={filteredMaterials.length}
+                    onPageChange={setMaterialPage}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 4. SCHEDULES TAB (GRID & 5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "schedules" && (
+            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Jadwal Perkuliahan 35 Hari</h3>
+                  <p className="text-xs text-slate-500">
+                    Sesi tatap muka online / offline (Menampilkan 5 sesi per halaman)
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsScheduleModalOpen(true)}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#D7F3FE] hover:bg-[#BAE6FD] p-4 text-xs font-black text-[#0369A1] border border-[#7DD3FC] transition cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Tambah Sesi Jadwal</span>
                 </button>
+              </div>
 
+              {/* Search Bar */}
+              <div className="relative w-full">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={scheduleSearch}
+                  onChange={(e) => setScheduleSearch(e.target.value)}
+                  placeholder="Cari topik mata pelatihan, pengampu, hari, atau ruang..."
+                  className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                />
+              </div>
+
+              {initialSchedules.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
+                  <Calendar className="h-10 w-10 text-slate-300 mx-auto" />
+                  <h4 className="font-bold text-sm text-slate-900">Belum Ada Sesi Jadwal di Database</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Klik tombol di bawah untuk menambahkan sesi jadwal diklat baru.
+                  </p>
+                  <button
+                    onClick={() => setIsScheduleModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Tambah Sesi Jadwal Baru</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Responsive Grid View */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedSchedules.map((s) => {
+                      const resolvedDayNum = getScheduleDayNumber(s)
+                      const displayDayTag = resolvedDayNum ? `Hari ${resolvedDayNum}` : s.day
+
+                      return (
+                        <div
+                          key={s.id}
+                          className="flex flex-col justify-between rounded-2xl bg-slate-50/80 p-4 border border-slate-200/90 gap-3 hover:bg-white hover:shadow-xs transition"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-[10px] font-black text-white">
+                                {displayDayTag}
+                              </span>
+                              <span className="text-xs font-bold text-slate-500">
+                                {s.start_time} - {s.end_time} WIB
+                              </span>
+                            </div>
+                            <h5 className="font-black text-sm text-slate-900 leading-snug">{s.subject_name}</h5>
+                            <div className="text-xs text-slate-500 space-y-0.5">
+                              <div>👨‍🏫 {s.lecturer}</div>
+                              <div>🏢 {s.room}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200/60">
+                            <button
+                              onClick={() => setEditingSchedule(s)}
+                              className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline cursor-pointer"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSchedule(s.id)}
+                              className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <PaginationControls
+                    currentPage={schedulePage}
+                    totalPages={totalSchedulePages}
+                    totalItems={filteredSchedules.length}
+                    onPageChange={setSchedulePage}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 5. TASKS TAB (GRID & 5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "tasks" && (
+            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Penugasan & Uji Praktek</h3>
+                  <p className="text-xs text-slate-500">
+                    Kelola tugas mandiri dan batas deadline (Menampilkan 5 tugas per halaman)
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsTaskModalOpen(true)}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFEADA] hover:bg-[#FED7AA] p-4 text-xs font-black text-[#EA580C] border border-[#FDBA74] transition cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Buat Tugas Baru</span>
                 </button>
+              </div>
 
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                {[
+                  { id: "all", label: "Semua Tugas" },
+                  { id: "pending", label: "⏳ Belum Selesai (Pending)" },
+                  { id: "completed", label: "✅ Sudah Selesai" },
+                ].map((filter) => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setTaskFilter(filter.id as any)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                      taskFilter === filter.id
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              {initialTasks.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
+                  <BookOpen className="h-10 w-10 text-slate-300 mx-auto" />
+                  <h4 className="font-bold text-sm text-slate-900">Belum Ada Penugasan di Database</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Klik tombol di bawah untuk membuat tugas diklat baru.
+                  </p>
+                  <button
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Buat Tugas Baru Sekarang</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Responsive Grid View */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedTasks.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex flex-col justify-between rounded-2xl bg-slate-50/80 p-4 border border-slate-200/90 gap-3 hover:bg-white hover:shadow-xs transition"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${
+                                t.status === "completed"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-amber-100 text-amber-800"
+                              }`}
+                            >
+                              {t.status === "completed" ? "Selesai" : "Pending"}
+                            </span>
+                            <span className="text-xs font-bold text-slate-500">Deadline: {t.due_date}</span>
+                          </div>
+                          <h5 className="font-black text-sm text-slate-900 leading-snug">{t.title}</h5>
+                          <p className="text-xs text-slate-500 font-medium">{t.subject_name}</p>
+                          {t.description && (
+                            <p className="text-xs text-slate-600 line-clamp-2">{t.description}</p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                          <button
+                            onClick={() => handleUpdateTaskStatus(t.id, t.status)}
+                            className="flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline cursor-pointer"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            <span>{t.status === "completed" ? "Ubah ke Pending" : "Tandai Selesai"}</span>
+                          </button>
+                          <div className="flex items-center gap-2.5">
+                            <button
+                              onClick={() => setEditingTask(t)}
+                              className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline cursor-pointer"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTask(t.id)}
+                              className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <PaginationControls
+                    currentPage={taskPage}
+                    totalPages={totalTaskPages}
+                    totalItems={filteredTasks.length}
+                    onPageChange={setTaskPage}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 6. ANNOUNCEMENTS TAB (GRID & 5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "announcements" && (
+            <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-black text-slate-900">Pengumuman Kelas</h3>
+                  <p className="text-xs text-slate-500">
+                    Pengumuman di portal beranda peserta (Menampilkan 5 pengumuman per halaman)
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsAnnouncementModalOpen(true)}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFE3EB] hover:bg-[#FBCFE8] p-4 text-xs font-black text-[#E11D48] border border-[#F9A8D4] transition cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer shadow-2xs self-start sm:self-auto"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Buat Pengumuman</span>
                 </button>
               </div>
-            </div>
 
-          </div>
-        )}
-
-        {/* Tab 2: Materials */}
-        {activeTab === "materials" && (
-          <div className="rounded-3xl bg-white border-2 border-slate-200 p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-[#18181B]">Pustaka Berkas Modul (Supabase Storage)</h3>
-                <p className="text-xs text-[#6B7C93]">Kelola materi live yang langsung tampil di halaman /materials</p>
-              </div>
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-4 py-2 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Upload Modul PDF</span>
-              </button>
-            </div>
-
-            {initialMaterials.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
-                <FileText className="h-10 w-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Modul di Database</h4>
-                <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Klik tombol di bawah untuk mengunggah berkas PDF materi pertama Anda.
-                </p>
-                <button
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2.5 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Upload Berkas PDF Sekarang</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {initialMaterials.map((m) => (
-                  <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
-                    <div className="space-y-1">
-                      <h5 className="font-bold text-sm text-[#18181B]">{m.title}</h5>
-                      <p className="text-xs text-[#6B7C93]">
-                        {m.subject_name} • Minggu {m.week_number} • {m.file_size ? `${(m.file_size / 1024 / 1024).toFixed(2)} MB` : "PDF"} • {m.file_name}
-                      </p>
-                      {m.description && (
-                        <p className="text-xs text-[#52647C] italic">{m.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      {m.file_url && (
-                        <a
-                          href={m.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs font-bold text-[#0D824B] hover:underline"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          <span>Unduh</span>
-                        </a>
-                      )}
-                      <button
-                        onClick={() => setEditingMaterial(m)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
+              {initialAnnouncements.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
+                  <Sparkles className="h-10 w-10 text-slate-300 mx-auto" />
+                  <h4 className="font-bold text-sm text-slate-900">Belum Ada Pengumuman di Database</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Klik tombol di bawah untuk membuat pengumuman kelas pertama Anda.
+                  </p>
+                  <button
+                    onClick={() => setIsAnnouncementModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-black text-white hover:bg-slate-800 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Buat Pengumuman Baru</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Responsive Grid View */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {paginatedAnnouncements.map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex flex-col justify-between rounded-2xl bg-slate-50/80 p-4 border border-slate-200/90 gap-3 hover:bg-white hover:shadow-xs transition"
                       >
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMaterial(m.id, m.file_name)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab 3: Schedules */}
-        {activeTab === "schedules" && (
-          <div className="rounded-3xl bg-white border-2 border-slate-200 p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-[#18181B]">Jadwal Perkuliahan (Supabase Database)</h3>
-                <p className="text-xs text-[#6B7C93]">Kelola jadwal per hari (Hari 1 s.d. 35) dan link media belajar</p>
-              </div>
-              <button
-                onClick={() => setIsScheduleModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-4 py-2 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Tambah Sesi Jadwal</span>
-              </button>
-            </div>
-
-            {initialSchedules.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
-                <Calendar className="h-10 w-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Sesi Jadwal di Database</h4>
-                <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Klik tombol di bawah untuk menambahkan sesi jadwal diklat baru.
-                </p>
-                <button
-                  onClick={() => setIsScheduleModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2.5 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Tambah Sesi Jadwal Baru</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {initialSchedules.map((s) => {
-                  const resolvedDayNum = getScheduleDayNumber(s)
-                  const displayDayTag = resolvedDayNum ? `Hari ${resolvedDayNum}` : s.day
-
-                  return (
-                    <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-[#18181B] px-2.5 py-0.5 text-[10px] font-black text-white">
-                            {displayDayTag}
-                          </span>
-                          <span className="text-xs font-semibold text-[#6B7C93]">{s.start_time} - {s.end_time} WIB</span>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            {a.is_urgent ? (
+                              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-black text-rose-700">
+                                Mendesak / Urgent
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[10px] font-black text-slate-700">
+                                Info Kelas
+                              </span>
+                            )}
+                            <span className="text-[11px] font-bold text-slate-500 truncate max-w-[120px]">
+                              {a.author}
+                            </span>
+                          </div>
+                          <h5 className="font-black text-sm text-slate-900 leading-snug">{a.title}</h5>
+                          <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">{a.content}</p>
                         </div>
-                        <h5 className="font-bold text-sm text-[#18181B]">{s.subject_name}</h5>
-                        <p className="text-xs text-[#6B7C93]">Pengampu: {s.lecturer} • Ruang: {s.room}</p>
-                      </div>
-                      <div className="flex items-center gap-3 self-end sm:self-auto">
-                        <button
-                          onClick={() => setEditingSchedule(s)}
-                          className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          <span>Edit Jadwal</span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSchedule(s.id)}
-                          className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span>Hapus</span>
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Tab 4: Tasks */}
-        {activeTab === "tasks" && (
-          <div className="rounded-3xl bg-white border-2 border-slate-200 p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-[#18181B]">Daftar Tugas & Uji Praktik</h3>
-                <p className="text-xs text-[#6B7C93]">Kelola batas waktu dan link pengumpulan LMS</p>
-              </div>
-              <button
-                onClick={() => setIsTaskModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-4 py-2 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Buat Tugas Baru</span>
-              </button>
-            </div>
-
-            {initialTasks.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
-                <BookOpen className="h-10 w-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Tugas di Database</h4>
-                <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Klik tombol di bawah untuk membuat penugasan mandiri pertama.
-                </p>
-                <button
-                  onClick={() => setIsTaskModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2.5 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Buat Tugas Baru Sekarang</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {initialTasks.map((t) => (
-                  <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${
-                          t.status === "completed" ? "bg-[#E6F7ED] text-[#0D824B]" : "bg-[#FFEADA] text-[#EA580C]"
-                        }`}>
-                          {t.status === "completed" ? "Selesai" : "Aktif"}
-                        </span>
-                        <span className="text-xs font-bold text-[#EA580C]">Tenggat: {new Date(t.due_date).toLocaleDateString("id-ID")}</span>
+                        <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200/60">
+                          <button
+                            onClick={() => setEditingAnnouncement(a)}
+                            className="flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline cursor-pointer"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAnnouncement(a.id)}
+                            className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
                       </div>
-                      <h5 className="font-bold text-sm text-[#18181B]">{t.title}</h5>
-                      <p className="text-xs text-[#6B7C93]">{t.subject_name}</p>
-                      {t.description && (
-                        <p className="text-xs text-[#52647C] line-clamp-2">{t.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      <button
-                        onClick={() => handleUpdateTaskStatus(t.id, t.status)}
-                        className="text-xs font-bold text-[#0D824B] hover:underline cursor-pointer"
-                      >
-                        {t.status === "completed" ? "Tandai Belum Selesai" : "Tandai Selesai"}
-                      </button>
-                      <button
-                        onClick={() => setEditingTask(t)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(t.id)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Tab 5: Announcements */}
-        {activeTab === "announcements" && (
-          <div className="rounded-3xl bg-white border-2 border-slate-200 p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black text-[#18181B]">Papan Pengumuman & Broadcast</h3>
-                <p className="text-xs text-[#6B7C93]">Kirim pengumuman live kepada seluruh peserta</p>
-              </div>
-              <button
-                onClick={() => setIsAnnouncementModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-4 py-2 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Buat Pengumuman</span>
-              </button>
+                  {/* Pagination Controls */}
+                  <PaginationControls
+                    currentPage={announcementPage}
+                    totalPages={totalAnnouncementPages}
+                    totalItems={initialAnnouncements.length}
+                    onPageChange={setAnnouncementPage}
+                  />
+                </div>
+              )}
             </div>
+          )}
+        </div>
+      </main>
 
-            {initialAnnouncements.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3">
-                <Sparkles className="h-10 w-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-sm text-[#18181B]">Belum Ada Pengumuman di Database</h4>
-                <p className="text-xs text-[#6B7C93] max-w-sm mx-auto">
-                  Klik tombol di bawah untuk membuat pengumuman atau broadcast kelas baru.
-                </p>
-                <button
-                  onClick={() => setIsAnnouncementModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2.5 text-xs font-black text-white hover:bg-[#27272A] transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Buat Pengumuman Sekarang</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {initialAnnouncements.map((a) => (
-                  <div key={a.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {a.is_urgent && (
-                          <span className="rounded-full bg-[#FFEAE9] px-2.5 py-0.5 text-[10px] font-black text-[#E11D48] border border-[#FFCDCA]">
-                            Mendesak / Urgent
-                          </span>
-                        )}
-                        <span className="text-xs font-semibold text-[#6B7C93]">Oleh: {a.author}</span>
-                      </div>
-                      <h5 className="font-bold text-sm text-[#18181B]">{a.title}</h5>
-                      <p className="text-xs text-[#52647C] line-clamp-2">{a.content}</p>
-                    </div>
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      <button
-                        onClick={() => setEditingAnnouncement(a)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#0369A1] hover:underline cursor-pointer"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAnnouncement(a.id)}
-                        className="flex items-center gap-1 text-xs font-bold text-[#E11D48] hover:underline cursor-pointer"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+      {/* ========================================================================= */}
+      {/* MODALS SECTION */}
+      {/* ========================================================================= */}
 
-      </div>
-
-      {/* ==========================================================
-          MODALS: TAMBAH (CREATE)
-         ========================================================== */}
-
-      {/* 1. Modal Upload Modul PDF */}
+      {/* 1. Modal: Upload Material PDF */}
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => {
-          if (!isLoading) {
-            setIsUploadModalOpen(false)
-            setSelectedFile(null)
-          }
+          setIsUploadModalOpen(false)
+          setSelectedFile(null)
         }}
-        title="Upload Modul PDF (Supabase Storage)"
+        title="Upload Modul Materi PDF (Supabase Storage)"
       >
         <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Judul Modul / Materi *</label>
-            <Input name="title" required placeholder="Contoh: Modul 01 — Tata Kelola TI & Arsitektur SPBE" className="text-xs" />
+            <label className="text-xs font-black text-slate-900">Pilih Berkas PDF * (Maks 50MB)</label>
+            <input
+              type="file"
+              name="file"
+              accept=".pdf,.zip,.rar"
+              required
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setSelectedFile(e.target.files[0])
+                }
+              }}
+              className="w-full text-xs font-medium text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-800 cursor-pointer"
+            />
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Judul Modul / Materi *</label>
+            <Input
+              name="title"
+              required
+              placeholder="Contoh: Modul 01 - Pengantar Basis Data Kejaksaan RI"
+              className="text-xs"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
-              <select name="subject_name" required className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]">
+              <label className="text-xs font-black text-slate-900">Tahapan Diklat *</label>
+              <select
+                name="subject_name"
+                required
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+              >
                 <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
                 <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
                 <option value="Tahap 3 • Lab Prakom">Tahap 3 • Lab Prakom</option>
@@ -936,311 +2112,373 @@ export function AdminDashboardClient({
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Minggu Pertemuan *</label>
-              <Input name="week_number" type="number" min="1" max="10" defaultValue="1" required className="text-xs" />
+              <label className="text-xs font-black text-slate-900">Minggu Pertemuan *</label>
+              <Input
+                name="week_number"
+                type="number"
+                min="1"
+                max="10"
+                defaultValue={1}
+                required
+                className="text-xs"
+              />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Deskripsi Singkat</label>
-            <Input name="description" placeholder="Penjelasan singkat modul dan panduan belajar..." className="text-xs" />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-black text-[#18181B]">Pilih Berkas PDF (Maks. 50MB) *</label>
-              {selectedFile && (
-                <span className={`text-[11px] font-bold ${selectedFile.size > 50 * 1024 * 1024 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                </span>
-              )}
-            </div>
-            <input
-              name="file"
-              type="file"
-              accept=".pdf,application/pdf"
-              required
-              disabled={isLoading}
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null
-                setSelectedFile(f)
-              }}
-              className="w-full text-xs text-slate-500 file:mr-3 file:rounded-xl file:border-0 file:bg-[#18181B] file:px-4 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-[#27272A] file:cursor-pointer disabled:opacity-50"
-            />
-            {selectedFile && selectedFile.size > 50 * 1024 * 1024 && (
-              <p className="text-[11px] font-bold text-rose-500">
-                Peringatan: Ukuran file ({(selectedFile.size / (1024 * 1024)).toFixed(1)} MB) melebihi batas maksimal 50MB.
-              </p>
-            )}
-            {selectedFile && selectedFile.size <= 50 * 1024 * 1024 && (
-              <p className="text-[11px] font-semibold text-[#0D824B]">
-                ✓ Berkas PDF siap diunggah ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
-              </p>
-            )}
           </div>
 
-          {isLoading && (
-            <div className="rounded-2xl bg-amber-50 border border-amber-200/80 p-3.5 space-y-2.5">
-              <div className="flex items-center gap-2.5 text-xs font-bold text-amber-900">
-                <Loader2 className="h-4 w-4 animate-spin text-amber-600 shrink-0" />
-                <span>{uploadProgressStatus || "Sedang mengunggah berkas PDF..."}</span>
-              </div>
-              <div className="w-full bg-amber-200/70 rounded-full h-2 overflow-hidden">
-                <div className="bg-amber-600 h-2 rounded-full animate-pulse w-full" />
-              </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Deskripsi Singkat (Opsional)</label>
+            <Input
+              name="description"
+              placeholder="Penjelasan singkat modul dan panduan belajar..."
+              className="text-xs"
+            />
+          </div>
+
+          {uploadProgressStatus && (
+            <div className="flex items-center gap-2 rounded-xl bg-blue-50 p-3 text-xs font-bold text-blue-700 border border-blue-200">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              <span>{uploadProgressStatus}</span>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={() => {
-                setIsUploadModalOpen(false)
-                setSelectedFile(null)
-              }}
-              disabled={isLoading}
-              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 disabled:opacity-50 cursor-pointer"
+              onClick={() => setIsUploadModalOpen(false)}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              disabled={isLoading || (selectedFile !== null && selectedFile.size > 50 * 1024 * 1024)}
-              className="flex items-center gap-1.5 rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+              disabled={isLoading}
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
             >
-              {isLoading ? "Mengunggah..." : "Simpan ke Supabase"}
+              {isLoading ? "Mengunggah..." : "Upload Sekarang"}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* 2. Modal Tambah Jadwal */}
-      <Modal isOpen={isScheduleModalOpen} onClose={() => setIsScheduleModalOpen(false)} title="Tambah Sesi Jadwal Diklat">
-        <form onSubmit={handleScheduleSubmit} className="space-y-4 pt-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Mata Kuliah / Topik Sesi *</label>
-            <Input name="subject_name" required placeholder="Contoh: Arsitektur Sistem Informasi & SPBE" className="text-xs" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1.5 col-span-3 sm:col-span-1">
-              <label className="text-xs font-black text-[#18181B]">Pilih Hari Diklat (1 - 35) *</label>
-              <select name="day_selection" required className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-2 text-xs font-medium text-[#18181B]">
-                {Array.from({ length: 35 }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={`Hari ${d}`}>
-                    Hari {d}
-                  </option>
-                ))}
+      {/* 2. Modal: Create Schedule */}
+      <Modal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        title="Tambah Sesi Jadwal Perkuliahan 35 Hari"
+      >
+        <form onSubmit={handleCreateScheduleSubmit} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Pilih Hari / Sesi *</label>
+              <select
+                name="day"
+                required
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+              >
+                {Array.from({ length: 35 }).map((_, i) => {
+                  const dayNum = i + 1
+                  const dayNames = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
+                  const assignedDayName = dayNames[(dayNum - 1) % 5]
+                  return (
+                    <option key={dayNum} value={`Hari ${dayNum} | ${assignedDayName}`}>
+                      Hari {dayNum} ({assignedDayName})
+                    </option>
+                  )
+                })}
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Mulai *</label>
-              <Input name="start_time" type="time" defaultValue="08:00" required className="text-xs" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Selesai *</label>
-              <Input name="end_time" type="time" defaultValue="15:30" required className="text-xs" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Dosen / Pengampu *</label>
-              <Input name="lecturer" required placeholder="Nama Pemateri" className="text-xs" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Ruang / Media *</label>
-              <Input name="room" required defaultValue="Ruang Diklat LMS" className="text-xs" />
+              <label className="text-xs font-black text-slate-900">Ruangan / Platform *</label>
+              <Input
+                name="room"
+                required
+                defaultValue="Zoom Diklat & LMS Badiklat"
+                className="text-xs"
+              />
             </div>
           </div>
+
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Link Pertemuan (LMS Ruang Diklat / Zoom)</label>
+            <label className="text-xs font-black text-slate-900">Nama Mata Pelatihan / Topik *</label>
             <Input
-              name="meeting_link"
-              defaultValue="https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat"
+              name="subject_name"
+              required
+              placeholder="Contoh: Arsitektur Cloud & Keamanan Siber Kejaksaan"
               className="text-xs"
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsScheduleModalOpen(false)} className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B]">Batal</button>
-            <button type="submit" disabled={isLoading} className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50">
-              {isLoading ? "Menyimpan..." : "Simpan Jadwal"}
-            </button>
-          </div>
-        </form>
-      </Modal>
 
-      {/* 3. Modal Tambah Tugas */}
-      <Modal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} title="Buat Penugasan Baru">
-        <form onSubmit={handleTaskSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Judul Tugas *</label>
-            <Input name="title" required placeholder="Contoh: Tugas Mandiri Tata Kelola TI SPBE" className="text-xs" />
+            <label className="text-xs font-black text-slate-900">Nama Dosen / Widyaiswara *</label>
+            <Input
+              name="lecturer"
+              required
+              placeholder="Contoh: Dr. Ir. Widyaiswara Utama, M.Kom"
+              className="text-xs"
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
-              <select name="subject_name" required className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]">
-                <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
-                <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
-                <option value="Tahap 3 • Lab Prakom">Tahap 3 • Lab Prakom</option>
-                <option value="Tahap 4 • Seminar">Tahap 4 • Seminar</option>
-              </select>
+              <label className="text-xs font-black text-slate-900">Jam Mulai (WIB) *</label>
+              <Input name="start_time" type="time" defaultValue="08:00" required className="text-xs" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Tenggat Waktu *</label>
-              <Input name="due_date" type="datetime-local" required className="text-xs" />
+              <label className="text-xs font-black text-slate-900">Jam Selesai (WIB) *</label>
+              <Input name="end_time" type="time" defaultValue="11:30" required className="text-xs" />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Link Pengumpulan (Portal LMS Kejaksaan)</label>
-            <Input name="submission_link" defaultValue="https://pengembangan.kejaksaan.go.id/dashboard" className="text-xs" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Deskripsi Tugas</label>
-            <Input name="description" placeholder="Instruksi dan format penulisan laporan tugas..." className="text-xs" />
-          </div>
+
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsTaskModalOpen(false)} className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B]">Batal</button>
-            <button type="submit" disabled={isLoading} className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50">
-              {isLoading ? "Menyimpan..." : "Simpan Tugas"}
+            <button
+              type="button"
+              onClick={() => setIsScheduleModalOpen(false)}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? "Menyimpan..." : "Simpan Sesi Jadwal"}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* 4. Modal Buat Pengumuman */}
-      <Modal isOpen={isAnnouncementModalOpen} onClose={() => setIsAnnouncementModalOpen(false)} title="Buat Pengumuman Kelas">
-        <form onSubmit={handleAnnouncementSubmit} className="space-y-4 pt-2">
+      {/* 3. Modal: Create Task */}
+      <Modal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        title="Buat Tugas Mandiri & Uji Praktek"
+      >
+        <form onSubmit={handleCreateTaskSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Judul Pengumuman *</label>
-            <Input name="title" required placeholder="Contoh: Perubahan Jadwal Sesi Zoom Hari Ini" className="text-xs" />
+            <label className="text-xs font-black text-slate-900">Judul Penugasan *</label>
+            <Input
+              name="title"
+              required
+              placeholder="Contoh: Tugas Mandiri 03 - Konfigurasi Server Linux & Docker"
+              className="text-xs"
+            />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+              <Input
+                name="subject_name"
+                required
+                placeholder="Contoh: Infrastruktur Jaringan & Server"
+                className="text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Batas Pengumpulan (Deadline) *</label>
+              <Input
+                name="due_date"
+                type="date"
+                required
+                className="text-xs"
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Nama Pengirim / Pembuat</label>
-            <Input name="author" defaultValue="Pengurus Diklat" className="text-xs" />
+            <label className="text-xs font-black text-slate-900">Instruksi / Deskripsi Tugas</label>
+            <textarea
+              name="description"
+              rows={3}
+              placeholder="Jelaskan format pengumpulan, tautan Google Drive / LMS, dan petunjuk praktis..."
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none"
+            />
           </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsTaskModalOpen(false)}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? "Menyimpan..." : "Publikasikan Tugas"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 4. Modal: Create Announcement */}
+      <Modal
+        isOpen={isAnnouncementModalOpen}
+        onClose={() => setIsAnnouncementModalOpen(false)}
+        title="Buat Pengumuman Kelas"
+      >
+        <form onSubmit={handleCreateAnnouncementSubmit} className="space-y-4 pt-2">
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-[#18181B]">Isi Pengumuman *</label>
-            <textarea name="content" rows={4} required placeholder="Tuliskan isi pengumuman atau instruksi penting di sini..." className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none" />
+            <label className="text-xs font-black text-slate-900">Judul Pengumuman *</label>
+            <Input
+              name="title"
+              required
+              placeholder="Contoh: [PENTING] Jadwal Gladi Bersih Ujian MOOC 120 JP"
+              className="text-xs"
+            />
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Nama Pembuat / Pengirim</label>
+            <Input
+              name="author"
+              defaultValue="Pengurus Diklat Prakom Batch 3"
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Isi Pesan Pengumuman *</label>
+            <textarea
+              name="content"
+              rows={4}
+              required
+              placeholder="Tuliskan detail pengumuman untuk seluruh rekan peserta diklat..."
+              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none"
+            />
+          </div>
+
           <div className="flex items-center gap-2">
-            <input type="checkbox" id="is_urgent" name="is_urgent" className="h-4 w-4 rounded border-slate-300 text-[#E11D48] focus:ring-0" />
-            <label htmlFor="is_urgent" className="text-xs font-bold text-[#E11D48]">
+            <input
+              type="checkbox"
+              id="is_urgent"
+              name="is_urgent"
+              className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0"
+            />
+            <label htmlFor="is_urgent" className="text-xs font-bold text-rose-600">
               Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
             </label>
           </div>
+
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setIsAnnouncementModalOpen(false)} className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B]">Batal</button>
-            <button type="submit" disabled={isLoading} className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50">
-              {isLoading ? "Mempublikasikan..." : "Publikasikan Pengumuman"}
+            <button
+              type="button"
+              onClick={() => setIsAnnouncementModalOpen(false)}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+            >
+              {isLoading ? "Mempublikasikan..." : "Kirim Pengumuman"}
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* ==========================================================
-          MODALS: EDIT (UPDATE)
-         ========================================================== */}
-
-      {/* Edit Modal: Schedules */}
+      {/* Edit Modal: Schedule */}
       {editingSchedule && (
         <Modal
           isOpen={Boolean(editingSchedule)}
           onClose={() => setEditingSchedule(null)}
-          title="Edit Sesi Jadwal Diklat"
+          title="Edit Sesi Jadwal Perkuliahan"
         >
           <form onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
             <input type="hidden" name="id" value={editingSchedule.id} />
-            
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Mata Kuliah / Topik Sesi *</label>
-              <Input
-                name="subject_name"
-                required
-                defaultValue={editingSchedule.subject_name.replace(/\[\s*hari\s*\d+\s*\]\s*/gi, '').trim()}
-                placeholder="Contoh: Manajemen Layanan TI & SPBE"
-                className="text-xs"
-              />
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1.5 col-span-3 sm:col-span-1">
-                <label className="text-xs font-black text-[#18181B]">Pilih Hari Diklat (1 - 35) *</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-900">Hari / Sesi *</label>
                 <select
-                  name="day_selection"
+                  name="day"
                   required
-                  defaultValue={`Hari ${getScheduleDayNumber(editingSchedule) || 1}`}
-                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-2 text-xs font-medium text-[#18181B]"
+                  defaultValue={editingSchedule.day}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
                 >
-                  {Array.from({ length: 35 }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={`Hari ${d}`}>
-                      Hari {d}
-                    </option>
-                  ))}
+                  {Array.from({ length: 35 }).map((_, i) => {
+                    const dayNum = i + 1
+                    const dayNames = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
+                    const assignedDayName = dayNames[(dayNum - 1) % 5]
+                    return (
+                      <option key={dayNum} value={`Hari ${dayNum} | ${assignedDayName}`}>
+                        Hari {dayNum} ({assignedDayName})
+                      </option>
+                    )
+                  })}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Mulai *</label>
+                <label className="text-xs font-black text-slate-900">Ruangan / Platform *</label>
                 <Input
-                  name="start_time"
-                  type="time"
-                  defaultValue={editingSchedule.start_time || "08:00"}
+                  name="room"
                   required
+                  defaultValue={editingSchedule.room}
                   className="text-xs"
                 />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Selesai *</label>
-                <Input
-                  name="end_time"
-                  type="time"
-                  defaultValue={editingSchedule.end_time || "15:30"}
-                  required
-                  className="text-xs"
-                />
-              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+              <Input
+                name="subject_name"
+                required
+                defaultValue={editingSchedule.subject_name}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Pengampu / Widyaiswara *</label>
+              <Input
+                name="lecturer"
+                required
+                defaultValue={editingSchedule.lecturer}
+                className="text-xs"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Dosen / Pengampu *</label>
+                <label className="text-xs font-black text-slate-900">Jam Mulai (WIB) *</label>
                 <Input
-                  name="lecturer"
+                  name="start_time"
+                  type="time"
+                  defaultValue={editingSchedule.start_time}
                   required
-                  defaultValue={editingSchedule.lecturer || ""}
-                  placeholder="Nama Pemateri"
                   className="text-xs"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Ruang / Media *</label>
+                <label className="text-xs font-black text-slate-900">Jam Selesai (WIB) *</label>
                 <Input
-                  name="room"
+                  name="end_time"
+                  type="time"
+                  defaultValue={editingSchedule.end_time}
                   required
-                  defaultValue={editingSchedule.room || "Ruang Diklat LMS"}
                   className="text-xs"
                 />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Link Pertemuan (LMS Ruang Diklat / Zoom)</label>
-              <Input
-                name="meeting_link"
-                defaultValue={editingSchedule.meeting_link || "https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat"}
-                className="text-xs"
-              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setEditingSchedule(null)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
               </button>
@@ -1254,78 +2492,49 @@ export function AdminDashboardClient({
         <Modal
           isOpen={Boolean(editingTask)}
           onClose={() => setEditingTask(null)}
-          title="Edit Data Tugas & Uji Praktik"
+          title="Edit Data Penugasan"
         >
           <form onSubmit={handleUpdateTaskSubmit} className="space-y-4 pt-2">
             <input type="hidden" name="id" value={editingTask.id} />
-            
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Judul Tugas *</label>
+              <label className="text-xs font-black text-slate-900">Judul Penugasan *</label>
               <Input
                 name="title"
                 required
                 defaultValue={editingTask.title}
-                placeholder="Contoh: Rangkuman Hari 3 — Tata Kelola TI"
                 className="text-xs"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
-                <select
+                <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+                <Input
                   name="subject_name"
                   required
-                  defaultValue={editingTask.subject_name || "Tahap 1 • MOOC"}
-                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
-                >
-                  <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
-                  <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
-                  <option value="Tahap 3 • Lab Prakom">Tahap 3 • Lab Prakom</option>
-                  <option value="Tahap 4 • Seminar">Tahap 4 • Seminar</option>
-                </select>
+                  defaultValue={editingTask.subject_name}
+                  className="text-xs"
+                />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Tenggat Waktu (Deadline) *</label>
+                <label className="text-xs font-black text-slate-900">Batas Pengumpulan (Deadline) *</label>
                 <Input
                   name="due_date"
-                  type="datetime-local"
+                  type="date"
                   required
-                  defaultValue={editingTask.due_date ? new Date(editingTask.due_date).toISOString().slice(0, 16) : ""}
+                  defaultValue={editingTask.due_date}
                   className="text-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Status Pengerjaan</label>
-              <select
-                name="status"
-                defaultValue={editingTask.status || "todo"}
-                className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
-              >
-                <option value="todo">Belum Selesai (Aktif)</option>
-                <option value="completed">Selesai</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Link Pengumpulan (Portal LMS Kejaksaan)</label>
-              <Input
-                name="submission_link"
-                defaultValue={editingTask.submission_link || "https://pengembangan.kejaksaan.go.id/dashboard"}
-                className="text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Deskripsi & Instruksi Tugas</label>
+              <label className="text-xs font-black text-slate-900">Instruksi Tugas</label>
               <textarea
                 name="description"
                 rows={3}
                 defaultValue={editingTask.description || ""}
-                placeholder="Instruksi dan format penulisan laporan tugas..."
-                className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none"
               />
             </div>
 
@@ -1333,14 +2542,14 @@ export function AdminDashboardClient({
               <button
                 type="button"
                 onClick={() => setEditingTask(null)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
               </button>
@@ -1360,7 +2569,7 @@ export function AdminDashboardClient({
             <input type="hidden" name="id" value={editingMaterial.id} />
             
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Judul Modul / Materi *</label>
+              <label className="text-xs font-black text-slate-900">Judul Modul / Materi *</label>
               <Input
                 name="title"
                 required
@@ -1371,12 +2580,12 @@ export function AdminDashboardClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Tahapan Diklat *</label>
+                <label className="text-xs font-black text-slate-900">Tahapan Diklat *</label>
                 <select
                   name="subject_name"
                   required
                   defaultValue={editingMaterial.subject_name}
-                  className="h-10 w-full rounded-xl border-2 border-slate-200 bg-white px-3 text-xs font-medium text-[#18181B]"
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
                 >
                   <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
                   <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
@@ -1385,7 +2594,7 @@ export function AdminDashboardClient({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-[#18181B]">Minggu Pertemuan *</label>
+                <label className="text-xs font-black text-slate-900">Minggu Pertemuan *</label>
                 <Input
                   name="week_number"
                   type="number"
@@ -1399,7 +2608,7 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Deskripsi Singkat</label>
+              <label className="text-xs font-black text-slate-900">Deskripsi Singkat</label>
               <Input
                 name="description"
                 defaultValue={editingMaterial.description || ""}
@@ -1412,14 +2621,14 @@ export function AdminDashboardClient({
               <button
                 type="button"
                 onClick={() => setEditingMaterial(null)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
               </button>
@@ -1439,7 +2648,7 @@ export function AdminDashboardClient({
             <input type="hidden" name="id" value={editingAnnouncement.id} />
             
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Judul Pengumuman *</label>
+              <label className="text-xs font-black text-slate-900">Judul Pengumuman *</label>
               <Input
                 name="title"
                 required
@@ -1449,7 +2658,7 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Nama Pengirim / Pembuat</label>
+              <label className="text-xs font-black text-slate-900">Nama Pengirim / Pembuat</label>
               <Input
                 name="author"
                 defaultValue={editingAnnouncement.author || "Pengurus Diklat"}
@@ -1458,13 +2667,13 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-[#18181B]">Isi Pengumuman *</label>
+              <label className="text-xs font-black text-slate-900">Isi Pengumuman *</label>
               <textarea
                 name="content"
                 rows={4}
                 required
                 defaultValue={editingAnnouncement.content}
-                className="w-full rounded-xl border-2 border-slate-200 bg-white p-3 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none"
               />
             </div>
 
@@ -1474,9 +2683,9 @@ export function AdminDashboardClient({
                 id="is_urgent_edit"
                 name="is_urgent"
                 defaultChecked={editingAnnouncement.is_urgent}
-                className="h-4 w-4 rounded border-slate-300 text-[#E11D48] focus:ring-0"
+                className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0"
               />
-              <label htmlFor="is_urgent_edit" className="text-xs font-bold text-[#E11D48]">
+              <label htmlFor="is_urgent_edit" className="text-xs font-bold text-rose-600">
                 Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
               </label>
             </div>
@@ -1485,14 +2694,14 @@ export function AdminDashboardClient({
               <button
                 type="button"
                 onClick={() => setEditingAnnouncement(null)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-full bg-[#18181B] px-5 py-2 text-xs font-black text-white hover:bg-[#27272A] disabled:opacity-50 cursor-pointer"
+                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
               </button>
@@ -1501,9 +2710,8 @@ export function AdminDashboardClient({
         </Modal>
       )}
 
-      {/* 5. Modal Broadcast WhatsApp */}
+      {/* Modal Broadcast WhatsApp */}
       <WhatsAppShareModal isOpen={isWAModalOpen} onClose={() => setIsWAModalOpen(false)} />
-
     </div>
   )
 }

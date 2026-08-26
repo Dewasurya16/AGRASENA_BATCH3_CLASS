@@ -500,3 +500,30 @@ export async function deleteAnnouncement(id: string) {
   revalidatePath('/admin/dashboard')
   return { success: 'Pengumuman berhasil dihapus.' }
 }
+
+// 6. VISITOR ANALYTICS ACTIONS
+export async function deleteVisitorLog(id: string) {
+  if (!isSupabaseConfigured()) {
+    return { error: 'Konfigurasi database belum tersedia.' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('visitor_logs').delete().eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/dashboard')
+  return { success: 'Log kunjungan berhasil dihapus.' }
+}
+
+export async function clearAllVisitorLogs() {
+  if (!isSupabaseConfigured()) {
+    return { error: 'Konfigurasi database belum tersedia.' }
+  }
+
+  const supabase = await createClient()
+  // Delete all rows where id is not null (effectively truncating rows allowed by RLS)
+  const { error } = await supabase.from('visitor_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+  if (error) return { error: error.message }
+  revalidatePath('/admin/dashboard')
+  return { success: 'Semua log riwayat pengunjung berhasil dibersihkan.' }
+}
+

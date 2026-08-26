@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
+import { Analytics } from '@vercel/analytics/next'
+import { VisitorTracker } from '@/components/public/visitor-tracker'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -28,8 +30,11 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             {children}
           </div>
+          <VisitorTracker />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
   )
 }
+
