@@ -139,10 +139,27 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
       return NextResponse.json(
         {
           error: "NO_GROQ_KEY",
-          message: "Groq API Key belum dikonfigurasi di server (.env.local).",
+          message: "Groq API Key belum dikonfigurasi di server environment.",
         },
         { status: 400 }
       )
+    }
+
+    // Sanitize incoming messages
+    const cleanMessages = Array.isArray(messages)
+      ? messages
+          .filter((m: any) => m && typeof m.content === "string" && m.content.trim())
+          .map((m: any) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: String(m.content).trim(),
+          }))
+      : []
+
+    if (cleanMessages.length === 0) {
+      return NextResponse.json({
+        reply: `Halo Pak/Ibu **${userName || "Rekan Prakom"}**! Ada yang bisa saya bantu terkait jadwal, materi modul 120 JP, atau kendala kodingan hari ini?`,
+        todayDay: currentDayNumber,
+      })
     }
 
     // 5. Call Groq API with Multi-Model Fallback
@@ -165,7 +182,7 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
             model,
             messages: [
               { role: "system", content: systemPrompt },
-              ...messages.slice(-8),
+              ...cleanMessages.slice(-8),
             ],
             temperature: 0.5,
             max_tokens: 2000,
@@ -183,19 +200,23 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
               todayStage: todayDetail.stageName,
             })
           }
+        } else {
+          const errBody = await groqResponse.text()
+          console.warn(`[AI Chat] Model ${model} returned ${groqResponse.status}:`, errBody)
         }
       } catch (apiErr) {
-        console.warn(`[AI Chat] Model ${model} failed:`, apiErr)
+        console.warn(`[AI Chat] Model ${model} fetch failed:`, apiErr)
       }
     }
 
     return NextResponse.json({
-      reply: "Halo Rekan Prakom! Maaf, server AI sedang mengalami beban tinggi. Silakan ulangi pertanyaan Anda dalam beberapa saat.",
+      reply: "Halo Rekan Prakom! Server AI sedang memproses permintaan dengan antrean tinggi. Silakan kirimkan kembali pertanyaan Anda.",
       model: "system-fallback",
       todayDay: currentDayNumber,
       todayStage: todayDetail.stageName,
     })
   } catch (err: any) {
+    console.error("[AI Chat Exception]:", err)
     return NextResponse.json(
       {
         error: "INTERNAL_ERROR",

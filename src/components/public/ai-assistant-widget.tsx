@@ -384,58 +384,35 @@ Silakan tanyakan materi harian, kendala kodingan, atau hal apapun yang ingin And
     ])
   }
 
-  // Fallback in-browser knowledge if connection is offline
+  // Intelligent local knowledge base fallback in case of network latency
   const generateOfflineResponse = (userText: string): { response: string; code?: string } => {
-    const q = userText.toLowerCase()
+    const q = userText.toLowerCase().trim()
     const todayObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNum) || RAW_DAYS_DATA[2]
     const tomorrowObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNum + 1) || RAW_DAYS_DATA[3]
 
-    // Check if user specifically asks about a particular day e.g. "hari 5" or "hari ke-5"
-    const matchDay = q.match(/hari\s*(?:ke[-\s]*)?(\d+)/i)
-    if (matchDay) {
-      const targetDay = parseInt(matchDay[1], 10)
-      const targetObj = RAW_DAYS_DATA.find((d) => d.day === targetDay)
-      if (targetObj) {
-        return {
-          response: `📅 **JADWAL HARI KE-${targetObj.day} (${targetObj.dayOfWeek}, ${targetObj.date})**
-━━━━━━━━━━━━━━━━━━━━
-• **Tahapan Diklat:** ${targetObj.stageName} (${targetObj.stageSubtitle})
-• **Jam Belajar:** 08:00 - 15:30 WIB
-• **Aktivitas:** Mengikuti materi & modul kurikulum 120 JP sesuai agenda kelas. Silakan periksa daftar sesi di tab Jadwal Roadmap.`
-        }
+    // 1. Python & Coding questions
+    if (q.includes('python') || q.includes('print')) {
+      return {
+        response: `Berikut adalah sintaks resmi fungsi \`print()\` pada bahasa pemrograman Python:`,
+        code: `# 1. Mencetak teks sederhana
+print("Halo, Rekan Pranata Komputer Batch 3 Kejaksaan RI!")
+
+# 2. Mencetak variabel dengan f-string (Python 3.6+)
+nama = "${userName || 'Dewa Sinar Surya'}"
+satker = "${userSatker || 'Kejaksaan Agung'}"
+print(f"Peserta: {nama} | Satuan Kerja: {satker}")
+
+# 3. Mencetak dengan pemisah kustom (separator)
+print("SPBE", "Tata Kelola TIK", "DUPAK BPS", sep=" • ")`
       }
     }
 
-    if (q.includes('jadwal') || q.includes('hari ini') || q.includes('besok')) {
+    // 2. SQL & Database
+    if (q.includes('sql') || q.includes('query') || q.includes('database') || q.includes('tabel') || q.includes('select')) {
       return {
-        response: `📅 **JADWAL REAL-TIME DIKLAT PRAKOM BATCH 3**
-━━━━━━━━━━━━━━━━━━━━
-• **Hari Ini (Hari ${currentDayNum} - ${todayObj.date}):** ${todayObj.stageName} (${todayObj.stageSubtitle})
-  Jam: 08:00 - 15:30 WIB • Kurikulum 120 JP
-• **Besok (Hari ${currentDayNum + 1} - ${tomorrowObj.date}):** ${tomorrowObj.stageName} (${tomorrowObj.stageSubtitle})
-  Sesi akan berlanjut besok pagi pukul 08:00 WIB.`
-      }
-    }
-
-    if (q.includes('angka kredit') || q.includes('ak') || q.includes('dupak') || q.includes('pak')) {
-      return {
-        response: `📈 **PANDUAN ANGKA KREDIT PRAKOM (PermenPAN-RB No. 32/2020)**
-━━━━━━━━━━━━━━━━━━━━
-• **Target Minimal Ahli Pertama**: 12.5 AK/tahun (Predikat Baik).
-• **Target Minimal Ahli Muda**: 25.0 AK/tahun.
-
-**Bukti Fisik yang Sah**:
-1. Surat Perintah Tugas (SPT) dari pimpinan satker.
-2. Laporan pelaksanaan kegiatan teknis (spesifikasi, skrip query, manual book).
-3. Pengesahan tanda tangan atasan langsung.`
-      }
-    }
-
-    if (q.includes('sql') || q.includes('query') || q.includes('database')) {
-      return {
-        response: `🗄️ **KODE QUERY SQL DATABASE (PostgreSQL)**
-Berikut contoh query agregasi performa data kepegawaian:`,
-        code: `SELECT 
+        response: `Berikut adalah contoh query SQL (PostgreSQL) untuk agregasi data kepegawaian Prakom Kejaksaan RI:`,
+        code: `-- Query Agregasi Angka Kredit Pranata Komputer
+SELECT 
     satker, 
     jenjang, 
     COUNT(*) AS total_peserta, 
@@ -446,10 +423,80 @@ ORDER BY rata_rata_ak DESC;`
       }
     }
 
-    return {
-      response: `Baik Pak/Ibu **${userName || 'Rekan'}**, pertanyaan Anda mengenai **"${userText}"** telah dicatat.
+    // 3. Specific Day Schedule e.g. "hari 5", "hari ke-5", "jadwal hari 8"
+    const matchDay = q.match(/hari\s*(?:ke[-\s]*)?(\d+)/i)
+    if (matchDay) {
+      const targetDay = parseInt(matchDay[1], 10)
+      const targetObj = RAW_DAYS_DATA.find((d) => d.day === targetDay)
+      if (targetObj) {
+        return {
+          response: `📅 **JADWAL HARI KE-${targetObj.day} (${targetObj.dayOfWeek}, ${targetObj.date})**
+━━━━━━━━━━━━━━━━━━━━
+• **Tahapan Diklat:** ${targetObj.stageName} (${targetObj.stageSubtitle})
+• **Waktu Belajar:** 08:00 - 15:30 WIB (Senin s.d. Jumat)
+• **Materi/Agenda:** Mengikuti kurikulum 120 JP di platform LMS Badiklat Kejaksaan RI.
 
-Silakan akses materi lengkap di menu **[Materi PDF](/materials)** atau uji kemampuan di **[Kuis MOOC](/quiz)**.`
+Silakan periksa daftar sesi terperinci beserta dosen pengampu pada menu **[Jadwal Roadmap](/schedules)**.`
+        }
+      }
+    }
+
+    // 4. Today / Tomorrow / General Schedule
+    if (q.includes('jadwal') || q.includes('hari ini') || q.includes('besok') || q.includes('pelajaran')) {
+      return {
+        response: `📅 **JADWAL REAL-TIME DIKLAT PRAKOM BATCH 3**
+━━━━━━━━━━━━━━━━━━━━
+• **Hari Ini (Hari ${currentDayNum} - ${todayObj.date}):** ${todayObj.stageName} (${todayObj.stageSubtitle})
+  Jam: 08:00 - 15:30 WIB • Kurikulum 120 JP
+• **Besok (Hari ${currentDayNum + 1} - ${tomorrowObj.date}):** ${tomorrowObj.stageName} (${tomorrowObj.stageSubtitle})
+  Sesi akan berlanjut besok pagi pukul 08:00 WIB.
+
+Untuk rincian seluruh 35 hari, silakan buka menu **[Jadwal](/schedules)**.`
+      }
+    }
+
+    // 5. Angka Kredit & DUPAK BPS
+    if (q.includes('angka kredit') || q.includes('ak') || q.includes('dupak') || q.includes('pak') || q.includes('skp')) {
+      return {
+        response: `📈 **PANDUAN ANGKA KREDIT PRAKOM (PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021)**
+━━━━━━━━━━━━━━━━━━━━
+• **Ahli Pertama**: Minimal **12.5 AK / tahun** (Predikat SKP Baik).
+• **Ahli Muda**: Minimal **25.0 AK / tahun**.
+• **Ahli Madya**: Minimal **37.5 AK / tahun**.
+
+**Syarat Bukti Fisik Sah (Juknis BPS)**:
+1. Surat Perintah Tugas (SPT) resmi yang ditandatangani pimpinan satker (Kajati/Kajari/Asintel/Aspidum/dll).
+2. Laporan pelaksanaan tugas teknis (dokumentasi sistem, tangkapan layar, logbook).
+3. Surat Pernyataan Melakukan Kegiatan (SPMK).`
+      }
+    }
+
+    // 6. SPBE & Regulasi
+    if (q.includes('spbe') || q.includes('perpres') || q.includes('domain')) {
+      return {
+        response: `🏛️ **SISTEM PEMERINTAHAN BERBASIS ELEKTRONIK (SPBE)**
+━━━━━━━━━━━━━━━━━━━━
+Berdasarkan **Perpres No. 95 Tahun 2018** & **Perpres No. 132 Tahun 2022**, SPBE terdiri atas **6 Domain**:
+1. **Domain Kebijakan SPBE** (Peraturan internal, pedoman, standar tata kelola TIK).
+2. **Domain Tata Kelola SPBE** (Kelembagaan, arsitektur proses bisnis, koordinasi antar unit).
+3. **Domain Manajemen SPBE** (Manajemen risiko, aset TIK, keamanan informasi, data/SDM).
+4. **Domain Layanan SPBE** (Layanan administrasi pemerintahan & layanan publik terpadu).
+5. **Domain Infrastruktur SPBE** (Pusat Data Nasional/Lokal, Jaringan Intra Pemerintah, Sistem Penghubung Layanan).
+6. **Domain Aplikasi SPBE** (Aplikasi umum berbagi pakai dan aplikasi khusus perkara).`
+      }
+    }
+
+    // 7. General Assistant Response
+    return {
+      response: `Halo Pak/Ibu **${userName || 'Rekan Prakom'}**! ✨
+
+Terkait pertanyaan Anda: **"${userText}"**, silakan tanyakan lebih spesifik mengenai:
+• 📅 **Jadwal Diklat** (misal: *"Jadwal hari ke-5"* atau *"Jadwal besok"*)
+• 💻 **Kodingan & Database** (misal: Python, SQL, Docker, Bash, Git)
+• 📈 **Angka Kredit & DUPAK BPS** (PermenPAN-RB No. 32/2020)
+• 🏛️ **Regulasi SPBE & Keamanan Siber**
+
+Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
     }
   }
 
@@ -472,24 +519,27 @@ Silakan akses materi lengkap di menu **[Materi PDF](/materials)** atau uji kemam
 
     // Call /api/ai/chat with server-side Groq Key and Context
     try {
-      const formattedHistory = nextHistory.map((m) => ({
-        role: m.sender === 'user' ? 'user' : 'assistant',
-        content: m.text
-      }))
+      const formattedHistory = nextHistory
+        .filter((m) => m.text && !m.id.includes('msg-welcome') && !m.id.includes('msg-ask-name'))
+        .map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text
+        }))
 
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: formattedHistory,
+          messages: formattedHistory.length > 0 ? formattedHistory : [{ role: 'user', content: query }],
           userName: userName || 'Rekan Prakom',
           userSatker: userSatker || 'Kejaksaan RI',
           currentDayNumber: currentDayNum,
         }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
+      const data = await res.json().catch(() => null)
+
+      if (res.ok && data?.reply) {
         setMessages((prev) => [
           ...prev,
           {
