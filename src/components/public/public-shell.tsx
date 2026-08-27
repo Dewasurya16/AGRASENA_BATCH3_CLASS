@@ -62,6 +62,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               Modul 120 JP
             </Link>
             <span>•</span>
+            <Link href="/cheatsheets" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition font-bold text-[#0D824B] dark:text-emerald-400">
+              Cheat Sheet
+            </Link>
+            <span>•</span>
             <Link href="/faq" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition font-bold text-[#FF7643] dark:text-amber-400">
               Bantuan & FAQ
             </Link>

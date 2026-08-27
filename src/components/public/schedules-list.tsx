@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
 import { getAutoRoadmapData, RoadmapDayDetail } from "@/lib/roadmap-utils"
+import { generateGoogleCalendarUrl, downloadIcsFile } from "@/lib/calendar-utils"
 
 export interface ScheduleItem {
   id: string
@@ -342,11 +343,46 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 self-start sm:self-center">
+                    <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                      {/* 1-Click Google Calendar */}
+                      <a
+                        href={generateGoogleCalendarUrl({
+                          title: `Hari ke-${activeModalDay.dayNumber}: ${ses.title}`,
+                          description: `Sesi Perkuliahan Diklat Fungsional Prakom Batch 3.\nPengampu: ${ses.instructor || 'Widyaiswara Pusdiklat'}\nModul: ${activeModalDay.stageName}`,
+                          startDate: activeModalDay.dateStr,
+                          startTime: ses.time.split(' - ')[0] || '08:00',
+                          endTime: ses.time.split(' - ')[1] || '16:00'
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#1E2433] px-2.5 py-1.5 text-xs font-bold text-[#18181B] dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-2xs"
+                        title="Simpan ke Google Calendar"
+                      >
+                        <Calendar className="h-3.5 w-3.5 text-[#0369A1] dark:text-sky-400" />
+                        <span>Google Cal</span>
+                      </a>
+
+                      {/* Download .ics file */}
+                      <button
+                        type="button"
+                        onClick={() => downloadIcsFile({
+                          title: `Hari ke-${activeModalDay.dayNumber}: ${ses.title}`,
+                          description: `Sesi Perkuliahan Diklat Fungsional Prakom Batch 3.\nPengampu: ${ses.instructor || 'Widyaiswara Pusdiklat'}`,
+                          startDate: activeModalDay.dateStr,
+                          startTime: ses.time.split(' - ')[0] || '08:00',
+                          endTime: ses.time.split(' - ')[1] || '16:00'
+                        })}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-white dark:bg-[#1E2433] px-2.5 py-1.5 text-xs font-bold text-[#18181B] dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-2xs cursor-pointer"
+                        title="Unduh file .ics (Apple / Outlook)"
+                      >
+                        <Download className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />
+                        <span>.ics</span>
+                      </button>
+
                       {ses.zoomUrl && (
                         <a href={ses.zoomUrl} target="_blank" rel="noopener noreferrer">
                           <Button variant="primary" size="sm" icon={<Video className="h-3.5 w-3.5" />}>
-                            Masuk Ruang Diklat (LMS)
+                            Masuk Zoom LMS
                           </Button>
                         </a>
                       )}
