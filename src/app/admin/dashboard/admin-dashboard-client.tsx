@@ -2888,6 +2888,20 @@ export function AdminDashboardClient({
             />
           </div>
 
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900">Tautan Zoom / LMS (Meeting Link)</label>
+              <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
+                Khusus Tahap 2, 3, 4 Zoom
+              </span>
+            </div>
+            <Input
+              name="meeting_link"
+              placeholder="Contoh: https://us02web.zoom.us/j/... (Kosongkan jika default LMS)"
+              className="text-xs font-mono"
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-black text-slate-900">Jam Mulai (WIB) *</label>
@@ -3111,6 +3125,21 @@ export function AdminDashboardClient({
                 required
                 defaultValue={editingSchedule.lecturer}
                 className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-slate-900">Tautan Zoom / LMS (Meeting Link)</label>
+                <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
+                  Khusus Tahap 2, 3, 4 Zoom
+                </span>
+              </div>
+              <Input
+                name="meeting_link"
+                defaultValue={editingSchedule.meeting_link || ""}
+                placeholder="Contoh: https://us02web.zoom.us/j/... (Kosongkan jika default LMS)"
+                className="text-xs font-mono"
               />
             </div>
 

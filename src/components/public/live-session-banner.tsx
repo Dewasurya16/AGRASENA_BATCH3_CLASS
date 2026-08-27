@@ -47,6 +47,7 @@ export interface LiveSessionBannerProps {
     lecturer?: string | null
     room?: string | null
     zoom_url?: string | null
+    meeting_link?: string | null
     day?: string | null
   }>
   todayTasks?: TaskItem[]
@@ -503,7 +504,7 @@ export function LiveSessionBanner({
           {/* Action on Active Class (08:00 - 16:00) or Break */}
           {(phase === 'in_class' || phase === 'in_break') && (
             <a
-              href={activeSession.zoom_url || RUANG_DIKLAT_URL}
+              href={activeSession.zoom_url || activeSession.meeting_link || RUANG_DIKLAT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full bg-[#FF7643] hover:bg-[#F06530] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#FF7643]/30 hover:scale-102 active:scale-98 transition-all cursor-pointer"
