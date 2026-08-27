@@ -9,7 +9,23 @@ export function VisitorTracker() {
   const lastTrackedTime = useRef<number>(0)
 
   useEffect(() => {
-    // Avoid re-tracking identical path within 5 seconds in same session
+    // 1. Never track on localhost / local development environment
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      const isLocal =
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname.endsWith('.local') ||
+        window.location.port === '3000' ||
+        window.location.port === '3001'
+
+      if (isLocal) {
+        return
+      }
+    }
+
+    // 2. Avoid re-tracking identical path within 5 seconds in same session
     const now = Date.now()
     if (lastTrackedPath.current === pathname && now - lastTrackedTime.current < 5000) {
       return

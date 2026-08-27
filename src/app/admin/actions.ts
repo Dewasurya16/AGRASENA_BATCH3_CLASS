@@ -527,3 +527,21 @@ export async function clearAllVisitorLogs() {
   return { success: 'Semua log riwayat pengunjung berhasil dibersihkan.' }
 }
 
+export async function clearLocalhostLogs() {
+  if (!isSupabaseConfigured()) {
+    return { error: 'Konfigurasi database belum tersedia.' }
+  }
+
+  const supabase = await createClient()
+  // Delete all localhost and private IP logs
+  const { error } = await supabase
+    .from('visitor_logs')
+    .delete()
+    .or('ip.eq.127.0.0.1,ip.eq.::1,ip.eq.localhost,ip.ilike.192.168.%,ip.ilike.10.%')
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/dashboard')
+  return { success: 'Semua log akses localhost/IP lokal berhasil dibersihkan.' }
+}
+
+

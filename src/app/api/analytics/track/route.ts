@@ -87,6 +87,45 @@ export async function POST(request: NextRequest) {
     const screen = (bodyData.screen || '').slice(0, 50)
     const language = (bodyData.language || request.headers.get('accept-language')?.slice(0, 10) || '').slice(0, 50)
 
+    const host = request.headers.get('host') || ''
+    const isLocalhostIp =
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip === 'localhost' ||
+      ip.startsWith('192.168.') ||
+      ip.startsWith('10.') ||
+      ip.startsWith('172.16.') ||
+      ip.startsWith('172.17.') ||
+      ip.startsWith('172.18.') ||
+      ip.startsWith('172.19.') ||
+      ip.startsWith('172.20.') ||
+      ip.startsWith('172.21.') ||
+      ip.startsWith('172.22.') ||
+      ip.startsWith('172.23.') ||
+      ip.startsWith('172.24.') ||
+      ip.startsWith('172.25.') ||
+      ip.startsWith('172.26.') ||
+      ip.startsWith('172.27.') ||
+      ip.startsWith('172.28.') ||
+      ip.startsWith('172.29.') ||
+      ip.startsWith('172.30.') ||
+      ip.startsWith('172.31.')
+
+    const isLocalHostHeader =
+      host.includes('localhost') ||
+      host.includes('127.0.0.1') ||
+      host.includes('0.0.0.0')
+
+    // Only record real production traffic from deployed site (ignore localhost / local IP dev)
+    if (process.env.NODE_ENV === 'development' || isLocalhostIp || isLocalHostHeader) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: 'Akses dari localhost / IP lokal dilewati dan tidak disimpan ke visitor_logs.',
+        data: { ip, device, os, browser, path },
+      })
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
