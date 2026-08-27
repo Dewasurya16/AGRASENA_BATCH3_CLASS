@@ -172,35 +172,85 @@ function TextMarkdownBlock({ text }: { text: string }) {
 }
 
 function renderInlineFormatted(text: string) {
-  // Matches **bold**, *italic*, and `inline-code`
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
+  if (!text) return null
 
-  return parts.map((part, idx) => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-      return (
-        <strong key={idx} className="font-extrabold text-[#0D3830] dark:text-emerald-300">
-          {part.slice(2, -2)}
-        </strong>
-      )
-    }
-    if (part.startsWith('*') && part.endsWith('*') && part.length >= 2) {
-      return (
-        <em key={idx} className="italic text-slate-700 dark:text-slate-200">
-          {part.slice(1, -1)}
-        </em>
-      )
-    }
-    if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
-      return (
-        <code
-          key={idx}
-          className="rounded bg-slate-100 dark:bg-[#1E2433] px-1.5 py-0.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700/80"
-        >
-          {part.slice(1, -1)}
-        </code>
-      )
-    }
-    return part
+  // Replace &nbsp; with space
+  const sanitized = text.replace(/&nbsp;/g, " ")
+
+  // Split by line break tags: <br>, <br/>, <br />
+  const lines = sanitized.split(/<br\s*\/?>/gi)
+
+  return lines.map((line, lineIdx) => {
+    // Matches **bold**, *italic*, `code`, <b>bold</b>, <strong>bold</strong>, <i>italic</i>, <em>italic</em>
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|<b>.*?<\/b>|<strong>.*?<\/strong>|<i>.*?<\/i>|<em>.*?<\/em>)/gi)
+
+    return (
+      <React.Fragment key={lineIdx}>
+        {lineIdx > 0 && <br />}
+        {parts.map((part, idx) => {
+          if (!part) return null
+
+          // Markdown **bold**
+          if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+            return (
+              <strong key={idx} className="font-extrabold text-[#0D3830] dark:text-emerald-300">
+                {part.slice(2, -2)}
+              </strong>
+            )
+          }
+
+          // HTML <b> or <strong>
+          const lowerPart = part.toLowerCase()
+          if (
+            (lowerPart.startsWith("<b>") && lowerPart.endsWith("</b>")) ||
+            (lowerPart.startsWith("<strong>") && lowerPart.endsWith("</strong>"))
+          ) {
+            const inner = part.replace(/^<[^>]+>|<\/[^>]+>$/g, "")
+            return (
+              <strong key={idx} className="font-extrabold text-[#0D3830] dark:text-emerald-300">
+                {inner}
+              </strong>
+            )
+          }
+
+          // Markdown *italic*
+          if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
+            return (
+              <em key={idx} className="italic text-slate-700 dark:text-slate-200">
+                {part.slice(1, -1)}
+              </em>
+            )
+          }
+
+          // HTML <i> or <em>
+          if (
+            (lowerPart.startsWith("<i>") && lowerPart.endsWith("</i>")) ||
+            (lowerPart.startsWith("<em>") && lowerPart.endsWith("</em>"))
+          ) {
+            const inner = part.replace(/^<[^>]+>|<\/[^>]+>$/g, "")
+            return (
+              <em key={idx} className="italic text-slate-700 dark:text-slate-200">
+                {inner}
+              </em>
+            )
+          }
+
+          // Markdown `code`
+          if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+            return (
+              <code
+                key={idx}
+                className="rounded bg-slate-100 dark:bg-[#1E2433] px-1.5 py-0.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 border border-slate-200 dark:border-slate-700/80 font-semibold"
+              >
+                {part.slice(1, -1)}
+              </code>
+            )
+          }
+
+          return part
+        })}
+      </React.Fragment>
+    )
   })
 }
 
