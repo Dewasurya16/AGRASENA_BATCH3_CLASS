@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getAutoRoadmapData, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
-import { TEMPLATES_DATA } from "@/components/public/templates-hub"
+import { TEMPLATES_DATA } from "@/lib/templates-data"
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,29 +52,26 @@ export async function POST(req: NextRequest) {
       // Supabase offline fallback
     }
 
-    // 2. Build structured 35-Day Roadmap Master Schedule
+    // 2. Build structured 35-Day Roadmap Master Schedule (Token-Efficient & Complete)
     const roadmapData = getAutoRoadmapData(currentDayNumber, rawSchedules)
     const todayDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber) || roadmapData.days[0]
     const tomorrowDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber + 1) || roadmapData.days[1]
 
     const all35DaysScheduleText = roadmapData.days
       .map((d) => {
-        const sessionList =
+        const sessionSummary =
           d.sessions && d.sessions.length > 0
             ? d.sessions
-                .map(
-                  (s) =>
-                    `    - ${s.time} WIB: ${s.title}${s.instructor ? ` (Pengampu: ${s.instructor})` : ""}${s.room ? ` [Ruangan: ${s.room}]` : ""}`
-                )
-                .join("\n")
-            : "    - Pembelajaran Mandiri / Belum ada sesi terperinci yang dijadwalkan."
+                .map((s) => `[${s.time} WIB: ${s.title}${s.instructor ? ` (${s.instructor})` : ""}]`)
+                .join(" ")
+            : "Pembelajaran Mandiri"
 
-        return `• [HARI ${d.dayNumber}] ${d.dayOfWeek}, ${d.dateStr} | ${d.stageName} (${d.stageSubtitle}) [Status: ${d.status.toUpperCase()}]:\n${sessionList}`
+        return `• Hari ${d.dayNumber} (${d.dayOfWeek}, ${d.dateStr} | ${d.stageName}): ${sessionSummary}`
       })
-      .join("\n\n")
+      .join("\n")
 
     const templatesContext = TEMPLATES_DATA
-      .map((t) => `• [${t.category}] "${t.title}" (${t.format}) — Dasar: ${t.legalReference}`)
+      .map((t) => `• [${t.category}] "${t.title}" (${t.format}) — ${t.description}`)
       .join("\n")
 
     // 3. System Prompt with Complete Ground Truth & General Knowledge Capabilities
