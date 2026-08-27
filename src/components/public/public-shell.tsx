@@ -43,7 +43,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-4 font-medium">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-medium">
             <a
               href="https://pengembangan.kejaksaan.go.id/dashboard"
               target="_blank"
@@ -60,6 +60,22 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             <span>•</span>
             <Link href="/materials" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
               Modul 120 JP
+            </Link>
+            <span>•</span>
+            <Link href="/paper-generator" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition font-bold text-[#0D824B] dark:text-emerald-400">
+              AI Makalah
+            </Link>
+            <span>•</span>
+            <Link href="/templates" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
+              Template Dokumen
+            </Link>
+            <span>•</span>
+            <Link href="/exam-prep" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
+              Persiapan Ujian
+            </Link>
+            <span>•</span>
+            <Link href="/discussions" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition">
+              Forum Diskusi
             </Link>
             <span>•</span>
             <Link href="/faq" className="hover:text-[#0D3830] dark:hover:text-emerald-400 transition font-bold text-[#FF7643] dark:text-amber-400">

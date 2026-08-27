@@ -20,7 +20,11 @@ import {
   Code2,
   ChevronDown,
   Sun,
-  Moon
+  Moon,
+  GraduationCap,
+  Clock,
+  MessageSquare,
+  Layers
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
@@ -61,9 +65,13 @@ export function ModernNavbar() {
   ]
 
   const moreLinks = [
+    { label: "AI Makalah Seminar", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun proposal inovasi satker" },
+    { label: "Template Dokumen", href: "/templates", icon: Layers, desc: "Unduh SPT, DUPAK, SOP Word" },
+    { label: "Persiapan Ujian & Seminar", href: "/exam-prep", icon: Clock, desc: "Countdown & 10 checklist kelulusan" },
+    { label: "Forum Diskusi", href: "/discussions", icon: MessageSquare, desc: "Tanya jawab rekan seangkatan" },
+    { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
     { label: "Pengumuman", href: "/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
     { label: "Galeri Karya", href: "/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
-    { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
   ]
 
   const isMoreActive = moreLinks.some((l) => pathname.startsWith(l.href))
