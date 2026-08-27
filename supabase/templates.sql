@@ -11,7 +11,10 @@ CREATE TABLE IF NOT EXISTS public.templates (
     bps_code TEXT,
     tags TEXT[] DEFAULT '{}',
     description TEXT,
-    content_doc TEXT NOT NULL,
+    content_doc TEXT,
+    file_url TEXT,
+    file_name TEXT,
+    file_size BIGINT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

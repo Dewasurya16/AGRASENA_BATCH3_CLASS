@@ -53,6 +53,7 @@ import {
   Loader2,
   MessageCircle,
   FileSpreadsheet,
+  FileCode,
   Users,
   Globe,
   Smartphone,
@@ -344,6 +345,11 @@ export function AdminDashboardClient({
   const [previewingTemplate, setPreviewingTemplate] = React.useState<DocumentTemplate | null>(null)
   const [templateCopied, setTemplateCopied] = React.useState(false)
 
+  const [selectedTemplateFile, setSelectedTemplateFile] = React.useState<File | null>(null)
+  const [templateUploadProgress, setTemplateUploadProgress] = React.useState<number>(0)
+  const [templateUploadStatus, setTemplateUploadStatus] = React.useState<string | null>(null)
+  const [isUploadingTemplate, setIsUploadingTemplate] = React.useState<boolean>(false)
+
   // Load custom templates on mount
   React.useEffect(() => {
     try {
@@ -379,39 +385,109 @@ export function AdminDashboardClient({
     })
   }, [allAdminTemplates, templateCategoryFilter, templateSearch])
 
-  const handleCreateTemplateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateTemplateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget
     const formData = new FormData(form)
 
     const title = (formData.get("title") as string)?.trim()
     const category = formData.get("category") as any
-    const format = formData.get("format") as any
+    let format = (formData.get("format") as string) || ".doc Word"
     const legalReference = (formData.get("legalReference") as string)?.trim()
     const bpsCode = (formData.get("bpsCode") as string)?.trim()
     const rawTags = (formData.get("tags") as string)?.trim()
     const description = (formData.get("description") as string)?.trim()
     const contentDoc = (formData.get("contentDoc") as string)?.trim()
 
-    if (!title || !category || !legalReference || !contentDoc) {
-      showFeedback("error", "Judul, kategori, dasar hukum, dan isi naskah dokumen wajib diisi.")
+    if (!title || !category || !legalReference) {
+      showFeedback("error", "Judul, kategori, dan dasar hukum wajib diisi.")
       return
+    }
+
+    let uploadedFileUrl: string | undefined = undefined
+    let uploadedFileName: string | undefined = undefined
+    let uploadedFileSize: number | undefined = undefined
+
+    // Direct Browser Upload to Supabase Storage if file attached
+    if (selectedTemplateFile) {
+      setIsUploadingTemplate(true)
+      setTemplateUploadProgress(0)
+      setTemplateUploadStatus("Mengunggah berkas template ke Supabase Storage...")
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+      const sanitizedName = selectedTemplateFile.name
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, "-")
+        .replace(/-+/g, "-")
+      const filePath = `templates/${Date.now()}_${sanitizedName}`
+      const directUploadUrl = `${supabaseUrl}/storage/v1/object/class-materials/${filePath}`
+      const publicFileUrl = `${supabaseUrl}/storage/v1/object/public/class-materials/${filePath}`
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open("POST", directUploadUrl, true)
+          xhr.setRequestHeader("apikey", supabaseKey)
+          xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`)
+          xhr.setRequestHeader("x-upsert", "true")
+          xhr.setRequestHeader("Content-Type", selectedTemplateFile.type || "application/octet-stream")
+
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const pct = Math.min(99, Math.round((evt.loaded / evt.total) * 100))
+              setTemplateUploadProgress(pct)
+              setTemplateUploadStatus(`Mengunggah berkas (${pct}%)...`)
+            }
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              uploadedFileUrl = publicFileUrl
+              uploadedFileName = selectedTemplateFile.name
+              uploadedFileSize = selectedTemplateFile.size
+              resolve()
+            } else {
+              reject(new Error(`Gagal upload berkas (Status: ${xhr.status})`))
+            }
+          }
+          xhr.onerror = () => reject(new Error("Gagal terhubung ke Supabase Storage"))
+          xhr.send(selectedTemplateFile)
+        })
+
+        const lowerName = selectedTemplateFile.name.toLowerCase()
+        if (lowerName.endsWith(".docx")) format = ".docx Word"
+        else if (lowerName.endsWith(".doc")) format = ".doc Word"
+        else if (lowerName.endsWith(".pdf")) format = ".pdf PDF"
+        else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) format = ".xlsx Excel"
+      } catch (err: any) {
+        showFeedback("error", `Gagal mengunggah berkas: ${err?.message || "Koneksi bermasalah"}`)
+        setIsUploadingTemplate(false)
+        return
+      } finally {
+        setIsUploadingTemplate(false)
+      }
     }
 
     const tags = rawTags
       ? rawTags.split(",").map((t) => t.trim()).filter(Boolean)
-      : ["Template Khusus", "Kejaksaan RI"]
+      : ["Template Dokumen", "Kejaksaan RI"]
 
     const newTemplate: DocumentTemplate = {
       id: `tpl-${Date.now()}`,
       title,
       category,
-      format: format || ".doc Word",
+      format,
       legalReference,
       bpsCode: bpsCode || undefined,
       tags,
       description: description || "Format dokumen naskah dinas resmi Kejaksaan RI.",
-      contentDoc,
+      contentDoc: contentDoc || (uploadedFileName ? `Dokumen lampiran resmi: ${uploadedFileName}` : ""),
+      file_url: uploadedFileUrl,
+      file_name: uploadedFileName,
+      file_size: uploadedFileSize,
+      created_at: new Date().toISOString(),
     }
 
     const updated = [newTemplate, ...customTemplates]
@@ -424,11 +500,14 @@ export function AdminDashboardClient({
     }
 
     setIsTemplateModalOpen(false)
+    setSelectedTemplateFile(null)
+    setTemplateUploadProgress(0)
+    setTemplateUploadStatus(null)
     form.reset()
-    showFeedback("success", `Template dokumen "${title}" berhasil ditambahkan ke koleksi!`)
+    showFeedback("success", `Template dokumen "${title}" berhasil diterbitkan!`)
   }
 
-  const handleUpdateTemplateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateTemplateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!editingTemplate) return
     const form = e.currentTarget
@@ -436,16 +515,81 @@ export function AdminDashboardClient({
 
     const title = (formData.get("title") as string)?.trim()
     const category = formData.get("category") as any
-    const format = formData.get("format") as any
+    let format = (formData.get("format") as string) || editingTemplate.format
     const legalReference = (formData.get("legalReference") as string)?.trim()
     const bpsCode = (formData.get("bpsCode") as string)?.trim()
     const rawTags = (formData.get("tags") as string)?.trim()
     const description = (formData.get("description") as string)?.trim()
     const contentDoc = (formData.get("contentDoc") as string)?.trim()
 
-    if (!title || !category || !legalReference || !contentDoc) {
-      showFeedback("error", "Judul, kategori, dasar hukum, dan isi naskah dokumen wajib diisi.")
+    if (!title || !category || !legalReference) {
+      showFeedback("error", "Judul, kategori, dan dasar hukum wajib diisi.")
       return
+    }
+
+    let uploadedFileUrl = editingTemplate.file_url
+    let uploadedFileName = editingTemplate.file_name
+    let uploadedFileSize = editingTemplate.file_size
+
+    if (selectedTemplateFile) {
+      setIsUploadingTemplate(true)
+      setTemplateUploadProgress(0)
+      setTemplateUploadStatus("Mengunggah berkas pembaruan ke Supabase Storage...")
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+      const sanitizedName = selectedTemplateFile.name
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, "-")
+        .replace(/-+/g, "-")
+      const filePath = `templates/${Date.now()}_${sanitizedName}`
+      const directUploadUrl = `${supabaseUrl}/storage/v1/object/class-materials/${filePath}`
+      const publicFileUrl = `${supabaseUrl}/storage/v1/object/public/class-materials/${filePath}`
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open("POST", directUploadUrl, true)
+          xhr.setRequestHeader("apikey", supabaseKey)
+          xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`)
+          xhr.setRequestHeader("x-upsert", "true")
+          xhr.setRequestHeader("Content-Type", selectedTemplateFile.type || "application/octet-stream")
+
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const pct = Math.min(99, Math.round((evt.loaded / evt.total) * 100))
+              setTemplateUploadProgress(pct)
+              setTemplateUploadStatus(`Mengunggah berkas (${pct}%)...`)
+            }
+          }
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              uploadedFileUrl = publicFileUrl
+              uploadedFileName = selectedTemplateFile.name
+              uploadedFileSize = selectedTemplateFile.size
+              resolve()
+            } else {
+              reject(new Error(`Gagal upload berkas (Status: ${xhr.status})`))
+            }
+          }
+          xhr.onerror = () => reject(new Error("Gagal terhubung ke storage"))
+          xhr.send(selectedTemplateFile)
+        })
+
+        const lowerName = selectedTemplateFile.name.toLowerCase()
+        if (lowerName.endsWith(".docx")) format = ".docx Word"
+        else if (lowerName.endsWith(".doc")) format = ".doc Word"
+        else if (lowerName.endsWith(".pdf")) format = ".pdf PDF"
+        else if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) format = ".xlsx Excel"
+      } catch (err: any) {
+        showFeedback("error", `Gagal mengunggah berkas: ${err?.message || "Koneksi bermasalah"}`)
+        setIsUploadingTemplate(false)
+        return
+      } finally {
+        setIsUploadingTemplate(false)
+      }
     }
 
     const tags = rawTags
@@ -456,12 +600,15 @@ export function AdminDashboardClient({
       ...editingTemplate,
       title,
       category,
-      format: format || editingTemplate.format,
+      format,
       legalReference,
       bpsCode: bpsCode || undefined,
       tags,
       description: description || editingTemplate.description,
-      contentDoc,
+      contentDoc: contentDoc !== undefined ? contentDoc : editingTemplate.contentDoc,
+      file_url: uploadedFileUrl,
+      file_name: uploadedFileName,
+      file_size: uploadedFileSize,
     }
 
     const exists = customTemplates.some((t) => t.id === editingTemplate.id)
@@ -478,6 +625,9 @@ export function AdminDashboardClient({
     }
 
     setEditingTemplate(null)
+    setSelectedTemplateFile(null)
+    setTemplateUploadProgress(0)
+    setTemplateUploadStatus(null)
     showFeedback("success", `Template "${title}" berhasil diperbarui!`)
   }
 
@@ -495,6 +645,17 @@ export function AdminDashboardClient({
   }
 
   const handleDownloadTemplateDoc = (template: DocumentTemplate) => {
+    if (template.file_url) {
+      const a = document.createElement("a")
+      a.href = template.file_url
+      a.target = "_blank"
+      a.download = template.file_name || `TEMPLATE_${template.id.toUpperCase()}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'><title>${template.title}</title>
     <style>
@@ -504,7 +665,7 @@ export function AdminDashboardClient({
       pre { font-family: 'Times New Roman', serif; white-space: pre-wrap; font-size: 11.5pt; line-height: 1.4; }
     </style></head><body><pre>`
     const footer = `</pre></body></html>`
-    const source = header + template.contentDoc + footer
+    const source = header + (template.contentDoc || "") + footer
     const blob = new Blob(['\ufeff' + source], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -3816,7 +3977,10 @@ export function AdminDashboardClient({
       {/* 5. Modal: Create Template */}
       <Modal
         isOpen={isTemplateModalOpen}
-        onClose={() => setIsTemplateModalOpen(false)}
+        onClose={() => {
+          setIsTemplateModalOpen(false)
+          setSelectedTemplateFile(null)
+        }}
         title="Tambah Template Dokumen / Naskah Dinas Baru"
       >
         <form onSubmit={handleCreateTemplateSubmit} className="space-y-4 pt-2">
@@ -3847,18 +4011,76 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900">Format Berkas *</label>
+              <label className="text-xs font-black text-slate-900">Format Berkas Utama *</label>
               <select
                 name="format"
                 required
-                defaultValue=".doc Word"
+                defaultValue=".docx Word"
                 className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
               >
-                <option value=".doc Word">.doc Word</option>
-                <option value=".docx Word">.docx Word</option>
-                <option value=".xlsx Excel">.xlsx Excel</option>
+                <option value=".docx Word">.docx Word (Microsoft Word)</option>
+                <option value=".doc Word">.doc Word (Klasik)</option>
+                <option value=".pdf PDF">.pdf PDF (Dokumen Resmi)</option>
+                <option value=".xlsx Excel">.xlsx Excel (Spreadsheet)</option>
               </select>
             </div>
+          </div>
+
+          {/* Document File Upload Dropzone (Word, PDF, Excel) */}
+          <div className="space-y-2 rounded-2xl border-2 border-dashed border-teal-300 bg-teal-50/50 p-4">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-teal-950 flex items-center gap-1.5">
+                <UploadCloud className="h-4 w-4 text-teal-600" />
+                <span>Unggah Berkas Asli (Word .docx/.doc atau PDF .pdf / Excel .xlsx)</span>
+              </label>
+              <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
+                Maks 50MB
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Lampirkan berkas dokumen template agar peserta diklat dapat langsung mengunduh file dokumen asli.
+            </p>
+
+            <input
+              type="file"
+              accept=".doc,.docx,.pdf,.xlsx,.xls,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null
+                setSelectedTemplateFile(file)
+              }}
+              className="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-teal-700 cursor-pointer"
+            />
+
+            {selectedTemplateFile && (
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-white p-2.5 border border-teal-200 text-xs shadow-2xs">
+                <div className="flex items-center gap-2 truncate">
+                  {selectedTemplateFile.name.toLowerCase().endsWith(".pdf") ? (
+                    <FileCode className="h-4 w-4 text-rose-600 shrink-0" />
+                  ) : (
+                    <FileText className="h-4 w-4 text-teal-600 shrink-0" />
+                  )}
+                  <span className="font-bold text-slate-800 truncate">{selectedTemplateFile.name}</span>
+                </div>
+                <span className="font-mono text-[10px] font-bold text-teal-700 shrink-0 bg-teal-50 px-2 py-0.5 rounded-md">
+                  {(selectedTemplateFile.size / (1024 * 1024)).toFixed(2)} MB
+                </span>
+              </div>
+            )}
+
+            {isUploadingTemplate && (
+              <div className="space-y-1 pt-1.5">
+                <div className="flex justify-between text-[10px] font-bold text-teal-800">
+                  <span>{templateUploadStatus}</span>
+                  <span>{templateUploadProgress}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-teal-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-teal-600 transition-all duration-200"
+                    style={{ width: `${templateUploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3901,13 +4123,12 @@ export function AdminDashboardClient({
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-black text-slate-900">Isi Naskah Dokumen Lengkap (.doc) *</label>
-              <span className="text-[10px] text-slate-400 font-mono">Format Teks Lengkap dengan Titik-titik</span>
+              <label className="text-xs font-black text-slate-900">Isi Teks Naskah Dokumen (Opsional jika lampiran berkas diunggah)</label>
+              <span className="text-[10px] text-slate-400 font-mono">Format Teks Naskah Dinas</span>
             </div>
             <textarea
               name="contentDoc"
-              rows={8}
-              required
+              rows={6}
               placeholder="KEJAKSAAN REPUBLIK INDONESIA&#10;KEJAKSAAN TINGGI / NEGERI ........................&#10;&#10;SURAT PERMOHONAN HAK AKSES TIK&#10;NOMOR: B - ...... / L. ... / ... / 2026&#10;&#10;Yang bertanda tangan di bawah ini:&#10;Nama: ...........................................................&#10;NIP: ...........................................................&#10;Jabatan: Pranata Komputer Ahli Pertama&#10;..."
               className="w-full font-mono rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-900 focus:border-slate-800 focus:outline-none"
             />
@@ -3916,16 +4137,28 @@ export function AdminDashboardClient({
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={() => setIsTemplateModalOpen(false)}
-              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+              disabled={isUploadingTemplate}
+              onClick={() => {
+                setIsTemplateModalOpen(false)
+                setSelectedTemplateFile(null)
+              }}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
+              disabled={isUploadingTemplate}
+              className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-2"
             >
-              Simpan & Terbitkan Template
+              {isUploadingTemplate ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Mengunggah Berkas...</span>
+                </>
+              ) : (
+                <span>Simpan & Terbitkan Template</span>
+              )}
             </button>
           </div>
         </form>
@@ -3935,7 +4168,10 @@ export function AdminDashboardClient({
       {editingTemplate && (
         <Modal
           isOpen={Boolean(editingTemplate)}
-          onClose={() => setEditingTemplate(null)}
+          onClose={() => {
+            setEditingTemplate(null)
+            setSelectedTemplateFile(null)
+          }}
           title="Edit Template Dokumen"
         >
           <form onSubmit={handleUpdateTemplateSubmit} className="space-y-4 pt-2">
@@ -3973,11 +4209,74 @@ export function AdminDashboardClient({
                   defaultValue={editingTemplate.format}
                   className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
                 >
-                  <option value=".doc Word">.doc Word</option>
-                  <option value=".docx Word">.docx Word</option>
-                  <option value=".xlsx Excel">.xlsx Excel</option>
+                  <option value=".docx Word">.docx Word (Microsoft Word)</option>
+                  <option value=".doc Word">.doc Word (Klasik)</option>
+                  <option value=".pdf PDF">.pdf PDF (Dokumen Resmi)</option>
+                  <option value=".xlsx Excel">.xlsx Excel (Spreadsheet)</option>
                 </select>
               </div>
+            </div>
+
+            {/* Document File Attachment / Replace */}
+            <div className="space-y-2 rounded-2xl border-2 border-dashed border-teal-300 bg-teal-50/50 p-4">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-teal-950 flex items-center gap-1.5">
+                  <UploadCloud className="h-4 w-4 text-teal-600" />
+                  <span>Ganti / Unggah Berkas Dokumen (Word .docx / PDF .pdf / Excel .xlsx)</span>
+                </label>
+                <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
+                  Maks 50MB
+                </span>
+              </div>
+
+              {editingTemplate.file_name && !selectedTemplateFile && (
+                <div className="flex items-center justify-between rounded-xl bg-white p-2.5 border border-slate-200 text-xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <FileText className="h-4 w-4 text-teal-600 shrink-0" />
+                    <span className="font-bold text-slate-800 truncate">{editingTemplate.file_name}</span>
+                  </div>
+                  <span className="text-[10px] text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded-md">
+                    Berkas Terpasang
+                  </span>
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept=".doc,.docx,.pdf,.xlsx,.xls,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null
+                  setSelectedTemplateFile(file)
+                }}
+                className="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-teal-700 cursor-pointer"
+              />
+
+              {selectedTemplateFile && (
+                <div className="mt-2 flex items-center justify-between rounded-xl bg-white p-2.5 border border-teal-200 text-xs shadow-2xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <FileText className="h-4 w-4 text-teal-600 shrink-0" />
+                    <span className="font-bold text-slate-800 truncate">{selectedTemplateFile.name}</span>
+                  </div>
+                  <span className="font-mono text-[10px] font-bold text-teal-700 shrink-0 bg-teal-50 px-2 py-0.5 rounded-md">
+                    {(selectedTemplateFile.size / (1024 * 1024)).toFixed(2)} MB (Baru)
+                  </span>
+                </div>
+              )}
+
+              {isUploadingTemplate && (
+                <div className="space-y-1 pt-1.5">
+                  <div className="flex justify-between text-[10px] font-bold text-teal-800">
+                    <span>{templateUploadStatus}</span>
+                    <span>{templateUploadProgress}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-teal-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-teal-600 transition-all duration-200"
+                      style={{ width: `${templateUploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -4019,12 +4318,11 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900">Isi Naskah Dokumen Lengkap (.doc) *</label>
+              <label className="text-xs font-black text-slate-900">Isi Naskah Dokumen Lengkap</label>
               <textarea
                 name="contentDoc"
-                rows={8}
-                required
-                defaultValue={editingTemplate.contentDoc}
+                rows={6}
+                defaultValue={editingTemplate.contentDoc || ""}
                 className="w-full font-mono rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-900 focus:border-slate-800 focus:outline-none"
               />
             </div>
@@ -4032,16 +4330,28 @@ export function AdminDashboardClient({
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setEditingTemplate(null)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                disabled={isUploadingTemplate}
+                onClick={() => {
+                  setEditingTemplate(null)
+                  setSelectedTemplateFile(null)
+                }}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
+                disabled={isUploadingTemplate}
+                className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
-                Simpan Perubahan
+                {isUploadingTemplate ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <span>Simpan Perubahan</span>
+                )}
               </button>
             </div>
           </form>
@@ -4054,6 +4364,7 @@ export function AdminDashboardClient({
           isOpen={Boolean(previewingTemplate)}
           onClose={() => setPreviewingTemplate(null)}
           title={`Pratinjau: ${previewingTemplate.title}`}
+          className="max-w-4xl"
         >
           <div className="space-y-4 pt-2">
             <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
@@ -4064,32 +4375,51 @@ export function AdminDashboardClient({
                 <span className="text-xs text-slate-500 font-medium">⚖️ {previewingTemplate.legalReference}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(previewingTemplate.contentDoc)
-                    setTemplateCopied(true)
-                    setTimeout(() => setTemplateCopied(false), 2000)
-                  }}
-                  className="flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-100 cursor-pointer"
-                >
-                  {templateCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{templateCopied ? "Tersalin!" : "Salin Teks"}</span>
-                </button>
+                {previewingTemplate.contentDoc && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(previewingTemplate.contentDoc || "")
+                      setTemplateCopied(true)
+                      setTimeout(() => setTemplateCopied(false), 2000)
+                    }}
+                    className="flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-100 cursor-pointer"
+                  >
+                    {templateCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{templateCopied ? "Tersalin!" : "Salin Teks"}</span>
+                  </button>
+                )}
                 <button
                   onClick={() => handleDownloadTemplateDoc(previewingTemplate)}
                   className="flex items-center gap-1 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  <span>Unduh .doc</span>
+                  <span>Unduh {previewingTemplate.format}</span>
                 </button>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 max-h-[60vh] overflow-y-auto shadow-inner">
-              <pre className="font-serif text-xs leading-relaxed text-slate-900 whitespace-pre-wrap selection:bg-teal-100">
-                {previewingTemplate.contentDoc}
-              </pre>
-            </div>
+            {previewingTemplate.file_url?.toLowerCase().endsWith(".pdf") ? (
+              <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 h-[60vh]">
+                <iframe
+                  src={previewingTemplate.file_url}
+                  title={previewingTemplate.title}
+                  className="w-full h-full border-0"
+                />
+              </div>
+            ) : previewingTemplate.contentDoc ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 max-h-[60vh] overflow-y-auto shadow-inner">
+                <pre className="font-serif text-xs leading-relaxed text-slate-900 whitespace-pre-wrap selection:bg-teal-100">
+                  {previewingTemplate.contentDoc}
+                </pre>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <FileText className="h-10 w-10 mx-auto text-teal-600" />
+                <p className="text-xs font-bold text-slate-800">
+                  Berkas dokumen ({previewingTemplate.file_name || previewingTemplate.format}) siap diunduh.
+                </p>
+              </div>
+            )}
           </div>
         </Modal>
       )}

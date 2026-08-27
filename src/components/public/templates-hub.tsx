@@ -26,12 +26,16 @@ export interface DocumentTemplate {
   id: string
   title: string
   category: "Administrasi & SPT" | "DUPAK & SKP BPS" | "SOP & Keamanan" | "Seminar Akhir"
-  format: ".doc Word" | ".xlsx Excel" | ".docx Word"
+  format: string
   description: string
   legalReference: string
   bpsCode?: string
   tags: string[]
-  contentDoc: string
+  contentDoc?: string
+  file_url?: string
+  file_name?: string
+  file_size?: number
+  created_at?: string
 }
 
 export const TEMPLATES_DATA: DocumentTemplate[] = [
@@ -497,8 +501,19 @@ export function TemplatesHub() {
     })
   }, [allTemplates, selectedCategory, searchQuery])
 
-  // Download template as clean Word document (.doc)
+  // Download template as clean Word document (.doc) or direct uploaded file
   const handleDownload = (template: DocumentTemplate) => {
+    if (template.file_url) {
+      const a = document.createElement("a")
+      a.href = template.file_url
+      a.target = "_blank"
+      a.download = template.file_name || `TEMPLATE_${template.id.toUpperCase()}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'><title>${template.title}</title>
     <style>
@@ -508,7 +523,7 @@ export function TemplatesHub() {
       pre { font-family: 'Times New Roman', serif; white-space: pre-wrap; font-size: 11.5pt; line-height: 1.4; }
     </style></head><body><pre>`
     const footer = `</pre></body></html>`
-    const source = header + template.contentDoc + footer
+    const source = header + (template.contentDoc || "") + footer
     const blob = new Blob(['\ufeff' + source], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -521,7 +536,7 @@ export function TemplatesHub() {
   }
 
   const handleCopyContent = () => {
-    if (!previewTemplate) return
+    if (!previewTemplate || !previewTemplate.contentDoc) return
     navigator.clipboard.writeText(previewTemplate.contentDoc)
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
@@ -658,7 +673,7 @@ export function TemplatesHub() {
                 className="flex items-center gap-1.5 text-xs font-bold text-[#0D824B] dark:text-emerald-400 hover:underline cursor-pointer"
               >
                 <Eye className="h-4 w-4" />
-                <span>Lihat Format</span>
+                <span>{template.file_url?.endsWith(".pdf") ? "Pratinjau PDF" : "Lihat Format"}</span>
               </button>
 
               <button
@@ -667,7 +682,7 @@ export function TemplatesHub() {
                 className="flex items-center gap-1.5 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" />
-                <span>Unduh Word</span>
+                <span>Unduh {template.format.split(" ")[0]}</span>
               </button>
             </div>
           </motion.div>
@@ -686,25 +701,44 @@ export function TemplatesHub() {
           <div className="space-y-4 pt-1">
             <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <span>⚖️ Dasar Regulasi: {previewTemplate.legalReference}</span>
-              <button
-                type="button"
-                onClick={handleCopyContent}
-                className="flex items-center gap-1 bg-white dark:bg-slate-700 text-slate-700 dark:text-white px-3 py-1 rounded-xl font-bold border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                <span>{copied ? "Tersalin!" : "Salin Teks"}</span>
-              </button>
+              {previewTemplate.contentDoc && (
+                <button
+                  type="button"
+                  onClick={handleCopyContent}
+                  className="flex items-center gap-1 bg-white dark:bg-slate-700 text-slate-700 dark:text-white px-3 py-1 rounded-xl font-bold border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copied ? "Tersalin!" : "Salin Teks"}</span>
+                </button>
+              )}
             </div>
 
-            <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#181D28] p-4 sm:p-6 overflow-y-auto max-h-[55vh] shadow-inner">
-              <pre className="font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-                {previewTemplate.contentDoc}
-              </pre>
-            </div>
+            {previewTemplate.file_url?.toLowerCase().endsWith(".pdf") ? (
+              <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-900 h-[60vh]">
+                <iframe
+                  src={previewTemplate.file_url}
+                  title={previewTemplate.title}
+                  className="w-full h-full border-0"
+                />
+              </div>
+            ) : previewTemplate.contentDoc ? (
+              <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#181D28] p-4 sm:p-6 overflow-y-auto max-h-[55vh] shadow-inner">
+                <pre className="font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                  {previewTemplate.contentDoc}
+                </pre>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+                <FileText className="h-10 w-10 mx-auto text-slate-400" />
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Dokumen {previewTemplate.format} ({previewTemplate.file_name || "Lampiran"}) siap diunduh
+                </p>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <span className="text-xs text-slate-500 font-mono">
-                Format resmi BPS & Kejaksaan RI — Siap diedit di Microsoft Word (.doc)
+                Format resmi BPS & Kejaksaan RI — Siap diedit di {previewTemplate.format}
               </span>
               <button
                 type="button"
