@@ -315,6 +315,10 @@ export function AdminDashboardClient({
   // Upload State
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [uploadProgressStatus, setUploadProgressStatus] = React.useState<string | null>(null)
+  const [uploadProgressPercent, setUploadProgressPercent] = React.useState<number>(0)
+  const [uploadProgressBytes, setUploadProgressBytes] = React.useState<string>("")
+  const [uploadSpeedStr, setUploadSpeedStr] = React.useState<string>("")
+  const [uploadModalError, setUploadModalError] = React.useState<string | null>(null)
 
   // Create Modals
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false)
@@ -579,37 +583,94 @@ export function AdminDashboardClient({
   // --- CRUD: MATERIALS ---
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (selectedFile && selectedFile.size > 50 * 1024 * 1024) {
-      showFeedback(
-        "error",
-        `Ukuran file melebihi batas 50MB (${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB). Silakan kompres PDF terlebih dahulu.`
+    setUploadModalError(null)
+
+    if (selectedFile && selectedFile.size > 100 * 1024 * 1024) {
+      const sizeMB = (selectedFile.size / (1024 * 1024)).toFixed(1)
+      setUploadModalError(
+        `Ukuran berkas (${sizeMB} MB) melebihi batas 100MB. Silakan kompres PDF terlebih dahulu.`
       )
       return
     }
 
     setIsLoading(true)
-    const sizeInMB = selectedFile ? (selectedFile.size / (1024 * 1024)).toFixed(1) : "0"
-    setUploadProgressStatus(`Mengunggah berkas PDF (${sizeInMB} MB) ke Supabase Storage...`)
+    setUploadProgressPercent(0)
+    setUploadProgressBytes("")
+    setUploadSpeedStr("")
+    setUploadProgressStatus("Mempersiapkan unggahan berkas...")
 
-    try {
-      const formData = new FormData(e.currentTarget)
-      const res = await uploadMaterial(formData)
+    const formElement = e.currentTarget
+    const formData = new FormData(formElement)
 
-      if (res?.error) {
-        showFeedback("error", res.error)
-      } else if (res?.success) {
-        showFeedback("success", res.success)
-        setIsUploadModalOpen(false)
-        setSelectedFile(null)
-        router.refresh()
+    const xhr = new XMLHttpRequest()
+    xhr.open("POST", "/api/materials/upload", true)
+
+    const startTime = Date.now()
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.min(99, Math.round((event.loaded / event.total) * 100))
+        setUploadProgressPercent(percent)
+
+        const loadedMB = (event.loaded / (1024 * 1024)).toFixed(1)
+        const totalMB = (event.total / (1024 * 1024)).toFixed(1)
+        setUploadProgressBytes(`${loadedMB} MB / ${totalMB} MB`)
+
+        const elapsedSec = (Date.now() - startTime) / 1000
+        if (elapsedSec > 0.3) {
+          const speed = (event.loaded / (1024 * 1024) / elapsedSec).toFixed(1)
+          setUploadSpeedStr(`${speed} MB/s`)
+        }
+
+        if (percent >= 99) {
+          setUploadProgressStatus("Menyimpan metadata modul ke database Supabase...")
+        } else {
+          setUploadProgressStatus(`Mengunggah berkas (${percent}%)...`)
+        }
       }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Terjadi kesalahan jaringan saat mengunggah berkas."
-      showFeedback("error", errorMsg)
-    } finally {
-      setIsLoading(false)
-      setUploadProgressStatus(null)
     }
+
+    xhr.onload = () => {
+      setIsLoading(false)
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const res = JSON.parse(xhr.responseText)
+          if (res.success) {
+            setUploadProgressPercent(100)
+            showFeedback("success", res.message || "Modul PDF berhasil diunggah!")
+            setIsUploadModalOpen(false)
+            setSelectedFile(null)
+            setUploadModalError(null)
+            setUploadProgressStatus(null)
+            router.refresh()
+          } else {
+            setUploadModalError(res.error || "Gagal mengunggah berkas.")
+          }
+        } catch {
+          setUploadModalError("Respon server tidak valid.")
+        }
+      } else {
+        try {
+          const res = JSON.parse(xhr.responseText)
+          setUploadModalError(res.error || `Gagal mengunggah (${xhr.status})`)
+        } catch {
+          setUploadModalError(`Gagal menghubungi server (${xhr.status}: ${xhr.statusText || "Error / Payload Too Large"})`)
+        }
+      }
+    }
+
+    xhr.onerror = () => {
+      setIsLoading(false)
+      setUploadModalError("Koneksi jaringan terputus saat mengunggah berkas. Periksa internet Anda dan coba lagi.")
+    }
+
+    xhr.ontimeout = () => {
+      setIsLoading(false)
+      setUploadModalError("Waktu unggah habis (timeout). Silakan periksa ukuran berkas dan koneksi internet.")
+    }
+
+    xhr.timeout = 300000 // 5 minutes
+    xhr.send(formData)
   }
 
   const handleUpdateMaterialSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -2614,26 +2675,57 @@ export function AdminDashboardClient({
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => {
-          setIsUploadModalOpen(false)
-          setSelectedFile(null)
+          if (!isLoading) {
+            setIsUploadModalOpen(false)
+            setSelectedFile(null)
+            setUploadModalError(null)
+            setUploadProgressStatus(null)
+          }
         }}
         title="Upload Modul Materi PDF (Supabase Storage)"
       >
         <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2">
+          {uploadModalError && (
+            <div className="flex items-start gap-2.5 rounded-2xl bg-rose-50 p-3.5 text-xs text-rose-800 border-2 border-rose-200">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold">{uploadModalError}</p>
+                <p className="text-[11px] text-rose-600">
+                  Tips: Jika berkas di atas 20MB, pastikan koneksi internet stabil atau kompres ukuran PDF via ilovepdf.com jika diperlukan.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-900">Pilih Berkas PDF * (Maks 50MB)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900">Pilih Berkas PDF *</label>
+              <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                Maks. 100MB
+              </span>
+            </div>
             <input
               type="file"
               name="file"
               accept=".pdf,.zip,.rar"
               required
+              disabled={isLoading}
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   setSelectedFile(e.target.files[0])
+                  setUploadModalError(null)
                 }
               }}
-              className="w-full text-xs font-medium text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-800 cursor-pointer"
+              className="w-full text-xs font-medium text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2.5 file:text-xs file:font-black file:text-white hover:file:bg-slate-800 cursor-pointer disabled:opacity-50"
             />
+            {selectedFile && (
+              <div className="flex items-center justify-between text-[11px] font-mono text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                <span className="truncate max-w-[240px]">📄 {selectedFile.name}</span>
+                <span className="font-bold text-slate-900 shrink-0">
+                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -2641,6 +2733,7 @@ export function AdminDashboardClient({
             <Input
               name="title"
               required
+              disabled={isLoading}
               placeholder="Contoh: Modul 01 - Pengantar Basis Data Kejaksaan RI"
               className="text-xs"
             />
@@ -2652,7 +2745,8 @@ export function AdminDashboardClient({
               <select
                 name="subject_name"
                 required
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                disabled={isLoading}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800 disabled:opacity-50"
               >
                 <option value="Tahap 1 • MOOC">Tahap 1 • MOOC</option>
                 <option value="Tahap 2 • TMO">Tahap 2 • TMO</option>
@@ -2669,6 +2763,7 @@ export function AdminDashboardClient({
                 max="10"
                 defaultValue={1}
                 required
+                disabled={isLoading}
                 className="text-xs"
               />
             </div>
@@ -2678,32 +2773,58 @@ export function AdminDashboardClient({
             <label className="text-xs font-black text-slate-900">Deskripsi Singkat (Opsional)</label>
             <Input
               name="description"
+              disabled={isLoading}
               placeholder="Penjelasan singkat modul dan panduan belajar..."
               className="text-xs"
             />
           </div>
 
-          {uploadProgressStatus && (
-            <div className="flex items-center gap-2 rounded-xl bg-blue-50 p-3 text-xs font-bold text-blue-700 border border-blue-200">
-              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-              <span>{uploadProgressStatus}</span>
+          {/* Live Progress Bar Container */}
+          {isLoading && (
+            <div className="space-y-2 rounded-2xl bg-blue-50 p-4 border border-blue-200">
+              <div className="flex items-center justify-between text-xs font-bold text-blue-900">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600 shrink-0" />
+                  <span>{uploadProgressStatus}</span>
+                </div>
+                <span className="font-mono text-blue-700">{uploadProgressPercent}%</span>
+              </div>
+
+              {/* Progress Bar Track */}
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-blue-200/80">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgressPercent}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-mono text-blue-700">
+                <span>{uploadProgressBytes}</span>
+                {uploadSpeedStr && <span>⚡ {uploadSpeedStr}</span>}
+              </div>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              onClick={() => setIsUploadModalOpen(false)}
-              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+              disabled={isLoading}
+              onClick={() => {
+                setIsUploadModalOpen(false)
+                setSelectedFile(null)
+                setUploadModalError(null)
+              }}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50 cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+              className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer flex items-center gap-2"
             >
-              {isLoading ? "Mengunggah..." : "Upload Sekarang"}
+              {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              <span>{isLoading ? "Sedang Mengunggah..." : "Upload Sekarang"}</span>
             </button>
           </div>
         </form>

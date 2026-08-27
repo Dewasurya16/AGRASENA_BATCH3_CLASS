@@ -32,23 +32,23 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* 4. Sleek Modern Minimalist Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-[#12161F]/80 backdrop-blur-md py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6B7C93] dark:text-slate-400">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 text-center sm:text-left">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg overflow-hidden shrink-0">
-                <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
-              </div>
-              <span className="font-semibold text-[#131E29] dark:text-slate-200">
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-[#12161F]/80 backdrop-blur-md py-6 sm:py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5 text-xs text-[#6B7C93] dark:text-slate-400">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shrink-0">
+              <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="font-bold text-xs sm:text-sm text-[#131E29] dark:text-slate-100 leading-snug">
                 Diklat Fungsional Pranata Komputer Keahlian • Batch 3 Kejaksaan RI
               </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                Dibuat dengan senang hati oleh <span className="font-bold text-slate-800 dark:text-slate-200">Dewa Sinar Surya, S.Kom.</span>
+              </span>
             </div>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium sm:pl-8">
-              Dibuat dengan senang hati oleh <span className="font-bold text-slate-800 dark:text-slate-200">Dewa Sinar Surya, S.Kom.</span>
-            </span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-medium">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-x-3.5 gap-y-2 font-medium text-[11px] sm:text-xs">
             <a
               href="https://pengembangan.kejaksaan.go.id/dashboard"
               target="_blank"

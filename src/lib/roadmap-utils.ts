@@ -177,6 +177,26 @@ export function getScheduleDayNumber(s: { subject_name?: string | null; day?: st
   return null
 }
 
+function cleanTimeFormat(timeStr?: string | null, fallback = "08:00"): string {
+  if (!timeStr) return fallback
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})/)
+  if (match) {
+    const h = match[1].padStart(2, '0')
+    const m = match[2]
+    return `${h}:${m}`
+  }
+  return timeStr.trim()
+}
+
+function parseTimeToMins(timeStr?: string | null): number {
+  if (!timeStr) return 0
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})/)
+  if (match) {
+    return parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+  }
+  return 0
+}
+
 /**
  * Maps live manual schedules from Supabase to the 35 days structure.
  */
@@ -211,7 +231,7 @@ export function getAutoRoadmapData(
       badgeLabel2 = "JADWAL HARI INI"
     }
 
-    // Match sessions from Supabase for this day with STRICT day identification
+    // Match sessions from Supabase for this day with STRICT day identification & sort chronologically
     const matchedSessions = supabaseSchedules
       .filter((s) => {
         const explicitDay = getScheduleDayNumber(s)
@@ -228,12 +248,15 @@ export function getAutoRoadmapData(
 
         return false
       })
+      .sort((a, b) => parseTimeToMins(a.start_time) - parseTimeToMins(b.start_time))
       .map((s) => {
         // Clean [Hari X] prefix from display title if present
         const cleanTitle = s.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "").trim()
+        const start = cleanTimeFormat(s.start_time, "08:00")
+        const end = cleanTimeFormat(s.end_time, "15:30")
         return {
           id: s.id,
-          time: `${s.start_time || "08:00"} - ${s.end_time || "15:30"}`,
+          time: `${start} - ${end}`,
           title: cleanTitle || s.subject_name,
           instructor: s.lecturer,
           room: s.room,
