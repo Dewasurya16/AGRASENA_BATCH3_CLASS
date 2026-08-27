@@ -1,3 +1,5 @@
+import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
+
 export interface RoadmapDayDetail {
   dayNumber: number
   stageNumber: number
@@ -216,6 +218,11 @@ export function getAutoRoadmapData(
   const currentStageObj = RAW_DAYS_DATA.find((d) => d.day === currentDay)
   const currentStageName = currentStageObj ? currentStageObj.stageName : "Tahap 1 • MOOC"
 
+  const effectiveSchedules =
+    supabaseSchedules && supabaseSchedules.length > 0
+      ? supabaseSchedules
+      : DEFAULT_SCHEDULES_DATA
+
   const days: RoadmapDayDetail[] = RAW_DAYS_DATA.map((item) => {
     let status: "completed" | "in_progress" | "upcoming" = "upcoming"
     let badgeLabel1 = "BELUM MULAI"
@@ -232,7 +239,7 @@ export function getAutoRoadmapData(
     }
 
     // Match sessions from Supabase for this day with STRICT day identification & sort chronologically
-    const matchedSessions = supabaseSchedules
+    const matchedSessions = effectiveSchedules
       .filter((s) => {
         const explicitDay = getScheduleDayNumber(s)
         if (explicitDay !== null) {

@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
 import { getAutoRoadmapData, RoadmapDayDetail } from "@/lib/roadmap-utils"
 import { generateGoogleCalendarUrl, downloadIcsFile } from "@/lib/calendar-utils"
+import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
 
 export interface ScheduleItem {
   id: string
@@ -39,11 +41,35 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
   const [selectedStage, setSelectedStage] = React.useState<number>(0)
   const [activeModalDay, setActiveModalDay] = React.useState<RoadmapDayDetail | null>(null)
   const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const [liveSchedules, setLiveSchedules] = React.useState<ScheduleItem[]>(
+    schedules && schedules.length > 0 ? schedules : (DEFAULT_SCHEDULES_DATA as any[])
+  )
+
+  React.useEffect(() => {
+    if (schedules && schedules.length > 0) {
+      setLiveSchedules(schedules)
+    }
+
+    try {
+      const supabase = createBrowserSupabaseClient()
+      supabase
+        .from("schedules")
+        .select("*")
+        .order("start_time", { ascending: true })
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setLiveSchedules(data as any[])
+          }
+        })
+    } catch {
+      // Ignore
+    }
+  }, [schedules])
 
   // Automatic calculation based on 35 days + Live manual sessions from Supabase
   const { days, summary } = React.useMemo(
-    () => getAutoRoadmapData(undefined, schedules),
-    [schedules]
+    () => getAutoRoadmapData(undefined, liveSchedules),
+    [liveSchedules]
   )
 
   // Stage definitions for clean segmented views

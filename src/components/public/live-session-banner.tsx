@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber } from "@/lib/roadmap-utils"
+import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
 
 export interface TaskItem {
   id: string
@@ -100,7 +101,12 @@ export function LiveSessionBanner({
 
   // Urutkan seluruh sesi jadwal untuk hari aktif secara kronologis
   const daysSchedules = React.useMemo(() => {
-    return todaySchedules
+    const sourceSchedules =
+      todaySchedules && todaySchedules.length > 0
+        ? todaySchedules
+        : (DEFAULT_SCHEDULES_DATA as any[])
+
+    return sourceSchedules
       .filter((s) => {
         const explicitDay = getScheduleDayNumber(s)
         if (explicitDay !== null) {
