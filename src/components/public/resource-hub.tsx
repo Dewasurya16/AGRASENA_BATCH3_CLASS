@@ -15,7 +15,12 @@ import {
   Sparkles,
   Award,
   UploadCloud,
-  Shield
+  Shield,
+  Loader2,
+  Copy,
+  Check,
+  Trash2,
+  Maximize2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
@@ -40,6 +45,8 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [previewMaterial, setPreviewMaterial] = React.useState<MaterialItem | null>(null)
   const [readerTab, setReaderTab] = React.useState<"pdf" | "notes">("pdf")
   const [studyNotes, setStudyNotes] = React.useState<Record<string, string>>({})
+  const [isSummarizing, setIsSummarizing] = React.useState(false)
+  const [copiedNote, setCopiedNote] = React.useState(false)
 
   // Load study notes from localStorage
   React.useEffect(() => {
@@ -49,24 +56,49 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
         setStudyNotes(JSON.parse(saved))
       }
     } catch {
-      // Ignore
+      // LocalStorage access fallback
     }
   }, [])
 
-  const subjects = ["Semua", ...Array.from(new Set(items.map((m) => m.subject_name)))]
-  const weeks = ["Semua", "Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"]
+  // Extract unique subjects & weeks for filter dropdowns
+  const subjects = React.useMemo(() => {
+    const set = new Set<string>()
+    items.forEach((m) => {
+      if (m.subject_name) set.add(m.subject_name)
+    })
+    return ["Semua", ...Array.from(set)]
+  }, [items])
 
-  const filtered = items.filter((m) => {
-    const q = searchQuery.toLowerCase().trim()
-    const matchSearch =
-      !q ||
-      m.title.toLowerCase().includes(q) ||
-      m.file_name.toLowerCase().includes(q) ||
-      (m.description && m.description.toLowerCase().includes(q))
-    const matchSubject = selectedSubject === "Semua" || m.subject_name === selectedSubject
-    const matchWeek = selectedWeek === "Semua" || `Week ${m.week_number}` === selectedWeek
-    return matchSearch && matchSubject && matchWeek
-  })
+  const weeks = React.useMemo(() => {
+    const set = new Set<number>()
+    items.forEach((m) => {
+      if (m.week_number) set.add(m.week_number)
+    })
+    return ["Semua", ...Array.from(set).sort((a, b) => a - b).map((w) => `Pertemuan ${w}`)]
+  }, [items])
+
+  // Filtered materials
+  const filtered = React.useMemo(() => {
+    return items.filter((item) => {
+      const matchSearch =
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+
+      const matchSubject = selectedSubject === "Semua" || item.subject_name === selectedSubject
+      const matchWeek =
+        selectedWeek === "Semua" || `Pertemuan ${item.week_number}` === selectedWeek
+
+      return matchSearch && matchSubject && matchWeek
+    })
+  }, [items, searchQuery, selectedSubject, selectedWeek])
+
+  const formatFileSize = (bytes?: number | null) => {
+    if (!bytes) return "Dokumen PDF"
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   const resetFilters = () => {
     setSearchQuery("")
@@ -74,81 +106,146 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
     setSelectedWeek("Semua")
   }
 
-  const formatFileSize = (bytes?: number | null) => {
-    if (!bytes) return "PDF Dokumen"
-    const mb = bytes / (1024 * 1024)
-    return `${mb.toFixed(1)} MB`
+  // AI Summarizer Handler
+  const handleGenerateAISummary = async () => {
+    if (!previewMaterial) return
+    setIsSummarizing(true)
+    try {
+      const res = await fetch("/api/ai/summarize-module", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: previewMaterial.title,
+          subject_name: previewMaterial.subject_name,
+          description: previewMaterial.description,
+          file_name: previewMaterial.file_name,
+          week_number: previewMaterial.week_number,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.summary) {
+        const currentText = studyNotes[previewMaterial.id] || ""
+        const updatedSummary = currentText.trim()
+          ? `${currentText}\n\n━━━━━━━━━━━━━━━━━━━━\n${data.summary}`
+          : data.summary
+
+        const newNotes = { ...studyNotes, [previewMaterial.id]: updatedSummary }
+        setStudyNotes(newNotes)
+        localStorage.setItem("prakom_study_notes", JSON.stringify(newNotes))
+        setReaderTab("notes")
+      }
+    } catch {
+      // Fallback
+    } finally {
+      setIsSummarizing(false)
+    }
+  }
+
+  const handleCopyNotes = () => {
+    if (!previewMaterial) return
+    const text = studyNotes[previewMaterial.id] || ""
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    setCopiedNote(true)
+    setTimeout(() => setCopiedNote(false), 2500)
+  }
+
+  const handleClearNotes = () => {
+    if (!previewMaterial) return
+    if (confirm("Apakah Anda yakin ingin mengosongkan catatan belajar modul ini?")) {
+      const newNotes = { ...studyNotes, [previewMaterial.id]: "" }
+      setStudyNotes(newNotes)
+      localStorage.setItem("prakom_study_notes", JSON.stringify(newNotes))
+    }
   }
 
   return (
-    <section id="resources" className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#0D824B] dark:text-emerald-300">
-              Bahan Ajar Diklat 120 JP • Supabase Storage
+    <section className="space-y-6">
+      {/* 1. Header Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-5"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+                <FileText className="h-3.5 w-3.5" />
+                <span>Pustaka Bahan Ajar 120 JP</span>
+              </span>
+              <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+                Akses Instan 24 Jam
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+              Pustaka Modul Bahan Ajar PDF & <br className="hidden sm:block" />
+              <span className="text-[#0D824B] dark:text-emerald-400">AI Ringkasan Belajar</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed">
+              Seluruh modul pelatihan fungsional 120 JP telah diarsipkan lengkap. Baca langsung di browser dengan PDF Reader responsif, buat rangkuman otomatis dengan asisten AI, dan simpan catatan belajar pribadi Anda.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+            <span className="rounded-full bg-slate-100 dark:bg-[#1E2433] px-4 py-2 text-xs font-black text-[#18181B] dark:text-white border border-slate-200 dark:border-slate-700">
+              Total {items.length} Modul Resmi
             </span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#131E29] dark:text-white mt-2">
-            Pustaka Modul Bahan Ajar PDF
-          </h3>
-          <p className="text-xs text-[#6B7C93] dark:text-slate-400">
-            Akses dan unduh modul resmi Agrasena (Prakom 625) atau buka langsung melalui modal preview
-          </p>
         </div>
+      </motion.div>
 
-        <span className="text-xs font-bold text-[#FF7643] dark:text-amber-400 bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 rounded-full self-start sm:self-auto">
-          {filtered.length} Modul Tersedia
-        </span>
-      </div>
-
-      {/* Filter & Search Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 soft-card-shadow border border-slate-100/90 dark:border-slate-800"
-      >
+      {/* 2. Filter & Search Controls */}
+      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="relative">
+          <div className="relative sm:col-span-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari judul modul / topik SPBE..."
-              className="h-11 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#131E29] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D3830] dark:focus:border-emerald-500 focus:outline-none"
+              placeholder="Cari judul modul / mata kuliah..."
+              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D824B] focus:outline-none"
             />
           </div>
 
-          <select
-            value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-4 py-2.5 text-xs font-bold text-[#131E29] dark:text-white focus:border-[#0D3830] dark:focus:border-emerald-500 focus:outline-none"
-          >
-            {subjects.map((sub) => (
-              <option key={sub} value={sub} className="bg-white dark:bg-[#1E2433] text-[#131E29] dark:text-white">
-                {sub === "Semua" ? "Semua Tahapan Diklat" : sub}
-              </option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-3.5 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+            >
+              {subjects.map((sub) => (
+                <option key={sub} value={sub}>
+                  {sub === "Semua" ? "📚 Semua Mata Kuliah" : sub}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={selectedWeek}
-            onChange={(e) => setSelectedWeek(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-4 py-2.5 text-xs font-bold text-[#131E29] dark:text-white focus:border-[#0D3830] dark:focus:border-emerald-500 focus:outline-none"
-          >
-            {weeks.map((w) => (
-              <option key={w} value={w} className="bg-white dark:bg-[#1E2433] text-[#131E29] dark:text-white">
-                {w === "Semua" ? "Semua Pertemuan (Week)" : w}
-              </option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={selectedWeek}
+              onChange={(e) => setSelectedWeek(e.target.value)}
+              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-3.5 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+            >
+              {weeks.map((wk) => (
+                <option key={wk} value={wk}>
+                  {wk === "Semua" ? "📅 Semua Pertemuan" : wk}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Materials Grid or Empty State */}
+      {/* 3. Module Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-10 text-center soft-card-shadow border border-slate-100 dark:border-slate-800 space-y-3">
+        <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
           <FileText className="mx-auto h-12 w-12 text-[#8C9BAE] dark:text-slate-500" />
           <h4 className="font-bold text-base text-[#131E29] dark:text-white">Tidak Ada Modul yang Sesuai</h4>
           <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-sm mx-auto">
@@ -159,10 +256,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
           </Button>
         </div>
       ) : (
-        <motion.div
-          layout
-          className="grid grid-cols-1 gap-5 md:grid-cols-2"
-        >
+        <motion.div layout className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {filtered.map((item) => (
             <motion.div
               key={item.id}
@@ -170,11 +264,11 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5 soft-card-shadow border border-slate-100 dark:border-slate-800 hover:border-[#0D3830]/40 dark:hover:border-emerald-500/50 transition-all duration-300"
+              className="group flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5.5 border-2 border-slate-200 dark:border-slate-800 hover:border-[#0D824B] dark:hover:border-emerald-500 shadow-sm transition-all duration-300"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
+                  <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-bold text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
                     Pertemuan {item.week_number}
                   </span>
                   <span className="font-mono text-[11px] font-semibold text-[#8C9BAE] dark:text-slate-400">
@@ -182,18 +276,18 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   </span>
                 </div>
 
-                <h4 className="font-bold text-base text-[#131E29] dark:text-white group-hover:text-[#0D3830] dark:group-hover:text-emerald-400 transition-colors line-clamp-2">
+                <h4 className="font-black text-base text-[#131E29] dark:text-white group-hover:text-[#0D824B] dark:group-hover:text-emerald-300 transition-colors line-clamp-2">
                   {item.title}
                 </h4>
                 <p className="text-xs font-bold text-[#FF7643] dark:text-amber-400">{item.subject_name}</p>
                 <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-2 leading-relaxed">
-                  {item.description}
+                  {item.description || "Modul kurikulum 120 JP Fungsional Pranata Komputer Keahlian."}
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 text-xs text-[#6B7C93] dark:text-slate-400 gap-3">
-                <span className="flex items-center gap-1 text-[11px] font-medium text-[#8C9BAE] dark:text-slate-400 truncate max-w-[180px]">
-                  <FileText className="h-3.5 w-3.5 text-[#0D3830] dark:text-emerald-400 shrink-0" />
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#8C9BAE] dark:text-slate-400 truncate max-w-[180px]">
+                  <FileText className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400 shrink-0" />
                   {item.file_name}
                 </span>
 
@@ -201,10 +295,13 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPreviewMaterial(item)}
+                    onClick={() => {
+                      setPreviewMaterial(item)
+                      setReaderTab("pdf")
+                    }}
                     icon={<Eye className="h-3.5 w-3.5" />}
                   >
-                    Preview
+                    Baca Modul
                   </Button>
                   <a
                     href={item.file_url}
@@ -227,18 +324,19 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
         </motion.div>
       )}
 
-      {/* Modal PDF Preview & Personal Study Notes */}
+      {/* 4. Modal PDF Preview & Personal Study Notes with AI Summarizer */}
       {previewMaterial && (
         <Modal
           isOpen={Boolean(previewMaterial)}
           onClose={() => setPreviewMaterial(null)}
           title={previewMaterial.title}
           description={`${previewMaterial.subject_name} • Modul Bahan Ajar (Prakom 625)`}
-          className="max-w-4xl"
+          className="max-w-5xl h-[92vh] sm:h-[90vh] flex flex-col p-0 overflow-hidden"
+          bodyClassName="p-0 flex flex-col flex-1 min-h-0 overflow-hidden"
         >
-          <div className="space-y-4 pt-1">
-            {/* View Switcher Tabs */}
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Top Switcher Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -252,6 +350,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   <FileText className="h-3.5 w-3.5" />
                   <span>Dokumen PDF</span>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => setReaderTab("notes")}
@@ -262,75 +361,136 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   }`}
                 >
                   <BookOpen className="h-3.5 w-3.5 text-[#A7F3D0]" />
-                  <span>Catatan Belajar Pribadi</span>
+                  <span>Catatan & AI Rangkuman</span>
                   {studyNotes[previewMaterial.id]?.trim() && (
                     <span className="h-2 w-2 rounded-full bg-[#FF7643]" />
                   )}
                 </button>
               </div>
 
-              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold hidden sm:inline-block">
-                {previewMaterial.file_size ? formatFileSize(previewMaterial.file_size) : "PDF Dokumen"}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleGenerateAISummary}
+                  disabled={isSummarizing}
+                  className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#EA580C] to-[#FF7643] hover:opacity-90 px-3.5 py-1 text-xs font-black text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isSummarizing ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Menganalisis...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>✨ Rangkum dengan AI</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Content Area */}
-            {readerTab === "pdf" ? (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 overflow-hidden h-[60vh]">
-                <iframe
-                  src={previewMaterial.file_url}
-                  className="w-full h-full"
-                  title={previewMaterial.title}
-                />
-              </div>
-            ) : (
-              <div className="space-y-3 h-[60vh] flex flex-col">
-                <div className="rounded-2xl bg-[#FFF9F5] dark:bg-[#1E2433] p-3.5 border border-[#FFEADA] dark:border-slate-700 text-xs text-[#EA580C] dark:text-amber-400 font-semibold flex items-center justify-between">
-                  <span>💡 Catatan belajar ini tersimpan otomatis di browser Anda.</span>
-                  <span className="text-[10px] bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full font-bold border border-[#FFEADA] dark:border-slate-700">Auto-Saved</span>
+            {/* Middle Main Content Area (Full Height Scrollable) */}
+            <div className="flex-1 min-h-0 p-3 sm:p-5 overflow-hidden flex flex-col">
+              {readerTab === "pdf" ? (
+                <div className="flex-1 w-full min-h-[350px] sm:min-h-[500px] rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-900 overflow-hidden shadow-inner relative">
+                  <iframe
+                    src={previewMaterial.file_url}
+                    className="w-full h-full border-0 absolute inset-0"
+                    title={previewMaterial.title}
+                  />
                 </div>
-                <textarea
-                  value={studyNotes[previewMaterial.id] || ""}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setStudyNotes((prev) => {
-                      const updated = { ...prev, [previewMaterial.id]: val }
-                      try {
-                        localStorage.setItem("prakom_study_notes", JSON.stringify(updated))
-                      } catch {
-                        // Ignore
-                      }
-                      return updated
-                    })
-                  }}
-                  placeholder="Tuliskan rangkuman, poin penting, pertanyaan diskusi, atau catatan persiapan tugas di sini..."
-                  className="flex-1 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-4 text-xs font-medium text-[#18181B] dark:text-white focus:border-[#0D3830] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-[#1E2433] focus:outline-none resize-none leading-relaxed"
-                />
-              </div>
-            )}
+              ) : (
+                <div className="flex-1 min-h-[350px] sm:min-h-[500px] flex flex-col space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#FFF9F5] dark:bg-[#1E2433] p-3 border border-[#FFD280] dark:border-slate-700 text-xs text-[#EA580C] dark:text-amber-400 font-semibold shrink-0">
+                    <span>💡 Catatan belajar dan hasil rangkuman AI ini otomatis tersimpan di browser Anda.</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCopyNotes}
+                        className="flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-xl font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                      >
+                        {copiedNote ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-500" />
+                            <span className="text-emerald-500">Tersalin!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Salin</span>
+                          </>
+                        )}
+                      </button>
 
-            {/* Modal Bottom Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-              <span className="text-xs text-[#8C9BAE] dark:text-slate-400 font-mono truncate">
-                Storage: class-materials/{previewMaterial.file_name}
+                      <button
+                        type="button"
+                        onClick={handleClearNotes}
+                        className="flex items-center gap-1 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-xl font-bold border border-slate-200 dark:border-slate-700 hover:bg-rose-50 transition cursor-pointer"
+                        title="Kosongkan Catatan"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <textarea
+                    value={studyNotes[previewMaterial.id] || ""}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setStudyNotes((prev) => {
+                        const updated = { ...prev, [previewMaterial.id]: val }
+                        try {
+                          localStorage.setItem("prakom_study_notes", JSON.stringify(updated))
+                        } catch {
+                          // Ignore
+                        }
+                        return updated
+                      })
+                    }}
+                    placeholder="Klik tombol '✨ Rangkum dengan AI' di atas atau ketik rangkuman, poin penting, pertanyaan diskusi, dan catatan persiapan tugas Anda di sini..."
+                    className="flex-1 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-4 text-xs font-mono text-[#18181B] dark:text-white focus:border-[#0D824B] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-[#1E2433] focus:outline-none resize-none leading-relaxed overflow-y-auto"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Toolbar Footer (Fully Responsive on Mobile & Desktop) */}
+            <div className="border-t border-slate-200 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#161B26] p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              <span className="text-[11px] font-mono text-[#8C9BAE] dark:text-slate-400 truncate max-w-xs self-start sm:self-center">
+                📁 {previewMaterial.file_name} ({formatFileSize(previewMaterial.file_size)})
               </span>
-              <div className="flex gap-2">
+
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
                 <a
                   href={previewMaterial.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="w-full sm:w-auto"
                 >
-                  <Button variant="secondary" size="md" icon={<ExternalLink className="h-4 w-4" />}>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    className="w-full justify-center text-xs font-bold"
+                    icon={<ExternalLink className="h-4 w-4" />}
+                  >
                     Buka Tab Baru
                   </Button>
                 </a>
+
                 <a
                   href={previewMaterial.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   download={previewMaterial.file_name}
+                  className="w-full sm:w-auto"
                 >
-                  <Button variant="orange" size="md" icon={<Download className="h-4 w-4" />}>
+                  <Button
+                    variant="orange"
+                    size="md"
+                    className="w-full justify-center text-xs font-black shadow-sm"
+                    icon={<Download className="h-4 w-4" />}
+                  >
                     Unduh PDF
                   </Button>
                 </a>

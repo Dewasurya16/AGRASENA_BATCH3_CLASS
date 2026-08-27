@@ -11,6 +11,7 @@ export interface ModalProps {
   description?: string
   children: React.ReactNode
   className?: string
+  bodyClassName?: string
 }
 
 export function Modal({
@@ -20,6 +21,7 @@ export function Modal({
   description,
   children,
   className,
+  bodyClassName,
 }: ModalProps) {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,7 +40,7 @@ export function Modal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto p-3 sm:p-6 flex min-h-screen items-center justify-center">
+    <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-6 flex min-h-screen items-center justify-center">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-[#0A1612]/60 dark:bg-black/80 backdrop-blur-md transition-opacity animate-fadeIn"
@@ -48,12 +50,12 @@ export function Modal({
       {/* Modal Card Container */}
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[92vh] flex flex-col rounded-[32px] bg-white dark:bg-[#12161F] shadow-2xl shadow-black/25 dark:shadow-black/70 border-2 border-slate-200 dark:border-slate-800 transition-all animate-scaleUp my-auto overflow-hidden",
+          "relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[94vh] flex flex-col rounded-[32px] bg-white dark:bg-[#12161F] shadow-2xl shadow-black/25 dark:shadow-black/70 border-2 border-slate-200 dark:border-slate-800 transition-all animate-scaleUp my-auto overflow-hidden",
           className
         )}
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
+        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
           <div className="pr-4 space-y-0.5">
             <h3 className="text-base sm:text-lg font-black text-[#131E29] dark:text-white tracking-tight">{title}</h3>
             {description && (
@@ -71,7 +73,7 @@ export function Modal({
         </div>
 
         {/* Modal Body with internal scrolling */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 overscroll-contain text-[#18181B] dark:text-slate-100">
+        <div className={cn("flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain text-[#18181B] dark:text-slate-100", bodyClassName)}>
           {children}
         </div>
       </div>

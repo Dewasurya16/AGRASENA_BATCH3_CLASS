@@ -10,12 +10,18 @@ export async function POST(req: NextRequest) {
     // 1. Fetch real-time context from Supabase if available
     let tasksContext = "Tugas Aktif: Rangkuman Materi Hari 2 — Manajemen Layanan TI & SPBE (Tenggat: 26 Agustus 2026, 23:59 WIB)"
     let scheduleContext = ""
+    let materialsContext = `• [Pertemuan 1] Modul Administrasi Prakom (Bahan Ajar Fungsional) - Tata kelola administrasi dan butir DUPAK (File: administrasi-prakom.pdf)
+• [Pertemuan 2] Modul SPBE & Arsitektur Sistem (Tata Kelola TI) - 6 Domain SPBE dan Perpres 95/2018
+• [Pertemuan 3] Modul Manajemen Basis Data & Big Data (Database) - Indexing, replikasi data perkara, dan query SQL tuning
+• [Pertemuan 4] Modul Jaringan & Cloud Server (Infrastruktur TI) - Konfigurasi Linux server, Nginx, dan backup otomatis
+• [Pertemuan 5] Modul Keamanan Informasi & CSIRT (Cybersecurity) - Respon insiden, enkripsi data, dan ISO 27001`
 
     try {
       const supabase = await createClient()
-      const [taskRes, schedRes] = await Promise.all([
-        supabase.from("tasks").select("*").limit(5),
-        supabase.from("schedules").select("*").limit(10),
+      const [taskRes, schedRes, matRes] = await Promise.all([
+        supabase.from("tasks").select("*").limit(10),
+        supabase.from("schedules").select("*").limit(15),
+        supabase.from("materials").select("title, subject_name, description, file_name, week_number").limit(25),
       ])
 
       if (taskRes.data && taskRes.data.length > 0) {
@@ -27,6 +33,12 @@ export async function POST(req: NextRequest) {
       if (schedRes.data && schedRes.data.length > 0) {
         scheduleContext = schedRes.data
           .map((s: any) => `• [${s.day || "Sesi"}] ${s.subject_name} (${s.start_time || "08:00"} - ${s.end_time || "15:30"} WIB)`)
+          .join("\n")
+      }
+
+      if (matRes.data && matRes.data.length > 0) {
+        materialsContext = matRes.data
+          .map((m: any) => `• [Pertemuan ${m.week_number || 1}] ${m.title} (${m.subject_name}) - ${m.description || "Modul Kurikulum 120 JP"} (File: ${m.file_name})`)
           .join("\n")
       }
     } catch {
@@ -50,14 +62,19 @@ KONTEKS DIKLAT HARI INI:
 - Topik Hari Ini: Tata Kelola TI & SPBE Nasional (120 JP)
 - Jadwal Besok: Hari ke-${currentDayNumber + 1} (${tomorrowObj.date}, ${tomorrowObj.dayOfWeek}) — ${tomorrowObj.stageName}
 - Jam Belajar Resmi: 08:00 - 15:30 WIB (Senin s.d. Jumat)
-- Tugas Aktif di Database:
+
+PUSTAKA MODUL PDF & BAHAN AJAR 120 JP YANG TERSEDIA DI KELAS:
+${materialsContext}
+(Jika peserta menanyakan isi modul, materi, konsep, bab tertentu, atau minta dirangkumkan salah satu modul di atas, jelaskan secara mendalam, terstruktur, dan tuntas sesuai isi modul tersebut!)
+
+TUGAS AKTIF DI DATABASE:
 ${tasksContext}
 
 KEMAMPUAN UTAMA ANDA (SERBA BISA):
-1. 💻 CODING & TROUBLESHOOTING: Anda adalah pakar pemrograman tingkat mahir. Jawab semua kendala coding, query SQL, Python, JavaScript, TypeScript, PHP, Bash Script, Docker, Git, REST API, optimasi database, dan arsitektur sistem. Berikan solusi kode yang bersih, efisien, dan siap pakai.
-2. 🏛️ REGULASI & SPBE: Kuasai penuh Perpres No. 95/2018 (SPBE), Perpres No. 132/2022, 4 Domain SPBE, Keamanan Siber (CSIRT/BSSN), dan Standar TIK Nasional.
-3. 📈 JABATAN FUNGSIONAL & ANGKA KREDIT: Pahami PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021 untuk perhitungan DUPAK/PAK, pembagian butir kegiatan Ahli Pertama (12.5 AK/thn) dan Ahli Muda (25 AK/thn), serta syarat bukti fisik yang sah.
-4. 📚 MATERI DIKLAT & TUGAS: Pandu penyusunan laporan tugas mandiri, makalah seminar akhir, rancangan database tilang/pidum/pidsus satker.
+1. 📚 PENGUASAAN MODUL & MATERI DIKLAT: Kuasai penuh seluruh modul bahan ajar 120 JP yang diunggah di kelas. Mampu merangkum materi, menjelaskan bab dan istilah teknis, serta membantu persiapan ujian seminar dan tugas mandiri.
+2. 💻 CODING & TROUBLESHOOTING: Anda adalah pakar pemrograman tingkat mahir. Jawab semua kendala coding, query SQL, Python, JavaScript, TypeScript, PHP, Bash Script, Docker, Git, REST API, optimasi database, dan arsitektur sistem. Berikan solusi kode yang bersih, efisien, dan siap pakai.
+3. 🏛️ REGULASI & SPBE: Kuasai penuh Perpres No. 95/2018 (SPBE), Perpres No. 132/2022, 6 Domain SPBE, Keamanan Siber (CSIRT/BSSN), dan Standar TIK Nasional.
+4. 📈 JABATAN FUNGSIONAL & ANGKA KREDIT: Pahami PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021 untuk perhitungan DUPAK/PAK, pembagian butir kegiatan Ahli Pertama (12.5 AK/thn) dan Ahli Muda (25 AK/thn), serta syarat bukti fisik yang sah.
 5. 🌐 PENGETAHUAN UMUM & PRODUKTIVITAS: Anda juga dapat menjawab pertanyaan umum lainnya di luar diklat dengan cerdas, logis, dan akurat.
 
 Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks yang jelas. Berikan jawaban yang tuntas dan solutif!`
