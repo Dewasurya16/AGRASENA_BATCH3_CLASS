@@ -560,7 +560,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
           onClose={() => setPreviewMaterial(null)}
           title={previewMaterial.title}
           description={`${previewMaterial.subject_name} • Modul Bahan Ajar (Prakom 625)`}
-          className="max-w-5xl h-[92vh] sm:h-[90vh] flex flex-col p-0 overflow-hidden"
+          className="max-w-6xl h-[94vh] flex flex-col p-0 overflow-hidden"
           bodyClassName="p-0 flex flex-col flex-1 min-h-0 overflow-hidden"
         >
           <div className="flex-1 flex flex-col min-h-0">
@@ -619,57 +619,45 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               </div>
             </div>
 
-            {/* Middle Main Content Area (Full Height Scrollable) */}
-            <div className="flex-1 min-h-0 p-3 sm:p-5 overflow-hidden flex flex-col">
+            {/* Middle Main Content Area */}
+            <div className="flex-1 min-h-0 p-2 sm:p-3 overflow-hidden flex flex-col bg-slate-100/60 dark:bg-[#0D1117]">
               {readerTab === "pdf" ? (
-                <div className="flex-1 w-full min-h-[350px] sm:min-h-[500px] rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-900 overflow-hidden shadow-inner relative">
+                <div className="flex-1 w-full h-full min-h-[350px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950 overflow-hidden shadow-inner relative">
                   
-                  {/* Modern Animated Loading Progress Overlay */}
+                  {/* Ultra-Clean Modern Centered Loading Progress Overlay */}
                   {isPdfLoading && (
-                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md transition-all duration-300">
-                      <div className="relative mb-4">
-                        <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-orange-500/30 to-amber-500/30 blur-lg animate-pulse" />
-                        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl">
-                          <FileText className="h-8 w-8 text-[#FF7643] animate-pulse" />
+                    <div className="absolute inset-0 z-20 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
+                      <div className="flex flex-col items-center text-center max-w-xs w-full bg-slate-900/95 border border-slate-700/80 rounded-3xl p-5 shadow-2xl shadow-black/60 space-y-3">
+                        {/* Animated Icon */}
+                        <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-500/30 text-[#FF7643]">
+                          <FileText className="h-6 w-6 animate-pulse" />
+                          <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF7643] text-white shadow">
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          </div>
                         </div>
-                        <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#FF7643] text-white shadow-md">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+
+                        {/* Title & Size */}
+                        <div className="space-y-0.5">
+                          <p className="text-xs sm:text-sm font-black text-white">Memuat Dokumen PDF</p>
+                          <p className="text-[10px] font-mono text-slate-400 truncate max-w-[220px]">
+                            {previewMaterial.file_size ? `${(previewMaterial.file_size / (1024 * 1024)).toFixed(2)} MB • ` : ""}
+                            Menyiapkan Reader...
+                          </p>
                         </div>
-                      </div>
 
-                      <h4 className="text-sm sm:text-base font-black text-white max-w-md truncate px-4">
-                        {previewMaterial.title}
-                      </h4>
-
-                      <p className="text-xs text-slate-400 mt-1 font-mono">
-                        {previewMaterial.file_size ? `${(previewMaterial.file_size / (1024 * 1024)).toFixed(2)} MB • ` : ""}
-                        Memuat Berkas PDF ke Layar...
-                      </p>
-
-                      {/* Progress Bar Track & Percentage */}
-                      <div className="w-full max-w-xs mt-4 space-y-2">
-                        <div className="flex justify-between items-center text-[11px] font-mono">
-                          <span className="text-slate-400">Loading Reader...</span>
-                          <span className="text-[#FF7643] font-bold">{pdfLoadProgress}%</span>
+                        {/* Progress Bar */}
+                        <div className="w-full space-y-1 pt-0.5">
+                          <div className="flex justify-between items-center text-[10px] font-mono">
+                            <span className="text-slate-400">Progress</span>
+                            <span className="text-orange-400 font-bold">{pdfLoadProgress}%</span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800 border border-slate-700">
+                            <div
+                              className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${pdfLoadProgress}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 border border-slate-700">
-                          <div
-                            className="h-full bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-300 ease-out"
-                            style={{ width: `${pdfLoadProgress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="mt-5">
-                        <a
-                          href={previewMaterial.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700 px-3.5 py-1.5 rounded-full transition cursor-pointer"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 text-[#FF7643]" />
-                          <span>Buka di Tab Baru / Download Langsung</span>
-                        </a>
                       </div>
                     </div>
                   )}
@@ -682,7 +670,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   />
                 </div>
               ) : (
-                <div className="flex-1 min-h-[350px] sm:min-h-[500px] flex flex-col space-y-3">
+                <div className="flex-1 min-h-[350px] flex flex-col space-y-2">
                   {/* Notes Control Bar & View Mode Toggle */}
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#FFF9F5] dark:bg-[#1E2433] p-3 border border-[#FFD280] dark:border-slate-700 text-xs text-[#EA580C] dark:text-amber-400 font-semibold shrink-0">
                     <div className="flex items-center gap-2">
@@ -771,13 +759,21 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               )}
             </div>
 
-            {/* Bottom Toolbar Footer (Fully Responsive on Mobile & Desktop) */}
-            <div className="border-t border-slate-200 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#161B26] p-3 sm:p-4 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-              <span className="text-[11px] font-mono text-[#8C9BAE] dark:text-slate-400 truncate max-w-xs self-start sm:self-center">
-                📁 {previewMaterial.file_name} ({formatFileSize(previewMaterial.file_size)})
-              </span>
+            {/* Bottom Toolbar Footer */}
+            <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161B26] p-3 sm:p-3.5 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400 truncate max-w-sm">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/50 text-[#EA580C] shrink-0 border border-orange-200 dark:border-orange-900/50">
+                  <FileText className="h-3.5 w-3.5" />
+                </span>
+                <span className="truncate font-medium">{previewMaterial.file_name}</span>
+                {previewMaterial.file_size ? (
+                  <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 shrink-0">
+                    {formatFileSize(previewMaterial.file_size)}
+                  </span>
+                ) : null}
+              </div>
 
-              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <a
                   href={previewMaterial.file_url}
                   target="_blank"
@@ -786,9 +782,9 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                 >
                   <Button
                     variant="secondary"
-                    size="md"
+                    size="sm"
                     className="w-full justify-center text-xs font-bold"
-                    icon={<ExternalLink className="h-4 w-4" />}
+                    icon={<ExternalLink className="h-3.5 w-3.5" />}
                   >
                     Buka Tab Baru
                   </Button>
@@ -803,9 +799,9 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                 >
                   <Button
                     variant="orange"
-                    size="md"
-                    className="w-full justify-center text-xs font-black shadow-sm"
-                    icon={<Download className="h-4 w-4" />}
+                    size="sm"
+                    className="w-full justify-center text-xs font-black shadow-md shadow-orange-500/20"
+                    icon={<Download className="h-3.5 w-3.5" />}
                   >
                     Unduh PDF
                   </Button>
