@@ -333,6 +333,109 @@ Coach / Widyaiswara Pembimbing        Penguji Seminar Akhir
 
 ( ................................... ) ( ................................... )
 NIP. ................................  NIP. ................................`
+  },
+  {
+    id: "audit-ti-report",
+    title: "Laporan Temuan Audit TI & Tata Kelola SPBE (Kondisi, Kriteria & Risiko)",
+    category: "SOP & Keamanan",
+    format: ".doc Word",
+    description: "Format laporan temuan audit TI baku berbasis ITIL AXELOS memuat analisis Kondisi aktual, Kriteria regulasi, Dampak Risiko, dan Rekomendasi perbaikan.",
+    legalReference: "Modul Audit TI Diklat Prakom & Kerangka Kerja ITIL AXELOS",
+    tags: ["Audit TI", "ITIL", "Temuan Audit", "SPBE", "Manajemen Risiko"],
+    contentDoc: `KEJAKSAAN REPUBLIK INDONESIA
+KEJAKSAAN TINGGI / KEJAKSAAN NEGERI ........................
+BIDANG PEMBINAAN / PENGELOLAAN DATA & STATISTIK KRIMINAL
+
+LAPORAN TEMUAN AUDIT TATA KELOLA & KEAMANAN SISTEM INFORMASI
+Nomor: LAP-AUDIT / ...... / ... / 2026
+
+I. INFORMASI UMUM AUDIT
+1. Objek Audit         : Sistem Informasi PTSP & Server Database Perkara Lokal
+2. Tanggal Pelaksanaan : ........................ 2026
+3. Auditor TI          : ........................................... (Pranata Komputer)
+4. Standar Acuan       : Kerangka Kerja ITIL / Standar SPBE Perpres No. 95/2018
+
+II. MATRIKS TEMUAN AUDIT TERSTRUKTUR
+
+A. TEMUAN 1: Mekanisme Backup Database Otomatis Belum Terenkripsi
+1. KONDISI (Condition):
+   Berdasarkan pemeriksaan fisik dan log server, proses backup database CMS Perkara telah berjalan harian pukul 23:00 WIB, namun file dump .sql disimpan pada partisi lokal tanpa enkripsi dan belum ditransfer otomatis ke off-site cloud storage.
+
+2. KRITERIA (Criteria):
+   - Perpres No. 95 Tahun 2018 Pasal 41 tentang Keamanan SPBE.
+   - SOP Manajemen Backup Kejaksaan RI: "Penyimpanan data cadangan wajib menerapkan enkripsi AES-256 dan prinsip 3-2-1 backup".
+
+3. RISIKO (Risk):
+   Potensi kebocoran data rahasia penanganan perkara jika server lokal mengalami pencurian fisik/ransomware, serta risiko kegagalan pemulihan bencana (Disaster Recovery).
+
+4. REKOMENDASI (Recommendation):
+   - Mengonfigurasi skrip cron backup dengan enkripsi GPG simetris otomatis.
+   - Menyiapkan storage NAS terisolasi / Object Storage S3 aman di jaringan Intra-Kejaksaan.
+
+III. RENCANA TINDAK LANJUT & TARGET SELESAI
+1. PIC Perbaikan  : Pranata Komputer Satker
+2. Target Selesai : 14 (empat belas) hari kalender setelah laporan disahkan
+
+Dibuat oleh:
+Auditor TI / Pranata Komputer
+
+
+( ........................................................... )
+NIP. .......................................................`
+  },
+  {
+    id: "risk-register-iso31000",
+    title: "Formulir Risk Assessment & Risk Register TI (Standar ISO 31000)",
+    category: "SOP & Keamanan",
+    format: ".doc Word",
+    description: "Format penilaian risiko teknologi informasi mencakup identifikasi aset, analisis kemungkinan (likelihood) x dampak (impact), evaluasi selera risiko, dan opsi mitigasi.",
+    legalReference: "Modul Manajemen Risiko TI Diklat Prakom & Standar ISO 31000:2018",
+    tags: ["ISO 31000", "Risk Register", "Likelihood & Impact", "Mitigasi TI"],
+    contentDoc: `KEJAKSAAN REPUBLIK INDONESIA
+KEJAKSAAN TINGGI / KEJAKSAAN NEGERI ........................
+
+FORMULIR DAFTAR RISIKO TEKNOLOGI INFORMASI (RISK REGISTER)
+TAHUN ANGGARAN 2026
+(Berdasarkan Pedoman Tata Kelola Risiko TI Standar ISO 31000)
+
+I. PENETAPAN KONTEKS & IDENTIFIKASI RISIKO
+Unit Pemilik Risiko : Subbagian Pembinaan / Urusan Daskrimti
+Sistem TIK          : Jaringan LAN, Server PTSP & Aplikasi Pelayanan Tilang
+
+II. TABEL PENILAIAN RISIKO (RISK ASSESSMENT MATRIX)
+
+---------------------------------------------------------------------------------------------------------
+No | Aset / Proses TI   | Ancaman & Kerentanan     | Dampak Negatif        | L | I | Skor | Tingkat Risiko
+---------------------------------------------------------------------------------------------------------
+1  | Server Database    | Serangan Ransomware /    | Layanan perkara lumpuh| 3 | 4 |  12  | TINGGI (High)
+   | Perkara            | Port RDP terbuka         | & berkas hilang       |   |   |      |
+---------------------------------------------------------------------------------------------------------
+2  | Bandwidth Jaringan | Kabel FO terputus /      | Pelayanan publik PTSP | 2 | 3 |  6   | SEDANG (Medium)
+   | Internet Kantor    | ISP utama down           | terhambat             |   |   |      |
+---------------------------------------------------------------------------------------------------------
+3  | Komputer User PTSP | Infeksi Malware USB      | Gangguan cetak kuitansi| 3 | 2 |  6   | SEDANG (Medium)
+---------------------------------------------------------------------------------------------------------
+* Keterangan: L = Likelihood (1-5) | I = Impact (1-5) | Skor = L x I
+
+III. RENCANA PENANGANAN RISIKO (RISK TREATMENT)
+
+1. Risiko No. 1 (Server Database):
+   - Opsi Penanganan : Mitigasi Risiko (Risk Mitigation)
+   - Aksi Pengendalian: Menutup port default RDP/SSH, memasang firewall whitelist IP, dan mengaktifkan backup terisolasi immutable.
+
+2. Risiko No. 2 (Jaringan Internet):
+   - Opsi Penanganan : Transfer Risiko (Risk Sharing) / Mitigasi
+   - Aksi Pengendalian: Berlangganan link backup seluler 4G/5G failover otomatis.
+
+Disahkan di : ........................
+Tanggal     : ........................ 2026
+
+Mengetahui,
+Kepala Subbagian Pembinaan             Pranata Komputer / Pengelola TI
+
+
+( ........................................... ) ( ........................................... )
+NIP. ........................................  NIP. ........................................`
   }
 ]
 

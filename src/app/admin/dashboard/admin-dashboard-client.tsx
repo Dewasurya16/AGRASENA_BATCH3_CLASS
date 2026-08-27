@@ -1304,9 +1304,9 @@ export function AdminDashboardClient({
                     <Layers className="h-5 w-5 text-teal-600 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-3xl font-black text-slate-900">6</div>
+                    <div className="text-3xl font-black text-slate-900">8</div>
                     <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
-                      SPT, DUPAK, SPMK & SOP
+                      SPT, DUPAK, SPMK, Audit & SOP
                     </div>
                   </div>
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-teal-600">
@@ -2287,7 +2287,7 @@ export function AdminDashboardClient({
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {["all", "#TugasMandiri", "#Database", "#Jaringan", "#SeminarAkhir", "#LMS", "#Umum"].map((tag) => (
+                    {["all", "#TeknisKodingLab", "#PengolahanData", "#DatabasePostgres", "#JaringanServer", "#AuditTI", "#ITILdanSPBE", "#TugasMandiri", "#SeminarAkhir", "#LMS", "#Umum"].map((tag) => (
                       <button
                         key={tag}
                         onClick={() => setDiscussionTagFilter(tag)}
@@ -2428,7 +2428,7 @@ export function AdminDashboardClient({
                       <span>Koleksi Template Dokumen Resmi (BPS & Kejaksaan RI)</span>
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      6 Berkas standar resmi Perka BPS No. 2/2021 dan Tata Naskah Dinas Kejaksaan RI
+                      8 Berkas standar resmi Perka BPS No. 2/2021, ISO 31000, ITIL AXELOS, dan Tata Naskah Dinas Kejaksaan RI
                     </p>
                   </div>
                   <a
@@ -2442,12 +2442,14 @@ export function AdminDashboardClient({
                   </a>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                   {[
                     { title: "Surat Perintah Tugas (SPT) TI", category: "Administrasi & SPT", ref: "Pedoman Tata Naskah Kejaksaan", desc: "Format penomoran PRINT resmi penugasan pemeliharaan server, jaringan & database." },
                     { title: "Formulir DUPAK & SPMK Prakom", category: "DUPAK & SKP BPS", ref: "Perka BPS No. 2/2021", desc: "Surat Pernyataan Melakukan Kegiatan 5 Sub-Unsur & butir angka kredit resmi." },
                     { title: "Konversi SKP ke PAK Integrasi", category: "DUPAK & SKP BPS", ref: "PermenPAN-RB No. 1/2023", desc: "Konversi predikat kinerja tahunan PNS ke Angka Kredit Integrasi." },
                     { title: "SOP Ruang Server & Keamanan", category: "SOP & Keamanan", ref: "Perpres 95/2018 SPBE", desc: "Tata tertib server, jadwal backup otomatis harian, dan tanggap darurat CSIRT." },
+                    { title: "Laporan Temuan Audit TI", category: "SOP & Keamanan", ref: "Standar ITIL AXELOS", desc: "Matriks temuan audit memuat Kondisi, Kriteria, Risiko, dan Rekomendasi." },
+                    { title: "Risk Register TI ISO 31000", category: "SOP & Keamanan", ref: "ISO 31000:2018", desc: "Matriks identifikasi ancaman, Likelihood x Impact, dan mitigasi risiko." },
                     { title: "Berita Acara Kerusakan TIK", category: "Administrasi & SPT", ref: "Tata Kelola BMN Kejaksaan", desc: "BAP pemeriksaan fisik dan diagnosa kerusakan perangkat PC/server dinas." },
                     { title: "Format Makalah Seminar Akhir", category: "Seminar Akhir", ref: "Pusdiklat Badiklat Kejaksaan", desc: "Format naskah proposal inovasi 5 Bab dengan Lembar Pengesahan Coach & Penguji." }
                   ].map((tpl, i) => (

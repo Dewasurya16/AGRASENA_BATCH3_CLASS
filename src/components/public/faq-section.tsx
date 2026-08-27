@@ -174,7 +174,51 @@ const FAQ_DATABASE: FAQItem[] = [
     highlight: "Minimal kehadiran 95% untuk syarat kelulusan diklat."
   },
 
-  // 8. Kendala & Saran
+  // 8. Kurikulum & Standar Kompetensi 9 Modul
+  {
+    id: "kurikulum-1",
+    category: "Kurikulum & Modul Diklat",
+    question: "Apa perbedaan mendasar porsi JP dan metode pembelajaran antara Pelatihan Fungsional Terampil dan Ahli?",
+    answer: "Berdasarkan Modul Overview Program Pelatihan Prakom Kejaksaan RI:\n• Pelatihan Fungsional Terampil: Berdurasi 106 JP dengan porsi praktik lebih dominan (60% Praktik, 40% Teori) yang berfokus pada penerapan dasar operasional TI.\n• Pelatihan Fungsional Ahli: Berdurasi 120 JP dengan porsi konseptual lebih besar (60% Teori, 40% Praktik) yang menitikberatkan pada tata kelola, analisis kebijakan, dan evaluasi SPBE.",
+    highlight: "Terampil: 106 JP (60% praktik) | Ahli: 120 JP (60% teori)."
+  },
+  {
+    id: "kurikulum-2",
+    category: "Kurikulum & Modul Diklat",
+    question: "Berapa kali periode kenaikan pangkat bagi ASN dalam satu tahun berdasarkan PermenPAN-RB No. 1 Tahun 2023?",
+    answer: "Berdasarkan PermenPAN-RB No. 1 Tahun 2023 dan regulasi BKN, periode usulan kenaikan pangkat PNS kini disederhanakan dan diperluas menjadi 6 (enam) periode dalam satu tahun, yaitu per:\n1. 1 Februari\n2. 1 April\n3. 1 Juni\n4. 1 Agustus\n5. 1 Oktober\n6. 1 Desember",
+    highlight: "Kenaikan pangkat PNS berlaku 6 periode dalam setahun."
+  },
+  {
+    id: "kurikulum-3",
+    category: "Kurikulum & Modul Diklat",
+    question: "Apa saja 4 unsur wajib dalam penyusunan Laporan Temuan Audit TI?",
+    answer: "Dalam Modul Audit TI, setiap temuan wajib memuat 4 unsur terstruktur:\n1. Temuan / Kondisi (Condition): Fakta aktual kelemahan kontrol sistem di lapangan.\n2. Kriteria (Criteria): Standar pembanding, peraturan perundang-undangan, atau SOP baku.\n3. Risiko (Risk): Dampak negatif aktual atau potensi ancaman kerugian yang ditimbulkan.\n4. Rekomendasi (Recommendation): Solusi perbaikan konkrit bagi pimpinan.",
+    highlight: "4 Unsur Audit: Kondisi, Kriteria, Risiko, dan Rekomendasi."
+  },
+  {
+    id: "kurikulum-4",
+    category: "Kurikulum & Modul Diklat",
+    question: "Sebutkan 6 aktivitas utama dalam Rantai Nilai Layanan (Service Value Chain - SVC) ITIL 4!",
+    answer: "Model operasional Service Value Chain (SVC) ITIL 4 terdiri dari 6 aktivitas inti:\n1. Plan (Perencanaan)\n2. Improve (Peningkatan Berkelanjutan)\n3. Engage (Pelibatan Pengguna & Stakeholder)\n4. Design & Transition (Perancangan & Transisi)\n5. Obtain / Build (Pengadaan & Pembangunan Sistem)\n6. Deliver & Support (Penyampaian & Dukungan Operasional)",
+    highlight: "6 Aktivitas SVC: Plan, Improve, Engage, Design & Transition, Obtain/Build, Deliver & Support."
+  },
+  {
+    id: "kurikulum-5",
+    category: "Kurikulum & Modul Diklat",
+    question: "Apa kepanjangan dan 5 dimensi analisis kelayakan sistem metode TELOS?",
+    answer: "Metode TELOS digunakan dalam tahap studi kelayakan perancangan sistem informasi inovasi:\n• T - Technical (Kelayakan kesiapan teknologi server, jaringan, dan keahlian SDM)\n• E - Economic (Analisis rasio biaya investasi vs manfaat efisiensi / Cost-Benefit)\n• L - Legal (Kepatuhan hukum, UU ITE, UU PDP, dan regulasi Kejaksaan)\n• O - Operational (Kesiapan alur kerja dan kemudahan adopsi oleh petugas PTSP/masyarakat)\n• S - Schedule (Ketepatan jadwal penyelesaian tahapan proyek 6 bulan)",
+    highlight: "TELOS: Technical, Economic, Legal, Operational, Schedule."
+  },
+  {
+    id: "kurikulum-6",
+    category: "Kurikulum & Modul Diklat",
+    question: "Apa fungsi teknik manipulasi data pivot_wider() di R dan pivot() di Python Pandas?",
+    answer: "Dalam Modul Pengolahan Data (DAMA DMBOK), fungsi `pivot_wider()` pada library R (tidyr) dan fungsi `.pivot()` / `.pivot_table()` pada library Python Pandas digunakan untuk melakukan 'Restructuring' atau mengubah struktur data dari format panjang (long format) menjadi format lebar (wide format) untuk mempermudah visualisasi dan pelaporan agregasi perkara.",
+    highlight: "Pivoting data: Mengubah struktur dari format panjang (long) ke format lebar (wide)."
+  },
+
+  // 9. Kendala & Saran
   {
     id: "admin-1",
     category: "Kendala Teknis & Bantuan",
@@ -192,6 +236,7 @@ export function FaqSection() {
 
   const categories = [
     "Semua",
+    "Kurikulum & Modul Diklat",
     "Jadwal & Sesi Diklat",
     "Tugas & Portal LMS",
     "Materi & Modul PDF",

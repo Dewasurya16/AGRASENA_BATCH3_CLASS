@@ -26,7 +26,16 @@ export function QuizPlayer() {
   const [isSubmitted, setIsSubmitted] = React.useState(false)
   const [timerSeconds, setTimerSeconds] = React.useState(1560) // 26 minutes default
 
-  const categories = ["Semua", "SPBE & Tata Kelola", "Manajemen Layanan TI", "Basis Data & Sistem", "Keamanan Informasi", "Angka Kredit Prakom"]
+  const categories = [
+    "Semua",
+    "Overview & Administrasi Prakom",
+    "Audit TI & IT Enterprise",
+    "Manajemen Layanan ITIL 4",
+    "Manajemen Risiko ISO 31000",
+    "Pengolahan Data & DAMA DMBOK",
+    "Sistem Informasi & SDLC",
+    "LMS & Regulasi ASN"
+  ]
 
   const filteredQuestions = React.useMemo(() => {
     if (selectedCategory === "Semua") return QUIZ_QUESTIONS

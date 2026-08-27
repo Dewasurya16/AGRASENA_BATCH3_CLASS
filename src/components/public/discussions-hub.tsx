@@ -43,7 +43,19 @@ interface DiscussionThread {
   replies: Reply[]
 }
 
-const TAGS_LIST = ["Semua", "#TugasMandiri", "#Database", "#Jaringan", "#SeminarAkhir", "#LMS", "#Umum"]
+const TAGS_LIST = [
+  "Semua",
+  "#TeknisKodingLab",
+  "#PengolahanData",
+  "#DatabasePostgres",
+  "#JaringanServer",
+  "#AuditTI",
+  "#ITILdanSPBE",
+  "#TugasMandiri",
+  "#SeminarAkhir",
+  "#LMS",
+  "#Umum"
+]
 
 export function DiscussionsHub() {
   const [threads, setThreads] = React.useState<DiscussionThread[]>([])

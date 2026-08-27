@@ -1,6 +1,6 @@
 export interface QuizQuestion {
   id: number
-  category: "SPBE & Tata Kelola" | "Manajemen Layanan TI" | "Basis Data & Sistem" | "Keamanan Informasi" | "Angka Kredit Prakom"
+  category: "Overview & Administrasi Prakom" | "Audit TI & IT Enterprise" | "Manajemen Layanan ITIL 4" | "Manajemen Risiko ISO 31000" | "Pengolahan Data & DAMA DMBOK" | "Sistem Informasi & SDLC" | "LMS & Regulasi ASN"
   question: string
   options: string[]
   correctIndex: number
@@ -8,351 +8,308 @@ export interface QuizQuestion {
 }
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
-  // --- KATEGORI 1: SPBE & TATA KELOLA PEMERINTAHAN (1 - 6) ---
+  // =========================================================================
+  // 1. OVERVIEW PROGRAM PELATIHAN & ADMINISTRASI PRAKOM (MODUL 1 & 2)
+  // =========================================================================
   {
     id: 1,
-    category: "SPBE & Tata Kelola",
-    question: "Berdasarkan Perpres No. 95 Tahun 2018 tentang SPBE, apa tujuan utama penerapan Arsitektur SPBE pada instansi pemerintah?",
+    category: "Overview & Administrasi Prakom",
+    question: "Apa perbedaan mendasar porsi alokasi jam pelajaran (JP) dan metode pembelajaran antara Pelatihan Fungsional Prakom Terampil dan Ahli?",
     options: [
-      "Membeli infrastruktur server dengan anggaran terbesar setiap tahun",
-      "Memberikan panduan integrasi proses bisnis, data, aplikasi, dan infrastruktur untuk layanan terpadu nasional",
-      "Membuat aplikasi mandiri sebanyak mungkin di tiap unit kerja",
-      "Menyerahkan seluruh pengelolaan data pemerintah ke pihak swasta tanpa kontrol"
+      "Terampil 120 JP (60% teori, 40% praktik) sedangkan Ahli 106 JP (40% teori, 60% praktik)",
+      "Terampil 106 JP (40% teori, 60% praktik) sedangkan Ahli 120 JP (60% teori, 40% praktik)",
+      "Keduanya memiliki alokasi 100 JP dengan porsi teori dan praktik 50%:50%",
+      "Terampil 140 JP tanpa praktik, sedangkan Ahli 100% full praktik di laboratorium"
     ],
     correctIndex: 1,
-    explanation: "Arsitektur SPBE bertujuan menyusun kerangka dasar yang mengintegrasikan proses bisnis, data dan informasi, infrastruktur, aplikasi, dan keamanan SPBE untuk menghasilkan layanan SPBE yang terpadu secara nasional."
+    explanation: "Berdasarkan Modul Overview Program Pelatihan Prakom Kejaksaan RI: Pelatihan Fungsional Terampil berdurasi 106 JP dengan porsi praktik lebih dominan (60% praktik, 40% teori), sedangkan Pelatihan Fungsional Ahli berdurasi 120 JP dengan menitikberatkan pada aspek konseptual dan kebijakan (60% teori, 40% praktik)."
   },
   {
     id: 2,
-    category: "SPBE & Tata Kelola",
-    question: "Prinsip 'Satu Data Indonesia' (Perpres No. 39 Tahun 2019) mewajibkan data yang dihasilkan instansi pemerintah memenuhi 4 kaidah, KECUALI...",
+    category: "Overview & Administrasi Prakom",
+    question: "Sebutkan 3 (tiga) pilar kompetensi utama yang dibangun dalam Pelatihan Fungsional Pranata Komputer Kejaksaan RI!",
     options: [
-      "Memenuhi Standar Data yang ditetapkan",
-      "Memiliki Metadata Baku",
-      "Memenuhi Kaidah Interoperabilitas Data & Menggunakan Kode Referensi",
-      "Data harus selalu dirahasiakan dan dilarang untuk dibagi-pakaikan antar instansi"
+      "Kompetensi Administrasi, Keuangan, dan Protokoler",
+      "Kompetensi Teknis, Manajerial, dan Sosial Kultural",
+      "Kompetensi Hardware, Software, dan Jaringan Komputer",
+      "Kompetensi Pidana Umum, Pidana Khusus, dan Perdata"
     ],
-    correctIndex: 3,
-    explanation: "Satu Data Indonesia justru mendorong prinsip 'Bagi Pakai Data' antar instansi pemerintah guna mewujudkan keterpaduan layanan publik. Empat prinsip SDI adalah: Standar Data, Metadata, Interoperabilitas, dan Kode Referensi/Data Induk."
+    correctIndex: 1,
+    explanation: "Standar Kompetensi ASN mencakup 3 pilar: (1) Kompetensi Teknis (spesifik bidang TI), (2) Kompetensi Manajerial (memimpin dan mengelola unit kerja), dan (3) Kompetensi Sosial Kultural (interaksi majemuk dengan masyarakat dan rekan kerja)."
   },
   {
     id: 3,
-    category: "SPBE & Tata Kelola",
-    question: "Dalam Domain Manajemen SPBE, proses audit TIK secara berkala wajib dilakukan untuk menilai aspek...",
+    category: "Overview & Administrasi Prakom",
+    question: "Urutan jenjang jabatan fungsional Pranata Komputer Kategori Keterampilan mulai dari yang terendah adalah...",
     options: [
-      "Hanya harga pembelian laptop pegawai",
-      "Tata kelola, fungsionalitas aplikasi, infrastruktur, dan kepatuhan keamanan informasi",
-      "Jumlah jam lembur operator komputer",
-      "Banyaknya dokumen cetak yang dihasilkan satker"
+      "Pemula, Terampil, Mahir",
+      "Terampil, Mahir, Penyelia",
+      "Pertama, Muda, Madya, Utama",
+      "Pelaksana, Pengatur, Penata"
     ],
     correctIndex: 1,
-    explanation: "Audit TIK dalam SPBE mencakup pemeriksaan kepatuhan tata kelola, keandalan infrastruktur, fungsionalitas sistem aplikasi, serta kecukupan kontrol keamanan informasi."
+    explanation: "Berdasarkan PermenPAN-RB No. 32 Tahun 2020: Kategori Keterampilan terdiri dari Terampil (Gol. II/c - II/d), Mahir (Gol. III/a - III/b), dan Penyelia (Gol. III/c - III/d). Sedangkan Kategori Keahlian adalah Pertama, Muda, Madya, dan Utama."
   },
   {
     id: 4,
-    category: "SPBE & Tata Kelola",
-    question: "Tingkat Kematangan (Maturity Level) evaluasi SPBE instansi pemerintah dengan nilai Level 3 menunjukkan bahwa tata kelola berada pada tahap...",
+    category: "Overview & Administrasi Prakom",
+    question: "Berdasarkan ketentuan terbaru PermenPAN-RB Nomor 1 Tahun 2023, berapa kali periode kenaikan pangkat bagi PNS dalam satu tahun kalender?",
     options: [
-      "Rintisan (Ad-hoc)",
-      "Terdefinisi (Standardized & Defined)",
-      "Terpadu (Integrated)",
-      "Optimum (Continuous Improvement)"
+      "2 (dua) periode (April dan Oktober)",
+      "4 (empat) periode (Januari, April, Juli, Oktober)",
+      "6 (enam) periode (Februari, April, Juni, Agustus, Oktober, Desember)",
+      "Setiap bulan tanpa batasan periode"
     ],
-    correctIndex: 1,
-    explanation: "Skala Kematangan SPBE: Level 1 (Rintisan), Level 2 (Terkelola), Level 3 (Terdefinisi), Level 4 (Terpadu/Terintegrasi), dan Level 5 (Optimum)."
-  },
-  {
-    id: 5,
-    category: "SPBE & Tata Kelola",
-    question: "Kementerian yang bertindak sebagai Koordinator Tim Koordinasi SPBE Nasional sesuai regulasi adalah...",
-    options: [
-      "Kementerian BUMN",
-      "Kementerian PANRB",
-      "Kementerian Pertahanan",
-      "Kementerian Keuangan"
-    ],
-    correctIndex: 1,
-    explanation: "Kementerian PANRB bertindak sebagai Koordinator Tim Koordinasi SPBE Nasional bersama Kementerian Kominfo (Komdigi), Bappenas, BSSN, BRIN, dan BPKP."
+    correctIndex: 2,
+    explanation: "Berdasarkan PermenPAN-RB No. 1 Tahun 2023 dan regulasi BKN, usulan kenaikan pangkat PNS kini disederhanakan dan diperluas menjadi 6 (enam) periode dalam satu tahun yaitu per 1 Februari, 1 April, 1 Juni, 1 Agustus, 1 Oktober, dan 1 Desember."
   },
 
-  // --- KATEGORI 2: MANAJEMEN LAYANAN TI (ITSM / ITIL) (6 - 10) ---
+  // =========================================================================
+  // 2. AUDIT TEKNOLOGI INFORMASI (MODUL 3)
+  // =========================================================================
   {
-    id: 6,
-    category: "Manajemen Layanan TI",
-    question: "Dalam kerangka kerja ITIL / Manajemen Layanan TI (ITSM), dokumen yang mendefinisikan kesepakatan tingkat ketersediaan dan performa layanan TI antara penyedia layanan dengan pengguna disebut...",
+    id: 5,
+    category: "Audit TI & IT Enterprise",
+    question: "Dalam penyusunan laporan temuan audit TI, unsur yang menjelaskan tentang konsekuensi, potensi ancaman, atau kerugian aktual yang dapat memengaruhi pencapaian sasaran sistem disebut...",
     options: [
-      "Service Level Agreement (SLA)",
-      "Operational Level Agreement (OLA)",
-      "Configuration Management Database (CMDB)",
-      "Underpinning Contract (UC)"
+      "Kondisi (Condition)",
+      "Kriteria (Criteria)",
+      "Risiko (Risk)",
+      "Rekomendasi (Recommendation)"
     ],
-    correctIndex: 0,
-    explanation: "SLA (Service Level Agreement) adalah dokumen kesepakatan formal antara penyedia layanan TI dengan pengguna yang mendefinisikan standar layanan, target respons, dan ketersediaan sistem."
+    correctIndex: 2,
+    explanation: "Struktur Laporan Temuan Audit TI terdiri dari: (1) Temuan/Kondisi (fakta aktual kelemahan kontrol), (2) Kriteria (standar pembanding/regulasi), (3) Risiko (dampak negatif/potensi kerugian yang ditimbulkan), dan (4) Rekomendasi (langkah perbaikan)."
   },
   {
-    id: 7,
-    category: "Manajemen Layanan TI",
-    question: "Perbedaan mendasar antara 'Incident Management' dan 'Problem Management' pada operasional TI adalah...",
+    id: 6,
+    category: "Audit TI & IT Enterprise",
+    question: "Organisasi internasional manakah yang merilis dan mengelola kepemilikan kerangka kerja Information Technology Infrastructure Library (ITIL)?",
     options: [
-      "Incident mencari penyebab akar masalah permanen, Problem hanya me-restart server",
-      "Incident fokus memulihkan layanan secepat mungkin, Problem fokus menganalisis & menyelesaikan akar penyebab gangguan (root cause)",
-      "Incident hanya menangani perangkat keras, Problem hanya menangani software",
-      "Tidak ada perbedaan di antara keduanya"
+      "ISACA (Information Systems Audit and Control Association)",
+      "AXELOS Limited",
+      "IEEE (Institute of Electrical and Electronics Engineers)",
+      "ISO (International Organization for Standardization)"
     ],
     correctIndex: 1,
-    explanation: "Incident Management bertujuan memulihkan gangguan operasional secepat mungkin ke kondisi normal, sedangkan Problem Management bertugas menganalisis dan mengeliminasi akar penyebab (root cause) agar gangguan tidak berulang."
+    explanation: "ITIL (Information Technology Infrastructure Library) adalah seperangkat panduan best practices untuk IT Service Management (ITSM) yang dirilis dan dimiliki oleh AXELOS Limited."
+  },
+
+  // =========================================================================
+  // 3. IT ENTERPRISE & ARSITEKTUR SPBE (MODUL 4)
+  // =========================================================================
+  {
+    id: 7,
+    category: "Audit TI & IT Enterprise",
+    question: "Instrumen teknologi informasi apakah yang digunakan untuk menjamin aspek kenirsangkalan (non-repudiation) dan keaslian pada arsitektur data SPBE Kejaksaan RI?",
+    options: [
+      "Koneksi kabel LAN Cat6 dan switch unmanaged",
+      "Enkripsi simetris, Sertifikat Elektronik, Tanda Tangan Elektronik (ETTD), Hash kriptografi, dan Public Key Infrastructure (PKI)",
+      "Antivirus gratis dan firewall bawaan Windows",
+      "Pencetakan fisik berkas perkara rangkap tiga"
+    ],
+    correctIndex: 1,
+    explanation: "Kenirsangkalan (Non-Repudiation) dan keaslian data dalam SPBE dijamin melalui kombinasi algoritma enkripsi, Sertifikat Elektronik Balai Sertifikasi Elektronik (BSrE BSSN), Tanda Tangan Elektronik Tersertifikasi (ETTD), fungsi Hash, dan infrastruktur kunci publik (PKI)."
   },
   {
     id: 8,
-    category: "Manajemen Layanan TI",
-    question: "Database yang menyimpan informasi seluruh aset TI, atribut konfigurasi, dan keterkaitan dependensi antar sistem disebut...",
+    category: "Audit TI & IT Enterprise",
+    question: "Mengapa Enterprise Architecture (EA) diposisikan sebagai cetak biru (blueprint) utama dalam transformasi digital instansi pemerintah?",
     options: [
-      "Data Warehouse (DWH)",
-      "Configuration Management Database (CMDB)",
-      "Relational Cache Store",
-      "Enterprise Resource Planning (ERP)"
+      "Agar instansi dapat melakukan pengadaan komputer setiap awal tahun",
+      "Sebagai pengarah strategis untuk menyelaraskan proses bisnis, integrasi data perkara, aplikasi layanan publik, dan infrastruktur keamanan TIK secara terpadu dan berkelanjutan",
+      "Untuk mengganti seluruh staf operator TI dengan sistem robot otomatis",
+      "Hanya sebagai formalitas dokumen syarat pencairan anggaran DIPA"
     ],
     correctIndex: 1,
-    explanation: "CMDB (Configuration Management Database) adalah repositori terpusat yang menyimpan daftar Configuration Items (CI) beserta relasi dependensi antar infrastruktur TI."
+    explanation: "Enterprise Architecture (EA) berfungsi sebagai cetak biru (blueprint) yang memetakan keterpaduan antara proses bisnis institusi penegak hukum, standardisasi data, arsitektur aplikasi, dan ketahanan infrastruktur SPBE."
   },
+
+  // =========================================================================
+  // 4. MANAJEMEN LAYANAN TEKNOLOGI INFORMASI (ITIL 4) (MODUL 5)
+  // =========================================================================
   {
     id: 9,
-    category: "Manajemen Layanan TI",
-    question: "Tujuan utama dari dibentuknya Change Advisory Board (CAB) dalam manajemen perubahan sistem TI adalah...",
+    category: "Manajemen Layanan ITIL 4",
+    question: "Sebutkan 6 (enam) aktivitas utama dalam Rantai Nilai Layanan (Service Value Chain - SVC) pada kerangka kerja ITIL 4!",
     options: [
-      "Menyetujui kenaikan gaji tim developer",
-      "Menilai dampak, risiko, dan urgensi sebelum suatu perubahan pada sistem produksi diizinkan untuk di-deploy",
-      "Menghapus database cadangan",
-      "Menulis kode program secara bergiliran"
+      "Input, Processing, Storage, Output, Distribution, Maintenance",
+      "Plan, Improve, Engage, Design & Transition, Obtain/Build, Deliver & Support",
+      "Requirements, Design, Coding, Testing, Deployment, Maintenance",
+      "Identifikasi, Analisis, Evaluasi, Mitigasi, Monitoring, Pelaporan"
     ],
     correctIndex: 1,
-    explanation: "CAB (Change Advisory Board) bertugas mengevaluasi permintaan perubahan (RFC), menilai risiko gangguan terhadap operasional bisnis, serta menjadwalkan deployment yang aman."
+    explanation: "Model operasional Rantai Nilai Layanan (Service Value Chain) ITIL 4 memuat 6 aktivitas inti: Plan (Perencanaan), Improve (Peningkatan), Engage (Pelibatan), Design & Transition (Desain & Transisi), Obtain/Build (Pengadaan/Pembangunan), dan Deliver & Support (Penyampaian & Dukungan)."
   },
   {
     id: 10,
-    category: "Manajemen Layanan TI",
-    question: "Metrik 'Mean Time to Repair' (MTTR) dalam pengelolaan sistem kejaksaan merepresentasikan...",
+    category: "Manajemen Layanan ITIL 4",
+    question: "Apa fungsi fundamental dari Configuration Management Database (CMDB) dalam manajemen konfigurasi layanan TI?",
     options: [
-      "Waktu rata-rata yang dibutuhkan untuk memperbaiki sistem kembali normal setelah terjadi insiden kegagalan",
-      "Waktu rata-rata server menyala tanpa pernah mati",
-      "Durasi pembuatan laporan angka kredit tahunan",
-      "Banyaknya tiket kendala yang masuk per hari"
-    ],
-    correctIndex: 0,
-    explanation: "MTTR (Mean Time to Repair) mengukur rata-rata waktu yang dihabiskan tim teknis untuk mendeteksi, memperbaiki, dan mengembalikan layanan yang down ke kondisi normal."
-  },
-
-  // --- KATEGORI 3: BASIS DATA & ARSITEKTUR SISTEM (11 - 16) ---
-  {
-    id: 11,
-    category: "Basis Data & Sistem",
-    question: "Teknik optimasi basis data relasional yang digunakan untuk mempercepat pencarian data pada kolom yang sering dijadikan kondisi WHERE tanpa melakukan full table scan adalah...",
-    options: [
-      "Database Normalization 3NF",
-      "Indexing (misalnya B-Tree Index)",
-      "Database Truncate",
-      "Foreign Key Cascading"
+      "Menyimpan password akun email seluruh pegawai",
+      "Menyimpan data atribut konfigurasi dan memetakan relasi ketergantungan antar-komponen layanan TI (Configuration Item / CI)",
+      "Sebagai tempat penyimpanan file backup video rekaman CCTV kantor",
+      "Mencatat absensi kehadiran harian staf fungsional"
     ],
     correctIndex: 1,
-    explanation: "Indexing (seperti B-Tree atau Hash Index) membuat struktur data penunjuk khusus yang memungkinkan database engine menemukan record yang cocok jauh lebih cepat tanpa harus memindai seluruh baris tabel (full table scan)."
+    explanation: "CMDB (Configuration Management Database) berfungsi menyimpan informasi rinci tentang seluruh Configuration Item (CI) seperti server, database, jaringan, dan aplikasi, serta memetakan hubungan ketergantungan antar-komponen untuk mempermudah analisis dampak insiden dan perubahan sistem."
   },
   {
-    id: 12,
-    category: "Basis Data & Sistem",
-    question: "Karakteristik transaksi database yang menjamin bahwa seluruh rangkaian perintah SQL berhasil dieksekusi bersama atau dibatalkan seutuhnya (all-or-nothing) dikenal dengan prinsip...",
+    id: 11,
+    category: "Manajemen Layanan ITIL 4",
+    question: "Manakah yang BUKAN merupakan salah satu dari 4 Dimensi Manajemen Layanan pada ITIL 4?",
     options: [
-      "Atomicity",
-      "Consistency",
-      "Isolation",
-      "Durability"
+      "Organizations and People",
+      "Information and Technology",
+      "Hardware and Physical Device Purchases Only",
+      "Value Streams and Processes"
     ],
-    correctIndex: 0,
-    explanation: "Atomicity (dalam prinsip ACID) memastikan bahwa seluruh operasi dalam suatu transaksi dianggap sebagai satu kesatuan tunggal: jika satu bagian gagal, seluruh transaksi di-rollback tanpa mengubah data."
+    correctIndex: 2,
+    explanation: "4 Dimensi Manajemen Layanan ITIL 4 adalah: (1) Organizations and People, (2) Information and Technology, (3) Partners and Suppliers, dan (4) Value Streams and Processes."
+  },
+
+  // =========================================================================
+  // 5. MANAJEMEN RISIKO TEKNOLOGI INFORMASI (ISO 31000) (MODUL 6)
+  // =========================================================================
+  {
+    id: 12,
+    category: "Manajemen Risiko ISO 31000",
+    question: "Sebutkan 3 (tiga) sub-tahapan yang wajib dilaksanakan dalam proses Penilaian Risiko (Risk Assessment) menurut standar ISO 31000!",
+    options: [
+      "Perencanaan, Pembiayaan, dan Pengadaan",
+      "Identifikasi Risiko, Analisis Risiko, dan Evaluasi Risiko",
+      "Mitigasi Risiko, Transfer Risiko, dan Penerimaan Risiko",
+      "Penyusunan SOP, Sosialisasi, dan Uji Petik"
+    ],
+    correctIndex: 1,
+    explanation: "Tahap Penilaian Risiko (Risk Assessment) terdiri dari 3 sub-proses: (1) Identifikasi Risiko (mengenali sumber bahaya & aset), (2) Analisis Risiko (mengukur likelihood x impact untuk besaran risiko), dan (3) Evaluasi Risiko (menentukan prioritas berdasarkan selera risiko)."
   },
   {
     id: 13,
-    category: "Basis Data & Sistem",
-    question: "Kondisi di mana sebuah tabel berada pada bentuk normal ketiga (3NF) mensyaratkan...",
+    category: "Manajemen Risiko ISO 31000",
+    question: "Opsi penanganan risiko (Risk Treatment) apakah yang tepat dipilih apabila estimasi biaya mitigasi teknis jauh lebih besar daripada potensi dampak kerugian finansial/operasional yang timbul?",
     options: [
-      "Sudah memenuhi 2NF dan tidak memiliki ketergantungan transitif (non-key attribute bergantung pada non-key lain)",
-      "Setiap kolom bernilai array atau tabel bersarang",
-      "Semua kolom harus memiliki tipe data VARCHAR",
-      "Tidak boleh ada relasi antar tabel"
-    ],
-    correctIndex: 0,
-    explanation: "Bentuk Normal Ketiga (3NF) mensyaratkan tabel telah memenuhi 2NF dan menghilangkan 'Transitive Dependency', di mana setiap kolom non-primary key harus bergantung secara langsung hanya pada primary key."
-  },
-  {
-    id: 14,
-    category: "Basis Data & Sistem",
-    question: "Kelebihan utama penggunaan arsitektur Microservices dibandingkan Monolithic pada sistem SPBE skala besar adalah...",
-    options: [
-      "Lebih mudah dideploy ke satu komputer laptop pribadi",
-      "Skalabilitas modular independen, fault isolation (kegagalan satu modul tidak mematikan seluruh sistem), dan fleksibilitas teknologi",
-      "Tidak memerlukan koneksi jaringan sama sekali",
-      "Menghilangkan kebutuhan basis data"
+      "Penghindaran Risiko (Risk Avoidance)",
+      "Penerimaan Risiko (Risk Acceptance)",
+      "Pembagian Risiko (Risk Sharing / Transfer)",
+      "Mitigasi Risiko Maksimal (Risk Mitigation)"
     ],
     correctIndex: 1,
-    explanation: "Microservices memecah aplikasi menjadi layanan-layanan independen yang dapat diskalakan dan di-deploy terpisah tanpa saling mengganggu ketersediaan layanan lainnya."
+    explanation: "Penerimaan Risiko (Risk Acceptance) diambil sebagai keputusan rasional manakala tingkat risiko berada dalam batas selera risiko (risk appetite) organisasi dan biaya pengendalian/mitigasi tidak ekonomis dibandingkan potensi kerugian."
+  },
+
+  // =========================================================================
+  // 6. HUKUM ADMINISTRASI NEGARA & LMS (MODUL 7)
+  // =========================================================================
+  {
+    id: 14,
+    category: "LMS & Regulasi ASN",
+    question: "Berdasarkan modul hukum administrasi ASN, apa perbedaan mendasar antara konsep 'Fungsi' dan 'Tugas' bagi seorang Pegawai Negeri Sipil?",
+    options: [
+      "Fungsi mengatur gaji pokok, sedangkan Tugas mengatur tunjangan kinerja",
+      "Fungsi menjawab alasan filosofis mengapa ASN ada (misal: pelaksana kebijakan, pelayan publik, pemersatu bangsa), sedangkan Tugas menjawab apa pekerjaan konkrit yang dikerjakan",
+      "Fungsi berlaku hanya untuk PPPK, sedangkan Tugas berlaku hanya untuk PNS",
+      "Tidak ada perbedaan sama sekali antara fungsi dan tugas dalam hukum administrasi"
+    ],
+    correctIndex: 1,
+    explanation: "Dalam hukum administrasi kepegawaian ASN: 'Fungsi' menjawab tujuan eksistensi/alasan mengapa institusi dan ASN ada, sedangkan 'Tugas' merupakan mandat operasional mengenai apa yang dikerjakan dalam rutinitas kerja pelayanan publik."
   },
   {
     id: 15,
-    category: "Basis Data & Sistem",
-    question: "Perintah SQL manakah yang paling tepat untuk menghitung jumlah total pegawai dan rata-rata Angka Kredit per satuan kerja?",
+    category: "LMS & Regulasi ASN",
+    question: "Regulasi Undang-Undang pokok yang menjadi landasan manajemen ASN, penguatan peran jabatan fungsional, dan digitalisasi manajemen kepegawaian saat ini adalah...",
     options: [
-      "SELECT satker, COUNT(*), AVG(ak) FROM pegawai GROUP BY satker;",
-      "SELECT satker, SUM(ak) FROM pegawai WHERE satker IS NOT NULL;",
-      "SELECT satker, ak FROM pegawai ORDER BY ak DESC;",
-      "UPDATE pegawai SET ak = AVG(ak);"
-    ],
-    correctIndex: 0,
-    explanation: "Fungsi agregasi COUNT(*) dan AVG(ak) yang dikombinasikan dengan klausa GROUP BY satker digunakan untuk mengelompokkan dan menghitung statistik per kategori."
-  },
-  {
-    id: 16,
-    category: "Basis Data & Sistem",
-    question: "Teknik 'Database Sharding' pada sistem basis data data besar (Big Data) berarti...",
-    options: [
-      "Menghapus data lama secara permanen",
-      "Memecah tabel database berukuran raksasa secara horizontal ke beberapa server fisik/node yang berbeda",
-      "Mengompresi data menjadi file ZIP",
-      "Mengganti seluruh query SQL menjadi file teks"
+      "Undang-Undang Nomor 5 Tahun 2014",
+      "Undang-Undang Nomor 20 Tahun 2023 tentang Aparatur Sipil Negara",
+      "Undang-Undang Nomor 11 Tahun 2008 tentang ITE",
+      "Peraturan Pemerintah Nomor 11 Tahun 2017"
     ],
     correctIndex: 1,
-    explanation: "Sharding adalah teknik partisi horizontal yang membagi baris data besar ke dalam beberapa database server independen untuk meningkatkan throughput dan performa penyimpanan."
+    explanation: "UU No. 20 Tahun 2023 tentang Aparatur Sipil Negara mencabut UU No. 5/2014 dan menjadi dasar hukum utama manajemen ASN berbasis meritokrasi, kelincahan organisasi fungsional, dan transformasi digital kepegawaian."
   },
 
-  // --- KATEGORI 4: KEAMANAN INFORMASI & KRIPTOGRAFI (17 - 21) ---
+  // =========================================================================
+  // 7. PENGOLAHAN DATA & DAMA DMBOK (MODUL 8)
+  // =========================================================================
+  {
+    id: 16,
+    category: "Pengolahan Data & DAMA DMBOK",
+    question: "Dalam pembersihan data perkara (data preparation & cleaning), proses penanganan nilai data yang menyimpang sangat jauh secara ekstrem dari sebaran data mayoritas disebut...",
+    options: [
+      "Penanganan Outlier (Pencilan)",
+      "Normalisasi Database 3NF",
+      "Data Indexing",
+      "Data Deduplication"
+    ],
+    correctIndex: 0,
+    explanation: "Outlier (Pencilan) adalah titik data yang nilainya berbeda signifikan/ekstrem dari distribusi kumpulan data lainnya. Deteksi dan perlakuan outlier wajib dilakukan agar tidak mendistorsi hasil analisis dan model prediksi statistik."
+  },
   {
     id: 17,
-    category: "Keamanan Informasi",
-    question: "Prinsip dasar keamanan informasi yang disingkat CIA Triad terdiri dari tiga elemen fundamental, yaitu...",
+    category: "Pengolahan Data & DAMA DMBOK",
+    question: "Fungsi pivot_wider() pada bahasa pemrograman R (paket tidyr) dan fungsi pivot() pada library Python Pandas digunakan untuk melakukan manipulasi data jenis apa?",
     options: [
-      "Control, Inspection, Audit",
-      "Confidentiality, Integrity, Availability",
-      "Cryptography, Infrastructure, Authentication",
-      "Consistency, Isolation, Atomicity"
+      "Menghapus seluruh kolom database secara permanen",
+      "Mengubah bentuk struktur data dari format panjang (long format) menjadi format lebar (wide format)",
+      "Melakukan kompresi file zip database",
+      "Melakukan koneksi socket jaringan lokal"
     ],
     correctIndex: 1,
-    explanation: "CIA Triad adalah fondasi standar keamanan informasi: Confidentiality (Kerahasiaan data), Integrity (Keutuhan data dari manipulasi), dan Availability (Ketersediaan data saat dibutuhkan)."
+    explanation: "Pivoting data adalah teknik restructuring data. `pivot_wider()` di R dan `.pivot()` / `.pivot_table()` di Python Pandas digunakan untuk mengubah baris-baris data observasi berformat panjang menjadi kolom-kolom berformat lebar (wide format) untuk mempermudah tabulasi statistik."
   },
   {
     id: 18,
-    category: "Keamanan Informasi",
-    question: "Serangan rekayasa sosial (Social Engineering) yang memanipulasi korban melalui email atau situs tiruan untuk mencuri kredensial login akun kedinasan disebut...",
+    category: "Pengolahan Data & DAMA DMBOK",
+    question: "Sebutkan teknik akuisisi data otomatis dari halaman web pemerintah atau portal publik menggunakan skrip bot/spider terprogram!",
     options: [
-      "Phishing",
-      "DDoS Attack",
-      "SQL Injection",
-      "Buffer Overflow"
-    ],
-    correctIndex: 0,
-    explanation: "Phishing adalah teknik penipuan siber di mana penyerang menyamar sebagai institusi resmi guna memancing pengguna memasukkan username, password, atau token OTP."
-  },
-  {
-    id: 19,
-    category: "Keamanan Informasi",
-    question: "Teknik pengamanan query aplikasi terhadap kerentanan SQL Injection yang paling direkomendasikan adalah...",
-    options: [
-      "Menggabungkan string input pengguna secara langsung ke dalam string query SQL",
-      "Menggunakan Parameterized Queries / Prepared Statements",
-      "Menonaktifkan firewall server",
-      "Memberikan hak akses superuser (root/dba) pada user aplikasi"
+      "Data Loading",
+      "Web Crawling / Scraping",
+      "Data Deduplication",
+      "Data Imputation"
     ],
     correctIndex: 1,
-    explanation: "Prepared Statements / Parameterized Queries memisahkan logika query SQL dari data input pengguna, sehingga karakter berbahaya yang diinput pengguna tidak dieksekusi sebagai perintah SQL."
+    explanation: "Web Crawling / Scraping adalah metode pengambilan data mentah secara otomatis dari halaman situs web menggunakan bot terprogram untuk dikumpulkan ke dalam repositori analitik."
+  },
+
+  // =========================================================================
+  // 8. REKAYASA SISTEM INFORMASI & SDLC (MODUL 9)
+  // =========================================================================
+  {
+    id: 19,
+    category: "Sistem Informasi & SDLC",
+    question: "Berdasarkan riset rekayasa perangkat lunak dan tata kelola TI, faktor non-teknis apakah yang menduduki peringkat teratas sebagai penyebab utama kegagalan proyek sistem informasi?",
+    options: [
+      "Spesifikasi monitor komputer staf kurang besar",
+      "Manajemen kebutuhan pengguna yang buruk (poor requirements management & scope creep)",
+      "Penggunaan bahasa pemrograman open-source",
+      "Kecepatan mengetik programmer yang lambat"
+    ],
+    correctIndex: 1,
+    explanation: "Riset rekayasa perangkat lunak menunjukkan bahwa penyebab utama kegagalan proyek TI bukanlah keterbatasan hardware atau bahasa pemrograman, melainkan ketidakjelasan pendefinisian kebutuhan pengguna, komunikasi yang buruk, dan perubahan lingkup yang tidak terkendali (poor requirements management)."
   },
   {
     id: 20,
-    category: "Keamanan Informasi",
-    question: "Dalam kriptografi kunci asimetris (Public-Key Cryptography) yang digunakan pada Tanda Tangan Elektronik (TTE) sertifikasi BSRE, pesan dienkripsi/ditandatangani dengan...",
+    category: "Sistem Informasi & SDLC",
+    question: "Dalam tahap analisis kelayakan sistem informasi, sebutkan kepanjangan dari kerangka uji kelayakan metode TELOS!",
     options: [
-      "Private Key pemilik dan diverifikasi oleh penerima menggunakan Public Key",
-      "Satu kunci rahasia yang sama untuk pengirim dan penerima",
-      "Password akun email atasan",
-      "Nomor Induk Pegawai (NIP)"
+      "Technology, Engineering, Logistics, Operation, Security",
+      "Technical, Economic, Legal, Operational, Schedule",
+      "Total, Enterprise, Level, Optimization, Standard",
+      "Testing, Execution, Logging, Overview, Support"
     ],
-    correctIndex: 0,
-    explanation: "Digital signature dibuat menggunakan Private Key milik penandatangan (yang dirahasiakan), dan keabsahannya dapat diverifikasi oleh publik menggunakan Public Key penandatangan."
+    correctIndex: 1,
+    explanation: "Kerangka Studi Kelayakan TELOS mencakup 5 dimensi evaluasi: (1) Technical (kemampuan teknologi & SDM), (2) Economic (analisis biaya vs manfaat), (3) Legal (kepatuhan regulasi & hukum), (4) Operational (kesiapan prosedur & pengguna), dan (5) Schedule (ketepatan jadwal peluncuran)."
   },
   {
     id: 21,
-    category: "Keamanan Informasi",
-    question: "Standar internasional Sistem Manajemen Keamanan Informasi (SMKI) yang wajib diadopsi oleh penyelenggara SPBE strategis adalah...",
+    category: "Sistem Informasi & SDLC",
+    question: "Prinsip Pemrograman Berorientasi Objek (OOP) yang berfungsi menyembunyikan detail implementasi internal dan membatasi akses langsung ke variabel melalui metode getter/setter disebut...",
     options: [
-      "ISO 9001",
-      "ISO 27001",
-      "ISO 14001",
-      "ISO 22000"
+      "Inheritance (Pewarisan)",
+      "Polymorphism (Banyak Bentuk)",
+      "Encapsulation (Enkapsulasi / Pembungkusan)",
+      "Abstraction (Abstraksi)"
     ],
-    correctIndex: 1,
-    explanation: "ISO/IEC 27001 adalah standar internasional untuk Information Security Management Systems (ISMS) yang memberikan kerangka kerja perlindungan aset informasi secara komprehensif."
-  },
-
-  // --- KATEGORI 5: ANGKA KREDIT JABATAN FUNGSIONAL PRAKOM (22 - 26) ---
-  {
-    id: 22,
-    category: "Angka Kredit Prakom",
-    question: "Menurut PermenPAN-RB No. 32 Tahun 2020, jenjang jabatan fungsional Pranata Komputer Kategori Keahlian berturut-turut dari tingkat pertama hingga tertinggi adalah...",
-    options: [
-      "Prakom Terampil -> Mahir -> Penyelia",
-      "Prakom Ahli Pertama -> Ahli Muda -> Ahli Madya -> Ahli Utama",
-      "Operator -> Junior -> Senior -> Master",
-      "Staff TI -> Kepala Seksi -> Asisten Direktur"
-    ],
-    correctIndex: 1,
-    explanation: "Kategori Keahlian terdiri dari: Ahli Pertama (Gol. III/a-III/b), Ahli Muda (Gol. III/c-III/d), Ahli Madya (Gol. IV/a-IV/c), dan Ahli Utama (Gol. IV/d-IV/e)."
-  },
-  {
-    id: 23,
-    category: "Angka Kredit Prakom",
-    question: "Menurut regulasi Jabatan Fungsional Pranata Komputer, bukti fisik yang sah untuk pengajuan butir kegiatan pengelolaan data atau pengembangan sistem informasi umumnya berupa...",
-    options: [
-      "Hanya foto selfie di depan komputer",
-      "Laporan pelaksanaan tugas, dokumen spesifikasi teknis/query/source code, dan surat penugasan resmi pimpinan",
-      "Struk belanja perangkat keras pribadi",
-      "Screenshot status media sosial"
-    ],
-    correctIndex: 1,
-    explanation: "Bukti fisik butir kegiatan Prakom wajib memuat surat tugas/SK, laporan hasil kegiatan yang ditandatangani atasan langsung, dokumentasi teknis (spesifikasi teknis, source code, data dictionary, dsb.)."
-  },
-  {
-    id: 24,
-    category: "Angka Kredit Prakom",
-    question: "Berapa target Angka Kredit (AK) pemeliharaan minimal per tahun bagi pejabat fungsional Pranata Komputer jenjang Ahli Pertama?",
-    options: [
-      "5.0 Angka Kredit",
-      "12.5 Angka Kredit",
-      "25.0 Angka Kredit",
-      "50.0 Angka Kredit"
-    ],
-    correctIndex: 1,
-    explanation: "Berdasarkan regulasi konversi predikat kinerja (PermenPAN-RB No. 1/2023), target angka kredit tahunan jenjang Ahli Pertama adalah 12.5 AK per tahun (predikat Baik = 100% x 12.5 = 12.5 AK)."
-  },
-  {
-    id: 25,
-    category: "Angka Kredit Prakom",
-    question: "Kegiatan 'Melakukan perancangan basis data terdistribusi atau arsitektur SPBE instansi' umumnya merupakan butir kegiatan jenjang...",
-    options: [
-      "Pranata Komputer Terampil",
-      "Pranata Komputer Ahli Muda / Ahli Madya",
-      "Petugas Keamanan Satker",
-      "Admin Gudang"
-    ],
-    correctIndex: 1,
-    explanation: "Perancangan arsitektur kompleks, pemodelan data terdistribusi, dan audit keamanan sistem merupakan butir kompetensi analisis tingkat lanjut yang berada pada jenjang Ahli Muda ke atas."
-  },
-  {
-    id: 26,
-    category: "Angka Kredit Prakom",
-    question: "Dokumen penetapan resmi perolehan total angka kredit yang diterbitkan oleh Pejabat Pembina Kepegawaian (PPK) atau Tim Penilai disebut...",
-    options: [
-      "DUPAK (Daftar Usul Penetapan Angka Kredit)",
-      "PAK (Penetapan Angka Kredit)",
-      "SKP (Sasaran Kinerja Pegawai)",
-      "KTP Pegawai"
-    ],
-    correctIndex: 1,
-    explanation: "PAK (Penetapan Angka Kredit) adalah surat keputusan penetapan angka kredit resmi yang telah disetujui oleh Tim Penilai/PPK sebagai dasar kenaikan pangkat atau jabatan."
+    correctIndex: 2,
+    explanation: "Enkapsulasi (Encapsulation) adalah mekanisme OOP untuk membungkus data (atribut) dan kode (metode) dalam satu kesatuan kelas serta menyembunyikan detail internal objek dari manipulasi langsung dari luar kelas guna menjaga integritas data."
   }
 ]
