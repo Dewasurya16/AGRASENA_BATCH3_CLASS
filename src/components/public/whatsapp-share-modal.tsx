@@ -67,7 +67,7 @@ _Semangat belajar rekan-rekan Pranata Komputer Batch 3! ✨_`
       <div className="space-y-4 pt-1 text-[#18181B] dark:text-white">
         <div className="flex items-center gap-2 rounded-2xl bg-[#E6F7ED] dark:bg-emerald-950/80 p-3 border border-[#A7F3D0] dark:border-emerald-800 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
           <MessageCircle className="h-4 w-4 shrink-0 text-[#0D824B] dark:text-emerald-400" />
-          <span>Format pesan rapi telah disusun otomatis dan siap dibagikan ke grup angkatan.</span>
+          <span>Format rekap harian telah disusun rapi dan siap disalin atau dibagikan.</span>
         </div>
 
         <div className="space-y-1.5">

@@ -163,7 +163,7 @@ const FAQ_DATABASE: FAQItem[] = [
     id: "zoom-1",
     category: "Presensi & Sesi Zoom",
     question: "Bagaimana jika link Zoom perkuliahan berubah atau belum dibuka?",
-    answer: "Tautan resmi ruang virtual selalu terintegrasi dengan LMS Kejaksaan. Namun jika ada perubahan tautan mendesak dari panitia, update link terbaru akan segera dipublikasikan di Papan Pengumuman (/announcements) serta broadcast grup WhatsApp angkatan.",
+    answer: "Tautan resmi ruang virtual selalu terintegrasi dengan LMS Kejaksaan. Namun jika ada perubahan tautan mendesak dari panitia, update link terbaru akan segera dipublikasikan di Papan Pengumuman (/announcements) serta broadcast pengurus kelas.",
     links: [{ text: "Cek Papan Pengumuman", href: "/announcements" }]
   },
   {
@@ -179,7 +179,7 @@ const FAQ_DATABASE: FAQItem[] = [
     id: "admin-1",
     category: "Kendala Teknis & Bantuan",
     question: "Bagaimana cara menyampaikan kendala teknis atau saran perbaikan ke Pengurus Kelas?",
-    answer: "Anda dapat menggunakan tombol 'Chat WhatsApp Admin' di halaman ini atau menyalin format laporan baku untuk dikirimkan ke grup WA / pengurus kelas. Helpdesk pengurus kelas siap merespon kendala akses modul, link Zoom, dan saran perbaikan sistem.",
+    answer: "Anda dapat menggunakan tombol 'Hubungi WhatsApp Admin' di halaman ini atau menyalin format laporan baku untuk dikirimkan langsung ke Helpdesk Pengurus Kelas. Tim admin siap merespon kendala akses modul, link Zoom, dan saran perbaikan sistem.",
     highlight: "Hubungi Admin Kelas via WhatsApp dengan format laporan terstruktur."
   }
 ]
@@ -524,22 +524,12 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
             <button
               type="button"
               onClick={handleOpenWhatsAppAdmin}
-              className="flex items-center gap-2 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-5 py-3 text-xs font-black text-white transition shadow-sm cursor-pointer"
+              className="flex items-center gap-2 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-6 py-3 text-xs sm:text-sm font-black text-white shadow-md hover:scale-102 transition-all cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>Kirim Pesan WhatsApp</span>
+              <span>Hubungi WhatsApp Admin</span>
               <ExternalLink className="h-3.5 w-3.5 text-white/80" />
             </button>
-
-            <a
-              href="https://chat.whatsapp.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-[#F4F6FA] dark:bg-[#1E2433] border border-slate-200 dark:border-slate-700 px-4 py-3 text-xs font-black text-[#18181B] dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-            >
-              <PhoneCall className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />
-              <span>Grup Angkatan WA</span>
-            </a>
           </div>
         </div>
       </div>

@@ -12,7 +12,8 @@ import {
   MessageCircle,
   ShieldCheck,
   Award,
-  Layers
+  Layers,
+  HelpCircle
 } from "lucide-react"
 import Link from "next/link"
 import { getCurrentDiklatDay, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
@@ -137,22 +138,20 @@ export function ClassInfoPanel() {
           </div>
         </div>
 
-        {/* Quick Links: Portal LMS & Grup WA */}
+        {/* Quick Links: Portal LMS & Bantuan FAQ */}
         <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <p className="text-[11px] font-bold text-[#8C9BAE] dark:text-slate-400 uppercase tracking-wider">
             Tautan Cepat
           </p>
 
           <div className="grid grid-cols-2 gap-2">
-            <a
-              href="https://chat.whatsapp.com"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/faq"
               className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2.5 text-xs font-bold text-[#131E29] dark:text-white hover:bg-[#E6F7ED] dark:hover:bg-emerald-950/80 hover:text-[#0D824B] dark:hover:text-emerald-300 border border-slate-100 dark:border-slate-800 transition"
             >
-              <MessageCircle className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
-              <span>Grup WA</span>
-            </a>
+              <HelpCircle className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
+              <span>Bantuan & FAQ</span>
+            </Link>
 
             <a
               href="https://pengembangan.kejaksaan.go.id/dashboard"
