@@ -130,40 +130,53 @@ STRUKTUR MAKALAH:
       })
     }
 
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "groq/compound-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.25,
-        max_tokens: 3000,
-      }),
-    })
+    const CANDIDATE_MODELS = [
+      "qwen/qwen3.8-27b",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "groq/compound",
+    ]
 
-    if (!groqResponse.ok) {
-      const err = await groqResponse.json().catch(() => ({}))
-      return NextResponse.json({
-        error: "GROQ_ERROR",
-        message: err?.error?.message || "Gagal menghasilkan draf makalah.",
-      }, { status: 500 })
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            temperature: 0.25,
+            max_tokens: 3500,
+          }),
+        })
+
+        if (groqResponse.ok) {
+          const data = await groqResponse.json()
+          const paper = data.choices?.[0]?.message?.content
+          if (paper && paper.length > 200) {
+            return NextResponse.json({
+              paper,
+              model,
+              authorSatker,
+              topicTitle,
+            })
+          }
+        }
+      } catch (apiErr) {
+        console.warn(`[Paper Gen] Model ${model} failed:`, apiErr)
+      }
     }
 
-    const data = await groqResponse.json()
-    const paper = data.choices?.[0]?.message?.content || "Gagal menyusun proposal makalah."
-
     return NextResponse.json({
-      paper,
-      model: data.model || "groq/compound-mini",
-      authorSatker,
-      topicTitle,
-    })
+      error: "GROQ_ERROR",
+      message: "Server AI sedang sibuk. Silakan coba kembali dalam beberapa detik.",
+    }, { status: 500 })
   } catch (err: any) {
     console.error("Paper Generator Error:", err)
     return NextResponse.json(

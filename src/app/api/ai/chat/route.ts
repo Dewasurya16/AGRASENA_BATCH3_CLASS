@@ -92,41 +92,53 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
       )
     }
 
-    // 5. Call Groq API with groq/compound-mini
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "groq/compound-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.slice(-8),
-        ],
-        temperature: 0.6,
-        max_tokens: 1200,
-      }),
-    })
+    // 5. Call Groq API with Multi-Model Fallback
+    const CANDIDATE_MODELS = [
+      "qwen/qwen3.8-27b",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "groq/compound",
+    ]
 
-    if (!groqResponse.ok) {
-      const errData = await groqResponse.json().catch(() => ({}))
-      return NextResponse.json(
-        {
-          error: "GROQ_API_ERROR",
-          message: errData?.error?.message || `Groq API Error (${groqResponse.status})`,
-        },
-        { status: groqResponse.status }
-      )
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages.slice(-8),
+            ],
+            temperature: 0.6,
+            max_tokens: 1500,
+          }),
+        })
+
+        if (groqResponse.ok) {
+          const data = await groqResponse.json()
+          const reply = data.choices?.[0]?.message?.content
+          if (reply) {
+            return NextResponse.json({
+              reply,
+              model,
+              todayDay: currentDayNumber,
+              todayStage: todayObj.stageName,
+            })
+          }
+        }
+      } catch (apiErr) {
+        console.warn(`[AI Chat] Model ${model} failed:`, apiErr)
+      }
     }
 
-    const data = await groqResponse.json()
-    const reply = data.choices?.[0]?.message?.content || "Maaf, tidak ada respon yang diterima dari AI."
-
     return NextResponse.json({
-      reply,
-      model: data.model || "groq/compound-mini",
+      reply: "Halo Rekan Prakom! Maaf, server AI sedang mengalami beban tinggi. Silakan ulangi pertanyaan Anda dalam beberapa saat.",
+      model: "system-fallback",
       todayDay: currentDayNumber,
       todayStage: todayObj.stageName,
     })

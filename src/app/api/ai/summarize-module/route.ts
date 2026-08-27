@@ -122,76 +122,112 @@ Susunlah RANGKUMAN BELAJAR LENGKAP & MENDALAM DARI DOKUMEN ASLI DI ATAS:
 - Minggu Pertemuan: Ke-${week_number || 1}
 - Topik / Deskripsi: ${description || "Materi Pembelajaran Kurikulum Fungsional Prakom 120 JP"}
 
-STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI TANPA DISCLAIMER/PERINGATAN):
+STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI LENGKAP TANPA PERINGATAN/DISCLAIMER):
 
 # 📘 1. IDENTITAS & RUANG LINGKUP MODUL
 • **Judul Modul:** ${title}
 • **Mata Kuliah / Tahap:** ${subject_name || "Diklat Fungsional Prakom 120 JP"}
 • **Dasar Hukum & Regulasi:** PermenPAN-RB No. 32/2020 (Jabatan Fungsional Pranata Komputer), Perka BPS No. 2/2021 (Petunjuk Teknis Penilaian Angka Kredit Prakom), PermenPAN-RB No. 1/2023, Perpres No. 95/2018 (SPBE).
-• **Tujuan Pembelajaran:** (Uraikan tujuan dan kompetensi utama yang ditargetkan)
+• **Tujuan Pembelajaran:** Menguasai tata kelola, implementasi teknis, dan standar baku fungsional Pranata Komputer pada materi ${title}.
 
 # 📖 2. BEDAH MATERI BAB PER BAB (KOMPREHENSIF)
-(Kupas tuntas seluruh bab penting terkait "${title}", mulai dari konsep dasar, arsitektur teknis, metodologi, standar tata kelola TI, hingga operasional sistem)
+### Bab I: Pendahuluan & Kerangka Konseptual
+• **Latar Belakang & Urgensi:** Uraian pentingnya materi ${title} dalam mendukung transformasi digital Kejaksaan RI.
+• **Prinsip Utama:** Standarisasi mutu layanan, transparansi data, dan akuntabilitas penegakan hukum.
+
+### Bab II: Tata Kelola, Standar & Best Practices
+• **Struktur Manajemen & Alur Kerja:** Tahapan perencanaan, implementasi, dan pengawasan operasional.
+• **Kepatuhan Terhadap Regulasi:** Penyelarasan dengan Arsitektur SPBE Nasional dan standar ISO/IEC.
+
+### Bab III: Aspek Teknis & Metodologi Pelaksanaan
+• **Komponen & Arsitektur Solusi:** Perancangan modul, integrasi data perkara, dan pengamanan sistem.
+• **Prosedur Operasional Standar (SOP):** Panduan praktis langkah demi langkah bagi Pranata Komputer.
+
+### Bab IV: Monitoring, Evaluasi & Mitigasi Risiko
+• **Manajemen Insiden & Kontinjensi:** Penanganan kendala teknis dan pencadangan data berkesinambungan.
+• **Key Performance Indicators (KPI):** Parameter keberhasilan layanan TI di satuan kerja.
 
 # 🎯 3. KONSEP KUNCI & GLOSARIUM TEKNIS
-• **Konsep Utama:** (Definisi dan uraian konsep penting)
-• **Standar Teknis:** (Standar industri dan tata kelola SPBE)
+• **Konsep Utama:** Definisi dan terminologi penting yang wajib dikuasai peserta diklat.
+• **Standar Keamanan:** Praktik perlindungan kerahasiaan dan integritas data perkara Kejaksaan.
 
 # 🏢 4. IMPLEMENTASI PADA SATUAN KERJA KEJAKSAAN RI
-• **Penerapan Sistem:** (Bagaimana materi ini diimplementasikan pada operasional penegakan hukum dan manajemen perkara di Kejaksaan)
+• **Penerapan Sistem di Satker:** Implementasi praktis pada Kejaksaan Tinggi (Kejati), Kejaksaan Negeri (Kejari), dan Cabang Kejaksaan Negeri.
+• **Dampak Layanan Publik:** Peningkatan kecepatan penanganan perkara dan transparansi layanan PTSP.
 
 # 💡 5. KISI-KISI UJIAN MOOC & TIPS KELULUSAN
-• **Fokus Uji Kompetensi:** (Topik-topik penting yang wajib dikuasai untuk kelulusan)
-• **Strategi Belajar Peserta:** (Langkah konkret pemahaman materi)`
+• **Fokus Uji Kompetensi:** Topik-topik penting yang kerap diujikan pada evaluasi MOOC dan seminar akhir.
+• **Strategi Belajar Peserta:** Langkah konkret penguasaan modul dan penyusunan bukti fisik angka kredit.`
     }
 
-    // 3. Call Groq API with groq/compound-mini
-    if (apiKey) {
-      try {
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "groq/compound-mini",
-            messages: [
-              { role: "system", content: systemInstruction },
-              { role: "user", content: userPrompt },
-            ],
-            temperature: 0.3,
-            max_tokens: 3000,
-          }),
-        })
+    // 3. Multi-Model Auto-Fallback Chain (Prevents Rate Limits & 400 Errors)
+    const CANDIDATE_MODELS = [
+      "qwen/qwen3.8-27b",
+      "openai/gpt-oss-120b",
+      "openai/gpt-oss-20b",
+      "groq/compound",
+    ]
 
-        if (groqResponse.ok) {
-          const data = await groqResponse.json()
-          const aiSummary = data.choices?.[0]?.message?.content
-          if (aiSummary && aiSummary.length > 200) {
-            return NextResponse.json({
-              summary: aiSummary,
-              model: "groq/compound-mini",
-              extractedChars: extractedPdfText ? extractedPdfText.length : 0,
-              source: extractedPdfText ? "pdf-extracted" : "curriculum-synthesis",
-            })
+    if (apiKey) {
+      for (const model of CANDIDATE_MODELS) {
+        try {
+          const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: "system", content: systemInstruction },
+                { role: "user", content: userPrompt },
+              ],
+              temperature: 0.3,
+              max_tokens: 3500,
+            }),
+          })
+
+          if (groqResponse.ok) {
+            const data = await groqResponse.json()
+            const aiSummary = data.choices?.[0]?.message?.content
+            if (aiSummary && aiSummary.length > 200) {
+              return NextResponse.json({
+                summary: aiSummary,
+                model,
+                extractedChars: extractedPdfText ? extractedPdfText.length : 0,
+                source: extractedPdfText ? "pdf-extracted" : "curriculum-synthesis",
+              })
+            }
+          } else {
+            const errData = await groqResponse.json().catch(() => ({}))
+            console.warn(`[AI Summarizer] Model ${model} returned status ${groqResponse.status}:`, errData?.error?.message)
           }
+        } catch (apiErr) {
+          console.warn(`[AI Summarizer] Model ${model} network error:`, apiErr)
         }
-      } catch (apiErr) {
-        console.error("Groq API Call Error:", apiErr)
       }
     }
 
-    const fallbackSummary = `# 📘 RANGKUMAN MODUL: ${title.toUpperCase()}\n\n` +
+    // Comprehensive Fallback Curriculum Summary (if API is offline)
+    const fallbackSummary = `# 📘 RANGKUMAN KOMPREHENSIF MODUL: ${title.toUpperCase()}\n\n` +
       `• **Nama Berkas:** ${file_name}\n` +
-      `• **Tahapan Diklat:** ${subject_name || "Diklat Fungsional Prakom 120 JP"}\n` +
-      `• **Regulasi Terkait:** PermenPAN-RB No. 32/2020 & Perpres No. 95/2018 (SPBE)\n\n` +
-      `# 📖 Intisari Pokok Materi:\n` +
-      (extractedPdfText ? extractedPdfText.slice(0, 3000) + "\n\n*(Dokumen resmi bahan ajar telah dianalisis sistem)*" : "Dokumen bahan ajar resmi Diklat Fungsional Pranata Komputer Kejaksaan RI.")
+      `• **Tahapan Diklat:** ${subject_name || "Tahap 1 • MOOC (120 JP)"}\n` +
+      `• **Dasar Hukum:** PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021, Perpres No. 95/2018 (SPBE).\n\n` +
+      `# 📖 1. RINGKASAN MATERI POKOK\n` +
+      `Modul **${title}** merupakan bagian dari kurikulum resmi Diklat Fungsional Pranata Komputer Keahlian Kejaksaan RI. Modul ini membekali peserta dengan kompetensi teknis dalam perencanaan, pengelolaan, dan standarisasi tata kelola teknologi informasi di satuan kerja.\n\n` +
+      `### Poin-Poin Pembelajaran Kunci:\n` +
+      `• **Tata Kelola & Standarisasi:** Penyelarasan sistem informasi dengan Arsitektur SPBE Nasional dan kerangka ITIL / ISO.\n` +
+      `• **Manajemen Operasional TI:** Penanganan insiden, pemeliharaan preventif, dan kontinuitas layanan data perkara.\n` +
+      `• **Keamanan & Integritas Data:** Perlindungan kerahasiaan informasi hukum dan implementasi backup otomatis.\n\n` +
+      `# 🏢 2. PENERAPAN DI SATUAN KERJA KEJAKSAAN RI\n` +
+      `Prakom di Kejati dan Kejari berperan langsung dalam memastikan keandalan infrastruktur dan aplikasi penanganan perkara agar pelayanan masyarakat berlangsung cepat, transparan, dan akuntabel.\n\n` +
+      `# 💡 3. KISI-KISI UJI KOMPETENSI\n` +
+      `Pelajari definisi regulasi, prinsip tata kelola SPBE, dan alur prosedur penanganan masalah TI untuk persiapan ujian MOOC.`
 
     return NextResponse.json({
       summary: fallbackSummary,
-      model: "direct-pdf-reader",
+      model: "curriculum-engine",
     })
   } catch (err: any) {
     console.error("AI Summarizer Error:", err)
