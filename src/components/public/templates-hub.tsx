@@ -14,7 +14,10 @@ import {
   Copy,
   ExternalLink,
   Layers,
-  Sparkles
+  Sparkles,
+  Award,
+  Building2,
+  BookOpen
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
@@ -22,10 +25,11 @@ import { Modal } from "@/components/ui/modal"
 export interface DocumentTemplate {
   id: string
   title: string
-  category: "Administrasi & SPT" | "DUPAK & SKP" | "SOP & Keamanan" | "Seminar Akhir"
+  category: "Administrasi & SPT" | "DUPAK & SKP BPS" | "SOP & Keamanan" | "Seminar Akhir"
   format: ".doc Word" | ".xlsx Excel" | ".docx Word"
   description: string
   legalReference: string
+  bpsCode?: string
   tags: string[]
   contentDoc: string
 }
@@ -36,32 +40,41 @@ const TEMPLATES_DATA: DocumentTemplate[] = [
     title: "Surat Perintah Tugas (SPT) Pemeliharaan & Troubleshooting TIK Satker",
     category: "Administrasi & SPT",
     format: ".doc Word",
-    description: "Format surat perintah tugas resmi penugasan Pranata Komputer untuk pemeliharaan server, jaringan lokal, dan basis data di Kejati/Kejari.",
-    legalReference: "PermenPAN-RB No. 32/2020 & Standar Tata Naskah Dinas Kejaksaan RI",
-    tags: ["Bukti Fisik Sah", "Pemeliharaan", "Kejati/Kejari"],
+    description: "Format surat perintah tugas resmi penugasan Pranata Komputer untuk pemeliharaan server, jaringan lokal, basis data, dan aplikasi perkara di Kejati/Kejari.",
+    legalReference: "Pedoman Tata Naskah Dinas Kejaksaan RI & PermenPAN-RB No. 32 Tahun 2020",
+    tags: ["Bukti Fisik Sah", "Pemeliharaan", "Kejati/Kejari", "Tata Naskah Kejaksaan"],
     contentDoc: `KEJAKSAAN REPUBLIK INDONESIA
 KEJAKSAAN TINGGI / KEJAKSAAN NEGERI ........................
 Jalan ............................................................................
+Telepon: (......) ............... Faksimile: (......) ...............
 
 SURAT PERINTAH TUGAS
 NOMOR: PRINT - ...... / L. ... / Dipa / ... / 2026
 
+KEPALA KEJAKSAAN NEGERI ........................
+
 DASAR:
-1. DIPA Kejaksaan Negeri ........................ Tahun Anggaran 2026;
-2. Kebutuhan pemeliharaan rutin infrastruktur server, jaringan lokal (LAN), dan basis data perkara demi kelancaran operasional pelayanan publik.
+1. Undang-Undang Nomor 11 Tahun 2021 tentang Perubahan atas Undang-Undang Nomor 16 Tahun 2004 tentang Kejaksaan Republik Indonesia;
+2. Peraturan Presiden Nomor 95 Tahun 2018 tentang Sistem Pemerintahan Berbasis Elektronik (SPBE);
+3. Peraturan Menteri Pendayagunaan Aparatur Negara dan Reformasi Birokrasi Nomor 32 Tahun 2020 tentang Jabatan Fungsional Pranata Komputer;
+4. DIPA Kejaksaan Negeri ........................ Tahun Anggaran 2026;
+5. Kebutuhan pemeliharaan berkala, audit infrastruktur server lokal, keamanan jaringan LAN/WAN, dan replikasi basis data perkara CMS & Tilang.
 
 MEMERINTAHKAN:
+
 Kepada:
-1. Nama / NIP       : ...........................................................
-   Pangkat / Gol.   : ...........................................................
-   Jabatan          : Pranata Komputer Ahli Pertama / Terampil
-   Satuan Kerja     : ...........................................................
+1. Nama                 : ...........................................................
+   NIP / NRP            : ...........................................................
+   Pangkat / Gol. Ruang : Penata Muda (III/a) / Penata Muda Tk. I (III/b)
+   Jabatan              : Pranata Komputer Ahli Pertama
+   Satuan Kerja         : Kejaksaan Negeri ........................
 
 Untuk:
-1. Melaksanakan kegiatan pemeliharaan, audit ketersediaan sistem jaringan, dan backup berkala database CMS PTSP & Tilang;
-2. Membuat laporan hasil pelaksanaan tugas teknis dan logbook rincian kegiatan;
-3. Melaporkan hasil pelaksanaan tugas kepada Pimpinan (Kasi Intel / Kasubagbin / Kajari);
-4. Melaksanakan perintah ini dengan penuh rasa tanggung jawab.
+1. Melaksanakan kegiatan pemeliharaan perangkat server, switch jaringan, access point, serta audit integritas basis data perkara pada unit kerja Kejaksaan Negeri ........................;
+2. Melakukan langkah mitigasi dan penanganan insiden siber lokal sesuai SOP Keamanan Informasi TIK;
+3. Menyusun Laporan Hasil Pelaksanaan Tugas Teknis, Dokumentasi Logbook Harian, dan Berita Acara Pemeriksaan Fisik Perangkat TIK;
+4. Melaporkan hasil pelaksanaan tugas kepada Kepala Subbagian Pembinaan / Kasi Intelijen / Kepala Kejaksaan Negeri;
+5. Melaksanakan Surat Perintah ini dengan penuh rasa tanggung jawab dan dedikasi.
 
 Dikeluarkan di : ........................
 Pada tanggal   : ........................ 2026
@@ -74,14 +87,16 @@ Jaksa Utama Pratama / Madya NIP. ....................`
   },
   {
     id: "dupak-spmk",
-    title: "Format Formulir DUPAK & SPMK Butir Kegiatan Prakom Keahlian",
-    category: "DUPAK & SKP",
+    title: "Surat Pernyataan Melakukan Kegiatan (SPMK) & DUPAK Format Baku BPS",
+    category: "DUPAK & SKP BPS",
     format: ".doc Word",
-    description: "Template Daftar Usul Penetapan Angka Kredit dan Surat Pernyataan Melakukan Kegiatan (SPMK) sesuai lampiran resmi Perka BPS.",
-    legalReference: "Peraturan Kepala BPS No. 2 Tahun 2021 (Juknis Penilaian AK Prakom)",
-    tags: ["Angka Kredit", "DUPAK", "SPMK", "TPAK"],
+    description: "Format SPMK resmi 5 Sub-Unsur Pranata Komputer Keahlian & Keterampilan sesuai Lampiran Perka BPS No. 2 Tahun 2021.",
+    legalReference: "Peraturan Kepala BPS No. 2 Tahun 2021 & PermenPAN-RB No. 1 Tahun 2023",
+    bpsCode: "Lampiran I-IV Perka BPS 2/2021",
+    tags: ["Perka BPS 2/2021", "SPMK", "DUPAK", "TPAK Kejaksaan"],
     contentDoc: `SURAT PERNYATAAN MELAKUKAN KEGIATAN (SPMK)
-BIDANG TATA KELOLA DAN SISTEM INFORMASI
+JABATAN FUNGSIONAL PRANATA KOMPUTER
+(Berdasarkan Peraturan Kepala Badan Pusat Statistik No. 2 Tahun 2021)
 
 Yang bertanda tangan di bawah ini:
 Nama                    : ...........................................................
@@ -93,16 +108,35 @@ Unit Kerja              : Kejaksaan Negeri ........................
 Menyatakan bahwa:
 Nama                    : ...........................................................
 NIP                     : ...........................................................
-Pangkat / Gol. Ruang    : Penata Muda (III/a) / Penata (III/c)
-Jabatan                 : Pranata Komputer Ahli Pertama / Ahli Muda
+Pangkat / Gol. Ruang    : Penata Muda (III/a) / Penata Muda Tk. I (III/b)
+Jabatan                 : Pranata Komputer Ahli Pertama
 Unit Kerja              : Kejaksaan Negeri ........................
 
 Telah nyata melakukan kegiatan pelayanan fungsional Pranata Komputer sebagai berikut:
-1. Melakukan backup dan replikasi basis data perkara (Volume: 12 Dokumen Log, Angka Kredit: 0.120)
-2. Melakukan konfigurasi perangkat jaringan switch & access point satker (Volume: 4 Laporan, Angka Kredit: 0.080)
-3. Menyusun dokumentasi teknis SOP Pengelolaan Layanan TIK (Volume: 1 Naskah SOP, Angka Kredit: 0.500)
 
-Demikian pernyataan ini dibuat dengan sebenarnya untuk dipergunakan dalam pengusulan Angka Kredit Jabatan Fungsional Pranata Komputer.
+SUB-UNSUR II: INFRASTRUKTUR TEKNOLOGI INFORMASI
+1. Butir Kegiatan: Melakukan backup dan replikasi basis data perkara (Kode: II.B.2)
+   - Volume / Satuan Hasil : 12 Dokumen Log Backup
+   - Angka Kredit Satuan   : 0.010
+   - Jumlah Angka Kredit   : 0.120
+   - Bukti Fisik Terlampir : Laporan Backup & File Log Database
+
+2. Butir Kegiatan: Melakukan perbaikan/troubleshooting perangkat jaringan satker (Kode: II.A.5)
+   - Volume / Satuan Hasil : 6 Laporan Penanganan Jaringan
+   - Angka Kredit Satuan   : 0.020
+   - Jumlah Angka Kredit   : 0.120
+   - Bukti Fisik Terlampir : Form Troubleshooting & Log Switch
+
+SUB-UNSUR III: SISTEM INFORMASI DAN MULTIMEDIA
+3. Butir Kegiatan: Menyusun dokumentasi teknis / SOP Layanan TIK (Kode: III.C.1)
+   - Volume / Satuan Hasil : 1 Naskah SOP
+   - Angka Kredit Satuan   : 0.500
+   - Jumlah Angka Kredit   : 0.500
+   - Bukti Fisik Terlampir : Dokumen SOP Pengelolaan Ruang Server
+
+TOTAL ANGKA KREDIT YANG DIUSULKAN: 0.740
+
+Demikian Surat Pernyataan ini dibuat dengan sebenarnya untuk dipergunakan dalam pengusulan Angka Kredit Jabatan Fungsional Pranata Komputer.
 
 ........................, ........................ 2026
 Pejabat Penilai Kinerja / Atasan Langsung
@@ -112,84 +146,132 @@ Pejabat Penilai Kinerja / Atasan Langsung
 NIP. .......................................................`
   },
   {
+    id: "konversi-skp-pak",
+    title: "Formulir Konversi Predikat SKP Tahunan ke Angka Kredit Integrasi",
+    category: "DUPAK & SKP BPS",
+    format: ".doc Word",
+    description: "Format konversi nilai kinerja SKP (Sangat Baik / Baik / Butuh Perbaikan) ke Angka Kredit Integrasi sesuai PermenPAN-RB No. 1/2023.",
+    legalReference: "PermenPAN-RB No. 1 Tahun 2023 (Pasal 37-39: Konversi SKP)",
+    tags: ["PermenPAN-RB 1/2023", "SKP Kinerja", "PAK Integrasi"],
+    contentDoc: `PENETAPAN ANGKA KREDIT (PAK) INTEGRASI / KONVERSI SKP
+PEGAWAI NEGERI SIPIL JABATAN FUNGSIONAL PRANATA KOMPUTER
+KEJAKSAAN REPUBLIK INDONESIA
+
+Nomor: PAK - ...... / C.4 / Prakom / ... / 2026
+Masa Penilaian: 01 Januari 2026 s.d. 31 Desember 2026
+
+I. KETERANGAN PERORANGAN:
+1. Nama                   : ...........................................................
+2. NIP                    : ...........................................................
+3. Nomor Seri KARPEG      : ...........................................................
+4. Pangkat / Gol. Ruang   : Penata Muda (III/a)
+5. Jabatan / Jenjang      : Pranata Komputer Ahli Pertama
+6. Unit Kerja             : Kejaksaan Negeri ........................
+
+II. HASIL EVALUASI KINERJA (SKP):
+• Predikat Kinerja Tahunan : BAIK (Koefisien: 100%) / SANGAT BAIK (Koefisien: 150%)
+• Angka Kredit Tahunan     : 12.5 (Jenjang Pertama: 100% x 12.5 = 12.500)
+
+III. REKAPITULASI PEROLEHAN ANGKA KREDIT:
+| No | Uraian Perolehan | AK Lama | AK Penyesuaian SKP | Jumlah AK Total |
+|---|---|---|---|---|
+| 1 | Angka Kredit Dasar Integrasi | 0.000 | 12.500 | 12.500 |
+| 2 | AK Kumulatif Minimal Kenaikan Pangkat (III/a ke III/b) | Target: 50.000 | Capaian: 12.500 | Kekurangan: 37.500 |
+
+Ditetapkan di : ........................
+Pada tanggal   : ........................ 2026
+
+Pejabat Penilai Kinerja / Tim Penilai AK Kejaksaan RI
+
+
+( ........................................................... )
+NIP. .......................................................`
+  },
+  {
     id: "sop-server",
-    title: "SOP Standar Operasional Prosedur Pengelolaan Ruang Server & Jaringan",
+    title: "SOP Standar Operasional Prosedur Pengelolaan Ruang Server & Keamanan Jaringan",
     category: "SOP & Keamanan",
     format: ".doc Word",
-    description: "Naskah SOP komprehensif tata tertib ruang data center/server lokal, hak akses user, jadwal backup, dan tanggap darurat insiden siber.",
-    legalReference: "Perpres 95/2018 SPBE & Standar Keamanan Siber BSSN",
-    tags: ["SOP", "Keamanan Siber", "Data Center"],
+    description: "Naskah SOP komprehensif tata tertib ruang data center/server lokal satker Kejaksaan, hak akses user, jadwal backup, dan penanganan insiden siber.",
+    legalReference: "Perpres No. 95 Tahun 2018 (SPBE) & Standar Keamanan Informasi BSSN",
+    tags: ["SOP", "Keamanan Siber", "Data Center", "SPBE Kejaksaan"],
     contentDoc: `STANDAR OPERASIONAL PROSEDUR (SOP)
 PENGELOLAAN RUANG SERVER DAN KEAMANAN JARINGAN TIK
 KEJAKSAAN NEGERI ........................
 
-NOMOR DOKUMEN   : SOP-TIK-001/2026
+NOMOR DOKUMEN   : SOP-TIK-001/KN.SPG/2026
 TANGGAL EFEKTIF : 01 September 2026
 DISAHKAN OLEH   : KEPALA KEJAKSAAN NEGERI ........................
 
 1. TUJUAN
-Memastikan kelangsungan operasional server, integritas data perkara, dan perlindungan infrastruktur TIK dari ancaman fisik maupun serangan siber.
+Memastikan ketersediaan (availability), keutuhan (integrity), dan kerahasiaan (confidentiality) data perkara serta kehandalan infrastruktur TIK di lingkungan Kejaksaan Negeri.
 
 2. RUANG LINGKUP
-Meliputi tata kelola akses fisik ruang server, manajemen pendingin & UPS, jadwal backup database harian, monitoring log jaringan, serta penanganan insiden malware/ransomware.
+Meliputi tata kelola akses fisik ruang server, pemeliharaan suhu pendingin & UPS, jadwal backup basis data otomatis harian, monitoring firewall mikrotik/cisco, dan prosedur tanggap darurat insiden siber.
 
 3. PROSEDUR UTAMA:
-A. Akses Fisik:
-- Hanya personel Pranata Komputer / Tim TIK yang memiliki izin masuk ke ruang server.
-- Setiap tamu vendor/teknisi wajib mengisi Buku Tamu Ruang Server dan didampingi staf TI.
+A. Tata Tertib & Akses Fisik:
+- Ruang server dalam keadaan terkunci 24 jam. Kunci dipegang oleh Tim Pengelola TIK / Pranata Komputer.
+- Setiap personel non-TIK atau teknisi pihak ketiga wajib mengisi Formulir Buku Tamu Ruang Server dan didampingi staf TI.
 
-B. Prosedur Pencadangan (Backup):
-- Backup basis data otomatis dijalankan setiap hari pukul 23:00 WIB ke media penyimpanan terpisah (NAS/Cloud).
-- Uji pemulihan data (Restore Drill) dilakukan minimal 1 (satu) kali setiap 3 bulan.
+B. Prosedur Pencadangan (Backup) & Pemulihan (Disaster Recovery):
+- Backup basis data aplikasi perkara (CMS PTSP & Tilang) otomatis dijalankan setiap hari pukul 23:00 WIB.
+- File backup disimpan pada dua media terpisah: Server Lokal (NAS) dan Penyimpanan Cadangan Terisolasi.
+- Uji simulasi pemulihan data (Restore Drill) wajib dilakukan minimal 1 kali setiap 3 bulan.
 
-C. Tanggap Insiden Keamanan (CSIRT):
-- Jika terdeteksi anomali/serangan siber, segera isolasi kabel jaringan perangkat terdampak.
-- Laporkan insiden ke Tim CSIRT Kejaksaan Agung RI dalam waktu maksimal 1x24 jam.`
+C. Prosedur Tanggap Darurat Insiden Siber (CSIRT Kejaksaan):
+- Jika terindikasi serangan ransomware/malware atau akses anomali, segera putuskan koneksi kabel LAN/WiFi perangkat terkait.
+- Buat laporan insiden awal dan koordinasikan dengan Tim CSIRT Kejaksaan Agung RI dalam kurun waktu 1x24 jam.`
   },
   {
     id: "berita-acara-tik",
-    title: "Berita Acara Kerusakan & Pemeliharaan Perangkat Keras TIK Satker",
+    title: "Berita Acara Pemeriksaan Fisik & Kerusakan Perangkat TIK Satker",
     category: "Administrasi & SPT",
     format: ".doc Word",
-    description: "Formulir Berita Acara Pemeriksaan Fisik (BAP) PC, laptop dinas, printer tilang, UPS, switch, atau server untuk dasar pengadaan/perbaikan.",
-    legalReference: "Tata Kelola BMN & Pengelolaan Aset TIK Kejaksaan RI",
-    tags: ["Berita Acara", "BMN", "Hardware"],
+    description: "Formulir Berita Acara Pemeriksaan (BAP) kerusakan PC, laptop dinas, printer tilang, UPS, switch, atau server untuk dasar perbaikan/penghapusan BMN.",
+    legalReference: "Pedoman Tata Kelola BMN & Pengelolaan Aset TIK Kejaksaan RI",
+    tags: ["Berita Acara", "BMN", "Hardware", "Pemeriksaan Fisik"],
     contentDoc: `BERITA ACARA PEMERIKSAAN KERUSAKAN PERANGKAT TIK
 NOMOR: BA - ...... / BMN-TIK / ... / 2026
 
 Pada hari ini ........................ tanggal ........................ bulan ........................ tahun 2026, kami yang bertanda tangan di bawah ini:
 
 1. Nama / NIP       : ...........................................................
-   Jabatan          : Pranata Komputer (Tim Pengelola TIK)
+   Pangkat / Gol.   : Penata Muda (III/a)
+   Jabatan          : Pranata Komputer Ahli Pertama (Tim Pengelola TIK)
 2. Nama / NIP       : ...........................................................
+   Pangkat / Gol.   : ...........................................................
    Jabatan          : Pengurus Barang Milik Negara (BMN)
 
-Telah melakukan pemeriksaan fisik dan uji diagnostik terhadap perangkat TIK berikut:
-• Jenis Perangkat   : Server / PC Desktop / Switch / UPS
+Telah melakukan pemeriksaan fisik, uji fungsionalitas, dan diagnosa teknis terhadap perangkat TIK milik Kejaksaan Negeri ........................ sebagai berikut:
+• Jenis Perangkat   : Server / PC Desktop / Printer / Switch / UPS
 • Merk / Tipe       : ...........................................................
 • Nomor Register BMN: ...........................................................
-• Lokasi Unit Kerja : Ruang PTSP / Pidum / Pidsus / Pembinaan
+• Tahun Perolehan   : ........................
+• Lokasi Penempatan : Ruang PTSP / Pidum / Pidsus / Pembinaan
 
 HASIL PEMERIKSAAN TEKNIS:
-1. Kondisi Fisik    : Rusak Berat / Rusak Ringan pada komponen Power Supply / Motherboard.
-2. Analisis Gejala  : Perangkat mengalami mati total akibat lonjakan tegangan listrik dan tidak dapat dilakukan booting OS.
-3. Rekomendasi      : Diperlukan penggantian modul Power Supply unit baru atau penghapusan BMN jika biaya perbaikan melebihi nilai ekonomis.
+1. Kondisi Fisik    : Rusak Berat / Rusak Ringan pada komponen Power Supply / Motherboard / Storage SSD.
+2. Analisis Gejala  : Perangkat mengalami mati total akibat lonjakan voltase listrik dan tidak dapat dilakukan booting sistem operasi.
+3. Rekomendasi      : Diperlukan penggantian modul suku cadang unit baru atau pengusulan penghapusan BMN jika estimasi biaya perbaikan melebihi nilai ekonomis aset.
 
-Demikian Berita Acara ini dibuat dengan sebenarnya untuk bahan pertimbangan tindak lanjut Pimpinan.
+Demikian Berita Acara ini dibuat dengan sebenarnya dalam 2 (dua) rangkap untuk bahan pertimbangan tindak lanjut Pimpinan.
 
 Tim Pemeriksa TIK                     Pengurus BMN Satker
 
 
-( .............................. )    ( .............................. )`
+( .............................. )    ( .............................. )
+NIP. ...........................      NIP. ...........................`
   },
   {
     id: "logbook-35hari",
-    title: "Format Logbook Catatan Harian Prakom (Sesuai Butir DUPAK)",
-    category: "DUPAK & SKP",
+    title: "Format Logbook Catatan Harian Prakom Sesuai Butir DUPAK",
+    category: "DUPAK & SKP BPS",
     format: ".doc Word",
-    description: "Tabel logbook harian pencatatan volume kegiatan, waktu kerja (menit/jam), bukti output, dan paraf atasan langsung.",
-    legalReference: "Perka BPS No. 2 Tahun 2021 (Pasal 14: Logbook Bukti Fisik)",
-    tags: ["Logbook", "Harian", "Bukti DUPAK"],
+    description: "Tabel logbook harian pencatatan volume kegiatan, waktu kerja (menit/jam), kode butir kegiatan BPS, output fisik, dan paraf atasan langsung.",
+    legalReference: "Peraturan Kepala BPS No. 2 Tahun 2021 (Pasal 14: Dokumentasi Logbook Bukti Fisik)",
+    bpsCode: "Pasal 14 Perka BPS 2/2021",
+    tags: ["Logbook", "Harian", "Bukti DUPAK", "Perka BPS"],
     contentDoc: `LOGBOOK / CATATAN HARIAN KEGIATAN PRANATA KOMPUTER
 Bulan: ........................ 2026
 
@@ -199,15 +281,15 @@ Jabatan         : Pranata Komputer Ahli Pertama
 Satuan Kerja    : Kejaksaan Negeri ........................
 
 TABEL LOGBOOK HARIAN:
-| No | Hari/Tanggal | Uraian Butir Kegiatan TI | Volume | Output / Dokumen Fisik | Waktu (Menit) | Paraf Atasan |
-|---|---|---|---|---|---|---|
-| 1 | Senin, 24/08/2026 | Melakukan backup harian database perkara tilang | 1 File | Log_backup_tilang.sql.gz | 45 Menit | [Paraf] |
-| 2 | Selasa, 25/08/2026 | Troubleshooting access point ruang sidang online | 1 Laporan | Form_troubleshoot_01.pdf | 60 Menit | [Paraf] |
-| 3 | Rabu, 26/08/2026 | Konfigurasi reverse proxy Nginx server CMS | 1 Skrip | default.conf.nginx | 90 Menit | [Paraf] |
-| 4 | Kamis, 27/08/2026 | Evaluasi penerapan 6 domain SPBE satker | 1 Dokumen | Laporan_Maturitas_SPBE.docx | 120 Menit | [Paraf] |
+| No | Hari/Tanggal | Kode Butir BPS | Uraian Butir Kegiatan TI | Volume | Output / Dokumen Fisik | Waktu (Menit) | Paraf Atasan |
+|---|---|---|---|---|---|---|---|
+| 1 | Senin, 24/08/2026 | II.B.2 | Melakukan backup harian database perkara tilang | 1 File | Log_backup_tilang.sql.gz | 45 Menit | [Paraf] |
+| 2 | Selasa, 25/08/2026 | II.A.5 | Troubleshooting access point ruang sidang online | 1 Laporan | Form_troubleshoot_01.pdf | 60 Menit | [Paraf] |
+| 3 | Rabu, 26/08/2026 | III.B.1 | Konfigurasi reverse proxy Nginx server CMS | 1 Skrip | default.conf.nginx | 90 Menit | [Paraf] |
+| 4 | Kamis, 27/08/2026 | I.A.3 | Evaluasi penerapan 6 domain SPBE satker | 1 Dokumen | Laporan_Maturitas_SPBE.docx | 120 Menit | [Paraf] |
 
 Mengetahui,
-Atasan Langsung / Pejabat Penilai
+Kepala Subbagian Pembinaan / Atasan Langsung
 
 
 ( ........................................................... )
@@ -218,9 +300,9 @@ NIP. .......................................................`
     title: "Template Format Naskah Makalah Seminar Akhir Diklat Kejaksaan RI",
     category: "Seminar Akhir",
     format: ".doc Word",
-    description: "Format standar penulisan naskah seminar akhir: Halaman Judul, Lembar Pengesahan Widyaiswara & Penguji, Bab I s.d. Bab IV, dan Daftar Pustaka.",
+    description: "Format standar penulisan naskah seminar akhir: Halaman Judul, Lembar Pengesahan Widyaiswara Badiklat & Penguji, Bab I s.d. Bab V, dan Daftar Pustaka.",
     legalReference: "Pedoman Penulisan Karya Ilmiah Pusdiklat Kejaksaan RI",
-    tags: ["Makalah", "Seminar", "Kelulusan Diklat"],
+    tags: ["Makalah", "Seminar", "Kelulusan Diklat", "Pusdiklat Kejaksaan"],
     contentDoc: `PROPOSAL RENCANA AKSI INOVASI TEKNOLOGI INFORMASI
 PELATIHAN FUNGSIONAL PRANATA KOMPUTER (BATCH 3)
 TAHUN ANGGARAN 2026
@@ -232,16 +314,19 @@ DISUSUN OLEH:
 NAMA PESERTA    : ...........................................................
 NIP             : ...........................................................
 PANGKAT / GOL   : Penata Muda (III/a)
+JABATAN         : Pranata Komputer Ahli Pertama
 SATUAN KERJA    : Kejaksaan Negeri ........................
 
 BADAN PENDIDIKAN DAN PELATIHAN KEJAKSAAN REPUBLIK INDONESIA
 JAKARTA - 2026
 
----------------------------------------------------------
+=========================================================
 LEMBAR PENGESAHAN:
-Proposal Rencana Aksi Inovasi ini telah disetujui untuk diseminarkan pada Evaluasi Akhir Pelatihan Fungsional Pranata Komputer Batch 3.
+Proposal Rencana Aksi Inovasi ini telah disetujui untuk diseminarkan pada Evaluasi Akhir Pelatihan Fungsional Pranata Komputer Keahlian Batch 3 Tahun 2026.
 
 Jakarta, ........................ 2026
+
+Menyetujui,
 
 Coach / Widyaiswara Pembimbing        Penguji Seminar Akhir
 
@@ -257,7 +342,7 @@ export function TemplatesHub() {
   const [previewTemplate, setPreviewTemplate] = React.useState<DocumentTemplate | null>(null)
   const [copied, setCopied] = React.useState(false)
 
-  const categories = ["Semua", "Administrasi & SPT", "DUPAK & SKP", "SOP & Keamanan", "Seminar Akhir"]
+  const categories = ["Semua", "Administrasi & SPT", "DUPAK & SKP BPS", "SOP & Keamanan", "Seminar Akhir"]
 
   const filteredTemplates = React.useMemo(() => {
     return TEMPLATES_DATA.filter((item) => {
@@ -265,19 +350,21 @@ export function TemplatesHub() {
       const matchSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.legalReference.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchCategory && matchSearch
     })
   }, [selectedCategory, searchQuery])
 
-  // Download template as Word document (.doc)
+  // Download template as clean Word document (.doc)
   const handleDownload = (template: DocumentTemplate) => {
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'><title>${template.title}</title>
     <style>
-      body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.4; color: #000; }
+      @page { size: A4; margin: 3cm 2.5cm 2.5cm 3cm; }
+      body { font-family: 'Times New Roman', serif; font-size: 11.5pt; line-height: 1.4; color: #000; }
       h1, h2, h3 { text-align: center; font-weight: bold; }
-      pre { font-family: 'Times New Roman', serif; white-space: pre-wrap; font-size: 11pt; }
+      pre { font-family: 'Times New Roman', serif; white-space: pre-wrap; font-size: 11.5pt; line-height: 1.4; }
     </style></head><body><pre>`
     const footer = `</pre></body></html>`
     const source = header + template.contentDoc + footer
@@ -311,22 +398,49 @@ export function TemplatesHub() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
             <Layers className="h-3.5 w-3.5" />
-            <span>Pusat Template Dokumen Resmi</span>
+            <span>Format Resmi BPS & Kejaksaan RI</span>
           </span>
           <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
-            Format .doc & .docx Siap Download
+            Standar Perka BPS No. 2/2021 & PermenPAN-RB 1/2023
           </span>
         </div>
 
         <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
-          Pusat Download Template Dokumen TIK & <br className="hidden sm:block" />
-          <span className="text-[#0D824B] dark:text-emerald-400">Administrasi Fungsional Kejaksaan</span>
+          Pusat Download Template Dokumen TIK, <br className="hidden sm:block" />
+          <span className="text-[#0D824B] dark:text-emerald-400">DUPAK / SKP BPS & Administrasi Satker</span>
         </h1>
 
         <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
-          Kumpulan berkas template resmi berstandar Pusdiklat & Perka BPS: Surat Perintah Tugas (SPT), Formulir DUPAK & SPMK, SOP Ruang Server, Berita Acara Kerusakan TIK, dan Format Makalah Seminar. Siap unduh dan edit langsung di Microsoft Word.
+          Koleksi formulir dan naskah dinas resmi yang telah disesuaikan 100% dengan regulasi <strong>Badan Pusat Statistik (BPS)</strong> selaku Instansi Pembina Jabatan Fungsional Pranata Komputer dan <strong>Tata Naskah Dinas Kejaksaan RI</strong>.
         </p>
       </motion.div>
+
+      {/* Compliance Highlights Card */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
+          <Award className="h-5 w-5 text-[#0D824B] shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Perka BPS No. 2 Tahun 2021</h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">Sesuai Lampiran I-IV Juknis Penilaian Angka Kredit Prakom (SPMK 5 Sub-Unsur & Logbook).</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
+          <Building2 className="h-5 w-5 text-[#EA580C] shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Tata Naskah Dinas Kejaksaan</h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">Format baku kop surat, penomoran PRINT & BA, dan pejabat pengesahan Kejati/Kejari.</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
+          <BookOpen className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Standar Pusdiklat Badiklat</h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">Format naskah proposal seminar rencana aksi inovasi siap diuji di hadapan Widyaiswara.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Filter and Search Bar */}
       <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
@@ -337,7 +451,7 @@ export function TemplatesHub() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari template SPT, DUPAK, SOP..."
+              placeholder="Cari template SPT, DUPAK BPS, SOP..."
               className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D824B] focus:outline-none"
             />
           </div>
@@ -429,7 +543,7 @@ export function TemplatesHub() {
           className="max-w-4xl"
         >
           <div className="space-y-4 pt-1">
-            <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">
               <span>⚖️ Dasar Regulasi: {previewTemplate.legalReference}</span>
               <button
                 type="button"
@@ -449,7 +563,7 @@ export function TemplatesHub() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
               <span className="text-xs text-slate-500 font-mono">
-                Berkas siap diedit langsung di Microsoft Word (.doc)
+                Format resmi BPS & Kejaksaan RI — Siap diedit di Microsoft Word (.doc)
               </span>
               <button
                 type="button"
