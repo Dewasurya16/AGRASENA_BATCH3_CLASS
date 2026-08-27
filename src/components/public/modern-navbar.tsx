@@ -20,8 +20,7 @@ import {
   Code2,
   ChevronDown,
   Sun,
-  Moon,
-  FileCode2
+  Moon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
@@ -62,7 +61,6 @@ export function ModernNavbar() {
   ]
 
   const moreLinks = [
-    { label: "Cheat Sheet 120 JP", href: "/cheatsheets", icon: FileCode2, desc: "Rangkuman konsep SPBE, SQL, Linux & AK" },
     { label: "Pengumuman", href: "/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
     { label: "Galeri Karya", href: "/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
     { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
