@@ -20,7 +20,9 @@ import {
   Copy,
   Check,
   Trash2,
-  Maximize2
+  Maximize2,
+  Edit3,
+  BookMarked
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
@@ -37,6 +39,207 @@ export interface MaterialItem {
   created_at: string
 }
 
+// Inline Markdown Parser for bold, italic, code
+function renderInlineFormatted(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return (
+        <strong key={idx} className="font-extrabold text-[#0D3830] dark:text-emerald-300">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
+      return (
+        <em key={idx} className="italic text-slate-700 dark:text-slate-200">
+          {part.slice(1, -1)}
+        </em>
+      )
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return (
+        <code
+          key={idx}
+          className="rounded bg-slate-200/80 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-[#0D824B] dark:text-emerald-400 border border-slate-300 dark:border-slate-700 font-semibold"
+        >
+          {part.slice(1, -1)}
+        </code>
+      )
+    }
+    return part
+  })
+}
+
+// Rich Formatted Note / Summary Document Viewer
+function RichNoteRenderer({ content }: { content: string }) {
+  if (!content || !content.trim()) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center text-slate-400 dark:text-slate-500 space-y-3">
+        <BookOpen className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+        <p className="text-xs font-semibold">Belum ada catatan atau rangkuman untuk modul ini.</p>
+        <p className="text-[11px] max-w-xs">
+          Klik tombol <strong className="text-[#EA580C]">"✨ Rangkum dengan AI"</strong> di atas untuk membuat rangkuman akademik otomatis dari dokumen PDF resmi.
+        </p>
+      </div>
+    )
+  }
+
+  const lines = content.split("\n")
+  const elements: React.ReactNode[] = []
+  let tableBuffer: string[] = []
+
+  const flushTable = (keyPrefix: number) => {
+    if (tableBuffer.length < 2) {
+      tableBuffer = []
+      return
+    }
+
+    const rows = tableBuffer
+      .filter((l) => !l.includes("---") && !l.includes("━━━"))
+      .map((l) =>
+        l
+          .split("|")
+          .map((c) => c.trim())
+          .filter((c, i, arr) => (i > 0 && i < arr.length - 1) || arr.length === 1)
+      )
+
+    if (rows.length > 0) {
+      const headerRow = rows[0]
+      const dataRows = rows.slice(1)
+
+      elements.push(
+        <div key={`tbl-${keyPrefix}`} className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <table className="w-full text-left text-xs border-collapse">
+            {headerRow && (
+              <thead className="bg-slate-100 dark:bg-slate-800 text-[#131E29] dark:text-white border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  {headerRow.map((h, hIdx) => (
+                    <th key={hIdx} className="p-2.5 font-black uppercase text-[11px] tracking-wider">
+                      {renderInlineFormatted(h)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-[#161B26]">
+              {dataRows.map((r, rIdx) => (
+                <tr key={rIdx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                  {r.map((cell, cIdx) => (
+                    <td key={cIdx} className="p-2.5 text-slate-700 dark:text-slate-300 leading-relaxed">
+                      {renderInlineFormatted(cell)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+    tableBuffer = []
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const trimmed = line.trim()
+
+    // Table detection
+    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+      tableBuffer.push(trimmed)
+      continue
+    } else if (tableBuffer.length > 0) {
+      flushTable(i)
+    }
+
+    if (!trimmed) {
+      elements.push(<div key={`sp-${i}`} className="h-2" />)
+      continue
+    }
+
+    // Heading 1 (# )
+    if (trimmed.startsWith("# ")) {
+      elements.push(
+        <div key={`h1-${i}`} className="mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-sm sm:text-base font-black text-[#0D3830] dark:text-emerald-400 flex items-center gap-2">
+            {renderInlineFormatted(trimmed.replace(/^#\s+/, ""))}
+          </h2>
+        </div>
+      )
+      continue
+    }
+
+    // Heading 2 (## )
+    if (trimmed.startsWith("## ")) {
+      elements.push(
+        <div key={`h2-${i}`} className="mt-3.5 mb-1.5">
+          <h3 className="text-xs sm:text-sm font-black text-[#131E29] dark:text-white flex items-center gap-1.5">
+            {renderInlineFormatted(trimmed.replace(/^##\s+/, ""))}
+          </h3>
+        </div>
+      )
+      continue
+    }
+
+    // Heading 3 (### )
+    if (trimmed.startsWith("### ")) {
+      elements.push(
+        <div key={`h3-${i}`} className="mt-3 mb-1">
+          <h4 className="text-xs font-black text-[#FF7643] dark:text-amber-400">
+            {renderInlineFormatted(trimmed.replace(/^###\s+/, ""))}
+          </h4>
+        </div>
+      )
+      continue
+    }
+
+    // Horizontal Divider
+    if (trimmed.startsWith("---") || trimmed.startsWith("━━━")) {
+      elements.push(<hr key={`hr-${i}`} className="my-3 border-slate-200 dark:border-slate-800" />)
+      continue
+    }
+
+    // Bullet Points (• , - , * )
+    if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      const content = trimmed.replace(/^([•\-\*]\s+)/, "")
+      elements.push(
+        <div key={`li-${i}`} className="flex items-start gap-2 pl-1 text-xs text-slate-700 dark:text-slate-300 leading-relaxed my-1">
+          <span className="text-[#0D824B] dark:text-emerald-400 font-bold select-none mt-0.5">•</span>
+          <div className="flex-1">{renderInlineFormatted(content)}</div>
+        </div>
+      )
+      continue
+    }
+
+    // Numbered List
+    const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/)
+    if (numMatch) {
+      elements.push(
+        <div key={`num-${i}`} className="flex items-start gap-2 pl-1 text-xs text-slate-700 dark:text-slate-300 leading-relaxed my-1">
+          <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-black text-[#0D3830] dark:text-emerald-400 select-none shrink-0 border border-slate-200 dark:border-slate-700">
+            {numMatch[1]}
+          </span>
+          <div className="flex-1">{renderInlineFormatted(numMatch[2])}</div>
+        </div>
+      )
+      continue
+    }
+
+    // Regular Paragraph
+    elements.push(
+      <p key={`p-${i}`} className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+        {renderInlineFormatted(line)}
+      </p>
+    )
+  }
+
+  if (tableBuffer.length > 0) {
+    flushTable(lines.length)
+  }
+
+  return <div className="space-y-1 p-4 sm:p-5 text-[#18181B] dark:text-slate-100">{elements}</div>
+}
+
 export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) {
   const items = materials
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -44,6 +247,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [selectedWeek, setSelectedWeek] = React.useState("Semua")
   const [previewMaterial, setPreviewMaterial] = React.useState<MaterialItem | null>(null)
   const [readerTab, setReaderTab] = React.useState<"pdf" | "notes">("pdf")
+  const [noteViewMode, setNoteViewMode] = React.useState<"rendered" | "edit">("rendered")
   const [studyNotes, setStudyNotes] = React.useState<Record<string, string>>({})
   const [isSummarizing, setIsSummarizing] = React.useState(false)
   const [copiedNote, setCopiedNote] = React.useState(false)
@@ -126,15 +330,11 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
 
       const data = await res.json()
       if (data.summary) {
-        const currentText = studyNotes[previewMaterial.id] || ""
-        const updatedSummary = currentText.trim()
-          ? `${currentText}\n\n━━━━━━━━━━━━━━━━━━━━\n${data.summary}`
-          : data.summary
-
-        const newNotes = { ...studyNotes, [previewMaterial.id]: updatedSummary }
+        const newNotes = { ...studyNotes, [previewMaterial.id]: data.summary }
         setStudyNotes(newNotes)
         localStorage.setItem("prakom_study_notes", JSON.stringify(newNotes))
         setReaderTab("notes")
+        setNoteViewMode("rendered")
       }
     } catch {
       // Fallback
@@ -379,7 +579,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   {isSummarizing ? (
                     <>
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Menganalisis...</span>
+                      <span>Menganalisis PDF...</span>
                     </>
                   ) : (
                     <>
@@ -403,8 +603,36 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                 </div>
               ) : (
                 <div className="flex-1 min-h-[350px] sm:min-h-[500px] flex flex-col space-y-3">
+                  {/* Notes Control Bar & View Mode Toggle */}
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[#FFF9F5] dark:bg-[#1E2433] p-3 border border-[#FFD280] dark:border-slate-700 text-xs text-[#EA580C] dark:text-amber-400 font-semibold shrink-0">
-                    <span>💡 Catatan belajar dan hasil rangkuman AI ini otomatis tersimpan di browser Anda.</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNoteViewMode("rendered")}
+                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                          noteViewMode === "rendered"
+                            ? "bg-white dark:bg-slate-800 text-[#0D3830] dark:text-emerald-400 shadow-2xs border border-[#FFD280] dark:border-slate-600"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                        }`}
+                      >
+                        <BookMarked className="h-3.5 w-3.5" />
+                        <span>Tampilan Rapi</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setNoteViewMode("edit")}
+                        className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                          noteViewMode === "edit"
+                            ? "bg-white dark:bg-slate-800 text-[#0D3830] dark:text-emerald-400 shadow-2xs border border-[#FFD280] dark:border-slate-600"
+                            : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                        }`}
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Mode Edit</span>
+                      </button>
+                    </div>
+
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -435,23 +663,30 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                     </div>
                   </div>
 
-                  <textarea
-                    value={studyNotes[previewMaterial.id] || ""}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setStudyNotes((prev) => {
-                        const updated = { ...prev, [previewMaterial.id]: val }
-                        try {
-                          localStorage.setItem("prakom_study_notes", JSON.stringify(updated))
-                        } catch {
-                          // Ignore
-                        }
-                        return updated
-                      })
-                    }}
-                    placeholder="Klik tombol '✨ Rangkum dengan AI' di atas atau ketik rangkuman, poin penting, pertanyaan diskusi, dan catatan persiapan tugas Anda di sini..."
-                    className="flex-1 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-4 text-xs font-mono text-[#18181B] dark:text-white focus:border-[#0D824B] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-[#1E2433] focus:outline-none resize-none leading-relaxed overflow-y-auto"
-                  />
+                  {/* Rendered Document View or Raw Textarea View */}
+                  {noteViewMode === "rendered" ? (
+                    <div className="flex-1 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#181D28] overflow-y-auto shadow-inner">
+                      <RichNoteRenderer content={studyNotes[previewMaterial.id] || ""} />
+                    </div>
+                  ) : (
+                    <textarea
+                      value={studyNotes[previewMaterial.id] || ""}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setStudyNotes((prev) => {
+                          const updated = { ...prev, [previewMaterial.id]: val }
+                          try {
+                            localStorage.setItem("prakom_study_notes", JSON.stringify(updated))
+                          } catch {
+                            // Ignore
+                          }
+                          return updated
+                        })
+                      }}
+                      placeholder="Ketik catatan tambahan atau edit rangkuman AI di sini..."
+                      className="flex-1 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-4 text-xs font-mono text-[#18181B] dark:text-white focus:border-[#0D824B] dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-[#1E2433] focus:outline-none resize-none leading-relaxed overflow-y-auto"
+                    />
+                  )}
                 </div>
               )}
             </div>

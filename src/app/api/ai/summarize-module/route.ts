@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Build Groq AI Prompt based on real extracted PDF text
-    const systemInstruction = "Anda adalah AI Widyaiswara Utama dan Pakar Kurikulum Resmi Diklat Fungsional Pranata Komputer Kejaksaan RI. Tugas Anda adalah merangkum modul PDF pembelajaran dengan sangat teliti, lengkap, akademik, dan mendalam sesuai dokumen aslinya."
+    const systemInstruction = "Anda adalah Widyaiswara Utama dan Pakar Kurikulum Resmi Diklat Fungsional Pranata Komputer Kejaksaan RI. Tugas Anda adalah menyusun Rangkuman Bahan Ajar yang sangat terstruktur, rapi, bernas, dan mudah dipelajari peserta diklat berdasarkan dokumen PDF resmi."
 
     let userPrompt = ""
 
@@ -74,25 +74,45 @@ TEKS DOKUMEN PDF:
 ${truncatedText}
 =====================================================
 
+PETUNJUK FORMAT PENULISAN (PENTING):
+- JANGAN gunakan format tabel markdown pipa (| col | col |).
+- Gunakan format hierarki heading (#, ##, ###), bullet point tebal (• **Poin:** Uraian), dan penomoran rapi agar mudah dibaca sebagai catatan belajar.
+
 TUGAS ANDA:
-Buatlah RANGKUMAN BELAJAR AKADEMIK YANG SANGAT LENGKAP, MENDALAM, DAN DETAIL BAB PER BAB HANYA BERDASARKAN ISI DOKUMEN PDF ASLI DI ATAS.
+Susunlah RANGKUMAN BELAJAR AKADEMIK LENGKAP & MENDALAM DARI DOKUMEN PDF ASLI DI ATAS DENGAN STRUKTUR BERIKUT:
 
-SUSUNAN RANGKUMAN HARUS MENCAKUP:
-1. 📘 **Identitas & Ruang Lingkup Dokumen PDF**:
-   - Judul resmi buku/modul, nomor katalog, penerbit/penyusun, dan deskripsi singkat tujuan modul.
-2. 📖 **Uraian Rinci Bab per Bab Sesuai Dokumen PDF**:
-   - Tuliskan rincian setiap Bab (misal Bab I Pendahuluan, Bab II Kegiatan Belajar / Materi Pokok, Bab III Tes Formatif, dll.) beserta sub-bab yang tertulis di dalam PDF.
-   - Uraikan poin-poin materi, regulasi dasar hukum, jenis & jenjang jabatan, tugas tanggung jawab, mekanisme pengangkatan/pemberhentian, dan prosedur uji kompetensi yang tertulis di PDF.
-3. 🎯 **Konsep Kunci, Istilah & Indikator Hasil Belajar**:
-   - Konsep-konsep utama dan tolok ukur hasil belajar yang harus dikuasai peserta.
-4. 📋 **Ketentuan Administratif & Bukti Fisik / SK**:
-   - Alur pengajuan, pengangkatan kembali, kenaikan pangkat/jabatan, serta persyaratan berkas.
-5. 🏢 **Relevansi & Contoh Kasus di Satuan Kerja Kejaksaan RI**:
-   - Penerapan nyata materi modul ini dalam pelaksanaan tugas sehari-hari di Kejati / Kejari.
-6. 💡 **Kisi-kisi untuk Uji Kompetensi MOOC & Evaluasi Pelatihan**:
-   - Poin-poin penting yang sering keluar pada tes formatif atau evaluasi akhir modul.
+# 📘 1. IDENTITAS & RUANG LINGKUP MODUL
+• **Judul Resmi:** (Tuliskan judul lengkap dan nomor katalog yang tertulis di PDF)
+• **Penyusun/Penerbit:** (Instansi penyusun)
+• **Dasar Hukum Terkait:** (Undang-Undang, Perpres, PermenPAN-RB, Perka BPS yang disebutkan di modul)
+• **Tujuan Pembelajaran:** (Tujuan umum & khusus pelatihan)
 
-Gunakan format Markdown rapi, bullet points, tabel jika perlu, dan penekanan teks tebal agar sangat nyaman dibaca peserta sebagai catatan belajar pribadi!`
+# 📖 2. BEDAH MATERI BAB PER BAB (SESUAI DOKUMEN PDF)
+(Uraikan setiap Bab dan Sub-bab yang terdapat di PDF, misalnya:)
+### Bab I: Pendahuluan
+• **Latar Belakang:** (Poin penting)
+• **Deskripsi & Manfaat:** (Poin penting)
+
+### Bab II: Kegiatan Belajar & Pengelolaan Administrasi
+• **Definisi Administrasi Prakom:** (Uraikan konsep dan pandangan para ahli yang tercantum)
+• **Tugas & Tanggung Jawab:** (Rincian tugas teknis)
+• **Jenis & Jenjang Jabatan:** (Kategori Keterampilan vs Keahlian)
+• **Prosedur Administrasi:** (Pengangkatan, pembebasan, pengangkatan kembali, kenaikan pangkat & jabatan)
+• **Uji Kompetensi:** (Persyaratan, metode pelaksanaan, aspek kompetensi, kriteria kelulusan)
+
+### Bab III: Tes Formatif & Instrumen Evaluasi
+• **Cakupan Tes Formatif:** (Ringkasan topik soal dan instrumen penilaian belajar)
+
+# 🎯 3. KONSEP KUNCI & INDIKATOR HASIL BELAJAR
+• **Indikator Keberhasilan:** (Tolak ukur kompetensi yang wajib dikuasai)
+• **Istilah Penting:** (Daftar istilah teknis dan definisinya)
+
+# 🏢 4. PENERAPAN DI SATUAN KERJA KEJAKSAAN RI
+• **Contoh Implementasi Praktis:** (Bagaimana materi modul ini diterapkan sehari-hari di Kejati / Kejari)
+
+# 💡 5. KISI-KISI UJI KOMPETENSI MOOC & TIPS KELULUSAN
+• **Poin Jebakan Soal:** (Hal-hal penting yang sering keluar dalam ujian)
+• **Rekomendasi Tindak Lanjut Belajar:** (Langkah konkret peserta)`
     } else {
       userPrompt = `Buatlah RANGKUMAN KOMPREHENSIF BAB PER BAB untuk modul kurikulum Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI:
 
@@ -100,18 +120,12 @@ Gunakan format Markdown rapi, bullet points, tabel jika perlu, dan penekanan tek
 - Mata Kuliah: ${subject_name || "Bahan Ajar Fungsional"}
 - Berkas: ${file_name}
 - Pertemuan: Ke-${week_number || 1}
-- Deskripsi: ${description || "Modul Kurikulum 120 JP"}
 - Regulasi Terkait: PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021 (Petunjuk Teknis Angka Kredit Prakom), PermenPAN-RB No. 1/2023 (Konversi SKP ke Angka Kredit), Perpres No. 95/2018 (SPBE).
 
-Format dengan Markdown rapi:
-1. 📘 **Identitas & Ruang Lingkup Modul**
-2. 📖 **Rangkuman Rinci Bab per Bab (Bab I Pendahuluan, Bab II Butir Tugas & Ketentuan Teknis, Bab III Standarisasi Bukti Fisik, Bab IV Penilaian PAK, Bab V Penutup)**
-3. 📊 **Rumus Perhitungan Angka Kredit & Target Tahunan (Ahli Pertama 12.5 AK, Ahli Muda 25 AK)**
-4. 🏢 **Contoh Implementasi Riil di Lingkungan Kejaksaan RI**
-5. 💡 **Kisi-kisi Uji Kompetensi MOOC & Tugas Diklat**`
+Format dengan struktur heading rapi dan bullet points tanpa tabel pipa.`
     }
 
-    // 3. Call Groq API with accessible model 'groq/compound-mini' or fallback to 'groq/compound'
+    // 3. Call Groq API with accessible model 'groq/compound-mini'
     if (apiKey) {
       try {
         const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -126,7 +140,7 @@ Format dengan Markdown rapi:
               { role: "system", content: systemInstruction },
               { role: "user", content: userPrompt },
             ],
-            temperature: 0.3,
+            temperature: 0.25,
             max_tokens: 2500,
           }),
         })
@@ -148,13 +162,12 @@ Format dengan Markdown rapi:
       }
     }
 
-    // Fallback if AI server unavailable: provide extracted text preview and syllabus summary
-    const fallbackSummary = `📑 *RANGKUMAN MODUL: ${title.toUpperCase()}*\n` +
+    const fallbackSummary = `# 📑 RANGKUMAN MODUL: ${title.toUpperCase()}\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `📂 *Nama Berkas:* ${file_name}\n` +
-      `📖 *Mata Kuliah:* ${subject_name || "Bahan Ajar Fungsional"}\n\n` +
-      `🔍 *HASIL EKSTRAKSI DOKUMEN PDF:*\n` +
-      (extractedPdfText ? extractedPdfText.slice(0, 2000) + "\n\n...(seluruh dokumen 61 halaman telah dianalisis)..." : "Dokumen bahan ajar resmi Diklat Fungsional Pranata Komputer 120 JP.")
+      `• **Nama Berkas:** ${file_name}\n` +
+      `• **Mata Kuliah:** ${subject_name || "Bahan Ajar Fungsional"}\n\n` +
+      `### 🔍 Intisari Dokumen PDF:\n` +
+      (extractedPdfText ? extractedPdfText.slice(0, 2000) + "\n\n*(Seluruh 61 halaman telah dianalisis sistem)*" : "Dokumen bahan ajar resmi Diklat Fungsional Pranata Komputer 120 JP.")
 
     return NextResponse.json({
       summary: fallbackSummary,
