@@ -22,6 +22,7 @@ import {
   clearAllVisitorLogs,
 } from "@/app/admin/actions"
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { TEMPLATES_DATA, DocumentTemplate } from "@/components/public/templates-hub"
 import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import {
@@ -333,6 +334,187 @@ export function AdminDashboardClient({
   const [editingTask, setEditingTask] = React.useState<any | null>(null)
   const [editingMaterial, setEditingMaterial] = React.useState<any | null>(null)
   const [editingAnnouncement, setEditingAnnouncement] = React.useState<any | null>(null)
+
+  // Templates Management State
+  const [customTemplates, setCustomTemplates] = React.useState<DocumentTemplate[]>([])
+  const [templateSearch, setTemplateSearch] = React.useState("")
+  const [templateCategoryFilter, setTemplateCategoryFilter] = React.useState<string>("Semua")
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = React.useState(false)
+  const [editingTemplate, setEditingTemplate] = React.useState<DocumentTemplate | null>(null)
+  const [previewingTemplate, setPreviewingTemplate] = React.useState<DocumentTemplate | null>(null)
+  const [templateCopied, setTemplateCopied] = React.useState(false)
+
+  // Load custom templates on mount
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("custom_prakom_templates")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          setCustomTemplates(parsed)
+        }
+      }
+    } catch {
+      // Ignore
+    }
+  }, [])
+
+  // All combined templates
+  const allAdminTemplates = React.useMemo(() => {
+    const customIds = new Set(customTemplates.map((t) => t.id))
+    const defaults = TEMPLATES_DATA.filter((t) => !customIds.has(t.id))
+    return [...customTemplates, ...defaults]
+  }, [customTemplates])
+
+  const filteredAdminTemplates = React.useMemo(() => {
+    return allAdminTemplates.filter((item) => {
+      const matchesCategory = templateCategoryFilter === "Semua" || item.category === templateCategoryFilter
+      const matchesSearch =
+        templateSearch === "" ||
+        item.title.toLowerCase().includes(templateSearch.toLowerCase()) ||
+        item.description.toLowerCase().includes(templateSearch.toLowerCase()) ||
+        item.legalReference.toLowerCase().includes(templateSearch.toLowerCase()) ||
+        item.tags.some((t) => t.toLowerCase().includes(templateSearch.toLowerCase()))
+      return matchesCategory && matchesSearch
+    })
+  }, [allAdminTemplates, templateCategoryFilter, templateSearch])
+
+  const handleCreateTemplateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    const title = (formData.get("title") as string)?.trim()
+    const category = formData.get("category") as any
+    const format = formData.get("format") as any
+    const legalReference = (formData.get("legalReference") as string)?.trim()
+    const bpsCode = (formData.get("bpsCode") as string)?.trim()
+    const rawTags = (formData.get("tags") as string)?.trim()
+    const description = (formData.get("description") as string)?.trim()
+    const contentDoc = (formData.get("contentDoc") as string)?.trim()
+
+    if (!title || !category || !legalReference || !contentDoc) {
+      showFeedback("error", "Judul, kategori, dasar hukum, dan isi naskah dokumen wajib diisi.")
+      return
+    }
+
+    const tags = rawTags
+      ? rawTags.split(",").map((t) => t.trim()).filter(Boolean)
+      : ["Template Khusus", "Kejaksaan RI"]
+
+    const newTemplate: DocumentTemplate = {
+      id: `tpl-${Date.now()}`,
+      title,
+      category,
+      format: format || ".doc Word",
+      legalReference,
+      bpsCode: bpsCode || undefined,
+      tags,
+      description: description || "Format dokumen naskah dinas resmi Kejaksaan RI.",
+      contentDoc,
+    }
+
+    const updated = [newTemplate, ...customTemplates]
+    setCustomTemplates(updated)
+    try {
+      localStorage.setItem("custom_prakom_templates", JSON.stringify(updated))
+      window.dispatchEvent(new Event("storage"))
+    } catch {
+      // Ignore
+    }
+
+    setIsTemplateModalOpen(false)
+    form.reset()
+    showFeedback("success", `Template dokumen "${title}" berhasil ditambahkan ke koleksi!`)
+  }
+
+  const handleUpdateTemplateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingTemplate) return
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
+    const title = (formData.get("title") as string)?.trim()
+    const category = formData.get("category") as any
+    const format = formData.get("format") as any
+    const legalReference = (formData.get("legalReference") as string)?.trim()
+    const bpsCode = (formData.get("bpsCode") as string)?.trim()
+    const rawTags = (formData.get("tags") as string)?.trim()
+    const description = (formData.get("description") as string)?.trim()
+    const contentDoc = (formData.get("contentDoc") as string)?.trim()
+
+    if (!title || !category || !legalReference || !contentDoc) {
+      showFeedback("error", "Judul, kategori, dasar hukum, dan isi naskah dokumen wajib diisi.")
+      return
+    }
+
+    const tags = rawTags
+      ? rawTags.split(",").map((t) => t.trim()).filter(Boolean)
+      : editingTemplate.tags
+
+    const updatedItem: DocumentTemplate = {
+      ...editingTemplate,
+      title,
+      category,
+      format: format || editingTemplate.format,
+      legalReference,
+      bpsCode: bpsCode || undefined,
+      tags,
+      description: description || editingTemplate.description,
+      contentDoc,
+    }
+
+    const exists = customTemplates.some((t) => t.id === editingTemplate.id)
+    const updated = exists
+      ? customTemplates.map((t) => (t.id === editingTemplate.id ? updatedItem : t))
+      : [updatedItem, ...customTemplates]
+
+    setCustomTemplates(updated)
+    try {
+      localStorage.setItem("custom_prakom_templates", JSON.stringify(updated))
+      window.dispatchEvent(new Event("storage"))
+    } catch {
+      // Ignore
+    }
+
+    setEditingTemplate(null)
+    showFeedback("success", `Template "${title}" berhasil diperbarui!`)
+  }
+
+  const handleDeleteTemplate = (id: string, title: string) => {
+    if (!confirm(`Hapus template dokumen "${title}"?`)) return
+    const updated = customTemplates.filter((t) => t.id !== id)
+    setCustomTemplates(updated)
+    try {
+      localStorage.setItem("custom_prakom_templates", JSON.stringify(updated))
+      window.dispatchEvent(new Event("storage"))
+    } catch {
+      // Ignore
+    }
+    showFeedback("success", `Template "${title}" berhasil dihapus.`)
+  }
+
+  const handleDownloadTemplateDoc = (template: DocumentTemplate) => {
+    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>${template.title}</title>
+    <style>
+      @page { size: A4; margin: 3cm 2.5cm 2.5cm 3cm; }
+      body { font-family: 'Times New Roman', serif; font-size: 11.5pt; line-height: 1.4; color: #000; }
+      h1, h2, h3 { text-align: center; font-weight: bold; }
+      pre { font-family: 'Times New Roman', serif; white-space: pre-wrap; font-size: 11.5pt; line-height: 1.4; }
+    </style></head><body><pre>`
+    const footer = `</pre></body></html>`
+    const source = header + template.contentDoc + footer
+    const blob = new Blob(['\ufeff' + source], { type: 'application/msword' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `TEMPLATE_${template.id.toUpperCase()}_KEJAKSAAN.doc`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
 
   const showFeedback = (type: "success" | "error", text: string) => {
     setFeedback({ type, text })
@@ -1094,7 +1276,7 @@ export function AdminDashboardClient({
     { id: "tasks", label: "Penugasan & Ujian", icon: BookOpen, count: initialTasks.length, color: "text-amber-600" },
     { id: "announcements", label: "Pengumuman Kelas", icon: Sparkles, count: initialAnnouncements.length, color: "text-rose-600" },
     { id: "discussions", label: "Moderasi Forum Diskusi", icon: MessageSquare, count: adminDiscussions.length, color: "text-purple-600" },
-    { id: "templates", label: "Pusat Template BPS & TIK", icon: Layers, count: 6, color: "text-teal-600" },
+    { id: "templates", label: "Pusat Template BPS & TIK", icon: Layers, count: allAdminTemplates.length, color: "text-teal-600" },
     { id: "exam_prep", label: "Kesiapan Ujian & Seminar", icon: Clock, count: 10, color: "text-amber-600" },
     { id: "paper_gen", label: "AI Makalah Inovasi Satker", icon: GraduationCap, count: null, color: "text-rose-600" },
   ]
@@ -2588,52 +2770,172 @@ export function AdminDashboardClient({
           {/* ========================================================================= */}
           {activeTab === "templates" && (
             <div className="space-y-6">
-              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+              {/* Top Banner & Action */}
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-6 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                      <Layers className="h-5 w-5 text-teal-600" />
-                      <span>Koleksi Template Dokumen Resmi (BPS & Kejaksaan RI)</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700 border border-teal-200">
+                        <Layers className="h-3.5 w-3.5" />
+                        <span>Manajemen Format Naskah Dinas & SPMK</span>
+                      </span>
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                        {allAdminTemplates.length} Template Siap Pakai
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 mt-2">
+                      Pusat Template Dokumen Resmi (BPS & Kejaksaan RI)
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      8 Berkas standar resmi Perka BPS No. 2/2021, ISO 31000, ITIL AXELOS, dan Tata Naskah Dinas Kejaksaan RI
+                    <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+                      Kelola formulir DUPAK/SPMK, Surat Perintah Tugas (SPT), SOP Keamanan Server, Berita Acara TIK, dan Naskah Seminar Inovasi. Template otomatis tersinkronisasi dan dapat diunduh publik dalam format Microsoft Word (.doc).
                     </p>
                   </div>
-                  <a
-                    href="/templates"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-full bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition shadow-2xs"
-                  >
-                    <span>Buka Pusat Template</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      onClick={() => setIsTemplateModalOpen(true)}
+                      className="flex items-center gap-2 rounded-full bg-teal-600 px-5 py-2.5 text-xs font-black text-white hover:bg-teal-700 transition shadow-sm cursor-pointer"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Tambah Template Baru</span>
+                    </button>
+                    <a
+                      href="/templates"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-200 transition"
+                    >
+                      <span>Lihat Halaman Publik</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                  {[
-                    { title: "Surat Perintah Tugas (SPT) TI", category: "Administrasi & SPT", ref: "Pedoman Tata Naskah Kejaksaan", desc: "Format penomoran PRINT resmi penugasan pemeliharaan server, jaringan & database." },
-                    { title: "Formulir DUPAK & SPMK Prakom", category: "DUPAK & SKP BPS", ref: "Perka BPS No. 2/2021", desc: "Surat Pernyataan Melakukan Kegiatan 5 Sub-Unsur & butir angka kredit resmi." },
-                    { title: "Konversi SKP ke PAK Integrasi", category: "DUPAK & SKP BPS", ref: "PermenPAN-RB No. 1/2023", desc: "Konversi predikat kinerja tahunan PNS ke Angka Kredit Integrasi." },
-                    { title: "SOP Ruang Server & Keamanan", category: "SOP & Keamanan", ref: "Perpres 95/2018 SPBE", desc: "Tata tertib server, jadwal backup otomatis harian, dan tanggap darurat CSIRT." },
-                    { title: "Laporan Temuan Audit TI", category: "SOP & Keamanan", ref: "Standar ITIL AXELOS", desc: "Matriks temuan audit memuat Kondisi, Kriteria, Risiko, dan Rekomendasi." },
-                    { title: "Risk Register TI ISO 31000", category: "SOP & Keamanan", ref: "ISO 31000:2018", desc: "Matriks identifikasi ancaman, Likelihood x Impact, dan mitigasi risiko." },
-                    { title: "Berita Acara Kerusakan TIK", category: "Administrasi & SPT", ref: "Tata Kelola BMN Kejaksaan", desc: "BAP pemeriksaan fisik dan diagnosa kerusakan perangkat PC/server dinas." },
-                    { title: "Format Makalah Seminar Akhir", category: "Seminar Akhir", ref: "Pusdiklat Badiklat Kejaksaan", desc: "Format naskah proposal inovasi 5 Bab dengan Lembar Pengesahan Coach & Penguji." }
-                  ].map((tpl, i) => (
-                    <div key={i} className="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">
-                          {tpl.category}
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">.doc Word</span>
-                      </div>
-                      <h4 className="text-xs font-black text-slate-900 leading-snug">{tpl.title}</h4>
-                      <p className="text-[11px] text-slate-500 leading-relaxed">{tpl.desc}</p>
-                      <div className="text-[10px] text-slate-400 font-mono pt-1">⚖️ Dasar: {tpl.ref}</div>
-                    </div>
-                  ))}
+                {/* Filter & Search Bar */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-slate-100">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Cari judul template, nomor regulasi, kata kunci naskah..."
+                      className="pl-10 text-xs h-10 rounded-xl"
+                    />
+                  </div>
+                  <select
+                    value={templateCategoryFilter}
+                    onChange={(e) => setTemplateCategoryFilter(e.target.value)}
+                    className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:border-slate-800 focus:outline-none"
+                  >
+                    <option value="Semua">Semua Kategori ({allAdminTemplates.length})</option>
+                    <option value="Administrasi & SPT">Administrasi & SPT</option>
+                    <option value="DUPAK & SKP BPS">DUPAK & SKP BPS</option>
+                    <option value="SOP & Keamanan">SOP & Keamanan</option>
+                    <option value="Seminar Akhir">Seminar Akhir</option>
+                  </select>
                 </div>
+
+                {/* Template Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredAdminTemplates.map((tpl) => {
+                    const isCustom = customTemplates.some((c) => c.id === tpl.id)
+                    return (
+                      <div
+                        key={tpl.id}
+                        className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-5 hover:border-teal-300 hover:shadow-md transition space-y-4"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-black uppercase bg-teal-50 text-teal-800 border border-teal-200/70 px-2.5 py-0.5 rounded-full">
+                              {tpl.category}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {isCustom ? (
+                                <span className="text-[9px] font-bold uppercase bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
+                                  Kustom Admin
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                  Bawaan BPS
+                                </span>
+                              )}
+                              <span className="text-[10px] font-mono text-slate-400 font-semibold">{tpl.format}</span>
+                            </div>
+                          </div>
+
+                          <h4 className="text-sm font-black text-slate-900 leading-snug">{tpl.title}</h4>
+                          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{tpl.description}</p>
+                          
+                          <div className="rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600 space-y-0.5 border border-slate-100">
+                            <div className="font-semibold text-slate-700 truncate">⚖️ {tpl.legalReference}</div>
+                            {tpl.bpsCode && (
+                              <div className="text-teal-700 font-mono font-bold text-[10px]">📌 Kode: {tpl.bpsCode}</div>
+                            )}
+                          </div>
+
+                          {tpl.tags && tpl.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {tpl.tags.slice(0, 3).map((tag, tIdx) => (
+                                <span key={tIdx} className="text-[9px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setPreviewingTemplate(tpl)}
+                              className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+                              title="Pratinjau Naskah"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              <span>Lihat</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownloadTemplateDoc(tpl)}
+                              className="flex items-center gap-1 rounded-lg bg-teal-50 px-2.5 py-1.5 text-[11px] font-bold text-teal-700 hover:bg-teal-100 border border-teal-200 transition cursor-pointer"
+                              title="Unduh File Word .doc"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              <span>.doc</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setEditingTemplate(tpl)}
+                              className="flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+                              title="Edit Template"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span>Edit</span>
+                            </button>
+                            {isCustom && (
+                              <button
+                                onClick={() => handleDeleteTemplate(tpl.id, tpl.title)}
+                                className="rounded-lg bg-rose-50 p-1.5 text-rose-600 hover:bg-rose-100 transition cursor-pointer"
+                                title="Hapus Template"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {filteredAdminTemplates.length === 0 && (
+                  <div className="text-center py-12 text-slate-400">
+                    <Layers className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm font-bold">Tidak ada template yang cocok dengan pencarian.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -3508,6 +3810,287 @@ export function AdminDashboardClient({
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* 5. Modal: Create Template */}
+      <Modal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        title="Tambah Template Dokumen / Naskah Dinas Baru"
+      >
+        <form onSubmit={handleCreateTemplateSubmit} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Judul Template Dokumen *</label>
+            <Input
+              name="title"
+              required
+              placeholder="Contoh: Surat Permohonan Akses Server & Database Perkara"
+              className="text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Kategori Dokumen *</label>
+              <select
+                name="category"
+                required
+                defaultValue="Administrasi & SPT"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
+              >
+                <option value="Administrasi & SPT">Administrasi & SPT</option>
+                <option value="DUPAK & SKP BPS">DUPAK & SKP BPS</option>
+                <option value="SOP & Keamanan">SOP & Keamanan</option>
+                <option value="Seminar Akhir">Seminar Akhir</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Format Berkas *</label>
+              <select
+                name="format"
+                required
+                defaultValue=".doc Word"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
+              >
+                <option value=".doc Word">.doc Word</option>
+                <option value=".docx Word">.docx Word</option>
+                <option value=".xlsx Excel">.xlsx Excel</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Dasar Hukum / Regulasi *</label>
+              <Input
+                name="legalReference"
+                required
+                placeholder="Contoh: Perpres No. 95/2018 SPBE / Perka BPS 2/2021"
+                className="text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Kode BPS / Butir DUPAK (Opsional)</label>
+              <Input
+                name="bpsCode"
+                placeholder="Contoh: Lampiran II Perka BPS 2/2021"
+                className="text-xs font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Tag / Label Pencarian (Pisahkan dengan koma)</label>
+            <Input
+              name="tags"
+              placeholder="Contoh: Server, Hak Akses, Kejati, Database"
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900">Deskripsi Singkat Template</label>
+            <Input
+              name="description"
+              placeholder="Penjelasan fungsi dan peruntukan naskah dinas ini..."
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900">Isi Naskah Dokumen Lengkap (.doc) *</label>
+              <span className="text-[10px] text-slate-400 font-mono">Format Teks Lengkap dengan Titik-titik</span>
+            </div>
+            <textarea
+              name="contentDoc"
+              rows={8}
+              required
+              placeholder="KEJAKSAAN REPUBLIK INDONESIA&#10;KEJAKSAAN TINGGI / NEGERI ........................&#10;&#10;SURAT PERMOHONAN HAK AKSES TIK&#10;NOMOR: B - ...... / L. ... / ... / 2026&#10;&#10;Yang bertanda tangan di bawah ini:&#10;Nama: ...........................................................&#10;NIP: ...........................................................&#10;Jabatan: Pranata Komputer Ahli Pertama&#10;..."
+              className="w-full font-mono rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-900 focus:border-slate-800 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsTemplateModalOpen(false)}
+              className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
+            >
+              Simpan & Terbitkan Template
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 6. Modal: Edit Template */}
+      {editingTemplate && (
+        <Modal
+          isOpen={Boolean(editingTemplate)}
+          onClose={() => setEditingTemplate(null)}
+          title="Edit Template Dokumen"
+        >
+          <form onSubmit={handleUpdateTemplateSubmit} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Judul Template Dokumen *</label>
+              <Input
+                name="title"
+                required
+                defaultValue={editingTemplate.title}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-900">Kategori Dokumen *</label>
+                <select
+                  name="category"
+                  required
+                  defaultValue={editingTemplate.category}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
+                >
+                  <option value="Administrasi & SPT">Administrasi & SPT</option>
+                  <option value="DUPAK & SKP BPS">DUPAK & SKP BPS</option>
+                  <option value="SOP & Keamanan">SOP & Keamanan</option>
+                  <option value="Seminar Akhir">Seminar Akhir</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-900">Format Berkas *</label>
+                <select
+                  name="format"
+                  required
+                  defaultValue={editingTemplate.format}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-900"
+                >
+                  <option value=".doc Word">.doc Word</option>
+                  <option value=".docx Word">.docx Word</option>
+                  <option value=".xlsx Excel">.xlsx Excel</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-900">Dasar Hukum / Regulasi *</label>
+                <Input
+                  name="legalReference"
+                  required
+                  defaultValue={editingTemplate.legalReference}
+                  className="text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-900">Kode BPS / Butir DUPAK (Opsional)</label>
+                <Input
+                  name="bpsCode"
+                  defaultValue={editingTemplate.bpsCode || ""}
+                  className="text-xs font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Tag / Label (Pisahkan dengan koma)</label>
+              <Input
+                name="tags"
+                defaultValue={editingTemplate.tags ? editingTemplate.tags.join(", ") : ""}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Deskripsi Singkat</label>
+              <Input
+                name="description"
+                defaultValue={editingTemplate.description}
+                className="text-xs"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900">Isi Naskah Dokumen Lengkap (.doc) *</label>
+              <textarea
+                name="contentDoc"
+                rows={8}
+                required
+                defaultValue={editingTemplate.contentDoc}
+                className="w-full font-mono rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-900 focus:border-slate-800 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingTemplate(null)}
+                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="rounded-full bg-teal-600 px-5 py-2 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* 7. Modal: Preview Template */}
+      {previewingTemplate && (
+        <Modal
+          isOpen={Boolean(previewingTemplate)}
+          onClose={() => setPreviewingTemplate(null)}
+          title={`Pratinjau: ${previewingTemplate.title}`}
+        >
+          <div className="space-y-4 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">
+                  {previewingTemplate.category}
+                </span>
+                <span className="text-xs text-slate-500 font-medium">⚖️ {previewingTemplate.legalReference}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(previewingTemplate.contentDoc)
+                    setTemplateCopied(true)
+                    setTimeout(() => setTemplateCopied(false), 2000)
+                  }}
+                  className="flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-100 cursor-pointer"
+                >
+                  {templateCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{templateCopied ? "Tersalin!" : "Salin Teks"}</span>
+                </button>
+                <button
+                  onClick={() => handleDownloadTemplateDoc(previewingTemplate)}
+                  className="flex items-center gap-1 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-black text-white hover:bg-teal-700 cursor-pointer shadow-sm"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Unduh .doc</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 max-h-[60vh] overflow-y-auto shadow-inner">
+              <pre className="font-serif text-xs leading-relaxed text-slate-900 whitespace-pre-wrap selection:bg-teal-100">
+                {previewingTemplate.contentDoc}
+              </pre>
+            </div>
+          </div>
         </Modal>
       )}
 

@@ -34,7 +34,7 @@ export interface DocumentTemplate {
   contentDoc: string
 }
 
-const TEMPLATES_DATA: DocumentTemplate[] = [
+export const TEMPLATES_DATA: DocumentTemplate[] = [
   {
     id: "spt-ti",
     title: "Surat Perintah Tugas (SPT) Pemeliharaan & Troubleshooting TIK Satker",
@@ -444,11 +444,49 @@ export function TemplatesHub() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("Semua")
   const [previewTemplate, setPreviewTemplate] = React.useState<DocumentTemplate | null>(null)
   const [copied, setCopied] = React.useState(false)
+  const [customTemplates, setCustomTemplates] = React.useState<DocumentTemplate[]>([])
 
   const categories = ["Semua", "Administrasi & SPT", "DUPAK & SKP BPS", "SOP & Keamanan", "Seminar Akhir"]
 
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("custom_prakom_templates")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          setCustomTemplates(parsed)
+        }
+      }
+    } catch {
+      // Ignore
+    }
+
+    const handleStorage = () => {
+      try {
+        const stored = localStorage.getItem("custom_prakom_templates")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) {
+            setCustomTemplates(parsed)
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
+    window.addEventListener("storage", handleStorage)
+    return () => window.removeEventListener("storage", handleStorage)
+  }, [])
+
+  const allTemplates = React.useMemo(() => {
+    const customIds = new Set(customTemplates.map((t) => t.id))
+    const defaults = TEMPLATES_DATA.filter((t) => !customIds.has(t.id))
+    return [...customTemplates, ...defaults]
+  }, [customTemplates])
+
   const filteredTemplates = React.useMemo(() => {
-    return TEMPLATES_DATA.filter((item) => {
+    return allTemplates.filter((item) => {
       const matchCategory = selectedCategory === "Semua" || item.category === selectedCategory
       const matchSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -457,7 +495,7 @@ export function TemplatesHub() {
         item.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
       return matchCategory && matchSearch
     })
-  }, [selectedCategory, searchQuery])
+  }, [allTemplates, selectedCategory, searchQuery])
 
   // Download template as clean Word document (.doc)
   const handleDownload = (template: DocumentTemplate) => {
