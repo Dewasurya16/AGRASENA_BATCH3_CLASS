@@ -155,9 +155,9 @@ export function QuizPlayer() {
           )}
         </div>
 
-        {/* Category Filter Horizontal Scrolling Bar */}
-        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {/* Category Filter Grid & Wrapping Pills */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-2">
             {categories.map((cat) => {
               const count = cat === "Semua" ? QUIZ_QUESTIONS.length : QUIZ_QUESTIONS.filter((q) => q.category === cat).length
               const isActive = selectedCategory === cat
@@ -168,7 +168,7 @@ export function QuizPlayer() {
                     setSelectedCategory(cat)
                     setCurrentIndex(0)
                   }}
-                  className={`rounded-2xl px-4 py-2.5 text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
+                  className={`rounded-2xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     isActive
                       ? "bg-[#0D824B] text-white shadow-sm ring-2 ring-[#0D824B]/30"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
