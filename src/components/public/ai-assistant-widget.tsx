@@ -210,7 +210,7 @@ export function AIAssistantWidget() {
   const [input, setInput] = React.useState('')
   const [isTyping, setIsTyping] = React.useState(false)
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
-  const [currentDayNum, setCurrentDayNum] = React.useState(3)
+  const [currentDayNum, setCurrentDayNum] = React.useState(getCurrentDiklatDay)
 
   // User Profile State
   const [userName, setUserName] = React.useState('')
@@ -241,13 +241,14 @@ export function AIAssistantWidget() {
         setTempNameInput(savedName)
         setTempSatkerInput(savedSatker || '')
         setIsNameSet(true)
+        const todayObj = RAW_DAYS_DATA.find((d) => d.day === today) || RAW_DAYS_DATA[0]
         setMessages([
           {
             id: 'msg-welcome',
             sender: 'ai',
             text: `Halo Pak/Ibu **${savedName}**${savedSatker ? ` (${savedSatker})` : ''}! 👋
 
-Hari ini adalah **Hari ke-${today} (${RAW_DAYS_DATA.find((d) => d.day === today)?.date || '26 Agu 2026'}) — ${RAW_DAYS_DATA.find((d) => d.day === today)?.stageName || 'Tahap 1 • MOOC'}**.
+Hari ini adalah **Hari ke-${today} (${todayObj.date}) — ${todayObj.stageName}**.
 
 Saya siap membantu:
 • 📅 Jadwal diklat hari ini & besok

@@ -77,26 +77,66 @@ export const RAW_DAYS_DATA = [
   { day: 35, stage: 4, stageName: "Tahap 4 • Seminar", stageSubtitle: "Seminar Klasikal", date: "9 Okt 2026", dayOfWeek: "Jumat", dots: 1 },
 ]
 
+const MONTH_MAP: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  mei: 4,
+  jun: 5,
+  jul: 6,
+  agu: 7,
+  agt: 7,
+  aug: 7,
+  sep: 8,
+  okt: 9,
+  oct: 9,
+  nov: 10,
+  des: 11,
+  dec: 11,
+}
+
+export function parseDiklatDate(dateStr: string): Date | null {
+  const parts = dateStr.trim().split(/\s+/)
+  if (parts.length < 3) return null
+  const day = parseInt(parts[0], 10)
+  const monthKey = parts[1].toLowerCase().slice(0, 3)
+  const month = MONTH_MAP[monthKey] ?? 7
+  const year = parseInt(parts[2], 10) || 2026
+  return new Date(year, month, day, 0, 0, 0, 0)
+}
+
 /**
  * Menghitung hari diklat ke-N secara otomatis berdasarkan kalender tanggal berjalan
  */
 export function getCurrentDiklatDay(): number {
   const now = new Date()
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
-  const currentMonthStr = monthNames[now.getMonth()]
-  const targetDateStr = `${now.getDate()} ${currentMonthStr}`
+  const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
 
-  // Cari apakah tanggal hari ini cocok dengan tanggal di kalender kurikulum 35 hari
-  const matched = RAW_DAYS_DATA.find((d) => d.date.startsWith(targetDateStr))
-  if (matched) {
-    return matched.day
+  // 1. Cari apakah tanggal hari ini cocok dengan tanggal di kalender kurikulum 35 hari
+  for (const item of RAW_DAYS_DATA) {
+    const itemDate = parseDiklatDate(item.date)
+    if (itemDate && itemDate.getTime() === todayAtMidnight.getTime()) {
+      return item.day
+    }
   }
 
-  // Jika sebelum tanggal mulai diklat (24 Agu 2026) -> Hari 1
-  const diklatStartDate = new Date(2026, 7, 24)
-  if (now < diklatStartDate) return 1
+  // 2. Jika sebelum tanggal mulai diklat (24 Agu 2026) -> Hari 1
+  const firstDayDate = parseDiklatDate(RAW_DAYS_DATA[0].date)
+  if (firstDayDate && todayAtMidnight.getTime() < firstDayDate.getTime()) {
+    return 1
+  }
 
-  return 3 // Default Hari 3
+  // 3. Jika hari ini jatuh pada hari libur/weekend di antara tahap perkuliahan, ambil hari perkuliahan aktif berikutnya
+  for (let i = 0; i < RAW_DAYS_DATA.length; i++) {
+    const itemDate = parseDiklatDate(RAW_DAYS_DATA[i].date)
+    if (itemDate && todayAtMidnight.getTime() < itemDate.getTime()) {
+      return RAW_DAYS_DATA[i].day
+    }
+  }
+
+  // 4. Jika setelah seluruh jadwal 35 hari selesai (setelah 9 Okt 2026) -> Hari 35
+  return 35
 }
 
 /**

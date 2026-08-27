@@ -2,8 +2,39 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Video, Clock, ExternalLink, Sparkles, Radio, Calendar, User, MapPin, Moon, Sun, BookOpen } from "lucide-react"
+import {
+  Video,
+  Clock,
+  ExternalLink,
+  Sparkles,
+  Radio,
+  Calendar,
+  User,
+  MapPin,
+  Moon,
+  Sun,
+  BookOpen,
+  FileText,
+  CheckCircle2,
+  Coffee,
+  ArrowRight,
+  Upload,
+  Layers,
+  Flame,
+  AlertCircle
+} from "lucide-react"
+import Link from "next/link"
 import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber } from "@/lib/roadmap-utils"
+
+export interface TaskItem {
+  id: string
+  title: string
+  subject_name: string
+  due_date: string
+  description?: string | null
+  submission_link?: string | null
+  status?: string
+}
 
 export interface LiveSessionBannerProps {
   currentDayName?: string
@@ -18,22 +49,27 @@ export interface LiveSessionBannerProps {
     zoom_url?: string | null
     day?: string | null
   }>
+  todayTasks?: TaskItem[]
 }
 
 const RUANG_DIKLAT_URL =
   'https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat'
 
+export type DailyPhase = 'in_class' | 'task_time' | 'prep_time' | 'weekend'
+
 export function LiveSessionBanner({
   currentDayName,
   currentDayNumber,
   todaySchedules = [],
+  todayTasks = [],
 }: LiveSessionBannerProps) {
   const [mounted, setMounted] = React.useState(false)
   const [currentTimeStr, setCurrentTimeStr] = React.useState("")
-  const [isWorkingHours, setIsWorkingHours] = React.useState(false)
+  const [phase, setPhase] = React.useState<DailyPhase>('in_class')
+  const [countdownText, setCountdownText] = React.useState("")
 
   const activeDayNum = currentDayNumber || getCurrentDiklatDay()
-  const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[2]
+  const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[0]
   const displayDayName = currentDayName || `Hari ${activeDayNum} • ${todayCurriculum.stageName}`
 
   React.useEffect(() => {
@@ -43,20 +79,52 @@ export function LiveSessionBanner({
       const hours = now.getHours()
       const minutes = now.getMinutes()
       const seconds = now.getSeconds()
-      const dayOfWeek = now.getDay() // 0 = Sunday, 6 = Saturday
+      const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu
 
       const hStr = String(hours).padStart(2, "0")
       const mStr = String(minutes).padStart(2, "0")
       const sStr = String(seconds).padStart(2, "0")
       setCurrentTimeStr(`${hStr}:${mStr}:${sStr} WIB`)
 
-      // Jam kerja diklat resmi: Senin s.d. Jumat, 08:00 - 15:30 WIB
       const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
       const totalMins = hours * 60 + minutes
-      const startMins = 8 * 60 // 08:00
-      const endMins = 15 * 60 + 30 // 15:30
 
-      setIsWorkingHours(isWeekday && totalMins >= startMins && totalMins <= endMins)
+      // 1. Akhir Pekan (Sabtu & Minggu)
+      if (!isWeekday) {
+        setPhase('weekend')
+        setCountdownText("Sesi dilanjutkan Senin, 08:00 WIB")
+        return
+      }
+
+      // 2. Jam Perkuliahan Aktif: 08:00 s.d. 16:00 WIB (08:00 - 15:59)
+      if (totalMins >= 8 * 60 && totalMins < 16 * 60) {
+        setPhase('in_class')
+        const remainingMinutes = 16 * 60 - totalMins
+        const remH = Math.floor(remainingMinutes / 60)
+        const remM = remainingMinutes % 60
+        setCountdownText(remH > 0 ? `Selesai dalam ${remH} jam ${remM} mnt` : `Selesai dalam ${remM} mnt`)
+        return
+      }
+
+      // 3. Jam Tugas Mandiri & Evaluasi Harian: 16:00 s.d. 23:59 WIB
+      if (totalMins >= 16 * 60 && totalMins <= 23 * 60 + 59) {
+        setPhase('task_time')
+        const remainingMinutes = (24 * 60) - totalMins
+        const remH = Math.floor(remainingMinutes / 60)
+        const remM = remainingMinutes % 60
+        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (23:59 WIB)`)
+        return
+      }
+
+      // 4. Ganti Hari / Dini Hari Menjelang Perkuliahan: 00:00 s.d. 07:59 WIB
+      if (totalMins >= 0 && totalMins < 8 * 60) {
+        setPhase('prep_time')
+        const remainingMinutes = (8 * 60) - totalMins
+        const remH = Math.floor(remainingMinutes / 60)
+        const remM = remainingMinutes % 60
+        setCountdownText(`Mulai dalam ${remH}j ${remM}m (08:00 WIB)`)
+        return
+      }
     }
 
     updateTime()
@@ -64,7 +132,7 @@ export function LiveSessionBanner({
     return () => clearInterval(timer)
   }, [])
 
-  // Find schedule that specifically matches today's day number (e.g. Hari 3)
+  // Cari sesi perkuliahan aktif untuk hari ini dari Supabase atau fallback kurikulum
   const matchedSchedule = todaySchedules.find((s) => {
     const explicitDay = getScheduleDayNumber(s)
     if (explicitDay !== null) {
@@ -84,71 +152,213 @@ export function LiveSessionBanner({
     zoom_url: RUANG_DIKLAT_URL,
   }
 
+  // Cari tugas aktif hari ini dari Supabase atau fallback
+  const matchedTask = todayTasks.find((t) => {
+    const titleMatch = t.title.toLowerCase().includes(`hari ${activeDayNum}`) ||
+                       t.subject_name.toLowerCase().includes(`hari ${activeDayNum}`)
+    return titleMatch && t.status !== 'completed'
+  }) || todayTasks.find((t) => t.status !== 'completed') || {
+    id: `task-day-${activeDayNum}`,
+    title: `Tugas Mandiri & Evaluasi Pemahaman Modul Hari ke-${activeDayNum}`,
+    subject_name: activeSession.subject_name,
+    due_date: `${todayCurriculum.date}, 23:59 WIB`,
+    submission_link: RUANG_DIKLAT_URL,
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       className={`relative overflow-hidden rounded-[32px] p-5 sm:p-7 text-white shadow-xl border transition-all ${
-        isWorkingHours
-          ? "bg-gradient-to-r from-[#0D3830] via-[#0E443B] to-[#0A2E27] shadow-[#0D3830]/20 border-white/15"
+        phase === 'in_class'
+          ? "bg-gradient-to-r from-[#0D3830] via-[#0E443B] to-[#0A2E27] shadow-[#0D3830]/25 border-emerald-500/20"
+          : phase === 'task_time'
+          ? "bg-gradient-to-r from-[#1E1B4B] via-[#2A1B4E] to-[#111827] shadow-indigo-950/40 border-indigo-500/30"
+          : phase === 'prep_time'
+          ? "bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0D2822] shadow-black/30 border-sky-500/20"
           : "bg-gradient-to-r from-[#131E29] via-[#1E293B] to-[#0F172A] shadow-black/20 border-slate-700/60"
       }`}
     >
-      {/* Decorative ambient glows */}
-      <div className={`absolute -left-12 -top-12 h-40 w-40 rounded-full blur-2xl pointer-events-none ${isWorkingHours ? "bg-[#E6F7ED]/20" : "bg-sky-500/10"}`} />
-      <div className={`absolute -right-10 -bottom-10 h-40 w-40 rounded-full blur-2xl pointer-events-none ${isWorkingHours ? "bg-[#FF7643]/25" : "bg-indigo-500/15"}`} />
+      {/* Decorative ambient glows based on active phase */}
+      <div
+        className={`absolute -left-12 -top-12 h-44 w-44 rounded-full blur-3xl pointer-events-none ${
+          phase === 'in_class'
+            ? "bg-[#E6F7ED]/25"
+            : phase === 'task_time'
+            ? "bg-indigo-500/25"
+            : phase === 'prep_time'
+            ? "bg-amber-400/15"
+            : "bg-sky-500/10"
+        }`}
+      />
+      <div
+        className={`absolute -right-10 -bottom-10 h-44 w-44 rounded-full blur-3xl pointer-events-none ${
+          phase === 'in_class'
+            ? "bg-[#FF7643]/30"
+            : phase === 'task_time'
+            ? "bg-purple-500/25"
+            : phase === 'prep_time'
+            ? "bg-emerald-400/20"
+            : "bg-indigo-500/15"
+        }`}
+      />
 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         
-        {/* Left Status & Session Info */}
-        <div className="space-y-2 max-w-2xl">
+        {/* Left Status & Contextual Info */}
+        <div className="space-y-2.5 max-w-2xl">
+          
+          {/* Phase Badges Rail */}
           <div className="flex flex-wrap items-center gap-2">
-            {isWorkingHours ? (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/90 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+            
+            {/* 1. Sesi Pembelajaran Aktif (08:00 - 16:00 WIB) */}
+            {phase === 'in_class' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
                 <span className="flex h-2 w-2 rounded-full bg-white animate-ping" />
                 Sesi Pembelajaran Aktif
               </span>
-            ) : (
-              <span className="flex items-center gap-1.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
-                <Moon className="h-3 w-3 text-amber-400" />
-                Di Luar Jam Perkuliahan (Istirahat)
+            )}
+
+            {/* 2. Kelas Selesai -> Waktu Tugas Mandiri (16:00 - 23:59 WIB) */}
+            {phase === 'task_time' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+                <CheckCircle2 className="h-3 w-3 text-emerald-300" />
+                Kelas Selesai • Waktu Pengerjaan Tugas
               </span>
             )}
 
-            <span className={`rounded-full px-3 py-1 text-[10px] font-extrabold border ${isWorkingHours ? "bg-white/15 text-[#E6F7ED] border-white/10" : "bg-slate-800/80 text-slate-300 border-slate-700"}`}>
+            {/* 3. Dini Hari -> Persiapan Kelas Pagi Ini (00:00 - 08:00 WIB) */}
+            {phase === 'prep_time' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <Coffee className="h-3.5 w-3.5 text-slate-950" />
+                Persiapan Kelas Hari Ini • Menunggu Sesi Mulai
+              </span>
+            )}
+
+            {/* 4. Weekend / Hari Libur */}
+            {phase === 'weekend' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                <Calendar className="h-3 w-3 text-sky-400" />
+                Akhir Pekan • Belajar Mandiri
+              </span>
+            )}
+
+            {/* Day & Stage Tag */}
+            <span className="rounded-full bg-white/15 text-slate-100 border border-white/10 px-3 py-1 text-[10px] font-extrabold">
               {displayDayName}
             </span>
 
+            {/* Realtime Clock & Dynamic Countdown */}
             {mounted && (
-              <span className="rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-mono text-slate-300 font-bold">
+              <span className="rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-mono text-slate-200 font-bold border border-white/5">
                 ⏰ {currentTimeStr}
+              </span>
+            )}
+
+            {mounted && countdownText && (
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold border ${
+                phase === 'task_time'
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  : phase === 'prep_time'
+                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                  : "bg-white/10 text-slate-300 border-white/10"
+              }`}>
+                ⏳ {countdownText}
               </span>
             )}
           </div>
 
+          {/* Main Title & Metadata by Phase */}
           <div>
-            <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
-              {isWorkingHours ? activeSession.subject_name : `Sesi Hari Ini Selesai • ${activeSession.subject_name}`}
-            </h3>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5 text-[#FFD280]" />
-                Jam Diklat: {activeSession.start_time} – {activeSession.end_time} WIB
-              </span>
-              {activeSession.lecturer && (
-                <span className="flex items-center gap-1">
-                  <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
-                  {activeSession.lecturer}
-                </span>
-              )}
-            </div>
+            {phase === 'in_class' && (
+              <>
+                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                  {activeSession.subject_name}
+                </h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5 text-[#FFD280]" />
+                    Jam Diklat: {activeSession.start_time} – {activeSession.end_time} WIB
+                  </span>
+                  {activeSession.lecturer && (
+                    <span className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
+                      {activeSession.lecturer}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <MapPin className="h-3.5 w-3.5 text-sky-400" />
+                    {activeSession.room || "Ruang Zoom Diklat"}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {phase === 'task_time' && (
+              <>
+                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                  Tugas Hari ke-{activeDayNum}: {matchedTask.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                  <span className="flex items-center gap-1 text-amber-300 font-bold">
+                    <Flame className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                    Batas Upload: {matchedTask.due_date || "Malam ini 23:59 WIB"}
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
+                    Mata Kuliah: {activeSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {phase === 'prep_time' && (
+              <>
+                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                  Persiapan Sesi Hari ke-{activeDayNum}: {activeSession.subject_name}
+                </h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                  <span className="flex items-center gap-1 text-emerald-300 font-bold">
+                    <Sun className="h-3.5 w-3.5 text-amber-400" />
+                    Perkuliahan Dimulai Pukul 08:00 WIB (Pagi Ini)
+                  </span>
+                  {activeSession.lecturer && (
+                    <span className="flex items-center gap-1 text-slate-300">
+                      <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
+                      Pengampu: {activeSession.lecturer}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+
+            {phase === 'weekend' && (
+              <>
+                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                  Sesi Mendatang (Senin): {activeSession.subject_name}
+                </h3>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                  <span className="flex items-center gap-1 text-sky-300">
+                    <Calendar className="h-3.5 w-3.5 text-sky-400" />
+                    Jadwal Dilanjutkan Senin Pukul 08:00 WIB
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-300">
+                    <BookOpen className="h-3.5 w-3.5 text-[#FFD280]" />
+                    Manfaatkan akhir pekan untuk mereview modul & kuis MOOC
+                  </span>
+                </div>
+              </>
+            )}
           </div>
+
         </div>
 
-        {/* Right CTA Actions */}
+        {/* Right Dynamic Actions by Phase */}
         <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto shrink-0">
-          {isWorkingHours ? (
+          
+          {/* Action on Active Class (08:00 - 16:00) */}
+          {phase === 'in_class' && (
             <a
               href={activeSession.zoom_url || RUANG_DIKLAT_URL}
               target="_blank"
@@ -159,21 +369,69 @@ export function LiveSessionBanner({
               <span>Masuk Ruang Zoom / LMS</span>
               <ExternalLink className="h-3.5 w-3.5 text-white/80" />
             </a>
-          ) : (
-            <a
-              href={RUANG_DIKLAT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 px-5 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer"
-            >
-              <BookOpen className="h-4 w-4 text-amber-400" />
-              <span>Akses Materi & LMS</span>
-              <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
-            </a>
           )}
+
+          {/* Action on Task Time (16:00 - 23:59) */}
+          {phase === 'task_time' && (
+            <>
+              <Link href="/tasks">
+                <button className="flex items-center gap-2 rounded-full bg-[#FF7643] hover:bg-[#F06530] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#FF7643]/30 hover:scale-102 active:scale-98 transition-all cursor-pointer">
+                  <Upload className="h-4 w-4 text-white" />
+                  <span>Buka & Kumpulkan Tugas</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-[#FFD280]" />
+                </button>
+              </Link>
+              <Link href="/materials">
+                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Bahan Ajar PDF</span>
+                </button>
+              </Link>
+            </>
+          )}
+
+          {/* Action on Prep Time (00:00 - 08:00) */}
+          {phase === 'prep_time' && (
+            <>
+              <Link href="/materials">
+                <button className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-600/30 hover:scale-102 active:scale-98 transition-all cursor-pointer">
+                  <BookOpen className="h-4 w-4 text-white" />
+                  <span>Pelajari Modul Hari ke-{activeDayNum}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-emerald-200" />
+                </button>
+              </Link>
+              <Link href="/schedules">
+                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <Calendar className="h-3.5 w-3.5 text-sky-300" />
+                  <span>Jadwal Sesi</span>
+                </button>
+              </Link>
+            </>
+          )}
+
+          {/* Action on Weekend */}
+          {phase === 'weekend' && (
+            <>
+              <Link href="/materials">
+                <button className="flex items-center gap-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 px-5 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <BookOpen className="h-4 w-4 text-amber-400" />
+                  <span>Akses Materi 120 JP</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                </button>
+              </Link>
+              <Link href="/quiz">
+                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Latihan Kuis MOOC</span>
+                </button>
+              </Link>
+            </>
+          )}
+
         </div>
 
       </div>
     </motion.div>
   )
 }
+

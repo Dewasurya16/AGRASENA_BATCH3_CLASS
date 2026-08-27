@@ -35,15 +35,14 @@ export interface ScheduleItem {
 }
 
 export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }) {
-  const [activeDayOverride, setActiveDayOverride] = React.useState<number>(3)
   const [selectedStage, setSelectedStage] = React.useState<number>(0)
   const [activeModalDay, setActiveModalDay] = React.useState<RoadmapDayDetail | null>(null)
   const [searchQuery, setSearchQuery] = React.useState<string>("")
 
   // Automatic calculation based on 35 days + Live manual sessions from Supabase
   const { days, summary } = React.useMemo(
-    () => getAutoRoadmapData(activeDayOverride, schedules),
-    [activeDayOverride, schedules]
+    () => getAutoRoadmapData(undefined, schedules),
+    [schedules]
   )
 
   // Stage definitions for clean segmented views

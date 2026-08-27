@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Share2, Copy, Check, ExternalLink, MessageCircle, X, Sparkles } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
+import { getCurrentDiklatDay, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
 
 export interface WhatsAppShareModalProps {
   isOpen: boolean
@@ -18,19 +19,23 @@ export interface WhatsAppShareModalProps {
 export function WhatsAppShareModal({
   isOpen,
   onClose,
-  dayNumber = 3,
-  dayName = "Tahap 1 • MOOC (Hari 3)",
+  dayNumber,
+  dayName,
   currentScheduleTitle = "Tata Kelola TI & SPBE Nasional (120 JP)",
-  activeTaskTitle = "Rangkuman Materi Hari 2 — Manajemen Layanan TI & SPBE",
-  activeTaskDueDate = "26 Agustus 2026, 23:59 WIB",
+  activeTaskTitle = "Tugas Mandiri Pembelajaran Diklat",
+  activeTaskDueDate = "Hari Ini, 23:59 WIB",
 }: WhatsAppShareModalProps) {
   const [copied, setCopied] = React.useState(false)
+
+  const activeDay = dayNumber || getCurrentDiklatDay()
+  const stageObj = RAW_DAYS_DATA.find((d) => d.day === activeDay) || RAW_DAYS_DATA[0]
+  const activeDayName = dayName || `${stageObj.stageName} (Hari ${activeDay})`
 
   const templateMessage = `*📢 INFO REKAP HARIAN DIKLAT PRAKOM BATCH 3*
 *Kejaksaan RI X Agrasena (Prakom 625)*
 ━━━━━━━━━━━━━━━━━━━━
 
-📅 *Status Diklat:* ${dayName}
+📅 *Status Diklat:* ${activeDayName}
 ⏰ *Sesi Selesai/Aktif:* ${currentScheduleTitle}
 
 📌 *TENGGAT TUGAS TERDEKAT:*

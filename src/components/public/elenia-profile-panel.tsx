@@ -15,34 +15,53 @@ import {
   Layers
 } from "lucide-react"
 import Link from "next/link"
+import { getCurrentDiklatDay, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
 
 export function ClassInfoPanel() {
-  const [selectedDay, setSelectedDay] = React.useState(3)
+  const currentDay = getCurrentDiklatDay()
+  const currentCurriculum = RAW_DAYS_DATA.find((d) => d.day === currentDay) || RAW_DAYS_DATA[0]
+  const progressPct = Math.round((currentDay / 35) * 100)
 
   const stages = [
     {
       title: "Tahap 1 • MOOC (Mandiri)",
       duration: "Hari 1 - 5 (24 - 28 Agu)",
-      status: "Sedang Berjalan",
-      color: "bg-[#FFEADA] text-[#EA580C] border-[#FFD2B8]",
+      status: currentDay > 5 ? "Selesai" : currentDay >= 1 ? "Sedang Berjalan" : "Mendatang",
+      color: currentDay > 5
+        ? "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]"
+        : currentDay >= 1
+        ? "bg-[#FFEADA] text-[#EA580C] border-[#FFD2B8]"
+        : "bg-slate-100 text-slate-600 border-slate-200",
     },
     {
       title: "Tahap 2 • TMO (Tatap Muka Online)",
       duration: "Hari 6 - 15 (31 Agu - 11 Sep)",
-      status: "Mendatang",
-      color: "bg-[#E8F2FE] text-[#2563EB] border-[#BFDBFE]",
+      status: currentDay > 15 ? "Selesai" : currentDay >= 6 ? "Sedang Berjalan" : "Mendatang",
+      color: currentDay > 15
+        ? "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]"
+        : currentDay >= 6
+        ? "bg-[#FFEADA] text-[#EA580C] border-[#FFD2B8]"
+        : "bg-[#E8F2FE] text-[#2563EB] border-[#BFDBFE]",
     },
     {
       title: "Tahap 3 • Lab Prakom di Unit Kerja",
       duration: "Hari 16 - 30 (14 Sep - 2 Okt)",
-      status: "Mendatang",
-      color: "bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]",
+      status: currentDay > 30 ? "Selesai" : currentDay >= 16 ? "Sedang Berjalan" : "Mendatang",
+      color: currentDay > 30
+        ? "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]"
+        : currentDay >= 16
+        ? "bg-[#FFEADA] text-[#EA580C] border-[#FFD2B8]"
+        : "bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]",
     },
     {
       title: "Tahap 4 • Seminar Klasikal",
       duration: "Hari 31 - 35 (5 - 9 Okt)",
-      status: "Mendatang",
-      color: "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]",
+      status: currentDay > 35 ? "Selesai" : currentDay >= 31 ? "Sedang Berjalan" : "Mendatang",
+      color: currentDay > 35
+        ? "bg-[#E6F7ED] text-[#0D824B] border-[#A7F3D0]"
+        : currentDay >= 31
+        ? "bg-[#FFEADA] text-[#EA580C] border-[#FFD2B8]"
+        : "bg-[#FFF2D1] text-[#B47D00] border-[#FFE7A3]",
     },
   ]
 
@@ -77,17 +96,17 @@ export function ClassInfoPanel() {
         <div className="rounded-[24px] bg-[#F8FAFC] p-4 border border-slate-200/60 space-y-2.5">
           <div className="flex items-center justify-between text-xs font-bold text-[#131E29]">
             <span>Roadmap Progres</span>
-            <span className="text-[#EA580C] font-mono font-bold">16 / 58 Materi (28%)</span>
+            <span className="text-[#EA580C] font-mono font-bold">{progressPct}% Selesai</span>
           </div>
 
           {/* Progress Bar */}
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-            <div className="h-full rounded-full bg-[#FF7643]" style={{ width: "28%" }} />
+            <div className="h-full rounded-full bg-[#FF7643]" style={{ width: `${progressPct}%` }} />
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-[#6B7C93] pt-1">
-            <span>Hari ke-3 dari 35 Hari</span>
-            <span className="font-bold text-[#0D824B]">Tahap 1 • MOOC</span>
+            <span>Hari ke-{currentDay} dari 35 Hari</span>
+            <span className="font-bold text-[#0D824B]">{currentCurriculum.stageName}</span>
           </div>
         </div>
 

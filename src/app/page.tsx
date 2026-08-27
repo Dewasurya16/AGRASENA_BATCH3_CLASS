@@ -74,6 +74,7 @@ export default async function HomePage() {
           currentDayName={`Hari ${summary.currentDayNumber} • ${summary.currentStageName}`}
           currentDayNumber={summary.currentDayNumber}
           todaySchedules={schedules}
+          todayTasks={tasks}
         />
 
         {/* 4. Hero Banner Gaya eTwinkle (Playful Neo-Minimalist) */}
@@ -118,48 +119,67 @@ export default async function HomePage() {
 
           {/* 4 Stage Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-            {[
-              {
-                num: 1,
-                title: "Tahap 1 • MOOC",
-                sub: "Pembelajaran Mandiri",
-                days: "Hari 1 s.d. 5",
-                dates: "24 Agu – 28 Agu 2026",
-                status: "Sedang Berjalan",
-                isCurrent: true,
-                headerColor: "bg-[#FFEADA] dark:bg-amber-950/90 text-[#EA580C] dark:text-amber-300",
-              },
-              {
-                num: 2,
-                title: "Tahap 2 • TMO",
-                sub: "Tatap Muka Online",
-                days: "Hari 6 s.d. 15",
-                dates: "31 Agu – 11 Sep 2026",
-                status: "Jadwal Mendatang",
-                isCurrent: false,
-                headerColor: "bg-[#D7F3FE] dark:bg-sky-950/90 text-[#0369A1] dark:text-sky-300",
-              },
-              {
-                num: 3,
-                title: "Tahap 3 • Lab Prakom",
-                sub: "Laboratorium di Satker",
-                days: "Hari 16 s.d. 30",
-                dates: "14 Sep – 2 Okt 2026",
-                status: "Jadwal Mendatang",
-                isCurrent: false,
-                headerColor: "bg-[#FFE3EB] dark:bg-rose-950/90 text-[#E11D48] dark:text-rose-300",
-              },
-              {
-                num: 4,
-                title: "Tahap 4 • Seminar",
-                sub: "Seminar Klasikal",
-                days: "Hari 31 s.d. 35",
-                dates: "5 Okt – 9 Okt 2026",
-                status: "Jadwal Mendatang",
-                isCurrent: false,
-                headerColor: "bg-[#FFF2D1] dark:bg-amber-950/90 text-[#B47D00] dark:text-amber-300",
-              },
-            ].map((stg) => (
+            {(() => {
+              const currentDay = summary.currentDayNumber
+              return [
+                {
+                  num: 1,
+                  title: "Tahap 1 • MOOC",
+                  sub: "Pembelajaran Mandiri",
+                  days: "Hari 1 s.d. 5",
+                  dates: "24 Agu – 28 Agu 2026",
+                  status: currentDay > 5 ? "Selesai" : currentDay >= 1 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                  isCurrent: currentDay >= 1 && currentDay <= 5,
+                  headerColor: currentDay >= 1 && currentDay <= 5
+                    ? "bg-[#FFEADA] dark:bg-amber-950/90 text-[#EA580C] dark:text-amber-300"
+                    : currentDay > 5
+                    ? "bg-[#E6F7ED] dark:bg-emerald-950/90 text-[#0D824B] dark:text-emerald-300"
+                    : "bg-[#D7F3FE] dark:bg-sky-950/90 text-[#0369A1] dark:text-sky-300",
+                },
+                {
+                  num: 2,
+                  title: "Tahap 2 • TMO",
+                  sub: "Tatap Muka Online",
+                  days: "Hari 6 s.d. 15",
+                  dates: "31 Agu – 11 Sep 2026",
+                  status: currentDay > 15 ? "Selesai" : currentDay >= 6 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                  isCurrent: currentDay >= 6 && currentDay <= 15,
+                  headerColor: currentDay >= 6 && currentDay <= 15
+                    ? "bg-[#FFEADA] dark:bg-amber-950/90 text-[#EA580C] dark:text-amber-300"
+                    : currentDay > 15
+                    ? "bg-[#E6F7ED] dark:bg-emerald-950/90 text-[#0D824B] dark:text-emerald-300"
+                    : "bg-[#D7F3FE] dark:bg-sky-950/90 text-[#0369A1] dark:text-sky-300",
+                },
+                {
+                  num: 3,
+                  title: "Tahap 3 • Lab Prakom",
+                  sub: "Laboratorium di Satker",
+                  days: "Hari 16 s.d. 30",
+                  dates: "14 Sep – 2 Okt 2026",
+                  status: currentDay > 30 ? "Selesai" : currentDay >= 16 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                  isCurrent: currentDay >= 16 && currentDay <= 30,
+                  headerColor: currentDay >= 16 && currentDay <= 30
+                    ? "bg-[#FFEADA] dark:bg-amber-950/90 text-[#EA580C] dark:text-amber-300"
+                    : currentDay > 30
+                    ? "bg-[#E6F7ED] dark:bg-emerald-950/90 text-[#0D824B] dark:text-emerald-300"
+                    : "bg-[#FFE3EB] dark:bg-rose-950/90 text-[#E11D48] dark:text-rose-300",
+                },
+                {
+                  num: 4,
+                  title: "Tahap 4 • Seminar",
+                  sub: "Seminar Klasikal",
+                  days: "Hari 31 s.d. 35",
+                  dates: "5 Okt – 9 Okt 2026",
+                  status: currentDay > 35 ? "Selesai" : currentDay >= 31 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                  isCurrent: currentDay >= 31 && currentDay <= 35,
+                  headerColor: currentDay >= 31 && currentDay <= 35
+                    ? "bg-[#FFEADA] dark:bg-amber-950/90 text-[#EA580C] dark:text-amber-300"
+                    : currentDay > 35
+                    ? "bg-[#E6F7ED] dark:bg-emerald-950/90 text-[#0D824B] dark:text-emerald-300"
+                    : "bg-[#FFF2D1] dark:bg-amber-950/90 text-[#B47D00] dark:text-amber-300",
+                },
+              ]
+            })().map((stg) => (
               <Link href="/schedules" key={stg.num} className="group block">
                 <div
                   className={`h-full rounded-2xl border-2 overflow-hidden flex flex-col justify-between transition-all ${
