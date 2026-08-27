@@ -69,7 +69,13 @@ import {
   ChevronRight,
   TrendingUp,
   FolderOpen,
-  ChevronLeft
+  ChevronLeft,
+  GraduationCap,
+  MessageSquare,
+  ThumbsUp,
+  Send,
+  Lightbulb,
+  Award
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
@@ -184,12 +190,109 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "materials" | "schedules" | "tasks" | "announcements"
+    "overview" | "visitors" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Discussions State for Admin
+  const [adminDiscussions, setAdminDiscussions] = React.useState<any[]>([])
+  const [discussionSearch, setDiscussionSearch] = React.useState("")
+  const [discussionTagFilter, setDiscussionTagFilter] = React.useState("all")
+  const [adminReplyTextMap, setAdminReplyTextMap] = React.useState<Record<string, string>>({})
+  const [isReplyingAdminMap, setIsReplyingAdminMap] = React.useState<Record<string, boolean>>({})
+
+  const fetchDiscussions = async () => {
+    try {
+      const res = await fetch("/api/discussions")
+      const data = await res.json()
+      if (data.discussions) {
+        setAdminDiscussions(data.discussions)
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  React.useEffect(() => {
+    fetchDiscussions()
+  }, [])
+
+  const handleAdminReplySubmit = async (threadId: string) => {
+    const text = adminReplyTextMap[threadId]?.trim()
+    if (!text) return
+
+    setIsReplyingAdminMap((prev) => ({ ...prev, [threadId]: true }))
+    try {
+      const res = await fetch("/api/discussions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "admin_reply",
+          threadId,
+          authorName: "Tim Widyaiswara / Panitia Diklat",
+          authorSatker: "Pusdiklat Badiklat Kejaksaan RI",
+          content: text,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && data.reply) {
+        setAdminDiscussions((prev) =>
+          prev.map((t) => (t.id === threadId ? { ...t, replies: [...t.replies, data.reply] } : t))
+        )
+        setAdminReplyTextMap((prev) => ({ ...prev, [threadId]: "" }))
+        showFeedback("success", "Tanggapan resmi admin/widyaiswara berhasil dikirim.")
+      }
+    } catch {
+      showFeedback("error", "Gagal mengirim tanggapan admin.")
+    } finally {
+      setIsReplyingAdminMap((prev) => ({ ...prev, [threadId]: false }))
+    }
+  }
+
+  const handleDeleteDiscussionThread = async (threadId: string) => {
+    if (!confirm("Hapus pertanyaan diskusi ini secara permanen?")) return
+    try {
+      const res = await fetch("/api/discussions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_thread", threadId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAdminDiscussions((prev) => prev.filter((t) => t.id !== threadId))
+        showFeedback("success", "Topik diskusi berhasil dihapus.")
+      }
+    } catch {
+      showFeedback("error", "Gagal menghapus topik diskusi.")
+    }
+  }
+
+  const handleDeleteDiscussionReply = async (threadId: string, replyId: string) => {
+    if (!confirm("Hapus komentar balasan ini?")) return
+    try {
+      const res = await fetch("/api/discussions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete_reply", threadId, replyId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAdminDiscussions((prev) =>
+          prev.map((t) =>
+            t.id === threadId
+              ? { ...t, replies: t.replies.filter((r: any) => r.id !== replyId) }
+              : t
+          )
+        )
+        showFeedback("success", "Balasan komentar berhasil dihapus.")
+      }
+    } catch {
+      showFeedback("error", "Gagal menghapus balasan.")
+    }
+  }
 
   // Filters & Search State
   const [visitorSearch, setVisitorSearch] = React.useState("")
@@ -827,6 +930,10 @@ export function AdminDashboardClient({
     { id: "schedules", label: "Jadwal 35 Hari", icon: Calendar, count: initialSchedules.length, color: "text-sky-600" },
     { id: "tasks", label: "Penugasan & Ujian", icon: BookOpen, count: initialTasks.length, color: "text-amber-600" },
     { id: "announcements", label: "Pengumuman Kelas", icon: Sparkles, count: initialAnnouncements.length, color: "text-rose-600" },
+    { id: "discussions", label: "Moderasi Forum Diskusi", icon: MessageSquare, count: adminDiscussions.length, color: "text-purple-600" },
+    { id: "templates", label: "Pusat Template BPS & TIK", icon: Layers, count: 6, color: "text-teal-600" },
+    { id: "exam_prep", label: "Kesiapan Ujian & Seminar", icon: Clock, count: 10, color: "text-amber-600" },
+    { id: "paper_gen", label: "AI Makalah Inovasi Satker", icon: GraduationCap, count: null, color: "text-rose-600" },
   ]
 
   return (
@@ -1163,6 +1270,89 @@ export function AdminDashboardClient({
                   </div>
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-rose-600">
                     <span>Publikasikan Info</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+                {/* 6. Forum Diskusi */}
+                <div
+                  onClick={() => setActiveTab("discussions")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Forum Diskusi</span>
+                    <MessageSquare className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{adminDiscussions.length}</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      Topik Tanya Jawab Peserta
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-purple-600">
+                    <span>Kelola & Balas Resmi</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 7. Templates BPS */}
+                <div
+                  onClick={() => setActiveTab("templates")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Template Dokumen BPS</span>
+                    <Layers className="h-5 w-5 text-teal-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">6</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      SPT, DUPAK, SPMK & SOP
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-teal-600">
+                    <span>Lihat & Unduh Format</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 8. Exam Prep & Checklist */}
+                <div
+                  onClick={() => setActiveTab("exam_prep")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Milestone Kelulusan</span>
+                    <Clock className="h-5 w-5 text-amber-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">10</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      Checklist Standar Kelulusan
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-amber-600">
+                    <span>Pantau Countdown Ujian</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 9. AI Paper Generator */}
+                <div
+                  onClick={() => setActiveTab("paper_gen")}
+                  className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">AI Makalah Seminar</span>
+                    <GraduationCap className="h-5 w-5 text-rose-600 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">5 Bab</div>
+                    <div className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      Proposal Inovasi Satker
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-rose-600">
+                    <span>Uji Generator Makalah</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
@@ -2052,6 +2242,358 @@ export function AdminDashboardClient({
                   />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 7. DISCUSSIONS MODERATION TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "discussions" && (
+            <div className="space-y-6">
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-purple-600" />
+                      <span>Moderasi Forum Diskusi & Tanya Jawab Peserta</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Pantau pertanyaan peserta, kirimkan balasan resmi atas nama Panitia/Widyaiswara, dan moderasi konten diskusi
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="/discussions"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full bg-purple-50 px-4 py-2 text-xs font-bold text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-2xs"
+                    >
+                      <span>Lihat Halaman Publik</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* Filter and Search */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={discussionSearch}
+                      onChange={(e) => setDiscussionSearch(e.target.value)}
+                      placeholder="Cari pertanyaan / nama / satker..."
+                      className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {["all", "#TugasMandiri", "#Database", "#Jaringan", "#SeminarAkhir", "#LMS", "#Umum"].map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setDiscussionTagFilter(tag)}
+                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                          discussionTagFilter === tag
+                            ? "bg-purple-700 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {tag === "all" ? "Semua Tag" : tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Discussions List */}
+                <div className="space-y-4 pt-2">
+                  {adminDiscussions
+                    .filter((t) => {
+                      const matchTag = discussionTagFilter === "all" || t.tag === discussionTagFilter
+                      const matchSearch =
+                        t.title?.toLowerCase().includes(discussionSearch.toLowerCase()) ||
+                        t.authorName?.toLowerCase().includes(discussionSearch.toLowerCase()) ||
+                        t.authorSatker?.toLowerCase().includes(discussionSearch.toLowerCase())
+                      return matchTag && matchSearch
+                    })
+                    .map((thread) => (
+                      <div
+                        key={thread.id}
+                        className="rounded-2xl border border-slate-200/90 p-5 bg-slate-50/50 space-y-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xs">
+                              {thread.authorName?.charAt(0) || "P"}
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-900">{thread.authorName}</h4>
+                              <span className="text-[11px] text-slate-500">{thread.authorSatker}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-purple-800">
+                              {thread.tag}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold">
+                              👍 {thread.upvotes} Dukungan
+                            </span>
+                            <button
+                              onClick={() => handleDeleteDiscussionThread(thread.id)}
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                              title="Hapus Thread"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-black text-slate-900 mb-1">{thread.title}</h4>
+                          <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{thread.content}</p>
+                        </div>
+
+                        {/* Existing Replies */}
+                        {thread.replies && thread.replies.length > 0 && (
+                          <div className="border-t border-slate-200/70 pt-3 space-y-2">
+                            <span className="text-[11px] font-bold text-slate-500">
+                              {thread.replies.length} Tanggapan Diskusi:
+                            </span>
+                            {thread.replies.map((reply: any) => (
+                              <div
+                                key={reply.id}
+                                className={`p-3 rounded-xl border text-xs space-y-1 ${
+                                  reply.isOfficial
+                                    ? "bg-emerald-50/80 border-emerald-200"
+                                    : "bg-white border-slate-200"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                                    {reply.authorName}
+                                    {reply.isOfficial && (
+                                      <span className="bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">
+                                        Official Admin
+                                      </span>
+                                    )}
+                                  </span>
+                                  <button
+                                    onClick={() => handleDeleteDiscussionReply(thread.id, reply.id)}
+                                    className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                                  >
+                                    Hapus
+                                  </button>
+                                </div>
+                                <p className="text-slate-700 whitespace-pre-wrap">{reply.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Admin Reply Box */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/70">
+                          <input
+                            type="text"
+                            value={adminReplyTextMap[thread.id] || ""}
+                            onChange={(e) =>
+                              setAdminReplyTextMap((prev) => ({ ...prev, [thread.id]: e.target.value }))
+                            }
+                            placeholder="Balas resmi sebagai Panitia / Widyaiswara Badiklat..."
+                            className="h-9 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                          />
+                          <button
+                            onClick={() => handleAdminReplySubmit(thread.id)}
+                            disabled={isReplyingAdminMap[thread.id]}
+                            className="h-9 px-3.5 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 shrink-0"
+                          >
+                            <Send className="h-3 w-3" />
+                            <span>Kirim Tanggapan</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 8. TEMPLATES BPS & TIK MANAGEMENT TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "templates" && (
+            <div className="space-y-6">
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <Layers className="h-5 w-5 text-teal-600" />
+                      <span>Koleksi Template Dokumen Resmi (BPS & Kejaksaan RI)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      6 Berkas standar resmi Perka BPS No. 2/2021 dan Tata Naskah Dinas Kejaksaan RI
+                    </p>
+                  </div>
+                  <a
+                    href="/templates"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-full bg-teal-50 px-4 py-2 text-xs font-bold text-teal-700 border border-teal-200 hover:bg-teal-100 transition shadow-2xs"
+                  >
+                    <span>Buka Pusat Template</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                  {[
+                    { title: "Surat Perintah Tugas (SPT) TI", category: "Administrasi & SPT", ref: "Pedoman Tata Naskah Kejaksaan", desc: "Format penomoran PRINT resmi penugasan pemeliharaan server, jaringan & database." },
+                    { title: "Formulir DUPAK & SPMK Prakom", category: "DUPAK & SKP BPS", ref: "Perka BPS No. 2/2021", desc: "Surat Pernyataan Melakukan Kegiatan 5 Sub-Unsur & butir angka kredit resmi." },
+                    { title: "Konversi SKP ke PAK Integrasi", category: "DUPAK & SKP BPS", ref: "PermenPAN-RB No. 1/2023", desc: "Konversi predikat kinerja tahunan PNS ke Angka Kredit Integrasi." },
+                    { title: "SOP Ruang Server & Keamanan", category: "SOP & Keamanan", ref: "Perpres 95/2018 SPBE", desc: "Tata tertib server, jadwal backup otomatis harian, dan tanggap darurat CSIRT." },
+                    { title: "Berita Acara Kerusakan TIK", category: "Administrasi & SPT", ref: "Tata Kelola BMN Kejaksaan", desc: "BAP pemeriksaan fisik dan diagnosa kerusakan perangkat PC/server dinas." },
+                    { title: "Format Makalah Seminar Akhir", category: "Seminar Akhir", ref: "Pusdiklat Badiklat Kejaksaan", desc: "Format naskah proposal inovasi 5 Bab dengan Lembar Pengesahan Coach & Penguji." }
+                  ].map((tpl, i) => (
+                    <div key={i} className="rounded-2xl border border-slate-200 p-4 bg-slate-50/50 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">
+                          {tpl.category}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">.doc Word</span>
+                      </div>
+                      <h4 className="text-xs font-black text-slate-900 leading-snug">{tpl.title}</h4>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">{tpl.desc}</p>
+                      <div className="text-[10px] text-slate-400 font-mono pt-1">⚖️ Dasar: {tpl.ref}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 9. EXAM PREP & GRADUATION MILESTONES TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "exam_prep" && (
+            <div className="space-y-6">
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                      <span>Milestone Ujian Evaluasi & Sidang Seminar Akhir</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Target jadwal hari H, kriteria penilaian widyaiswara, dan 10 checklist kelulusan diklat
+                    </p>
+                  </div>
+                  <a
+                    href="/exam-prep"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-full bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-2xs"
+                  >
+                    <span>Buka Halaman Ujian</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="p-4 rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 space-y-1.5">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase">Hari Ke-30 (23 Sept 2026)</span>
+                    <h4 className="text-xs font-black text-slate-900">Ujian Komprehensif MOOC</h4>
+                    <p className="text-[11px] text-slate-600">Materi regulasi SPBE, PermenPAN 32/2020, dan Perka BPS 2/2021.</p>
+                  </div>
+                  <div className="p-4 rounded-2xl border-2 border-amber-200 bg-amber-50/50 space-y-1.5">
+                    <span className="text-[10px] font-bold text-amber-800 uppercase">Hari Ke-33 (28 Sept 2026)</span>
+                    <h4 className="text-xs font-black text-slate-900">Batas Unggah Makalah Inovasi</h4>
+                    <p className="text-[11px] text-slate-600">Pengumpulan naskah proposal proyek aksi perubahan satker di LMS.</p>
+                  </div>
+                  <div className="p-4 rounded-2xl border-2 border-purple-200 bg-purple-50/50 space-y-1.5">
+                    <span className="text-[10px] font-bold text-purple-800 uppercase">Hari Ke-35 (30 Sept 2026)</span>
+                    <h4 className="text-xs font-black text-slate-900">Sidang Seminar & Evaluasi Akhir</h4>
+                    <p className="text-[11px] text-slate-600">Presentasi paparan 10 menit di hadapan Penguji dan Coach Widyaiswara.</p>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4 space-y-2">
+                  <h4 className="text-xs font-black text-slate-900">Bobot Penilaian Sidang Seminar:</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="block text-base font-black text-emerald-700">30%</span>
+                      <span className="text-[10px] text-slate-500 font-bold">Relevansi Inovasi Satker</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="block text-base font-black text-blue-700">25%</span>
+                      <span className="text-[10px] text-slate-500 font-bold">Kepatuhan SPBE & BPS</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="block text-base font-black text-amber-700">25%</span>
+                      <span className="text-[10px] text-slate-500 font-bold">Arsitektur & Keamanan TI</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="block text-base font-black text-purple-700">20%</span>
+                      <span className="text-[10px] text-slate-500 font-bold">Sistematika Presentasi</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 10. AI PAPER GENERATOR OVERVIEW TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "paper_gen" && (
+            <div className="space-y-6">
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <GraduationCap className="h-5 w-5 text-rose-600" />
+                      <span>AI Generator Makalah Proyek Akhir & Inovasi Satker</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Mesin penyusun naskah akademik 5 Bab lengkap terintegrasi Groq AI berstandar Pusdiklat Kejaksaan RI
+                    </p>
+                  </div>
+                  <a
+                    href="/paper-generator"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-full bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-2xs"
+                  >
+                    <span>Uji Generator Publik</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+                    <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Bot className="h-4 w-4 text-rose-600" />
+                      <span>Spesifikasi Engine AI:</span>
+                    </h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
+                      <li>• <strong>Model AI:</strong> Groq <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">groq/compound-mini</code></li>
+                      <li>• <strong>Suhu (Temperature):</strong> 0.25 (Akademik Konsisten & Terstruktur)</li>
+                      <li>• <strong>Struktur Output:</strong> 5 Bab Lengkap (Pendahuluan, Regulasi, Arsitektur, Aksi, Rekomendasi)</li>
+                      <li>• <strong>Format Ekspor:</strong> Dokumen Microsoft Word (.doc) A4 Margin 3cm x 2.5cm</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+                    <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Lightbulb className="h-4 w-4 text-amber-500" />
+                      <span>Topik Preset Inovasi Satker:</span>
+                    </h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
+                      <li>1. Otomasi Backup & Replikasi DB Perkara Tilang & CMS PTSP</li>
+                      <li>2. Dashboard Monitoring Indeks SPBE Satker</li>
+                      <li>3. Notifikasi Digital Jadwal Sidang Berbasis WhatsApp API</li>
+                      <li>4. Penguatan Keamanan Server & SOP CSIRT Kejaksaan</li>
+                      <li>5. Single Sign-On (SSO) Hak Akses Pegawai</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

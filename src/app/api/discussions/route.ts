@@ -127,6 +127,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reply: newReply })
     }
 
+    if (action === "admin_reply") {
+      if (!threadId || !content) {
+        return NextResponse.json({ error: "Thread ID dan isi balasan wajib diisi." }, { status: 400 })
+      }
+
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      if (!thread) {
+        return NextResponse.json({ error: "Diskusi tidak ditemukan." }, { status: 404 })
+      }
+
+      const newReply = {
+        id: `rep-${Date.now()}`,
+        authorName: authorName || "Admin / Tim Widyaiswara Badiklat",
+        authorSatker: authorSatker || "Badan Diklat Kejaksaan RI",
+        isOfficial: true,
+        content,
+        createdAt: new Date().toISOString()
+      }
+
+      thread.replies.push(newReply)
+      return NextResponse.json({ success: true, reply: newReply })
+    }
+
+    if (action === "delete_thread") {
+      if (!threadId) {
+        return NextResponse.json({ error: "Thread ID wajib disertakan." }, { status: 400 })
+      }
+      DISCUSSIONS_STORE = DISCUSSIONS_STORE.filter((t) => t.id !== threadId)
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === "delete_reply") {
+      const { replyId } = body
+      if (!threadId || !replyId) {
+        return NextResponse.json({ error: "Thread ID dan Reply ID wajib disertakan." }, { status: 400 })
+      }
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      if (thread) {
+        thread.replies = thread.replies.filter((r) => r.id !== replyId)
+      }
+      return NextResponse.json({ success: true })
+    }
+
     if (action === "upvote") {
       if (!threadId) {
         return NextResponse.json({ error: "Thread ID wajib disertakan." }, { status: 400 })
