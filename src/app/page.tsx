@@ -351,6 +351,38 @@ export default async function HomePage() {
                 </div>
               </div>
             </Link>
+
+            {/* Card 7: Pusat Bantuan & FAQ Admin */}
+            <Link href="/faq" className="group block sm:col-span-2 lg:col-span-3">
+              <div className="h-full rounded-2xl bg-gradient-to-r from-[#FFF5EC] via-white to-[#E6F7ED]/50 dark:from-[#231710] dark:via-[#161B26] dark:to-[#12161F] border-2 border-[#FFD280] dark:border-amber-900/60 group-hover:border-[#FF7643] dark:group-hover:border-emerald-500 group-hover:shadow-md transition-all overflow-hidden flex flex-col sm:flex-row items-center justify-between p-4 sm:p-5 gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EA580C] text-white shadow-md shadow-[#EA580C]/25">
+                    <HelpCircle className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-2.5 py-0.5 text-[10px] font-black uppercase text-[#EA580C] dark:text-amber-300">
+                        Pusat Bantuan & Pengaduan
+                      </span>
+                      <span className="text-[11px] font-bold text-[#0D824B] dark:text-emerald-400 hidden sm:inline">
+                        • Respon Cepat Admin
+                      </span>
+                    </div>
+                    <h4 className="font-black text-base text-[#18181B] dark:text-white group-hover:text-[#EA580C] dark:group-hover:text-amber-400 transition">
+                      Tanya Jawab (FAQ) & Kontak Admin Kelas
+                    </h4>
+                    <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-1">
+                      Panduan lengkap jadwal, LMS, dan formulir aduan kendala teknis atau saran perbaikan kelas.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs font-black text-[#EA580C] dark:text-amber-400 self-end sm:self-center shrink-0">
+                  <span>Buka Pusat Bantuan</span>
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </div>
+            </Link>
           </div>
         </section>
 

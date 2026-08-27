@@ -63,6 +63,7 @@ export function ModernNavbar() {
   const moreLinks = [
     { label: "Pengumuman", href: "/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
     { label: "Galeri Karya", href: "/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
+    { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & kontak admin kelas" },
   ]
 
   const isMoreActive = moreLinks.some((l) => pathname.startsWith(l.href))
