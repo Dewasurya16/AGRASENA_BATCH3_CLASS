@@ -39,7 +39,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
             </div>
             <span className="font-semibold text-[#131E29] dark:text-slate-200">
-              Dibuat dengan senang hati oleh Dewa Sinar Surya,S.Kom
+              Diklat Fungsional Pranata Komputer Keahlian • Batch 3 Kejaksaan RI
             </span>
           </div>
 
