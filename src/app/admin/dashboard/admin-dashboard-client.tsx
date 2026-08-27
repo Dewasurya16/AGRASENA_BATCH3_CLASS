@@ -1940,7 +1940,7 @@ export function AdminDashboardClient({
                   type="text"
                   value={scheduleSearch}
                   onChange={(e) => setScheduleSearch(e.target.value)}
-                  placeholder="Cari topik mata pelatihan, pengampu, hari, atau ruang..."
+                  placeholder="Cari topik jadwal, tahap diklat, pengampu, hari, atau ruang..."
                   className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
                 />
               </div>
@@ -2099,10 +2099,15 @@ export function AdminDashboardClient({
                             >
                               {t.status === "completed" ? "Selesai" : "Pending"}
                             </span>
-                            <span className="text-xs font-bold text-slate-500">Deadline: {t.due_date}</span>
+                            <span className="text-[11px] font-bold text-slate-500">
+                              Deadline: {new Date(t.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })} • 23:59 WIB
+                            </span>
                           </div>
                           <h5 className="font-black text-sm text-slate-900 leading-snug">{t.title}</h5>
-                          <p className="text-xs text-slate-500 font-medium">{t.subject_name}</p>
+                          <div className="flex items-center gap-1 text-xs text-slate-600 font-medium">
+                            <span className="text-[10px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">Tahap</span>
+                            <span>{t.subject_name}</span>
+                          </div>
                           {t.description && (
                             <p className="text-xs text-slate-600 line-clamp-2">{t.description}</p>
                           )}
@@ -2743,11 +2748,11 @@ export function AdminDashboardClient({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-black text-slate-900">Nama Mata Pelatihan / Topik *</label>
+            <label className="text-xs font-black text-slate-900">Tahap & Topik Jadwal *</label>
             <Input
               name="subject_name"
               required
-              placeholder="Contoh: Arsitektur Cloud & Keamanan Siber Kejaksaan"
+              placeholder="Contoh: Tahap 1 • Arsitektur Cloud & Keamanan Siber Kejaksaan"
               className="text-xs"
             />
           </div>
@@ -2811,11 +2816,11 @@ export function AdminDashboardClient({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+              <label className="text-xs font-black text-slate-900">Tahap Pelatihan *</label>
               <Input
                 name="subject_name"
                 required
-                placeholder="Contoh: Infrastruktur Jaringan & Server"
+                placeholder="Contoh: Tahap 1 • MOOC / Tahap 2 • TMO"
                 className="text-xs"
               />
             </div>
@@ -2969,7 +2974,7 @@ export function AdminDashboardClient({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+              <label className="text-xs font-black text-slate-900">Tahap & Topik Jadwal *</label>
               <Input
                 name="subject_name"
                 required
@@ -3052,7 +3057,7 @@ export function AdminDashboardClient({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-900">Mata Pelatihan *</label>
+                <label className="text-xs font-black text-slate-900">Tahap Pelatihan *</label>
                 <Input
                   name="subject_name"
                   required

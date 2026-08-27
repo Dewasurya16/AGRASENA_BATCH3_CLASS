@@ -5,6 +5,8 @@ import { motion } from "framer-motion"
 import { Clock, ArrowRight, Flame, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
+
 export interface TaskItem {
   id: string
   title: string
@@ -32,7 +34,7 @@ export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem }) {
   React.useEffect(() => {
     setMounted(true)
     const calculateTime = () => {
-      const targetDate = new Date(task.due_date).getTime()
+      const targetDate = getTaskDeadlineTimestamp(task.due_date)
       const now = new Date().getTime()
       const difference = targetDate - now
 

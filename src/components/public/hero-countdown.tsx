@@ -4,6 +4,8 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { ArrowRight, Flame, Sparkles, BookOpen, Clock } from "lucide-react"
 
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
+
 export interface TaskItem {
   id: string
   title: string
@@ -30,7 +32,7 @@ export function HeroCountdown({ targetTask }: { targetTask?: TaskItem }) {
   React.useEffect(() => {
     setMounted(true)
     const calculateTime = () => {
-      const targetDate = new Date(task.due_date).getTime()
+      const targetDate = getTaskDeadlineTimestamp(task.due_date)
       const now = new Date().getTime()
       const difference = targetDate - now
 

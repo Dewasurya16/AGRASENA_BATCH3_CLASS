@@ -8,6 +8,7 @@ import { HomeTaskReminder } from "@/components/public/home-task-reminder"
 import { LiveSessionBanner } from "@/components/public/live-session-banner"
 import { SupabaseStatus } from "@/components/supabase-status"
 import { getAutoRoadmapData } from "@/lib/roadmap-utils"
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import {
   Calendar,
   FileText,
@@ -56,7 +57,9 @@ export default async function HomePage() {
     }
   }
 
-  const closestTask = tasks.find((t) => t.status !== "completed")
+  const now = new Date().getTime()
+  const activeTasks = tasks.filter((t) => t.status !== "completed")
+  const closestTask = activeTasks.find((t) => getTaskDeadlineTimestamp(t.due_date) >= now) || activeTasks[0] || tasks[0]
   const { summary } = getAutoRoadmapData(undefined, schedules)
 
   return (

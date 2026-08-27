@@ -3,6 +3,8 @@ import { PublicShell } from "@/components/public/public-shell"
 import { HeroCountdown } from "@/components/public/hero-countdown"
 import { TaskBoard } from "@/components/public/task-board"
 
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
+
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
@@ -26,7 +28,10 @@ export default async function TasksPage() {
     }
   }
 
-  const closestTask = tasks.find((t) => t.status !== "completed")
+  const now = new Date().getTime()
+  const activeTasks = tasks.filter((t) => t.status !== "completed")
+  // Pick nearest active task that hasn't passed 23:59:59 today, or earliest active
+  const closestTask = activeTasks.find((t) => getTaskDeadlineTimestamp(t.due_date) >= now) || activeTasks[0] || tasks[0]
 
   return (
     <PublicShell>

@@ -341,6 +341,18 @@ export async function deleteMaterial(id: string, fileName?: string) {
   return { success: 'Modul materi berhasil dihapus.' }
 }
 
+function formatTaskDueDateISO(dateStr: string): string {
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) {
+    const [, y, m, d] = match
+    // 23:59:59.999 WIB is UTC+7 -> 16:59:59.999 UTC
+    return new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 16, 59, 59, 999)).toISOString()
+  }
+  const fallback = new Date(dateStr)
+  fallback.setHours(23, 59, 59, 999)
+  return fallback.toISOString()
+}
+
 // 4. TASK ACTIONS (CREATE, UPDATE, DELETE)
 export async function createTask(formData: FormData) {
   const title = (formData.get('title') as string)?.trim()
@@ -358,7 +370,7 @@ export async function createTask(formData: FormData) {
     title,
     subject_name,
     description: description || null,
-    due_date: new Date(due_date).toISOString(),
+    due_date: formatTaskDueDateISO(due_date),
     submission_link: submission_link || 'https://pengembangan.kejaksaan.go.id/dashboard',
     status: 'todo',
   })
@@ -370,7 +382,7 @@ export async function createTask(formData: FormData) {
   revalidatePath('/', 'layout')
   revalidatePath('/tasks')
   revalidatePath('/admin/dashboard')
-  return { success: 'Tugas baru berhasil disimpan ke database!' }
+  return { success: 'Tugas baru berhasil disimpan ke database (Tenggat: 23:59:59 WIB)!' }
 }
 
 export async function updateTask(formData: FormData) {
@@ -393,7 +405,7 @@ export async function updateTask(formData: FormData) {
       title,
       subject_name,
       description: description || null,
-      due_date: new Date(due_date).toISOString(),
+      due_date: formatTaskDueDateISO(due_date),
       submission_link: submission_link || 'https://pengembangan.kejaksaan.go.id/dashboard',
       status: status as any,
     })
@@ -406,7 +418,7 @@ export async function updateTask(formData: FormData) {
   revalidatePath('/', 'layout')
   revalidatePath('/tasks')
   revalidatePath('/admin/dashboard')
-  return { success: 'Data tugas berhasil diperbarui!' }
+  return { success: 'Data tugas berhasil diperbarui (Tenggat: 23:59:59 WIB)!' }
 }
 
 export async function updateTaskStatus(id: string, status: 'todo' | 'in_progress' | 'completed') {

@@ -72,15 +72,15 @@ export function TaskBoard({ tasks = [] }: { tasks?: TaskRecord[] }) {
               className="rounded-[28px] bg-white dark:bg-[#161B26] p-6 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#18181B] dark:hover:border-slate-600 transition-all flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-[10px] font-black uppercase text-[#EA580C] dark:text-amber-300">
-                    {task.subject_name}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-[10px] font-black uppercase text-[#EA580C] dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                    {task.subject_name.startsWith("Tahap") ? task.subject_name : `Tahap • ${task.subject_name}`}
                   </span>
-                  <span className={`text-xs font-bold flex items-center gap-1 ${
+                  <span className={`text-xs font-bold flex items-center gap-1 shrink-0 ${
                     task.status === "completed" ? "text-[#0D824B] dark:text-emerald-400" : "text-[#EA580C] dark:text-amber-400"
                   }`}>
                     <Clock className="h-3.5 w-3.5" />
-                    <span>{new Date(task.due_date).toLocaleDateString("id-ID")}</span>
+                    <span>{new Date(task.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })} (23:59 WIB)</span>
                   </span>
                 </div>
 
