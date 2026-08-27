@@ -61,7 +61,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t border-slate-800/80 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Web Kelas. Siap untuk pengembangan modular.</p>
+          <p>© {new Date().getFullYear()} Diklat Fungsional Prakom Batch 3 Kejaksaan RI • Dibuat dengan senang hati oleh <span className="text-slate-300 font-semibold">Dewa Sinar Surya, S.Kom.</span></p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5 text-indigo-400" />
