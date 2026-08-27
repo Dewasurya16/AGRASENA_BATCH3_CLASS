@@ -119,6 +119,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
           subject_name: previewMaterial.subject_name,
           description: previewMaterial.description,
           file_name: previewMaterial.file_name,
+          file_url: previewMaterial.file_url,
           week_number: previewMaterial.week_number,
         }),
       })
