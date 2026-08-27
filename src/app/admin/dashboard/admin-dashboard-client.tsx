@@ -21,6 +21,7 @@ import {
   deleteVisitorLog,
   clearAllVisitorLogs,
 } from "@/app/admin/actions"
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
 import { Modal } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import {
@@ -585,7 +586,12 @@ export function AdminDashboardClient({
     e.preventDefault()
     setUploadModalError(null)
 
-    if (selectedFile && selectedFile.size > 100 * 1024 * 1024) {
+    if (!selectedFile) {
+      setUploadModalError("Silakan pilih berkas PDF terlebih dahulu.")
+      return
+    }
+
+    if (selectedFile.size > 100 * 1024 * 1024) {
       const sizeMB = (selectedFile.size / (1024 * 1024)).toFixed(1)
       setUploadModalError(
         `Ukuran berkas (${sizeMB} MB) melebihi batas 100MB. Silakan kompres PDF terlebih dahulu.`
@@ -593,17 +599,44 @@ export function AdminDashboardClient({
       return
     }
 
+    const formElement = e.currentTarget
+    const formData = new FormData(formElement)
+    const title = (formData.get("title") as string)?.trim()
+    const subject_name = (formData.get("subject_name") as string)?.trim()
+    const week_number = Number(formData.get("week_number")) || 1
+    const description = (formData.get("description") as string)?.trim()
+
+    if (!title || !subject_name) {
+      setUploadModalError("Judul modul dan tahapan diklat wajib diisi.")
+      return
+    }
+
     setIsLoading(true)
     setUploadProgressPercent(0)
     setUploadProgressBytes("")
     setUploadSpeedStr("")
-    setUploadProgressStatus("Mempersiapkan unggahan berkas...")
+    setUploadProgressStatus("Menghubungkan langsung ke Supabase Storage...")
 
-    const formElement = e.currentTarget
-    const formData = new FormData(formElement)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+    // Clean & sanitize file name
+    const sanitizedName = selectedFile.name
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+    const filePath = `materials/${Date.now()}_${sanitizedName}`
+
+    // 1. Direct Browser Upload to Supabase Storage endpoint (bypasses Vercel/Next.js body size limit entirely!)
+    const directUploadUrl = `${supabaseUrl}/storage/v1/object/class-materials/${filePath}`
+    const publicFileUrl = `${supabaseUrl}/storage/v1/object/public/class-materials/${filePath}`
 
     const xhr = new XMLHttpRequest()
-    xhr.open("POST", "/api/materials/upload", true)
+    xhr.open("POST", directUploadUrl, true)
+    xhr.setRequestHeader("apikey", supabaseKey)
+    xhr.setRequestHeader("Authorization", `Bearer ${supabaseKey}`)
+    xhr.setRequestHeader("x-upsert", "true")
+    xhr.setRequestHeader("Content-Type", selectedFile.type || "application/pdf")
 
     const startTime = Date.now()
 
@@ -623,54 +656,123 @@ export function AdminDashboardClient({
         }
 
         if (percent >= 99) {
-          setUploadProgressStatus("Menyimpan metadata modul ke database Supabase...")
+          setUploadProgressStatus("Menyimpan metadata modul ke database...")
         } else {
-          setUploadProgressStatus(`Mengunggah berkas (${percent}%)...`)
+          setUploadProgressStatus(`Mengunggah berkas ke Supabase (${percent}%)...`)
         }
       }
     }
 
-    xhr.onload = () => {
-      setIsLoading(false)
+    const saveMetadataToDatabase = async (fileUrl: string) => {
+      setUploadProgressStatus("Menyimpan informasi modul ke database...")
+      try {
+        const res = await fetch("/api/materials/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            subject_name,
+            week_number,
+            description,
+            file_url: fileUrl,
+            file_name: selectedFile.name,
+            file_size: selectedFile.size,
+            file_type: selectedFile.type || "application/pdf",
+          }),
+        })
+
+        const data = await res.json()
+        if (data.success) {
+          setUploadProgressPercent(100)
+          showFeedback("success", data.message || "Modul PDF berhasil diunggah!")
+          setIsUploadModalOpen(false)
+          setSelectedFile(null)
+          setUploadModalError(null)
+          setUploadProgressStatus(null)
+          router.refresh()
+        } else {
+          setUploadModalError(data.error || "Gagal menyimpan metadata ke database.")
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Gagal menyimpan metadata."
+        setUploadModalError("Berkas berhasil terunggah, tetapi gagal menyimpan metadata: " + msg)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    xhr.onload = async () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const res = JSON.parse(xhr.responseText)
-          if (res.success) {
-            setUploadProgressPercent(100)
-            showFeedback("success", res.message || "Modul PDF berhasil diunggah!")
-            setIsUploadModalOpen(false)
-            setSelectedFile(null)
-            setUploadModalError(null)
-            setUploadProgressStatus(null)
-            router.refresh()
-          } else {
-            setUploadModalError(res.error || "Gagal mengunggah berkas.")
-          }
-        } catch {
-          setUploadModalError("Respon server tidak valid.")
-        }
+        // Uploaded successfully directly to Supabase Storage!
+        await saveMetadataToDatabase(publicFileUrl)
       } else {
+        // Fallback using Supabase JS SDK
         try {
-          const res = JSON.parse(xhr.responseText)
-          setUploadModalError(res.error || `Gagal mengunggah (${xhr.status})`)
-        } catch {
-          setUploadModalError(`Gagal menghubungi server (${xhr.status}: ${xhr.statusText || "Error / Payload Too Large"})`)
+          setUploadProgressStatus("Mencoba jalur cadangan Supabase SDK...")
+          const supabase = createBrowserSupabaseClient()
+          const { error: sdkError } = await supabase.storage
+            .from("class-materials")
+            .upload(filePath, selectedFile, {
+              cacheControl: "3600",
+              upsert: true,
+              contentType: selectedFile.type || "application/pdf",
+            })
+
+          if (sdkError) {
+            setIsLoading(false)
+            setUploadModalError(
+              `Gagal mengunggah ke Supabase Storage (${sdkError.message}). Pastikan bucket 'class-materials' tersedia dengan status Public.`
+            )
+          } else {
+            const { data: pubData } = supabase.storage
+              .from("class-materials")
+              .getPublicUrl(filePath)
+            await saveMetadataToDatabase(pubData.publicUrl)
+          }
+        } catch (err: unknown) {
+          setIsLoading(false)
+          const msg = err instanceof Error ? err.message : "Error"
+          setUploadModalError(`Gagal mengunggah berkas: ${msg}`)
         }
       }
     }
 
-    xhr.onerror = () => {
-      setIsLoading(false)
-      setUploadModalError("Koneksi jaringan terputus saat mengunggah berkas. Periksa internet Anda dan coba lagi.")
+    xhr.onerror = async () => {
+      // Fallback via Supabase SDK
+      try {
+        setUploadProgressStatus("Mencoba jalur cadangan Supabase SDK...")
+        const supabase = createBrowserSupabaseClient()
+        const { error: sdkError } = await supabase.storage
+          .from("class-materials")
+          .upload(filePath, selectedFile, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: selectedFile.type || "application/pdf",
+          })
+
+        if (sdkError) {
+          setIsLoading(false)
+          setUploadModalError("Koneksi gagal: " + sdkError.message)
+        } else {
+          const { data: pubData } = supabase.storage
+            .from("class-materials")
+            .getPublicUrl(filePath)
+          await saveMetadataToDatabase(pubData.publicUrl)
+        }
+      } catch (err: unknown) {
+        setIsLoading(false)
+        const msg = err instanceof Error ? err.message : "Error"
+        setUploadModalError("Gagal mengunggah berkas: " + msg)
+      }
     }
 
     xhr.ontimeout = () => {
       setIsLoading(false)
-      setUploadModalError("Waktu unggah habis (timeout). Silakan periksa ukuran berkas dan koneksi internet.")
+      setUploadModalError("Waktu unggah habis (timeout). Silakan periksa koneksi internet Anda.")
     }
 
     xhr.timeout = 300000 // 5 minutes
-    xhr.send(formData)
+    xhr.send(selectedFile)
   }
 
   const handleUpdateMaterialSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
