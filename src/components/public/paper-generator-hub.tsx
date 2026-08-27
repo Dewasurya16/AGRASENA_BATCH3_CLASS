@@ -53,59 +53,13 @@ const PRESET_TOPICS = [
   }
 ]
 
-function renderFormattedMarkdown(text: string) {
-  const lines = text.split("\n")
-  return (
-    <div className="space-y-2 text-xs leading-relaxed text-slate-800 dark:text-slate-200">
-      {lines.map((line, idx) => {
-        const trimmed = line.trim()
-        if (!trimmed) return <div key={idx} className="h-1.5" />
-
-        if (trimmed.startsWith("# ")) {
-          return (
-            <h2 key={idx} className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 mt-5 mb-2 pb-1 border-b border-slate-200 dark:border-slate-700">
-              {trimmed.replace(/^#\s+/, "")}
-            </h2>
-          )
-        }
-        if (trimmed.startsWith("## ")) {
-          return (
-            <h3 key={idx} className="text-sm sm:text-base font-black text-[#131E29] dark:text-white mt-4 mb-1">
-              {trimmed.replace(/^##\s+/, "")}
-            </h3>
-          )
-        }
-        if (trimmed.startsWith("### ")) {
-          return (
-            <h4 key={idx} className="text-xs sm:text-sm font-black text-[#FF7643] dark:text-amber-400 mt-3 mb-1">
-              {trimmed.replace(/^###\s+/, "")}
-            </h4>
-          )
-        }
-        if (trimmed.startsWith("---") || trimmed.startsWith("━━━")) {
-          return <hr key={idx} className="my-3 border-slate-200 dark:border-slate-800" />
-        }
-        if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-          const content = trimmed.replace(/^([•\-\*]\s+)/, "")
-          return (
-            <div key={idx} className="flex items-start gap-2 pl-1.5 my-1">
-              <span className="text-[#0D824B] dark:text-emerald-400 font-bold select-none">•</span>
-              <div className="flex-1">{formatBoldItalic(content)}</div>
-            </div>
-          )
-        }
-        return <p key={idx}>{formatBoldItalic(line)}</p>
-      })}
-    </div>
-  )
-}
-
-function formatBoldItalic(text: string) {
+// Inline Bold/Italic/Code Formatter
+function formatInline(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g)
   return parts.map((part, idx) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
       return (
-        <strong key={idx} className="font-black text-[#0D3830] dark:text-emerald-300">
+        <strong key={idx} className="font-extrabold text-[#0D3830] dark:text-emerald-300">
           {part.slice(2, -2)}
         </strong>
       )
@@ -119,13 +73,85 @@ function formatBoldItalic(text: string) {
     }
     if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
       return (
-        <code key={idx} className="rounded bg-slate-100 dark:bg-slate-800 px-1 py-0.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
+        <code key={idx} className="rounded bg-slate-200/80 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold border border-slate-300 dark:border-slate-700">
           {part.slice(1, -1)}
         </code>
       )
     }
     return part
   })
+}
+
+// Clean Document Viewer (Filters out broken ASCII boxes)
+function RenderPaperDocument({ content }: { content: string }) {
+  const lines = content.split("\n")
+
+  return (
+    <div className="space-y-2 text-xs leading-relaxed text-slate-800 dark:text-slate-200">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim()
+        if (!trimmed) return <div key={idx} className="h-2" />
+
+        // Skip raw ascii noise lines if any
+        if (/^[+\-| ]{5,}$/.test(trimmed) || trimmed.startsWith("```")) {
+          return null
+        }
+
+        // Heading 1 (# ) - Title & BAB
+        if (trimmed.startsWith("# ")) {
+          const titleText = trimmed.replace(/^#\s+/, "")
+          return (
+            <div key={idx} className="mt-6 mb-3 pb-1.5 border-b-2 border-slate-200 dark:border-slate-700">
+              <h2 className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 uppercase tracking-tight">
+                {formatInline(titleText)}
+              </h2>
+            </div>
+          )
+        }
+
+        // Heading 2 (## )
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3 key={idx} className="text-sm sm:text-base font-black text-[#131E29] dark:text-white mt-4 mb-1.5">
+              {formatInline(trimmed.replace(/^##\s+/, ""))}
+            </h3>
+          )
+        }
+
+        // Heading 3 (### ) - Sub-Bab (e.g. 1.1 Latar Belakang)
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={idx} className="text-xs sm:text-sm font-black text-[#FF7643] dark:text-amber-400 mt-3.5 mb-1">
+              {formatInline(trimmed.replace(/^###\s+/, ""))}
+            </h4>
+          )
+        }
+
+        // Horizontal Line
+        if (trimmed.startsWith("---") || trimmed.startsWith("━━━")) {
+          return <hr key={idx} className="my-4 border-slate-200 dark:border-slate-800" />
+        }
+
+        // Bullet Points (• , - , * )
+        if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          const textContent = trimmed.replace(/^([•\-\*]\s+)/, "")
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-2 my-1">
+              <span className="text-[#0D824B] dark:text-emerald-400 font-bold select-none mt-0.5">•</span>
+              <div className="flex-1 text-slate-700 dark:text-slate-300">{formatInline(textContent)}</div>
+            </div>
+          )
+        }
+
+        // Regular Paragraph
+        return (
+          <p key={idx} className="text-slate-700 dark:text-slate-300 leading-relaxed text-justify">
+            {formatInline(line)}
+          </p>
+        )
+      })}
+    </div>
+  )
 }
 
 export function PaperGeneratorHub() {
@@ -203,37 +229,74 @@ export function PaperGeneratorHub() {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // 1-Click Download as .doc (Word Compatible Document)
+  // Clean Microsoft Word Document Exporter
   const handleDownloadDoc = () => {
     if (!generatedPaper) return
+
+    // Clean text lines
+    const lines = generatedPaper.split('\n')
+    let bodyHtml = ""
+
+    lines.forEach((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) {
+        bodyHtml += "<p style='margin-bottom: 6pt;'></p>"
+        return
+      }
+
+      // Ignore ascii box noise
+      if (/^[+\-| ]{5,}$/.test(trimmed) || trimmed.startsWith("```")) {
+        return
+      }
+
+      if (trimmed.startsWith("# ")) {
+        const text = trimmed.replace(/^#\s+/, '')
+        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #0D3830; margin-top: 18pt; margin-bottom: 8pt;'>${text}</h2>`
+        return
+      }
+      if (trimmed.startsWith("## ")) {
+        const text = trimmed.replace(/^##\s+/, '')
+        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; text-align: center; margin-top: 14pt; margin-bottom: 6pt;'>${text}</h3>`
+        return
+      }
+      if (trimmed.startsWith("### ")) {
+        const text = trimmed.replace(/^###\s+/, '')
+        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 4pt; color: #333;'>${text}</h4>`
+        return
+      }
+      if (trimmed.startsWith("---") || trimmed.startsWith("━━━")) {
+        bodyHtml += "<hr style='border: 0; border-top: 1px solid #ccc; margin: 12pt 0;'/>"
+        return
+      }
+      if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+        const content = trimmed.replace(/^([•\-\*]\s+)/, '')
+          .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+          .replace(/\*(.*?)\*/g, '<i>$1</i>')
+        bodyHtml += `<p style='margin-left: 20pt; text-indent: -12pt; margin-bottom: 4pt; line-height: 1.5;'>• ${content}</p>`
+        return
+      }
+
+      const formatted = trimmed
+        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+        .replace(/\*(.*?)\*/g, '<i>$1</i>')
+      bodyHtml += `<p style='text-align: justify; margin-bottom: 6pt; line-height: 1.5;'>${formatted}</p>`
+    })
+
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'><title>${topicTitle}</title>
     <style>
+      @page { size: A4; margin: 3cm 2.5cm 2.5cm 3cm; }
       body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000; }
-      h1 { font-size: 16pt; font-weight: bold; text-align: center; color: #0D3830; }
-      h2 { font-size: 14pt; font-weight: bold; text-align: center; }
-      h3 { font-size: 12pt; font-weight: bold; margin-top: 14pt; }
-      p { text-align: justify; margin-bottom: 6pt; }
-      ul { margin-top: 0; }
+      p { line-height: 1.5; }
     </style></head><body>`
     const footer = `</body></html>`
-    
-    // Convert basic markdown to HTML for Word
-    const htmlBody = generatedPaper
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
-      .replace(/\*(.*?)\*/gim, '<i>$1</i>')
-      .replace(/\n\n/gim, '<p></p>')
-      .replace(/^• (.*$)/gim, '<li>$1</li>')
 
-    const source = header + htmlBody + footer
+    const source = header + bodyHtml + footer
     const blob = new Blob(['\ufeff' + source], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `PROPOSAL_MAKALAH_${authorSatker.toUpperCase().replace(/\s+/g, '_')}_${Date.now()}.doc`
+    a.download = `MAKALAH_SEMINAR_${authorSatker.toUpperCase().replace(/\s+/g, '_')}_${Date.now()}.doc`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -265,7 +328,7 @@ export function PaperGeneratorHub() {
         </h1>
 
         <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
-          Susun draf proposal makalah seminar inovasi teknologi informasi (4 Bab Lengkap: Latar Belakang, Landasan Regulasi SPBE, Arsitektur Sistem, dan Rencana Aksi 6 Bulan) secara otomatis dan langsung siap diunduh dalam format Microsoft Word (.doc).
+          Susun draf proposal makalah seminar inovasi teknologi informasi (5 Bab Lengkap: Latar Belakang, Landasan Regulasi SPBE, Arsitektur Sistem, Rencana Aksi 6 Bulan, dan Rekomendasi) secara otomatis dan langsung siap diunduh dalam format Microsoft Word (.doc).
         </p>
       </motion.div>
 
@@ -406,7 +469,7 @@ export function PaperGeneratorHub() {
               className="w-full font-black text-xs uppercase tracking-wider shadow-md cursor-pointer justify-center"
               icon={isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             >
-              {isGenerating ? "Menyusun Draf Makalah 4 Bab..." : "✨ Susun Proposal Makalah AI"}
+              {isGenerating ? "Menyusun Draf Makalah 5 Bab..." : "✨ Susun Proposal Makalah AI"}
             </Button>
           </form>
         </div>
@@ -447,7 +510,7 @@ export function PaperGeneratorHub() {
             </div>
 
             {/* Output Body */}
-            <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px]">
+            <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px] bg-white dark:bg-[#181D28]">
               {isGenerating ? (
                 <div className="flex flex-col items-center justify-center h-full min-h-[350px] text-center space-y-4">
                   <Loader2 className="h-10 w-10 text-[#EA580C] animate-spin" />
@@ -459,7 +522,7 @@ export function PaperGeneratorHub() {
                   </div>
                 </div>
               ) : generatedPaper ? (
-                renderFormattedMarkdown(generatedPaper)
+                <RenderPaperDocument content={generatedPaper} />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full min-h-[350px] text-center text-slate-400 dark:text-slate-500 space-y-3">
                   <FileText className="h-12 w-12 text-slate-300 dark:text-slate-700" />
