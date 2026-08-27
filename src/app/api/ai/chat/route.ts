@@ -1,81 +1,134 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { RAW_DAYS_DATA } from "@/lib/roadmap-utils"
+import { getAutoRoadmapData, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
+import { TEMPLATES_DATA } from "@/components/public/templates-hub"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { messages, userApiKey, userName, userSatker, currentDayNumber = 3 } = body
 
-    // 1. Fetch real-time context from Supabase if available
+    // 1. Fetch ALL real-time data from Supabase without low limits
+    let rawSchedules: any[] = []
     let tasksContext = "Tugas Aktif: Rangkuman Materi Hari 2 — Manajemen Layanan TI & SPBE (Tenggat: 26 Agustus 2026, 23:59 WIB)"
-    let scheduleContext = ""
     let materialsContext = `• [Pertemuan 1] Modul Administrasi Prakom (Bahan Ajar Fungsional) - Tata kelola administrasi dan butir DUPAK (File: administrasi-prakom.pdf)
 • [Pertemuan 2] Modul SPBE & Arsitektur Sistem (Tata Kelola TI) - 6 Domain SPBE dan Perpres 95/2018
 • [Pertemuan 3] Modul Manajemen Basis Data & Big Data (Database) - Indexing, replikasi data perkara, dan query SQL tuning
 • [Pertemuan 4] Modul Jaringan & Cloud Server (Infrastruktur TI) - Konfigurasi Linux server, Nginx, dan backup otomatis
 • [Pertemuan 5] Modul Keamanan Informasi & CSIRT (Cybersecurity) - Respon insiden, enkripsi data, dan ISO 27001`
+    let announcementsContext = "Tidak ada pengumuman mendesak saat ini."
 
     try {
       const supabase = await createClient()
-      const [taskRes, schedRes, matRes] = await Promise.all([
-        supabase.from("tasks").select("*").limit(10),
-        supabase.from("schedules").select("*").limit(15),
-        supabase.from("materials").select("title, subject_name, description, file_name, week_number").limit(25),
+      const [taskRes, schedRes, matRes, annRes] = await Promise.all([
+        supabase.from("tasks").select("*").order("created_at", { ascending: false }),
+        supabase.from("schedules").select("*").order("start_time", { ascending: true }),
+        supabase.from("materials").select("*").order("created_at", { ascending: false }),
+        supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       ])
+
+      if (schedRes.data && schedRes.data.length > 0) {
+        rawSchedules = schedRes.data
+      }
 
       if (taskRes.data && taskRes.data.length > 0) {
         tasksContext = taskRes.data
-          .map((t: any) => `• ${t.title} (${t.subject_name}) - Deadline: ${t.due_date}`)
-          .join("\n")
-      }
-
-      if (schedRes.data && schedRes.data.length > 0) {
-        scheduleContext = schedRes.data
-          .map((s: any) => `• [${s.day || "Sesi"}] ${s.subject_name} (${s.start_time || "08:00"} - ${s.end_time || "15:30"} WIB)`)
+          .map((t: any) => `• "${t.title}" (${t.subject_name}) | Deadline: ${t.due_date} | Status: ${t.status || "Aktif"} | Rincian: ${t.description || "-"}`)
           .join("\n")
       }
 
       if (matRes.data && matRes.data.length > 0) {
         materialsContext = matRes.data
-          .map((m: any) => `• [Pertemuan ${m.week_number || 1}] ${m.title} (${m.subject_name}) - ${m.description || "Modul Kurikulum 120 JP"} (File: ${m.file_name})`)
+          .map((m: any) => `• [Tahap/Pertemuan ${m.week_number || 1}] "${m.title}" (${m.subject_name}) — ${m.description || "Modul Kurikulum 120 JP"} (File: ${m.file_name || "-"})`)
+          .join("\n")
+      }
+
+      if (annRes.data && annRes.data.length > 0) {
+        announcementsContext = annRes.data
+          .map((a: any) => `• [${a.is_urgent ? "PENTING" : "INFO"}] "${a.title}" (${a.author || "Pengurus"}): ${a.content}`)
           .join("\n")
       }
     } catch {
-      // Offline fallback
+      // Supabase offline fallback
     }
 
-    // 2. Resolve current and tomorrow's schedule
-    const todayObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNumber) || RAW_DAYS_DATA[2]
-    const tomorrowObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNumber + 1) || RAW_DAYS_DATA[3]
+    // 2. Build structured 35-Day Roadmap Master Schedule
+    const roadmapData = getAutoRoadmapData(currentDayNumber, rawSchedules)
+    const todayDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber) || roadmapData.days[0]
+    const tomorrowDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber + 1) || roadmapData.days[1]
 
-    // 3. Versatile, All-Knowing System Prompt
-    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI resmi yang cerdas, serba bisa, dan siap membantu segala topik untuk Pelatihan Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
+    const all35DaysScheduleText = roadmapData.days
+      .map((d) => {
+        const sessionList =
+          d.sessions && d.sessions.length > 0
+            ? d.sessions
+                .map(
+                  (s) =>
+                    `    - ${s.time} WIB: ${s.title}${s.instructor ? ` (Pengampu: ${s.instructor})` : ""}${s.room ? ` [Ruangan: ${s.room}]` : ""}`
+                )
+                .join("\n")
+            : "    - Pembelajaran Mandiri / Belum ada sesi terperinci yang dijadwalkan."
+
+        return `• [HARI ${d.dayNumber}] ${d.dayOfWeek}, ${d.dateStr} | ${d.stageName} (${d.stageSubtitle}) [Status: ${d.status.toUpperCase()}]:\n${sessionList}`
+      })
+      .join("\n\n")
+
+    const templatesContext = TEMPLATES_DATA
+      .map((t) => `• [${t.category}] "${t.title}" (${t.format}) — Dasar: ${t.legalReference}`)
+      .join("\n")
+
+    // 3. System Prompt with Complete Ground Truth
+    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI resmi yang cerdas, serba bisa, dan berpengetahuan komprehensif untuk Pelatihan Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
 
 PROFIL PENGGUNA:
 - Nama: ${userName || "Rekan Prakom"}
 - Satuan Kerja: ${userSatker || "Kejaksaan RI"}
-- Selalu panggil dan sapa pengguna dengan namanya secara ramah, santun, dan solutif.
+- Sapa pengguna dengan ramah, santun, profesional, dan solutif.
 
-KONTEKS DIKLAT HARI INI:
-- Hari Ini: Hari ke-${currentDayNumber} (${todayObj.date}, ${todayObj.dayOfWeek}) — ${todayObj.stageName} (${todayObj.stageSubtitle})
-- Topik Hari Ini: Tata Kelola TI & SPBE Nasional (120 JP)
-- Jadwal Besok: Hari ke-${currentDayNumber + 1} (${tomorrowObj.date}, ${tomorrowObj.dayOfWeek}) — ${tomorrowObj.stageName}
-- Jam Belajar Resmi: 08:00 - 15:30 WIB (Senin s.d. Jumat)
+STATUS DIKLAT HARI INI:
+- Hari Ini: Hari ke-${currentDayNumber} (${todayDetail.dateStr}, ${todayDetail.dayOfWeek}) — ${todayDetail.stageName} (${todayDetail.stageSubtitle})
+- Status Hari Ini: ${todayDetail.status.toUpperCase()}
+- Sesi Hari Ini:
+${todayDetail.sessions && todayDetail.sessions.length > 0 ? todayDetail.sessions.map((s) => `  * ${s.time} WIB: ${s.title}${s.instructor ? ` (${s.instructor})` : ""}`).join("\n") : "  * Pembelajaran Mandiri MOOC"}
+- Jadwal Besok: Hari ke-${currentDayNumber + 1} (${tomorrowDetail?.dateStr || "-"}, ${tomorrowDetail?.dayOfWeek || "-"}) — ${tomorrowDetail?.stageName || "-"}
+- Jam Belajar Resmi Diklat: 08:00 - 15:30 WIB (Senin s.d. Jumat)
 
-PUSTAKA MODUL PDF & BAHAN AJAR 120 JP YANG TERSEDIA DI KELAS:
+======================================================================
+MASTER JADWAL 35 HARI LENGKAP (SUMBER KEBENARAN UTAMA / GROUND TRUTH):
+======================================================================
+${all35DaysScheduleText}
+
+======================================================================
+DAFTAR MODUL PDF & BAHAN AJAR 120 JP:
+======================================================================
 ${materialsContext}
-(Jika peserta menanyakan isi modul, materi, konsep, bab tertentu, atau minta dirangkumkan salah satu modul di atas, jelaskan secara mendalam, terstruktur, dan tuntas sesuai isi modul tersebut!)
 
-TUGAS AKTIF DI DATABASE:
+======================================================================
+DAFTAR TUGAS AKTIF & DEADLINE:
+======================================================================
 ${tasksContext}
 
-KEMAMPUAN UTAMA ANDA (SERBA BISA):
-1. 📚 PENGUASAAN MODUL & MATERI DIKLAT: Kuasai penuh seluruh modul bahan ajar 120 JP yang diunggah di kelas. Mampu merangkum materi, menjelaskan bab dan istilah teknis, serta membantu persiapan ujian seminar dan tugas mandiri.
-2. 💻 CODING & TROUBLESHOOTING: Anda adalah pakar pemrograman tingkat mahir. Jawab semua kendala coding, query SQL, Python, JavaScript, TypeScript, PHP, Bash Script, Docker, Git, REST API, optimasi database, dan arsitektur sistem. Berikan solusi kode yang bersih, efisien, dan siap pakai.
-3. 🏛️ REGULASI & SPBE: Kuasai penuh Perpres No. 95/2018 (SPBE), Perpres No. 132/2022, 6 Domain SPBE, Keamanan Siber (CSIRT/BSSN), dan Standar TIK Nasional.
-4. 📈 JABATAN FUNGSIONAL & ANGKA KREDIT: Pahami PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021 untuk perhitungan DUPAK/PAK, pembagian butir kegiatan Ahli Pertama (12.5 AK/thn) dan Ahli Muda (25 AK/thn), serta syarat bukti fisik yang sah.
-5. 🌐 PENGETAHUAN UMUM & PRODUKTIVITAS: Anda juga dapat menjawab pertanyaan umum lainnya di luar diklat dengan cerdas, logis, dan akurat.
+======================================================================
+PENGUMUMAN KELAS TERBARU:
+======================================================================
+${announcementsContext}
+
+======================================================================
+PUSAT TEMPLATE DOKUMEN BPS & KEJAKSAAN RI:
+======================================================================
+${templatesContext}
+
+ATURAN WAJIB DALAM MENJAWAB:
+1. AKURASI JADWAL HARIAN:
+   - Jika pengguna menanyakan jadwal hari tertentu (misal: "jadwal hari ke-5", "jadwal hari jumat", "jadwal hari 8", "jadwal besok", dsb.), BACA LANGSUNG dari bagian [MASTER JADWAL 35 HARI LENGKAP] di atas.
+   - Sebutkan secara persis: Tanggal, Hari, Tahap Diklat, serta SELURUH SESI & JAM yang terdaftar (contoh untuk Hari ke-5: 08:00 - 08:45 WIB: Area TI Spesial, 08:45 - 09:30 WIB: Pembuatan Dokumentasi dan Laporan, dst.).
+   - JANGAN PERNAH menyatakan "topik menyusul" atau "belum ada di database" jika di atas sudah tercatat rincian sesinya!
+2. PENGUASAAN MODUL & MATERI:
+   - Mampu menjelaskan secara mendalam isi modul, konsep SPBE (Perpres 95/2018), 6 Domain SPBE, Arsitektur Sistem, Manajemen Database, CSIRT Keamanan Siber, dan Tata Kelola TI.
+3. KODING & TROUBLESHOOTING:
+   - Berikan kode SQL, Python, JavaScript, Bash, atau Docker yang rapi di dalam blok kode markdown.
+4. ANGKA KREDIT & DUPAK BPS:
+   - PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021 (Ahli Pertama 12.5 AK/thn, Ahli Muda 25 AK/thn).
 
 Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks yang jelas. Berikan jawaban yang tuntas dan solutif!`
 
@@ -114,8 +167,8 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
               { role: "system", content: systemPrompt },
               ...messages.slice(-8),
             ],
-            temperature: 0.6,
-            max_tokens: 1500,
+            temperature: 0.5,
+            max_tokens: 2000,
           }),
         })
 
@@ -127,7 +180,7 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
               reply,
               model,
               todayDay: currentDayNumber,
-              todayStage: todayObj.stageName,
+              todayStage: todayDetail.stageName,
             })
           }
         }
@@ -140,7 +193,7 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
       reply: "Halo Rekan Prakom! Maaf, server AI sedang mengalami beban tinggi. Silakan ulangi pertanyaan Anda dalam beberapa saat.",
       model: "system-fallback",
       todayDay: currentDayNumber,
-      todayStage: todayObj.stageName,
+      todayStage: todayDetail.stageName,
     })
   } catch (err: any) {
     return NextResponse.json(

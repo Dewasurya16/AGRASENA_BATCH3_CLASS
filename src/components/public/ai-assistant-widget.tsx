@@ -390,14 +390,30 @@ Silakan tanyakan materi harian, kendala kodingan, atau hal apapun yang ingin And
     const todayObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNum) || RAW_DAYS_DATA[2]
     const tomorrowObj = RAW_DAYS_DATA.find((d) => d.day === currentDayNum + 1) || RAW_DAYS_DATA[3]
 
+    // Check if user specifically asks about a particular day e.g. "hari 5" or "hari ke-5"
+    const matchDay = q.match(/hari\s*(?:ke[-\s]*)?(\d+)/i)
+    if (matchDay) {
+      const targetDay = parseInt(matchDay[1], 10)
+      const targetObj = RAW_DAYS_DATA.find((d) => d.day === targetDay)
+      if (targetObj) {
+        return {
+          response: `📅 **JADWAL HARI KE-${targetObj.day} (${targetObj.dayOfWeek}, ${targetObj.date})**
+━━━━━━━━━━━━━━━━━━━━
+• **Tahapan Diklat:** ${targetObj.stageName} (${targetObj.stageSubtitle})
+• **Jam Belajar:** 08:00 - 15:30 WIB
+• **Aktivitas:** Mengikuti materi & modul kurikulum 120 JP sesuai agenda kelas. Silakan periksa daftar sesi di tab Jadwal Roadmap.`
+        }
+      }
+    }
+
     if (q.includes('jadwal') || q.includes('hari ini') || q.includes('besok')) {
       return {
         response: `📅 **JADWAL REAL-TIME DIKLAT PRAKOM BATCH 3**
 ━━━━━━━━━━━━━━━━━━━━
 • **Hari Ini (Hari ${currentDayNum} - ${todayObj.date}):** ${todayObj.stageName} (${todayObj.stageSubtitle})
-  Jam: 08:00 - 15:30 WIB • Topik: Tata Kelola TI & SPBE Nasional (120 JP)
+  Jam: 08:00 - 15:30 WIB • Kurikulum 120 JP
 • **Besok (Hari ${currentDayNum + 1} - ${tomorrowObj.date}):** ${tomorrowObj.stageName} (${tomorrowObj.stageSubtitle})
-  Sesi akan otomatis berlanjut besok pagi pukul 08:00 WIB.`
+  Sesi akan berlanjut besok pagi pukul 08:00 WIB.`
       }
     }
 
