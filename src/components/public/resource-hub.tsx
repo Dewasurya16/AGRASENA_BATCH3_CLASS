@@ -251,6 +251,34 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [studyNotes, setStudyNotes] = React.useState<Record<string, string>>({})
   const [isSummarizing, setIsSummarizing] = React.useState(false)
   const [copiedNote, setCopiedNote] = React.useState(false)
+  const [isPdfLoading, setIsPdfLoading] = React.useState(true)
+  const [pdfLoadProgress, setPdfLoadProgress] = React.useState(15)
+
+  // Manage PDF Loading Progress Simulation
+  React.useEffect(() => {
+    if (previewMaterial && readerTab === "pdf") {
+      setIsPdfLoading(true)
+      setPdfLoadProgress(15)
+
+      const interval = setInterval(() => {
+        setPdfLoadProgress((prev) => {
+          if (prev < 40) return prev + Math.floor(Math.random() * 12) + 8
+          if (prev < 75) return prev + Math.floor(Math.random() * 8) + 5
+          if (prev < 92) return prev + Math.floor(Math.random() * 4) + 2
+          return prev
+        })
+      }, 350)
+
+      return () => clearInterval(interval)
+    }
+  }, [previewMaterial?.id, readerTab])
+
+  const handleIframeLoad = () => {
+    setPdfLoadProgress(100)
+    setTimeout(() => {
+      setIsPdfLoading(false)
+    }, 400)
+  }
 
   // Load study notes from localStorage
   React.useEffect(() => {
@@ -595,8 +623,60 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             <div className="flex-1 min-h-0 p-3 sm:p-5 overflow-hidden flex flex-col">
               {readerTab === "pdf" ? (
                 <div className="flex-1 w-full min-h-[350px] sm:min-h-[500px] rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-900 overflow-hidden shadow-inner relative">
+                  
+                  {/* Modern Animated Loading Progress Overlay */}
+                  {isPdfLoading && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md transition-all duration-300">
+                      <div className="relative mb-4">
+                        <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-orange-500/30 to-amber-500/30 blur-lg animate-pulse" />
+                        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl">
+                          <FileText className="h-8 w-8 text-[#FF7643] animate-pulse" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#FF7643] text-white shadow-md">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        </div>
+                      </div>
+
+                      <h4 className="text-sm sm:text-base font-black text-white max-w-md truncate px-4">
+                        {previewMaterial.title}
+                      </h4>
+
+                      <p className="text-xs text-slate-400 mt-1 font-mono">
+                        {previewMaterial.file_size ? `${(previewMaterial.file_size / (1024 * 1024)).toFixed(2)} MB • ` : ""}
+                        Memuat Berkas PDF ke Layar...
+                      </p>
+
+                      {/* Progress Bar Track & Percentage */}
+                      <div className="w-full max-w-xs mt-4 space-y-2">
+                        <div className="flex justify-between items-center text-[11px] font-mono">
+                          <span className="text-slate-400">Loading Reader...</span>
+                          <span className="text-[#FF7643] font-bold">{pdfLoadProgress}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 border border-slate-700">
+                          <div
+                            className="h-full bg-gradient-to-r from-orange-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${pdfLoadProgress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-5">
+                        <a
+                          href={previewMaterial.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700 px-3.5 py-1.5 rounded-full transition cursor-pointer"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 text-[#FF7643]" />
+                          <span>Buka di Tab Baru / Download Langsung</span>
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
                   <iframe
                     src={previewMaterial.file_url}
+                    onLoad={handleIframeLoad}
                     className="w-full h-full border-0 absolute inset-0"
                     title={previewMaterial.title}
                   />
