@@ -1310,14 +1310,14 @@ export function CodeVault() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#E6F7ED] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#0D824B]">
+            <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#0D824B] dark:text-emerald-300">
               Integrated Web IDE • 4 Pilar: Database • Frontend • Backend • Data Science
             </span>
           </div>
-          <h2 className="text-xl sm:text-3xl font-black text-[#18181B] tracking-tight mt-2">
+          <h2 className="text-xl sm:text-3xl font-black text-[#18181B] dark:text-white tracking-tight mt-2">
             Prakom Code & SQL Web IDE
           </h2>
-          <p className="text-xs sm:text-sm text-[#6B7C93]">
+          <p className="text-xs sm:text-sm text-[#6B7C93] dark:text-slate-400">
             Editor interaktif dengan sistem manajemen file terstruktur rapi berdasarkan 4 pilar kompetensi Pranata Komputer.
           </p>
         </div>
@@ -1336,14 +1336,14 @@ export function CodeVault() {
       </div>
 
       {/* Main Switcher: IDE vs Snippet Library */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
         <button
           type="button"
           onClick={() => setActiveMainTab("ide")}
           className={`flex items-center gap-2 rounded-full px-5 py-2 text-xs font-black transition-all cursor-pointer ${
             activeMainTab === "ide"
-              ? "bg-[#0D3830] text-white shadow-md"
-              : "bg-white border border-slate-200 text-[#52647C] hover:bg-slate-50"
+              ? "bg-[#0D3830] dark:bg-emerald-600 text-white shadow-md"
+              : "bg-white dark:bg-[#161B26] border border-slate-200 dark:border-slate-800 text-[#52647C] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <TerminalIcon className="h-4 w-4 text-[#A7F3D0]" />
@@ -1355,8 +1355,8 @@ export function CodeVault() {
           onClick={() => setActiveMainTab("library")}
           className={`flex items-center gap-2 rounded-full px-5 py-2 text-xs font-black transition-all cursor-pointer ${
             activeMainTab === "library"
-              ? "bg-[#18181B] text-white shadow-md"
-              : "bg-white border border-slate-200 text-[#52647C] hover:bg-slate-50"
+              ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-md"
+              : "bg-white dark:bg-[#161B26] border border-slate-200 dark:border-slate-800 text-[#52647C] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           }`}
         >
           <Code2 className="h-4 w-4 text-[#FFD280]" />
@@ -1792,15 +1792,15 @@ export function CodeVault() {
       {activeMainTab === "library" && (
         <div className="space-y-6">
           {/* Search & Filter Bar */}
-          <div className="rounded-[28px] bg-white p-4 border-2 border-slate-200 shadow-sm space-y-3">
+          <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE]" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari codingan berdasarkan kata kunci, judul, bahasa, atau nama pengirim..."
-                className="h-11 w-full rounded-2xl border-2 border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-[#18181B] placeholder-[#9AA8BA] focus:border-[#18181B] focus:outline-none"
+                className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#18181B] dark:focus:border-emerald-500 focus:outline-none"
               />
             </div>
 
@@ -1812,8 +1812,8 @@ export function CodeVault() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     selectedCategory === cat
-                      ? "bg-[#18181B] text-white shadow-xs"
-                      : "bg-[#F4F6FA] border border-slate-200 text-[#52647C] hover:bg-slate-200"
+                      ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-xs"
+                      : "bg-[#F4F6FA] dark:bg-[#1E2433] border border-slate-200 dark:border-slate-700 text-[#52647C] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-[#18181B] dark:hover:text-white"
                   }`}
                 >
                   {cat === "Database"
@@ -1833,10 +1833,10 @@ export function CodeVault() {
           {/* Snippet Grid */}
           <div className="space-y-6">
             {filtered.length === 0 ? (
-              <div className="rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center space-y-3 bg-white">
-                <Code2 className="h-10 w-10 text-slate-300 mx-auto" />
-                <h4 className="font-bold text-sm text-[#18181B]">Codingan Tidak Ditemukan</h4>
-                <p className="text-xs text-[#6B7C93]">Jadilah yang pertama menambahkan file atau arsip ZIP untuk kategori ini!</p>
+              <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 bg-white dark:bg-[#12161F]">
+                <Code2 className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
+                <h4 className="font-bold text-sm text-[#18181B] dark:text-white">Codingan Tidak Ditemukan</h4>
+                <p className="text-xs text-[#6B7C93] dark:text-slate-400">Jadilah yang pertama menambahkan file atau arsip ZIP untuk kategori ini!</p>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(true)}
@@ -1853,20 +1853,20 @@ export function CodeVault() {
                     key={snippet.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-[32px] bg-white border-2 border-slate-200 shadow-sm overflow-hidden"
+                    className="rounded-[32px] bg-white dark:bg-[#161B26] border-2 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
                   >
                     {/* Header Titlebar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b-2 border-slate-200 bg-[#FAFBFD] gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b-2 border-slate-200 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#12161F] gap-3">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black border ${
                             snippet.category === "Database"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
+                              ? "bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                               : snippet.category === "Frontend"
-                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              ? "bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800"
                               : snippet.category === "Backend"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-rose-50 text-rose-700 border-rose-200"
+                              ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                              : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
                           }`}>
                             {snippet.category === "Database" && "🗄️ "}
                             {snippet.category === "Frontend" && "🎨 "}
@@ -1874,23 +1874,23 @@ export function CodeVault() {
                             {snippet.category === "Data Science" && "📊 "}
                             {snippet.category}
                           </span>
-                          <span className="font-mono text-[10px] font-black uppercase text-slate-600 bg-slate-200 px-2 py-0.5 rounded-md">
+                          <span className="font-mono text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                             {snippet.language}
                           </span>
                           {snippet.zip_name && (
-                            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-black text-amber-600 border border-amber-300 flex items-center gap-1">
+                            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-black text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
                               <Archive className="h-3 w-3" />
                               <span>Arsip ZIP ({snippet.files_count || 1} file)</span>
                             </span>
                           )}
                           {snippet.is_community && (
-                            <span className="rounded-full bg-[#FFEADA] px-2.5 py-0.5 text-[10px] font-black text-[#EA580C] border border-[#FFD280]">
+                            <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-2.5 py-0.5 text-[10px] font-black text-[#EA580C] dark:text-amber-300 border border-[#FFD280] dark:border-amber-800">
                               🤝 Rekan Kelas: {snippet.author || "Peserta"}
                             </span>
                           )}
                         </div>
-                        <h3 className="font-black text-base text-[#18181B]">{snippet.title}</h3>
-                        <p className="text-xs text-[#6B7C93]">{snippet.description}</p>
+                        <h3 className="font-black text-base text-[#18181B] dark:text-white">{snippet.title}</h3>
+                        <p className="text-xs text-[#6B7C93] dark:text-slate-400">{snippet.description}</p>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0">
@@ -1951,7 +1951,7 @@ export function CodeVault() {
 
                             setActiveMainTab("ide")
                           }}
-                          className="flex items-center gap-1 rounded-full bg-[#E6F7ED] px-3.5 py-2 text-xs font-black text-[#0D824B] border border-[#A7F3D0] hover:bg-[#D1F2DF] transition cursor-pointer"
+                          className="flex items-center gap-1 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-2 text-xs font-black text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800 hover:bg-[#D1F2DF] dark:hover:bg-emerald-900 transition cursor-pointer"
                         >
                           <Play className="h-3 w-3 fill-current" />
                           <span>Buka di IDE</span>
@@ -1960,16 +1960,16 @@ export function CodeVault() {
                         <button
                           type="button"
                           onClick={() => handleCopyCode(snippet.code, snippet.id)}
-                          className="flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-black text-[#18181B] border-2 border-slate-200 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+                          className="flex items-center gap-1.5 rounded-full bg-white dark:bg-slate-800 px-4 py-2 text-xs font-black text-[#18181B] dark:text-white border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs cursor-pointer"
                         >
                           {isCopied ? (
                             <>
-                              <Check className="h-3.5 w-3.5 text-[#0D824B]" />
-                              <span className="text-[#0D824B]">Tersalin!</span>
+                              <Check className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />
+                              <span className="text-[#0D824B] dark:text-emerald-400">Tersalin!</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="h-3.5 w-3.5 text-[#FF7643]" />
+                              <Copy className="h-3.5 w-3.5 text-[#FF7643] dark:text-amber-400" />
                               <span>Salin Kode</span>
                             </>
                           )}
@@ -2146,11 +2146,11 @@ export function CodeVault() {
             </div>
           )}
 
-          <form onSubmit={handleCreateSnippet} className="space-y-4 text-[#18181B]">
+          <form onSubmit={handleCreateSnippet} className="space-y-4 text-[#18181B] dark:text-white">
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-black text-[#18181B]">Judul Codingan / Proyek *</label>
+                <label className="text-xs font-black text-[#18181B] dark:text-white">Judul Codingan / Proyek *</label>
                 <Input
                   required
                   value={formTitle}
@@ -2161,7 +2161,7 @@ export function CodeVault() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-black text-[#18181B]">Nama Anda & Satker (Opsional)</label>
+                <label className="text-xs font-black text-[#18181B] dark:text-white">Nama Anda & Satker (Opsional)</label>
                 <Input
                   value={formAuthor}
                   onChange={(e) => setFormAuthor(e.target.value)}
@@ -2173,38 +2173,38 @@ export function CodeVault() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-black text-[#18181B]">Pilar Kategori *</label>
+                <label className="text-xs font-black text-[#18181B] dark:text-white">Pilar Kategori *</label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value as SnippetCategory)}
-                  className="w-full rounded-2xl border-2 border-slate-200 bg-white p-2.5 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+                  className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] p-2.5 text-xs font-medium text-[#18181B] dark:text-white focus:border-[#18181B] dark:focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="Database">🗄️ Database</option>
-                  <option value="Frontend">🎨 Frontend</option>
-                  <option value="Backend">⚙️ Backend</option>
-                  <option value="Data Science">📊 Data Science</option>
+                  <option value="Database" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">🗄️ Database</option>
+                  <option value="Frontend" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">🎨 Frontend</option>
+                  <option value="Backend" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">⚙️ Backend</option>
+                  <option value="Data Science" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">📊 Data Science</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-black text-[#18181B]">Bahasa Pemrograman *</label>
+                <label className="text-xs font-black text-[#18181B] dark:text-white">Bahasa Pemrograman *</label>
                 <select
                   value={formLanguage}
                   onChange={(e) => setFormLanguage(e.target.value as any)}
-                  className="w-full rounded-2xl border-2 border-slate-200 bg-white p-2.5 text-xs font-medium text-[#18181B] focus:border-[#18181B] focus:outline-none"
+                  className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] p-2.5 text-xs font-medium text-[#18181B] dark:text-white focus:border-[#18181B] dark:focus:border-emerald-500 focus:outline-none"
                 >
-                  <option value="python">Python (🐍 .py)</option>
-                  <option value="sql">SQL (PostgreSQL / MySQL)</option>
-                  <option value="bash">Bash / Shell Script (.sh)</option>
-                  <option value="typescript">JavaScript / TypeScript (.js, .ts)</option>
-                  <option value="yaml">YAML / Docker (.yml)</option>
-                  <option value="json">HTML / JSON (.html, .json)</option>
+                  <option value="python" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">Python (🐍 .py)</option>
+                  <option value="sql" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">SQL (PostgreSQL / MySQL)</option>
+                  <option value="bash" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">Bash / Shell Script (.sh)</option>
+                  <option value="typescript" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">JavaScript / TypeScript (.js, .ts)</option>
+                  <option value="yaml" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">YAML / Docker (.yml)</option>
+                  <option value="json" className="bg-white dark:bg-[#1E2433] text-[#18181B] dark:text-white">HTML / JSON (.html, .json)</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-black text-[#18181B]">Deskripsi Singkat / Kegunaan</label>
+              <label className="text-xs font-black text-[#18181B] dark:text-white">Deskripsi Singkat / Kegunaan</label>
               <Input
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
@@ -2214,19 +2214,19 @@ export function CodeVault() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-black text-[#18181B]">Source Code Utama *</label>
+              <label className="text-xs font-black text-[#18181B] dark:text-white">Source Code Utama *</label>
               <textarea
                 required
                 rows={4}
                 value={formCode}
                 onChange={(e) => setFormCode(e.target.value)}
                 placeholder="Paste kode atau isi skrip utama Anda di sini..."
-                className="w-full rounded-2xl border-2 border-slate-200 bg-[#18181B] text-emerald-300 font-mono p-3 text-xs focus:border-[#0D824B] focus:outline-none leading-relaxed"
+                className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#18181B] text-emerald-300 font-mono p-3 text-xs focus:border-[#0D824B] focus:outline-none leading-relaxed"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-black text-[#18181B]">Tags (Pisahkan dengan koma)</label>
+              <label className="text-xs font-black text-[#18181B] dark:text-white">Tags (Pisahkan dengan koma)</label>
               <Input
                 value={formTags}
                 onChange={(e) => setFormTags(e.target.value)}
@@ -2235,11 +2235,11 @@ export function CodeVault() {
               />
             </div>
 
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+                className="rounded-full bg-slate-100 dark:bg-slate-800 px-4 py-2 text-xs font-bold text-[#18181B] dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
               >
                 Batal
               </button>

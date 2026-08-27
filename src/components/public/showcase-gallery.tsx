@@ -49,15 +49,15 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
     <section id="showcase" className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#131E29]">
+          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#131E29] dark:text-white">
             Galeri Showcase & Karya Terbaik
           </h3>
-          <p className="text-xs text-[#6B7C93]">
+          <p className="text-xs text-[#6B7C93] dark:text-slate-400">
             Kumpulan hasil tugas besar, aplikasi, dan karya proyek terbaik dari mahasiswa
           </p>
         </div>
 
-        <span className="text-xs font-bold text-[#FF7643] bg-[#FFEADA] px-3 py-1 rounded-full flex items-center gap-1.5">
+        <span className="text-xs font-bold text-[#FF7643] dark:text-amber-300 bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 rounded-full flex items-center gap-1.5">
           <Trophy className="h-4 w-4" />
           Featured Projects
         </span>
@@ -67,31 +67,31 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
         {list.map((item, idx) => (
           <div
             key={item.id}
-            className="flex flex-col justify-between rounded-[28px] bg-white p-5 soft-card-shadow border border-slate-100"
+            className="flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5 soft-card-shadow border border-slate-100 dark:border-slate-800"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-[#B47D00] bg-[#FFF4D6] px-2.5 py-0.5 rounded-full">
-                  <Star className="h-3 w-3 fill-[#B47D00]" />
+                <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-[#B47D00] dark:text-amber-300 bg-[#FFF4D6] dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full">
+                  <Star className="h-3 w-3 fill-[#B47D00] dark:fill-amber-400" />
                   Top #{idx + 1}
                 </span>
-                <span className="rounded-full bg-[#E6F7ED] px-2.5 py-0.5 text-[11px] font-bold text-[#0D824B]">
+                <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-2.5 py-0.5 text-[11px] font-bold text-[#0D824B] dark:text-emerald-300">
                   {item.subject_name}
                 </span>
               </div>
 
-              <h4 className="font-bold text-base text-[#131E29] line-clamp-1">
+              <h4 className="font-bold text-base text-[#131E29] dark:text-white line-clamp-1">
                 {item.title}
               </h4>
 
-              <p className="text-xs text-[#6B7C93] line-clamp-3 leading-relaxed">
+              <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-3 leading-relaxed">
                 {item.description}
               </p>
             </div>
 
-            <div className="space-y-3 border-t border-slate-100 pt-4 mt-4">
-              <div className="flex items-center gap-1.5 text-xs text-[#6B7C93]">
-                <Users className="h-3.5 w-3.5 text-[#0D3830] shrink-0" />
+            <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+              <div className="flex items-center gap-1.5 text-xs text-[#6B7C93] dark:text-slate-400">
+                <Users className="h-3.5 w-3.5 text-[#0D3830] dark:text-emerald-400 shrink-0" />
                 <span className="truncate">{item.student_names}</span>
               </div>
 

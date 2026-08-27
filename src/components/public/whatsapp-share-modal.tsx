@@ -64,22 +64,22 @@ _Semangat belajar rekan-rekan Pranata Komputer Batch 3! ✨_`
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Salin Rekap Harian ke WhatsApp">
-      <div className="space-y-4 pt-1 text-[#18181B]">
-        <div className="flex items-center gap-2 rounded-2xl bg-[#E6F7ED] p-3 border border-[#A7F3D0] text-xs font-bold text-[#0D824B]">
-          <MessageCircle className="h-4 w-4 shrink-0 text-[#0D824B]" />
+      <div className="space-y-4 pt-1 text-[#18181B] dark:text-white">
+        <div className="flex items-center gap-2 rounded-2xl bg-[#E6F7ED] dark:bg-emerald-950/80 p-3 border border-[#A7F3D0] dark:border-emerald-800 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
+          <MessageCircle className="h-4 w-4 shrink-0 text-[#0D824B] dark:text-emerald-400" />
           <span>Format pesan rapi telah disusun otomatis dan siap dibagikan ke grup angkatan.</span>
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-black text-[#18181B]">Pratinjau Teks Pesan WhatsApp:</label>
-            <span className="text-[10px] font-bold text-[#6B7C93]">Formatted Markdown</span>
+            <label className="text-xs font-black text-[#18181B] dark:text-white">Pratinjau Teks Pesan WhatsApp:</label>
+            <span className="text-[10px] font-bold text-[#6B7C93] dark:text-slate-400">Formatted Markdown</span>
           </div>
           <textarea
             readOnly
             value={templateMessage}
             rows={7}
-            className="w-full rounded-2xl border-2 border-slate-200 bg-[#F8FAFC] p-3.5 font-mono text-xs text-[#18181B] focus:outline-none select-all leading-relaxed"
+            className="w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] p-3.5 font-mono text-xs text-[#18181B] dark:text-slate-200 focus:outline-none select-all leading-relaxed"
           />
         </div>
 
@@ -87,23 +87,23 @@ _Semangat belajar rekan-rekan Pranata Komputer Batch 3! ✨_`
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto rounded-full bg-slate-100 px-4 py-2.5 text-xs font-bold text-[#18181B] hover:bg-slate-200 cursor-pointer"
+            className="w-full sm:w-auto rounded-full bg-slate-100 dark:bg-slate-800 px-4 py-2.5 text-xs font-bold text-[#18181B] dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
           >
             Tutup
           </button>
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center justify-center gap-1.5 w-full sm:w-auto rounded-full bg-white px-5 py-2.5 text-xs font-black text-[#18181B] border-2 border-slate-200 hover:bg-slate-50 transition shadow-xs cursor-pointer"
+            className="flex items-center justify-center gap-1.5 w-full sm:w-auto rounded-full bg-white dark:bg-slate-800 px-5 py-2.5 text-xs font-black text-[#18181B] dark:text-white border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-[#0D824B]" />
-                <span className="text-[#0D824B]">Tersalin ke Clipboard!</span>
+                <Check className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />
+                <span className="text-[#0D824B] dark:text-emerald-400">Tersalin ke Clipboard!</span>
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5 text-[#FF7643]" />
+                <Copy className="h-3.5 w-3.5 text-[#FF7643] dark:text-amber-400" />
                 <span>Salin Teks Saja</span>
               </>
             )}

@@ -67,54 +67,54 @@ export function ClassInfoPanel() {
 
   return (
     <aside className="w-full lg:w-80 shrink-0 space-y-6">
-      <div className="rounded-[32px] bg-white p-6 soft-card-shadow border border-slate-100/90 space-y-6">
+      <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-6 soft-card-shadow border border-slate-100/90 dark:border-slate-800 space-y-6">
         
         {/* Diklat Badge & Identity matching Gambar 1 */}
-        <div className="flex flex-col items-center text-center pb-4 border-b border-slate-100">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0D3830] text-white shadow-lg shadow-[#0D3830]/20 mb-3">
+        <div className="flex flex-col items-center text-center pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0D3830] dark:bg-emerald-600 text-white shadow-lg shadow-[#0D3830]/20 mb-3">
             <GraduationCap className="h-8 w-8 text-[#E6F7ED]" />
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1.5">
-            <span className="rounded-full bg-[#FFEADA] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#EA580C]">
+            <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#EA580C] dark:text-amber-300">
               Diklat Fungsional
             </span>
-            <span className="rounded-full bg-[#E6F7ED] px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#0D824B]">
+            <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-[#0D824B] dark:text-emerald-300">
               Total 120 JP
             </span>
           </div>
 
-          <h4 className="font-extrabold text-sm sm:text-base text-[#131E29] leading-snug">
+          <h4 className="font-extrabold text-sm sm:text-base text-[#131E29] dark:text-white leading-snug">
             Pranata Komputer Keahlian — Batch 3
           </h4>
-          <p className="text-[11px] text-[#6B7C93] mt-1">
+          <p className="text-[11px] text-[#6B7C93] dark:text-slate-400 mt-1">
             Kerja sama Kejaksaan RI X Agrasena (Prakom 625)
           </p>
         </div>
 
         {/* Progress Tracker Widget matching Gambar 2 */}
-        <div className="rounded-[24px] bg-[#F8FAFC] p-4 border border-slate-200/60 space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-bold text-[#131E29]">
+        <div className="rounded-[24px] bg-[#F8FAFC] dark:bg-[#161B26] p-4 border border-slate-200/60 dark:border-slate-800 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-bold text-[#131E29] dark:text-white">
             <span>Roadmap Progres</span>
-            <span className="text-[#EA580C] font-mono font-bold">{progressPct}% Selesai</span>
+            <span className="text-[#EA580C] dark:text-amber-400 font-mono font-bold">{progressPct}% Selesai</span>
           </div>
 
           {/* Progress Bar */}
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
             <div className="h-full rounded-full bg-[#FF7643]" style={{ width: `${progressPct}%` }} />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-[#6B7C93] pt-1">
+          <div className="flex items-center justify-between text-[11px] text-[#6B7C93] dark:text-slate-400 pt-1">
             <span>Hari ke-{currentDay} dari 35 Hari</span>
-            <span className="font-bold text-[#0D824B]">{currentCurriculum.stageName}</span>
+            <span className="font-bold text-[#0D824B] dark:text-emerald-400">{currentCurriculum.stageName}</span>
           </div>
         </div>
 
         {/* 4 Stages Breakdown matching Gambar 2, 3, 4 */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h5 className="font-bold text-xs sm:text-sm text-[#131E29]">4 Tahapan Pelatihan</h5>
-            <Link href="/schedules" className="text-[11px] font-bold text-[#FF7643] hover:underline">
+            <h5 className="font-bold text-xs sm:text-sm text-[#131E29] dark:text-white">4 Tahapan Pelatihan</h5>
+            <Link href="/schedules" className="text-[11px] font-bold text-[#FF7643] dark:text-amber-400 hover:underline">
               Buka Jadwal
             </Link>
           </div>
@@ -123,23 +123,23 @@ export function ClassInfoPanel() {
             {stages.map((stg, idx) => (
               <div
                 key={idx}
-                className="flex flex-col rounded-2xl bg-[#F8FAFC] p-3 border border-slate-100 hover:bg-white hover:shadow-xs transition space-y-1"
+                className="flex flex-col rounded-2xl bg-[#F8FAFC] dark:bg-[#161B26] p-3 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 hover:shadow-xs transition space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <h6 className="font-bold text-xs text-[#131E29]">{stg.title}</h6>
+                  <h6 className="font-bold text-xs text-[#131E29] dark:text-white">{stg.title}</h6>
                   <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold border ${stg.color}`}>
                     {stg.status}
                   </span>
                 </div>
-                <p className="text-[10px] text-[#6B7C93]">{stg.duration}</p>
+                <p className="text-[10px] text-[#6B7C93] dark:text-slate-400">{stg.duration}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Quick Links: Portal LMS & Grup WA */}
-        <div className="space-y-2 pt-2 border-t border-slate-100">
-          <p className="text-[11px] font-bold text-[#8C9BAE] uppercase tracking-wider">
+        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-[11px] font-bold text-[#8C9BAE] dark:text-slate-400 uppercase tracking-wider">
             Tautan Cepat
           </p>
 
@@ -148,9 +148,9 @@ export function ClassInfoPanel() {
               href="https://chat.whatsapp.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2.5 text-xs font-bold text-[#131E29] hover:bg-[#E6F7ED] hover:text-[#0D824B] border border-slate-100 transition"
+              className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2.5 text-xs font-bold text-[#131E29] dark:text-white hover:bg-[#E6F7ED] dark:hover:bg-emerald-950/80 hover:text-[#0D824B] dark:hover:text-emerald-300 border border-slate-100 dark:border-slate-800 transition"
             >
-              <MessageCircle className="h-4 w-4 text-[#0D824B]" />
+              <MessageCircle className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
               <span>Grup WA</span>
             </a>
 
@@ -158,21 +158,21 @@ export function ClassInfoPanel() {
               href="https://pengembangan.kejaksaan.go.id/dashboard"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2.5 text-xs font-bold text-[#131E29] hover:bg-[#FFEADA] hover:text-[#EA580C] border border-slate-100 transition"
+              className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2.5 text-xs font-bold text-[#131E29] dark:text-white hover:bg-[#FFEADA] dark:hover:bg-amber-950/80 hover:text-[#EA580C] dark:hover:text-amber-300 border border-slate-100 dark:border-slate-800 transition"
             >
-              <BookOpen className="h-4 w-4 text-[#EA580C]" />
+              <BookOpen className="h-4 w-4 text-[#EA580C] dark:text-amber-400" />
               <span>Portal LMS</span>
             </a>
           </div>
         </div>
 
         {/* Storage & Backup Status */}
-        <div className="flex items-center justify-between rounded-2xl bg-[#E6F7ED]/60 p-3.5 border border-[#A7F3D0]">
+        <div className="flex items-center justify-between rounded-2xl bg-[#E6F7ED]/60 dark:bg-emerald-950/40 p-3.5 border border-[#A7F3D0] dark:border-emerald-800">
           <div className="flex items-center gap-2.5">
-            <ShieldCheck className="h-5 w-5 text-[#0D824B]" />
+            <ShieldCheck className="h-5 w-5 text-[#0D824B] dark:text-emerald-400" />
             <div>
-              <p className="text-xs font-bold text-[#0D824B]">Cloud Backup Aktif</p>
-              <p className="text-[10px] text-[#065F46]">Modul PDF Supabase Ready</p>
+              <p className="text-xs font-bold text-[#0D824B] dark:text-emerald-300">Cloud Backup Aktif</p>
+              <p className="text-[10px] text-[#065F46] dark:text-emerald-400">Modul PDF Supabase Ready</p>
             </div>
           </div>
         </div>

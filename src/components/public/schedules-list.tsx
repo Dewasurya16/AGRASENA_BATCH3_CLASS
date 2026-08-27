@@ -74,45 +74,45 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="relative overflow-hidden rounded-[36px] bg-white p-6 sm:p-10 border-2 border-slate-200 shadow-sm space-y-6"
+        className="relative overflow-hidden rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-6 transition-colors duration-200"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <div className="flex items-center gap-2">
               <span className="flex h-2.5 w-2.5 rounded-full bg-[#FF7643] animate-ping" />
-              <span className="text-xs font-black uppercase tracking-wider text-[#FF7643]">
+              <span className="text-xs font-black uppercase tracking-wider text-[#FF7643] dark:text-amber-400">
                 Roadmap 35 Hari Diklat Fungsional
               </span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-[#18181B] tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight">
               Jadwal 35 Hari Pelatihan
             </h2>
-            <p className="text-xs sm:text-sm text-[#52647C] leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed">
               Struktur lengkap 35 hari perkuliahan Pranata Komputer Kejaksaan RI. Isi kegiatan dan modul disinkronkan langsung dari data manual pengurus di Supabase.
             </p>
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="flex items-center gap-3 bg-[#F8FAFC] p-4 rounded-3xl border-2 border-slate-200 self-start lg:self-auto">
+          <div className="flex items-center gap-3 bg-[#F8FAFC] dark:bg-[#181D28] p-4 rounded-3xl border-2 border-slate-200 dark:border-slate-700 self-start lg:self-auto">
             <div className="text-center px-3">
-              <div className="text-2xl font-black text-[#18181B]">{summary.completedDays}</div>
-              <div className="text-[10px] font-bold uppercase text-[#0D824B]">Selesai</div>
+              <div className="text-2xl font-black text-[#18181B] dark:text-white">{summary.completedDays}</div>
+              <div className="text-[10px] font-bold uppercase text-[#0D824B] dark:text-emerald-400">Selesai</div>
             </div>
-            <div className="h-8 w-px bg-slate-200" />
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-700" />
             <div className="text-center px-3">
-              <div className="text-2xl font-black text-[#FF7643]">Hari {summary.currentDayNumber}</div>
-              <div className="text-[10px] font-bold uppercase text-[#FF7643]">Hari Ini</div>
+              <div className="text-2xl font-black text-[#FF7643] dark:text-amber-400">Hari {summary.currentDayNumber}</div>
+              <div className="text-[10px] font-bold uppercase text-[#FF7643] dark:text-amber-400">Hari Ini</div>
             </div>
-            <div className="h-8 w-px bg-slate-200" />
+            <div className="h-8 w-px bg-slate-200 dark:bg-slate-700" />
             <div className="text-center px-3">
-              <div className="text-2xl font-black text-[#18181B]">{summary.totalDays - summary.completedDays}</div>
-              <div className="text-[10px] font-bold uppercase text-[#6B7C93]">Tersisa</div>
+              <div className="text-2xl font-black text-[#18181B] dark:text-white">{summary.totalDays - summary.completedDays}</div>
+              <div className="text-[10px] font-bold uppercase text-[#6B7C93] dark:text-slate-400">Tersisa</div>
             </div>
           </div>
         </div>
 
         {/* Filter Stage Tabs & Search */}
-        <div className="pt-4 border-t-2 border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="pt-4 border-t-2 border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
             {stageCategories.map((tab) => {
               const isSelected = selectedStage === tab.id
@@ -122,8 +122,8 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                   onClick={() => setSelectedStage(tab.id)}
                   className={`rounded-full px-4 py-2 text-xs font-black transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-[#18181B] text-white shadow-md scale-102"
-                      : "bg-[#F4F6FA] text-[#52647C] hover:bg-slate-200 hover:text-[#18181B]"
+                      ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-md scale-102"
+                      : "bg-[#F4F6FA] dark:bg-[#1E2433] text-[#52647C] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-[#18181B] dark:hover:text-white"
                   }`}
                 >
                   {tab.name}
@@ -133,13 +133,13 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
           </div>
 
           <div className="relative w-full md:w-64">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE]" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari hari / tanggal / sesi..."
-              className="h-10 w-full rounded-full border-2 border-slate-200 bg-white pl-10 pr-4 text-xs font-bold text-[#18181B] placeholder-[#9AA8BA] focus:border-[#18181B] focus:outline-none"
+              className="h-10 w-full rounded-full border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-bold text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#18181B] dark:focus:border-emerald-500 focus:outline-none"
             />
           </div>
         </div>
@@ -148,10 +148,10 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
       {/* 2. Structured 35 Days Grid */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-lg sm:text-xl font-black text-[#18181B]">
+          <h3 className="text-lg sm:text-xl font-black text-[#18181B] dark:text-white">
             Daftar 35 Hari Pelatihan ({filteredDays.length} Hari Ditampilkan)
           </h3>
-          <span className="text-xs font-bold text-[#6B7C93]">
+          <span className="text-xs font-bold text-[#6B7C93] dark:text-slate-400">
             Klik kartu untuk rincian sesi & link Zoom
           </span>
         </div>
@@ -164,11 +164,11 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
             const isCompleted = item.status === "completed"
             const isCurrent = item.status === "in_progress"
 
-            let headerBg = "bg-[#F4F6FA] text-[#52647C]"
-            if (item.stageNumber === 1) headerBg = "bg-[#D7F3FE] text-[#0369A1]"
-            if (item.stageNumber === 2) headerBg = "bg-[#E6F7ED] text-[#0D824B]"
-            if (item.stageNumber === 3) headerBg = "bg-[#FFE3EB] text-[#E11D48]"
-            if (item.stageNumber === 4) headerBg = "bg-[#FFF2D1] text-[#B47D00]"
+            let headerBg = "bg-[#F4F6FA] dark:bg-slate-800 text-[#52647C] dark:text-slate-300"
+            if (item.stageNumber === 1) headerBg = "bg-[#D7F3FE] dark:bg-sky-950/80 text-[#0369A1] dark:text-sky-300"
+            if (item.stageNumber === 2) headerBg = "bg-[#E6F7ED] dark:bg-emerald-950/80 text-[#0D824B] dark:text-emerald-300"
+            if (item.stageNumber === 3) headerBg = "bg-[#FFE3EB] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300"
+            if (item.stageNumber === 4) headerBg = "bg-[#FFF2D1] dark:bg-amber-950/80 text-[#B47D00] dark:text-amber-300"
 
             return (
               <motion.div
@@ -179,39 +179,39 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setActiveModalDay(item)}
-                className={`group cursor-pointer rounded-2xl bg-white border-2 overflow-hidden flex flex-col justify-between transition-all ${
+                className={`group cursor-pointer rounded-2xl bg-white dark:bg-[#161B26] border-2 overflow-hidden flex flex-col justify-between transition-all ${
                   isCurrent
-                    ? "border-[#FF7643] ring-4 ring-[#FF7643]/15 shadow-lg"
+                    ? "border-[#FF7643] dark:border-amber-500 ring-4 ring-[#FF7643]/15 dark:ring-amber-500/20 shadow-lg"
                     : isCompleted
-                    ? "border-slate-200 hover:border-[#0D824B] shadow-xs hover:shadow-md"
-                    : "border-slate-200 hover:border-[#18181B] shadow-xs hover:shadow-md"
+                    ? "border-slate-200 dark:border-slate-800 hover:border-[#0D824B] dark:hover:border-emerald-500 shadow-xs hover:shadow-md"
+                    : "border-slate-200 dark:border-slate-800 hover:border-[#18181B] dark:hover:border-slate-600 shadow-xs hover:shadow-md"
                 }`}
               >
                 {/* Window Header */}
-                <div className={`flex items-center justify-between px-3.5 py-2 border-b-2 border-slate-200 ${headerBg}`}>
+                <div className={`flex items-center justify-between px-3.5 py-2 border-b-2 border-slate-200 dark:border-slate-800 ${headerBg}`}>
                   <div className="flex items-center gap-1.5 font-black text-xs">
                     <span>Hari {item.dayNumber}</span>
                     <span>•</span>
                     <span className="text-[11px] font-bold">{item.stageName}</span>
                   </div>
-                  <span className="font-mono text-xs font-black text-slate-600">_oX</span>
+                  <span className="font-mono text-xs font-black text-slate-600 dark:text-slate-400">_oX</span>
                 </div>
 
                 <div className="p-5 space-y-4">
                   {/* Top Day info + Date */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
-                      <h4 className="font-black text-base text-[#18181B] group-hover:text-[#FF7643] transition">
+                      <h4 className="font-black text-base text-[#18181B] dark:text-white group-hover:text-[#FF7643] dark:group-hover:text-amber-400 transition">
                         Hari ke-{item.dayNumber}
                       </h4>
-                      <p className="flex items-center gap-1.5 text-xs text-[#6B7C93] font-semibold">
-                        <Calendar className="h-3.5 w-3.5 text-[#8C9BAE]" />
+                      <p className="flex items-center gap-1.5 text-xs text-[#6B7C93] dark:text-slate-400 font-semibold">
+                        <Calendar className="h-3.5 w-3.5 text-[#8C9BAE] dark:text-slate-500" />
                         <span>{item.dateStr}</span>
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end">
-                      <span className="font-mono text-xs font-black text-[#18181B] bg-slate-100 px-2 py-0.5 rounded-md">
+                      <span className="font-mono text-xs font-black text-[#18181B] dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                         {item.sessions.length} Sesi
                       </span>
                     </div>
@@ -223,32 +223,32 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                       item.sessions.slice(0, 2).map((ses, sIdx) => (
                         <div
                           key={sIdx}
-                          className="rounded-xl bg-[#F8FAFC] p-2.5 border border-slate-200/80 text-xs space-y-1"
+                          className="rounded-xl bg-[#F8FAFC] dark:bg-[#1E2433] p-2.5 border border-slate-200/80 dark:border-slate-700/60 text-xs space-y-1"
                         >
-                          <div className="flex items-center justify-between text-[11px] font-bold text-[#0369A1]">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-[#0369A1] dark:text-sky-400">
                             <span>{ses.time} WIB</span>
                           </div>
-                          <p className="font-bold text-[#18181B] line-clamp-1">
+                          <p className="font-bold text-[#18181B] dark:text-slate-200 line-clamp-1">
                             {ses.title}
                           </p>
                         </div>
                       ))
                     ) : (
-                      <div className="rounded-xl bg-slate-50 p-3 text-center border border-dashed border-slate-200 text-[11px] text-[#8C9BAE]">
+                      <div className="rounded-xl bg-slate-50 dark:bg-[#1E2433] p-3 text-center border border-dashed border-slate-200 dark:border-slate-700 text-[11px] text-[#8C9BAE] dark:text-slate-400">
                         Belum ada kegiatan manual yang diisi
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Status Pill */}
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
                     <span
                       className={`rounded-full px-3 py-0.5 text-[10px] font-black uppercase ${
                         isCompleted
-                          ? "bg-[#E6F7ED] text-[#0D824B]"
+                          ? "bg-[#E6F7ED] dark:bg-emerald-950/80 text-[#0D824B] dark:text-emerald-300"
                           : isCurrent
-                          ? "bg-[#FFEADA] text-[#EA580C]"
-                          : "bg-slate-100 text-[#6B7C93]"
+                          ? "bg-[#FFEADA] dark:bg-amber-950/80 text-[#EA580C] dark:text-amber-300"
+                          : "bg-slate-100 dark:bg-slate-800 text-[#6B7C93] dark:text-slate-400"
                       }`}
                     >
                       {isCompleted
@@ -258,7 +258,7 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                         : "Jadwal Mendatang"}
                     </span>
 
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#8C9BAE] group-hover:text-[#18181B] transition">
+                    <span className="flex items-center gap-1 text-[11px] font-bold text-[#8C9BAE] dark:text-slate-400 group-hover:text-[#18181B] dark:group-hover:text-white transition">
                       <span>Detail</span>
                       <ChevronRight className="h-3 w-3" />
                     </span>
@@ -270,17 +270,17 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
         </motion.div>
 
         {/* 3. Clean Legend Bar */}
-        <div className="rounded-2xl bg-white p-4 border-2 border-slate-200 flex flex-wrap items-center justify-center sm:justify-start gap-6 text-xs font-black text-[#52647C]">
+        <div className="rounded-2xl bg-white dark:bg-[#12161F] p-4 border-2 border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-center sm:justify-start gap-6 text-xs font-black text-[#52647C] dark:text-slate-300">
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-[#0D824B]" />
+            <span className="h-3 w-3 rounded-full bg-[#0D824B] dark:bg-emerald-400" />
             <span>Selesai (Sudah Terlaksana)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-[#FF7643]" />
+            <span className="h-3 w-3 rounded-full bg-[#FF7643] dark:bg-amber-400" />
             <span>Sedang Berjalan (Jadwal Hari Ini)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-slate-300" />
+            <span className="h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-600" />
             <span>Belum Mulai (Jadwal Mendatang)</span>
           </div>
         </div>
@@ -299,15 +299,15 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
           <div className="space-y-4">
             
             {/* Status Header */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F8FAFC] border-2 border-slate-200">
-              <span className="text-xs font-black text-[#18181B]">Status Perkuliahan:</span>
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#181D28] border-2 border-slate-200 dark:border-slate-700">
+              <span className="text-xs font-black text-[#18181B] dark:text-white">Status Perkuliahan:</span>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
                   activeModalDay.status === "completed"
-                    ? "bg-[#E6F7ED] text-[#0D824B]"
+                    ? "bg-[#E6F7ED] dark:bg-emerald-950/80 text-[#0D824B] dark:text-emerald-300"
                     : activeModalDay.status === "in_progress"
-                    ? "bg-[#FFEADA] text-[#EA580C]"
-                    : "bg-slate-100 text-[#64748B]"
+                    ? "bg-[#FFEADA] dark:bg-amber-950/80 text-[#EA580C] dark:text-amber-300"
+                    : "bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400"
                 }`}
               >
                 {activeModalDay.status === "completed"
@@ -320,7 +320,7 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
 
             {/* Session Items from Supabase */}
             <div className="space-y-3">
-              <h5 className="font-black text-xs text-[#8C9BAE] uppercase tracking-wider">
+              <h5 className="font-black text-xs text-[#8C9BAE] dark:text-slate-400 uppercase tracking-wider">
                 Rincian Sesi & Kegiatan:
               </h5>
 
@@ -328,15 +328,15 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                 activeModalDay.sessions.map((ses, sIdx) => (
                   <div
                     key={sIdx}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border-2 border-slate-200/80 gap-3"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] dark:bg-[#181D28] p-4 border-2 border-slate-200/80 dark:border-slate-700 gap-3"
                   >
                     <div className="space-y-1">
-                      <span className="font-mono text-xs font-black text-[#0369A1] bg-[#D7F3FE] px-2 py-0.5 rounded-md">
+                      <span className="font-mono text-xs font-black text-[#0369A1] dark:text-sky-300 bg-[#D7F3FE] dark:bg-sky-950/80 px-2 py-0.5 rounded-md">
                         {ses.time} WIB
                       </span>
-                      <h6 className="font-black text-sm text-[#18181B] mt-1">{ses.title}</h6>
+                      <h6 className="font-black text-sm text-[#18181B] dark:text-white mt-1">{ses.title}</h6>
                       {ses.instructor && (
-                        <p className="text-xs text-[#6B7C93]">
+                        <p className="text-xs text-[#6B7C93] dark:text-slate-400">
                           Pengampu: <strong>{ses.instructor}</strong>
                         </p>
                       )}
@@ -354,9 +354,9 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                   </div>
                 ))
               ) : (
-                <div className="p-6 text-center space-y-2 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200">
-                  <p className="text-xs font-bold text-[#18181B]">Belum ada kegiatan manual untuk Hari ke-{activeModalDay.dayNumber}</p>
-                  <p className="text-[11px] text-[#6B7C93]">
+                <div className="p-6 text-center space-y-2 rounded-2xl bg-slate-50 dark:bg-[#181D28] border-2 border-dashed border-slate-200 dark:border-slate-700">
+                  <p className="text-xs font-bold text-[#18181B] dark:text-white">Belum ada kegiatan manual untuk Hari ke-{activeModalDay.dayNumber}</p>
+                  <p className="text-[11px] text-[#6B7C93] dark:text-slate-400">
                     Tambahkan sesi jadwal untuk <strong>Hari {activeModalDay.dayNumber}</strong> melalui Dashboard Pengurus.
                   </p>
                 </div>

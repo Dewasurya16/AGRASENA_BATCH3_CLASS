@@ -39,19 +39,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           
           // Variants
           variant === "primary" &&
-            "bg-[#0D3830] text-white shadow-md shadow-[#0D3830]/15 hover:bg-[#082822] hover:shadow-lg hover:shadow-[#0D3830]/20",
+            "bg-[#0D3830] dark:bg-emerald-600 text-white shadow-md shadow-[#0D3830]/15 dark:shadow-emerald-900/30 hover:bg-[#082822] dark:hover:bg-emerald-700 hover:shadow-lg hover:shadow-[#0D3830]/20",
           variant === "orange" &&
             "bg-[#FF7643] text-white shadow-md shadow-[#FF7643]/20 hover:bg-[#F06530] hover:shadow-lg hover:shadow-[#FF7643]/30",
           variant === "secondary" &&
-            "bg-[#EDF2F7] text-[#131E29] hover:bg-[#E2E8F0] hover:text-[#0D3830]",
+            "bg-[#EDF2F7] dark:bg-slate-800 text-[#131E29] dark:text-white hover:bg-[#E2E8F0] dark:hover:bg-slate-700 hover:text-[#0D3830] dark:hover:text-emerald-400",
           variant === "outline" &&
-            "border border-slate-200/80 bg-white text-[#131E29] hover:bg-slate-50 hover:border-slate-300",
+            "border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#131E29] dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600",
           variant === "ghost" &&
-            "bg-transparent text-[#6B7C93] hover:bg-slate-100/70 hover:text-[#131E29]",
+            "bg-transparent text-[#6B7C93] dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800 hover:text-[#131E29] dark:hover:text-white",
           variant === "danger" &&
-            "bg-[#FFEAE9] text-[#E11D48] hover:bg-[#FCDAD7] border border-[#FFCDCA]",
+            "bg-[#FFEAE9] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300 hover:bg-[#FCDAD7] dark:hover:bg-rose-900 border border-[#FFCDCA] dark:border-rose-800",
           variant === "glass" &&
-            "bg-white/80 text-[#131E29] border border-white/60 shadow-sm backdrop-blur-md hover:bg-white",
+            "bg-white/80 dark:bg-slate-800/80 text-[#131E29] dark:text-white border border-white/60 dark:border-slate-700 shadow-sm backdrop-blur-md hover:bg-white dark:hover:bg-slate-800",
           className
         )}
         {...props}

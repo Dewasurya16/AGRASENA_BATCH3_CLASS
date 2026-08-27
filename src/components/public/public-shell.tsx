@@ -10,7 +10,7 @@ import Link from "next/link"
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen flex flex-col text-[#131E29] antialiased selection:bg-[#0D3830] selection:text-white">
+    <div className="relative min-h-screen flex flex-col text-[#131E29] dark:text-slate-100 antialiased selection:bg-[#0D3830] selection:text-white">
       {/* 1. Dynamic Ambient Background Animation */}
       <AnimatedBackground />
 

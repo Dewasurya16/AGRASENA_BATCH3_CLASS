@@ -66,17 +66,17 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
   return (
     <div id="schedule" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Left 2 Cols: Todays Schedule Timeline */}
-      <div className="lg:col-span-2 rounded-[32px] bg-white p-6 soft-card-shadow border border-slate-100/90 space-y-6">
+      <div className="lg:col-span-2 rounded-[32px] bg-white dark:bg-[#12161F] p-6 soft-card-shadow border border-slate-100/90 dark:border-slate-800 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h4 className="font-bold text-lg text-[#131E29]">Jadwal Kuliah Hari Ini</h4>
-            <span className="rounded-full bg-[#E6F7ED] px-2.5 py-0.5 text-[10px] font-extrabold text-[#0D824B]">
+            <h4 className="font-bold text-lg text-[#131E29] dark:text-white">Jadwal Kuliah Hari Ini</h4>
+            <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-extrabold text-[#0D824B] dark:text-emerald-300">
               Realtime
             </span>
           </div>
           <button
             onClick={() => setIsAllModalOpen(true)}
-            className="text-xs font-bold text-[#6B7C93] hover:text-[#0D3830] transition inline-flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#6B7C93] dark:text-slate-400 hover:text-[#0D3830] dark:hover:text-emerald-400 transition inline-flex items-center gap-1 cursor-pointer"
           >
             <span>Lihat Semua</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -87,7 +87,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
         <div className="space-y-4">
           {/* Time Rail Header */}
           <div className="relative flex items-center justify-between px-2 pt-2">
-            <div className="absolute left-8 right-8 top-1/2 h-0.5 -translate-y-1/2 bg-slate-100 z-0" />
+            <div className="absolute left-8 right-8 top-1/2 h-0.5 -translate-y-1/2 bg-slate-100 dark:bg-slate-800 z-0" />
             
             {timePills.map((pill) => {
               const isSelected = selectedIndex === pill.index
@@ -99,7 +99,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                     pill.color
                   } ${
                     isSelected
-                      ? "ring-2 ring-[#0D3830] ring-offset-2 scale-105 shadow-md"
+                      ? "ring-2 ring-[#0D3830] dark:ring-emerald-500 ring-offset-2 dark:ring-offset-slate-900 scale-105 shadow-md"
                       : "opacity-80 hover:opacity-100 hover:scale-102"
                   }`}
                 >
@@ -110,10 +110,10 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
           </div>
 
           {/* Floating Highlight Card */}
-          <div className="relative overflow-hidden rounded-[24px] bg-[#F8FAFC] border border-slate-200/70 p-5 shadow-lg shadow-slate-200/50 transition-all duration-300">
+          <div className="relative overflow-hidden rounded-[24px] bg-[#F8FAFC] dark:bg-[#161B26] border border-slate-200/70 dark:border-slate-800 p-5 shadow-lg shadow-slate-200/50 dark:shadow-black/60 transition-all duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3.5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0D3830] text-white shadow-md">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0D3830] dark:bg-emerald-600 text-white shadow-md">
                   <span className="font-extrabold text-sm">
                     {activeClass?.subject_name.substring(0, 2).toUpperCase() || "IT"}
                   </span>
@@ -121,11 +121,11 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
 
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h5 className="font-bold text-base text-[#131E29]">
+                    <h5 className="font-bold text-base text-[#131E29] dark:text-white">
                       {activeClass?.subject_name || "Information Technology"}
                     </h5>
                   </div>
-                  <p className="text-xs text-[#6B7C93]">
+                  <p className="text-xs text-[#6B7C93] dark:text-slate-400">
                     {activeClass?.lecturer || "Dr. Irfan Hakim"} • {activeClass?.room || "Lab Komputer 3"}
                   </p>
 
@@ -136,13 +136,13 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                         <div
                           key={i}
                           style={{ backgroundColor: c }}
-                          className="inline-block h-6 w-6 rounded-full ring-2 ring-white text-[9px] font-bold text-white flex items-center justify-center"
+                          className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-800 text-[9px] font-bold text-white flex items-center justify-center"
                         >
                           {String.fromCharCode(65 + i)}
                         </div>
                       ))}
                     </div>
-                    <span className="text-[11px] font-bold text-[#6B7C93]">
+                    <span className="text-[11px] font-bold text-[#6B7C93] dark:text-slate-400">
                       Jam: {activeClass?.start_time} - {activeClass?.end_time} WIB
                     </span>
                   </div>
@@ -166,11 +166,11 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
             </div>
 
             {/* Sub-pills under schedule */}
-            <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-slate-200/50">
-              <span className="rounded-full bg-white px-3 py-0.5 text-[10px] font-bold text-[#131E29] border border-slate-200 shadow-xs">
+            <div className="mt-4 flex flex-wrap gap-2 pt-3 border-t border-slate-200/50 dark:border-slate-800">
+              <span className="rounded-full bg-white dark:bg-slate-800 px-3 py-0.5 text-[10px] font-bold text-[#131E29] dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs">
                 Mata Kuliah Wajib
               </span>
-              <span className="rounded-full bg-[#FFEADA] px-3 py-0.5 text-[10px] font-bold text-[#EA580C]">
+              <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-0.5 text-[10px] font-bold text-[#EA580C] dark:text-amber-300">
                 {activeClass?.day || "Rabu"}
               </span>
             </div>
@@ -179,11 +179,11 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
       </div>
 
       {/* Right Col: Last 20 Days Progress Card */}
-      <div className="rounded-[32px] bg-white p-6 soft-card-shadow border border-slate-100/90 flex flex-col justify-between">
+      <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-6 soft-card-shadow border border-slate-100/90 dark:border-slate-800 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-base text-[#131E29]">Aktivitas 20 Hari</h4>
-            <span className="text-xs font-bold text-[#0D824B] bg-[#E6F7ED] px-2.5 py-0.5 rounded-full">
+            <h4 className="font-bold text-base text-[#131E29] dark:text-white">Aktivitas 20 Hari</h4>
+            <span className="text-xs font-bold text-[#0D824B] dark:text-emerald-400 bg-[#E6F7ED] dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full">
               98% Sukses
             </span>
           </div>
@@ -193,14 +193,14 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
             <div className="relative flex h-36 w-36 items-center justify-center">
               <svg className="h-full w-full rotate-[-90deg]" viewBox="0 0 36 36">
                 <path
-                  className="text-slate-100"
+                  className="text-slate-100 dark:text-slate-800"
                   strokeWidth="3.2"
                   stroke="currentColor"
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-[#0D3830]"
+                  className="text-[#0D3830] dark:text-emerald-500"
                   strokeDasharray="80, 100"
                   strokeWidth="3.2"
                   strokeLinecap="round"
@@ -209,7 +209,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-[#FF7643]"
+                  className="text-[#FF7643] dark:text-amber-500"
                   strokeDasharray="25, 100"
                   strokeDashoffset="-80"
                   strokeWidth="3.2"
@@ -220,8 +220,8 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                 />
               </svg>
               <div className="absolute text-center">
-                <span className="text-3xl font-extrabold text-[#131E29]">50</span>
-                <p className="text-[10px] font-semibold text-[#8C9BAE] uppercase tracking-wider">
+                <span className="text-3xl font-extrabold text-[#131E29] dark:text-white">50</span>
+                <p className="text-[10px] font-semibold text-[#8C9BAE] dark:text-slate-400 uppercase tracking-wider">
                   Tugas Selesai
                 </p>
               </div>
@@ -230,20 +230,20 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
         </div>
 
         {/* Software / Subject Badges */}
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2 text-xs font-bold text-[#131E29]">
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2 text-xs font-bold text-[#131E29] dark:text-slate-200">
             <span className="h-2 w-2 rounded-full bg-[#FF7643]" />
             <span>Next.js Web</span>
           </div>
-          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2 text-xs font-bold text-[#131E29]">
+          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2 text-xs font-bold text-[#131E29] dark:text-slate-200">
             <span className="h-2 w-2 rounded-full bg-[#0D3830]" />
             <span>Python AI</span>
           </div>
-          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2 text-xs font-bold text-[#131E29]">
+          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2 text-xs font-bold text-[#131E29] dark:text-slate-200">
             <span className="h-2 w-2 rounded-full bg-[#2563EB]" />
             <span>PostgreSQL</span>
           </div>
-          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] p-2 text-xs font-bold text-[#131E29]">
+          <div className="flex items-center gap-2 rounded-xl bg-[#F8FAFC] dark:bg-[#161B26] p-2 text-xs font-bold text-[#131E29] dark:text-slate-200">
             <span className="h-2 w-2 rounded-full bg-[#7E22CE]" />
             <span>Figma UI/UX</span>
           </div>
@@ -262,19 +262,19 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
           {list.map((item, idx) => (
             <div
               key={item.id || idx}
-              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200/70 gap-3"
+              className="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl bg-[#F8FAFC] dark:bg-[#161B26] p-4 border border-slate-200/70 dark:border-slate-800 gap-3"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#0D3830] px-2 py-0.5 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-[#0D3830] dark:bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white">
                     {item.day}
                   </span>
-                  <h5 className="font-bold text-sm text-[#131E29]">{item.subject_name}</h5>
+                  <h5 className="font-bold text-sm text-[#131E29] dark:text-white">{item.subject_name}</h5>
                 </div>
-                <p className="text-xs text-[#6B7C93]">
+                <p className="text-xs text-[#6B7C93] dark:text-slate-400">
                   {item.lecturer} • {item.room}
                 </p>
-                <p className="text-[11px] font-mono text-[#0D824B] font-semibold">
+                <p className="text-[11px] font-mono text-[#0D824B] dark:text-emerald-400 font-semibold">
                   {item.start_time} - {item.end_time} WIB
                 </p>
               </div>
