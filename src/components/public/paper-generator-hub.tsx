@@ -236,7 +236,7 @@ export function PaperGeneratorHub() {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // Clean Microsoft Word Document Exporter
+  // Clean Microsoft Word Document Exporter (Standar Naskah Dinas Pusdiklat: Margin 4cm Kiri, 3cm Atas/Bawah/Kanan)
   const handleDownloadDoc = () => {
     if (!generatedPaper) return
 
@@ -258,43 +258,59 @@ export function PaperGeneratorHub() {
 
       if (trimmed.startsWith("# ")) {
         const text = trimmed.replace(/^#\s+/, '')
-        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #0D3830; margin-top: 18pt; margin-bottom: 8pt;'>${text}</h2>`
+        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #000; margin-top: 20pt; margin-bottom: 10pt; text-transform: uppercase;'>${text}</h2>`
         return
       }
       if (trimmed.startsWith("## ")) {
         const text = trimmed.replace(/^##\s+/, '')
-        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; text-align: center; margin-top: 14pt; margin-bottom: 6pt;'>${text}</h3>`
+        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; text-align: center; color: #000; margin-top: 14pt; margin-bottom: 8pt; text-transform: uppercase;'>${text}</h3>`
         return
       }
       if (trimmed.startsWith("### ")) {
         const text = trimmed.replace(/^###\s+/, '')
-        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 4pt; color: #333;'>${text}</h4>`
+        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 4pt; color: #000;'>${text}</h4>`
         return
       }
       if (trimmed.startsWith("---") || trimmed.startsWith("━━━")) {
-        bodyHtml += "<hr style='border: 0; border-top: 1px solid #ccc; margin: 12pt 0;'/>"
+        bodyHtml += "<hr style='border: 0; border-top: 1.5pt solid #000; margin: 14pt 0;'/>"
         return
       }
       if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
         const content = trimmed.replace(/^([•\-\*]\s+)/, '')
           .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
           .replace(/\*(.*?)\*/g, '<i>$1</i>')
-        bodyHtml += `<p style='margin-left: 20pt; text-indent: -12pt; margin-bottom: 4pt; line-height: 1.5;'>• ${content}</p>`
+        bodyHtml += `<p style='margin-left: 24pt; text-indent: -14pt; margin-bottom: 4pt; line-height: 1.5; text-align: justify;'>• ${content}</p>`
         return
       }
 
       const formatted = trimmed
         .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
         .replace(/\*(.*?)\*/g, '<i>$1</i>')
-      bodyHtml += `<p style='text-align: justify; margin-bottom: 6pt; line-height: 1.5;'>${formatted}</p>`
+      bodyHtml += `<p style='text-align: justify; margin-bottom: 6pt; line-height: 1.5; text-indent: 28pt;'>${formatted}</p>`
     })
 
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head><meta charset='utf-8'><title>${topicTitle}</title>
     <style>
-      @page { size: A4; margin: 3cm 2.5cm 2.5cm 3cm; }
-      body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000; }
-      p { line-height: 1.5; }
+      @page {
+        size: A4 portrait;
+        margin: 30mm 30mm 30mm 40mm; /* Atas 3cm, Kanan 3cm, Bawah 3cm, Kiri 4cm (Standar Naskah Dinas) */
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000000;
+      }
+      p {
+        line-height: 1.5;
+        margin-top: 0;
+        margin-bottom: 6pt;
+      }
+      h2, h3, h4 {
+        font-family: 'Times New Roman', Times, serif;
+        page-break-after: avoid;
+      }
     </style></head><body>`
     const footer = `</body></html>`
 
@@ -303,7 +319,7 @@ export function PaperGeneratorHub() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `MAKALAH_SEMINAR_${authorSatker.toUpperCase().replace(/\s+/g, '_')}_${Date.now()}.doc`
+    a.download = `DRAF_PROPOSAL_${authorSatker.toUpperCase().replace(/\s+/g, '_')}_${Date.now()}.doc`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -322,7 +338,7 @@ export function PaperGeneratorHub() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
             <GraduationCap className="h-3.5 w-3.5" />
-            <span>Asisten Seminar Akhir Diklat</span>
+            <span>Asisten Draf Seminar Diklat</span>
           </span>
           <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
             Standar Format Pusdiklat Kejaksaan RI
@@ -330,12 +346,12 @@ export function PaperGeneratorHub() {
         </div>
 
         <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
-          AI Generator Makalah Proyek Akhir & <br className="hidden sm:block" />
+          AI Generator Draf Proposal Makalah & <br className="hidden sm:block" />
           <span className="text-[#0D824B] dark:text-emerald-400">Rencana Aksi Inovasi Satker</span>
         </h1>
 
         <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
-          Susun draf proposal makalah seminar inovasi teknologi informasi (5 Bab Lengkap: Latar Belakang, Landasan Regulasi SPBE, Arsitektur Sistem, Rencana Aksi 6 Bulan, dan Rekomendasi) secara otomatis dan langsung siap diunduh dalam format Microsoft Word (.doc).
+          Susun draf kerangka proposal inovasi teknologi informasi (5 Bab Lengkap: Pendahuluan, Regulasi SPBE, Arsitektur Sistem, Rencana Aksi 6 Bulan, dan Rekomendasi). Unduh langsung dalam format <strong>Microsoft Word (.doc)</strong> dengan standar naskah dinas resmi (Margin 4-3-3-4) untuk disempurnakan sesuai data satker Anda.
         </p>
       </motion.div>
 

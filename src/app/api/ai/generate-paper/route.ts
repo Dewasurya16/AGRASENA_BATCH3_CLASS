@@ -4,7 +4,7 @@ import { generateAiCompletion } from "@/lib/ai-provider"
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
-// Bulletproof 5-Chapter Academic Paper Builder (Always delivers complete 5 chapters even if external API is throttled)
+// Bulletproof 5-Chapter Academic Paper Draft Builder (Standar Format Pusdiklat Kejaksaan RI)
 function generateStructuredPaperFallback(data: {
   authorName?: string
   authorNip?: string
@@ -22,11 +22,11 @@ function generateStructuredPaperFallback(data: {
   const problem = data.problemStatement || "Keterbatasan otomatisasi sistem dan risiko integritas data operasional"
   const outcome = data.desiredOutcome || "Peningkatan efisiensi layanan, akurasi data perkara, dan penguatan SPBE"
 
-  return `# 🎓 PROPOSAL RENCANA AKSI INOVASI TEKNOLOGI INFORMASI
+  return `# 🎓 DRAF PROPOSAL RENCANA AKSI INOVASI TIK
 ## ${title.toUpperCase()}
 
 **Disusun Oleh:** ${name} (NIP. ${nip})
-**Jabatan:** ${rank}
+**Jabatan / Golongan:** ${rank}
 **Satuan Kerja:** ${satker}
 **Pelatihan Fungsional Pranata Komputer Keahlian (Batch 3) Kejaksaan RI Tahun 2026**
 
@@ -35,101 +35,100 @@ function generateStructuredPaperFallback(data: {
 # BAB I: PENDAHULUAN
 
 ### 1.1 Latar Belakang
-Transformasi digital di lingkungan Kejaksaan Republik Indonesia merupakan komitmen strategis dalam mewujudkan tata kelola birokrasi yang modern, transparan, akuntabel, dan berorientasi pada pelayanan prima. Penerapan Sistem Pemerintahan Berbasis Elektronik (SPBE) menuntut setiap satuan kerja, termasuk ${satker}, untuk terus berinovasi dalam mengoptimalkan pengelolaan data operasional dan administrasi penegakan hukum.
+Transformasi digital di lingkungan Kejaksaan Republik Indonesia merupakan pilar strategis dalam mewujudkan tata kelola birokrasi yang modern, transparan, dan akuntabel sesuai amanat Perpres Sistem Pemerintahan Berbasis Elektronik (SPBE). Setiap satuan kerja dituntut untuk menghadirkan layanan berbasis teknologi informasi yang mampu menunjang tugas pokok fungsi penegakan hukum dan pelayanan publik.
 
-Kondisi faktual saat ini di ${satker} menunjukkan bahwa proses pengelolaan informasi masih menghadapi berbagai tantangan operasional. Kebutuhan terhadap ketersediaan data yang cepat, aman, dan terintegrasi menuntut adanya inovasi TIK yang tepat guna. Melalui perancangan "${title}", diharapkan ${satker} dapat memangkas waktu birokrasi, mengeliminasi potensi kehilangan data, serta meningkatkan kepuasan masyarakat pencari keadilan.
+Kondisi faktual saat ini di ${satker} menunjukkan bahwa pengelolaan administrasi dan data perkara masih membutuhkan penguatan otomasi. Adanya inovasi "${title}" dirancang untuk menjawab tantangan operasional tersebut, mengeliminasi risiko kehilangan data, mempercepat proses birokrasi, serta mewujudkan transparansi layanan prima kepada masyarakat.
 
 ### 1.2 Identifikasi & Rumusan Masalah
-Berdasarkan analisis kondisi kerja eksisting di ${satker}, teridentifikasi 3 (tiga) permasalahan utama sebagai berikut:
-• **Masalah 1 (Aspek Efisiensi Operasional):** ${problem}, yang mengakibatkan pemrosesan administrasi membutuhkan waktu lebih lama dan membebani tugas staf operasional.
-• **Masalah 2 (Aspek Integritas & Keamanan Data):** Belum optimalnya prosedur pencadangan otomatis terpusat yang menimbulkan risiko *data loss* saat terjadi kendala infrastruktur atau gangguan perangkat keras.
-• **Masalah 3 (Aspek Transparansi & Kualitas Layanan):** Akses informasi bagi pimpinan dan stakeholder masih terhambat akibat data yang terfragmentasi antar seksi kerja.
+Berdasarkan analisis kondisi kerja eksisting di ${satker}, dirumuskan permasalahan pokok sebagai berikut:
+• **Aspek Efisiensi Operasional:** ${problem}, yang berdampak pada lambatnya waktu pemrosesan berkas kerja.
+• **Aspek Integritas Data & Keamanan:** Prosedur pencadangan dan sinkronisasi data yang belum terpusat secara otomatis sehingga rentan terhadap risiko kegagalan sistem.
+• **Aspek Kualitas Layanan Publik:** Keterbatasan akses monitoring informasi real-time bagi pimpinan dan pihak berkepentingan.
 
 ### 1.3 Maksud dan Tujuan Inovasi
-• **Maksud:** Merancang, membangun, dan mengimplementasikan "${title}" sebagai instrumen modernisasi pelayanan administrasi TIK di ${satker}.
-• **Tujuan Jangka Pendek (2 Bulan Pertama):** Menyelesaikan analisis kebutuhan, perancangan skema basis data, implementasi modul inti, serta pengujian internal sistem (*alpha testing*).
-• **Tujuan Jangka Menengah (4 Bulan):** Melakukan User Acceptance Testing (UAT), pelatihan operasional bagi pengguna, dan pengesahan Standar Operasional Prosedur (SOP) oleh Kepala Satuan Kerja.
-• **Tujuan Jangka Panjang (6 Bulan & Seterusnya):** Integrasi penuh dengan sistem nasional Kejaksaan RI, monitoring kinerja berkala, serta standarisasi model replikasi untuk satker Kejaksaan lainnya.
+• **Maksud:** Merancang dan mengimplementasikan "${title}" sebagai solusi modernisasi layanan administrasi TIK di ${satker}.
+• **Tujuan Jangka Pendek (2 Bulan):** Penyusunan analisis kebutuhan, perancangan skema database, pembuatan modul inti, serta pengujian internal (*alpha testing*).
+• **Tujuan Jangka Menengah (4 Bulan):** Pelaksanaan User Acceptance Testing (UAT), sosialisasi pengguna, serta penerbitan SOP baku oleh pimpinan satker.
+• **Tujuan Jangka Panjang (6 Bulan & Seterusnya):** Integrasi sistem ke ekosistem Satu Data Kejaksaan RI dan standarisasi replikasi untuk satker lain.
 
 ### 1.4 Ruang Lingkup Sistem
-• **Batasan Pengguna (User Scope):** Sistem mencakup hak akses Administrator TIK (pengelolaan konfigurasi & database), Operator Seksi (input & validasi transaksi), Pimpinan Satker (monitoring dashboard analitik), dan Publik (pengecekan status layanan).
-• **Batasan Fungsional & Teknis:** Sistem difokuskan pada otomatisasi alur kerja, validasi logika data secara otomatis, manajemen backup harian terenkripsi, serta penyajian laporan real-time.
+• **Batasan Pengguna (User Scope):** Administrator TIK Satker, Operator Seksi/Bidang, Pimpinan/Kajari, serta Publik/Pemohon Layanan.
+• **Batasan Fungsional & Teknis:** Otomasi alur data, validasi logika input, pencadangan basis data otomatis, dan dashboard analitik.
 
 ### 1.5 Manfaat Inovasi
-• **Manfaat Bagi Satuan Kerja (${satker}):** Meningkatkan efisiensi kerja pegawai, menjamin akurasi data administrasi, dan mempercepat kenaikan Indeks SPBE Satker.
-• **Manfaat Bagi Institusi Kejaksaan RI:** Mendukung program Satu Data Kejaksaan Agung RI serta mempermudah audit tata kelola teknologi informasi.
-• **Manfaat Bagi Masyarakat / Pencari Keadilan:** Memberikan kepastian pelayanan hukum yang cepat, transparan, akurat, dan bebas dari pungutan liar.
+• **Bagi Satuan Kerja (${satker}):** Peningkatan efisiensi waktu kerja pegawai, akurasi data administrasi, dan akselerasi Indeks SPBE Satker.
+• **Bagi Institusi Kejaksaan RI:** Penguatan Satu Data Kejaksaan Agung RI serta kemudahan audit kepatuhan TIK.
+• **Bagi Masyarakat:** Layanan publik yang lebih cepat, transparan, akurat, dan bebas dari pungutan liar.
 
 ---
 
 # BAB II: LANDASAN REGULASI & KERANGKA TEORI
 
 ### 2.1 Landasan Regulasi Kebijakan
-Pelaksanaan inovasi TIK ini didasarkan pada landasan yuridis yang berlaku:
-• **Peraturan Presiden No. 95 Tahun 2018** tentang Sistem Pemerintahan Berbasis Elektronik (SPBE), yang mengamanatkan keterpaduan dan efisiensi sistem digital instansi pemerintah.
-• **Peraturan Presiden No. 132 Tahun 2022** tentang Arsitektur SPBE Nasional, yang menjadi rujukan standardisasi domain proses bisnis dan domain aplikasi kejaksaan.
-• **PermenPAN-RB No. 32 Tahun 2020** tentang Jabatan Fungsional Pranata Komputer, yang mengatur tugas pokok Pranata Komputer dalam merancang dan mengembangkan sistem informasi.
+Inovasi ini disusun berdasarkan landasan yuridis kedinasan:
+• **Peraturan Presiden No. 95 Tahun 2018** tentang Sistem Pemerintahan Berbasis Elektronik (SPBE).
+• **Peraturan Presiden No. 132 Tahun 2022** tentang Arsitektur SPBE Nasional.
+• **PermenPAN-RB No. 32 Tahun 2020** tentang Jabatan Fungsional Pranata Komputer.
 • **Peraturan Kepala BPS No. 2 Tahun 2021** tentang Petunjuk Teknis Penilaian Angka Kredit Pranata Komputer.
-• **Instruksi Jaksa Agung RI** mengenai percepatan transformasi digital dan keterpaduan layanan publik Kejaksaan RI menuju Satu Data Penegakan Hukum.
+• **Instruksi Jaksa Agung RI** mengenai Percepatan Transformasi Digital dan Keterpaduan Layanan Kejaksaan RI.
 
 ### 2.2 Landasan Teori TIK & Keamanan Informasi
-• **Konsep CIA Triad & High Availability:** Menjamin tiga pilar utama keamanan informasi—Kerahasiaan (*Confidentiality*), Keutuhan (*Integrity*), dan Ketersediaan (*Availability*) layanan TIK secara berkelanjutan (24/7).
-• **Perancangan Basis Data Relasional & Normalisasi:** Penerapan kaidah normalisasi 3NF, integritas referensial foreign key, dan pembuatan indeks B-Tree guna mengoptimalkan query transaksi data dalam jumlah besar.
-• **Standar Keamanan Siber & CSIRT:** Penerapan Role-Based Access Control (RBAC), sanitasi input terhadap celah SQL Injection dan Cross-Site Scripting (XSS), serta kepatuhan pada standar ISO/IEC 27001.
+• **Prinsip CIA Triad & High Availability:** Menjamin Kerahasiaan (*Confidentiality*), Keutuhan (*Integrity*), dan Ketersediaan (*Availability*) layanan TIK secara berkelanjutan (24/7).
+• **Tata Kelola Basis Data Relasional & Normalisasi:** Penerapan kaidah normalisasi 3NF dan strategi indexing B-Tree untuk kecepatan query data.
+• **Standar Keamanan Siber & CSIRT:** Penerapan Role-Based Access Control (RBAC), sanitasi input terhadap serangan siber, dan kepatuhan ISO/IEC 27001.
 
 ---
 
 # BAB III: RANCANGAN INOVASI & ARSITEKTUR TEKNIS
 
-### 3.1 Gambaran Umum & Analisis As-Is vs To-Be
-• **Kondisi Eksisting (As-Is):** Pencatatan dan pengelolaan data masih bersifat manual/semi-manual, rentan salah input (*human-error*), dan proses pelaporan ke pimpinan membutuhkan rekapitulasi berulang.
-• **Kondisi Target (To-Be):** Seluruh alur kerja telah terotomatisasi secara digital melalui validasi sistem terpusat, pencadangan data otomatis harian, dan ketersediaan laporan analitik seketika (*real-time dashboard*).
+### 3.1 Gambaran Umum (Analisis As-Is vs To-Be)
+• **Kondisi Eksisting (As-Is):** Pengelolaan data masih manual/semi-otomatis, risiko human-error tinggi, dan rekapitulasi data membutuhkan waktu lama.
+• **Kondisi Target (To-Be):** Alur kerja terotomatisasi secara digital, validasi sistem terpusat, backup otomatis, dan laporan tersaji real-time.
 
 ### 3.2 Alur Proses Bisnis Terperinci
-Alur kerja sistem inovasi dirancang dalam 4 (empat) tahapan utama:
-• **Tahap 1 — Inisiasi & Input Transaksi:** Operator menginput data perkara/transaksi melalui antarmuka web yang terenkripsi SSL/TLS.
-• **Tahap 2 — Validasi Data & Eksekusi Otomatis:** Sistem menjalankan verifikasi format logika, mencegah duplikasi data, dan memproses transaksi secara instan.
-• **Tahap 3 — Penyimpanan & Replikasi Basis Data:** Data tersimpan ke DBMS utama dengan *audit logging* otomatis serta replikasi cadangan terenkripsi.
-• **Tahap 4 — Output Layanan & Diseminasi Informasi:** Sistem menerbitkan tanda bukti elektronik, memperbarui dashboard analitik pimpinan, dan mengirimkan notifikasi status ke pihak berkepentingan.
+• **Tahap 1 (Inisiasi & Input Transaksi):** Penginputan data oleh operator melalui antarmuka web terenkripsi SSL/TLS.
+• **Tahap 2 (Validasi Data & Eksekusi Otomatis):** Verifikasi format data, pencegahan duplikasi, dan pemrosesan otomatis di backend.
+• **Tahap 3 (Penyimpanan & Replikasi Basis Data):** Penyimpanan transaksi ke database utama dengan audit logging dan pencadangan instan.
+• **Tahap 4 (Output Layanan & Diseminasi):** Penerbitan laporan analitik pimpinan dan pengiriman notifikasi status secara real-time.
 
 ### 3.3 Spesifikasi Infrastruktur TIK & Keamanan
-• **Spesifikasi Server & Jaringan:** Dedicated Virtual Private Server (VPS) / On-Premise Server OS Linux Ubuntu Server 22.04 LTS, Minimal 4 vCPU, RAM 8-16 GB, SSD Storage NVMe 256-512 GB RAID-1, Bandwidth dedicated 100 Mbps dengan IP Statis.
-• **Spesifikasi Basis Data & Backend:** DBMS PostgreSQL v15 / MySQL 8.0 Enterprise, Backend NodeJS / Python FastAPI / PHP 8.3 dengan arsitektur modular yang skalabel.
-• **Manajemen Keamanan & Akses:** Autentikasi Multi-Factor Authentication (MFA), enkripsi password Argon2id / bcrypt, Reverse Proxy Nginx dengan Web Application Firewall (WAF).
+• **Spesifikasi Server & Jaringan:** VPS / On-Premise Linux Ubuntu Server 22.04 LTS, RAM 8-16 GB, Storage SSD NVMe RAID-1, IP Statis Dedicated.
+• **Spesifikasi Basis Data & Backend:** DBMS PostgreSQL v15 / MySQL 8.0 Enterprise, Backend NodeJS / Python FastAPI / PHP 8.3.
+• **Manajemen Keamanan:** Multi-Factor Authentication (MFA), Hashing password Argon2id / bcrypt, Reverse Proxy Nginx dengan WAF.
 
 ---
 
 # BAB IV: RENCANA AKSI PENTAHAPAN & MANFAAT
 
 ### 4.1 Milestone Rencana Aksi Pentahapan (6 Bulan)
-• **Bulan 1 (Fase Analisis & Perancangan):** Pengumpulan kebutuhan satker, penyusunan Data Flow Diagram (DFD), Entity Relationship Diagram (ERD), dan mockup UI/UX.
-• **Bulan 2 (Fase Pengembangan Kode & Basis Data):** Penulisan kode program inti, pembuatan REST API, konfigurasi database, dan integrasi modul.
-• **Bulan 3 (Fase Pengujian Terpadu / Testing):** Pelaksanaan Unit Testing, Security Vulnerability Scanning, serta User Acceptance Testing (UAT) bersama pengguna di satker.
-• **Bulan 4 (Fase Deployment & Sosialisasi):** Peluncuran sistem di lingkungan produksi, pelatihan operator dan staf, serta pembuatan User Manual Guide.
-• **Bulan 5 (Fase Penetapan Regulasi SOP):** Penerbitan Surat Keputusan (SK) Standar Operasional Prosedur (SOP) dari Kepala Kejaksaan Negeri untuk kepastian hukum operasional.
-• **Bulan 6 (Fase Monitoring & Evaluasi):** Evaluasi performa sistem, rekapitulasi indeks kepuasan, patching pemeliharaan, serta penyusunan laporan akhir seminar diklat.
+• **Bulan 1 (Analisis & Perancangan):** Pengumpulan kebutuhan satker, penyusunan DFD/ERD, dan perancangan prototype UI/UX.
+• **Bulan 2 (Pengembangan Kode & Basis Data):** Penulisan kode program modul utama, konfigurasi database, dan pembuatan REST API.
+• **Bulan 3 (Pengujian Terpadu / Testing):** Pelaksanaan Unit Testing, Penetration Testing, dan User Acceptance Testing (UAT).
+• **Bulan 4 (Deployment & Sosialisasi):** Peluncuran sistem di lingkungan produksi, pelatihan pengguna, dan penyusunan User Manual.
+• **Bulan 5 (Penetapan Regulasi SOP):** Penerbitan SK Standar Operasional Prosedur (SOP) dari Kepala Kejaksaan Negeri.
+• **Bulan 6 (Monitoring & Evaluasi):** Evaluasi kinerja sistem, pengumpulan feedback pengguna, dan penyusunan laporan seminar akhir.
 
 ### 4.2 Analisis Manfaat & Efisiensi Layanan
-• **Efisiensi Waktu Kerja:** Memangkas waktu pemrosesan dan rekapitulasi data dari semula berhari-hari menjadi hitungan menit (efisiensi hingga 80%).
-• **Akurasi & Integritas Informasi:** Mengurangi potensi kesalahan input manusia (*zero human-error*) dan menjamin riwayat transaksi tercatat secara permanen (*audit trail*).
-• **Akuntabilitas Kinerja:** Memudahkan monitoring kinerja satker oleh pimpinan secara transparan dan terukur.
+• **Efisiensi Waktu:** Pemangkasan waktu pemrosesan data administrasi hingga 80%.
+• **Akurasi Data:** Menghilangkan potensi kesalahan pencatatan dan memastikan jejak audit (*audit trail*) tercatat rapi.
+• **Akuntabilitas Satker:** Kemudahan pengawasan langsung bagi pimpinan satker.
 
-### 4.3 Mitigasi Risiko & Keberlanjutan Sistem (Sustainability Plan)
-• **Mitigasi Gangguan Perangkat & Daya:** Pemanfaatan Uninterruptible Power Supply (UPS) online berkapasitas 3 KVA serta auto-restart daemon.
-• **Mitigasi Bencana & Kehilangan Data (Disaster Recovery):** Penjadwalan pencadangan otomatis (*Automated Cron Backup*) harian terenkripsi ke NAS dan Cloud Storage dengan kebijakan retensi 30 hari.
-• **Mitigasi Ketergantungan Personel:** Dokumentasi source code terstruktur, repository Git internal satker, dan pelaksanaan alih pengetahuan (*knowledge transfer*) berkala.
+### 4.3 Mitigasi Risiko & Keberlanjutan Sistem
+• **Mitigasi Daya & Server:** Pemanfaatan UPS Online 3 KVA dan automated monitoring server.
+• **Mitigasi Kehilangan Data:** Penjadwalan pencadangan otomatis harian (Automated Cron Backup) terenkripsi ke NAS dan Cloud.
+• **Mitigasi Personel:** Dokumentasi teknis terstandarisasi dan kegiatan alih pengetahuan (*knowledge transfer*) berkala.
 
 ---
 
 # BAB V: KESIMPULAN & REKOMENDASI
 
 ### 5.1 Kesimpulan
-Rancang bangun inovasi "${title}" di ${satker} merupakan langkah nyata dan strategis dalam mendukung modernisasi birokrasi dan transformasi digital Kejaksaan RI. Inovasi ini mampu menyelesaikan permasalahan ${problem} secara tuntas, meningkatkan efisiensi operasional, serta mewujudkan ${outcome} secara berkelanjutan.
+Draf rancang bangun inovasi "${title}" di ${satker} merupakan langkah strategis dalam memodernisasi tata kelola TIK di lingkungan Kejaksaan RI. Inovasi ini secara nyata mampu mengatasi kendala ${problem} serta mewujudkan ${outcome} yang akuntabel dan berkelanjutan.
 
 ### 5.2 Rekomendasi
-• **Rekomendasi Kebijakan:** Ditetapkannya Standar Operasional Prosedur (SOP) baku mengenai pemanfaatan inovasi melalui Surat Keputusan Kepala Satuan Kerja.
-• **Rekomendasi Dukungan Sumber Daya:** Penyediaan alokasi anggaran pemeliharaan perangkat TIK, upgrade lisensi keamanan, dan pelatihan teknis staf secara berkelanjutan.
-• **Rekomendasi Replikasi Nasional:** Pengembangan lanjutan agar modul inovasi ini dapat diintegrasikan dengan aplikasi induk Kejaksaan Agung RI dan direplikasi ke satker Kejaksaan lainnya di seluruh Indonesia.`
+• **Rekomendasi Kebijakan:** Penetapan Standar Operasional Prosedur (SOP) resmi melalui SK Kepala Satuan Kerja.
+• **Rekomendasi Sumber Daya:** Alokasi anggaran pemeliharaan perangkat TIK, upgrade lisensi keamanan, dan bandwidth jaringan.
+• **Rekomendasi Replikasi:** Pengintegrasian sistem ke aplikasi nasional Kejaksaan Agung RI agar dapat direplikasi ke satker lain di seluruh Indonesia.`
 }
 
 export async function POST(req: NextRequest) {
