@@ -149,8 +149,8 @@ SUSUNLAH KESELURUHAN 5 BAB BERIKUT DENGAN FORMAT MARKDOWN LENGKAP:
         { role: "user", content: userPrompt },
       ],
       temperature: 0.35,
-      max_tokens: 4096,
-      mustIncludeKeyPhrases: ["BAB V", "BAB 5", "Kesimpulan", "Rekomendasi"],
+      max_tokens: 6000,
+      mustIncludeKeyPhrases: ["BAB V", "BAB 5", "Kesimpulan", "5.1", "5.2"],
     })
 
     if (result.text && result.text.length > 200) {

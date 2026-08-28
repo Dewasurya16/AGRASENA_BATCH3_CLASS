@@ -100,9 +100,16 @@ function RenderPaperDocument({ content }: { content: string }) {
         // Heading 1 (# ) - Title & BAB
         if (trimmed.startsWith("# ")) {
           const titleText = trimmed.replace(/^#\s+/, "")
+          let chapterId = ""
+          if (/BAB I\b|BAB 1\b/i.test(titleText)) chapterId = "bab-1"
+          else if (/BAB II\b|BAB 2\b/i.test(titleText)) chapterId = "bab-2"
+          else if (/BAB III\b|BAB 3\b/i.test(titleText)) chapterId = "bab-3"
+          else if (/BAB IV\b|BAB 4\b/i.test(titleText)) chapterId = "bab-4"
+          else if (/BAB V\b|BAB 5\b/i.test(titleText)) chapterId = "bab-5"
+
           return (
-            <div key={idx} className="mt-6 mb-3 pb-1.5 border-b-2 border-slate-200 dark:border-slate-700">
-              <h2 className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 uppercase tracking-tight">
+            <div key={idx} id={chapterId || undefined} className="mt-7 mb-3 pb-2 border-b-2 border-slate-200 dark:border-slate-700 scroll-mt-6">
+              <h2 className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 uppercase tracking-tight flex items-center gap-2">
                 {formatInline(titleText)}
               </h2>
             </div>
@@ -478,33 +485,67 @@ export function PaperGeneratorHub() {
         <div className="lg:col-span-7">
           <div className="rounded-[28px] bg-white dark:bg-[#12161F] border-2 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full min-h-[550px] overflow-hidden">
             {/* Output Header Controls */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 p-4 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
-                <span className="text-xs font-black text-[#131E29] dark:text-white">
-                  Draf Naskah Seminar Proyek Akhir
-                </span>
+            <div className="flex flex-col gap-2.5 border-b border-slate-200 dark:border-slate-800 p-4 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
+                  <span className="text-xs font-black text-[#131E29] dark:text-white">
+                    Draf Naskah Seminar Proyek Akhir (5 Bab Lengkap)
+                  </span>
+                  {generatedPaper && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
+                      <Check className="h-3 w-3" />
+                      5 Bab Tuntas ({generatedPaper.length.toLocaleString("id-ID")} Karakter)
+                    </span>
+                  )}
+                </div>
+
+                {generatedPaper && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      <span>{copied ? "Tersalin!" : "Salin"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadDoc}
+                      className="flex items-center gap-1.5 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Unduh (.doc Word)</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
+              {/* Chapter Jump Pills when paper is generated */}
               {generatedPaper && (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                  >
-                    {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copied ? "Tersalin!" : "Salin"}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleDownloadDoc}
-                    className="flex items-center gap-1.5 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>Unduh (.doc Word)</span>
-                  </button>
+                <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none text-[11px]">
+                  <span className="text-[10px] font-bold text-slate-500 shrink-0">Navigasi Bab:</span>
+                  {[
+                    { id: "bab-1", label: "Bab I: Pendahuluan" },
+                    { id: "bab-2", label: "Bab II: Regulasi & Teori" },
+                    { id: "bab-3", label: "Bab III: Arsitektur" },
+                    { id: "bab-4", label: "Bab IV: Rencana Aksi" },
+                    { id: "bab-5", label: "Bab V: Rekomendasi" },
+                  ].map((ch) => (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById(ch.id)
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+                      }}
+                      className="shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-[10.5px] border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                    >
+                      {ch.label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
