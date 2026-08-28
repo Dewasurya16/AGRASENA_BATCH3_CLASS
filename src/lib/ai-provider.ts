@@ -20,15 +20,10 @@ export interface GenerateAiResult {
 const OPENROUTER_FREE_MODELS = [
   "z-ai/glm-5.2:free",
   "z-ai/glm-5.3-flash",
-  "~z-ai/glm-latest",
-  "z-ai/glm-5.2",
   "openrouter/free",
   "minimax/minimax-m3:free",
   "cohere/north-mini-code:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
-  "inclusionai/ling-3.0-flash-fin:free",
-  "minimax/minimax-m2.7:free",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
 ]
 
 const GROQ_MODELS = [
@@ -41,7 +36,7 @@ const GROQ_MODELS = [
 export async function generateAiCompletion(options: GenerateAiOptions): Promise<GenerateAiResult> {
   const { messages, temperature = 0.4, max_tokens = 2500, userApiKey } = options
 
-  // 1. OPENROUTER ATTEMPT (Priority)
+  // 1. OPENROUTER ATTEMPT (Priority 1: GLM 5.2 & OpenRouter Free Pool)
   const openRouterKey =
     (userApiKey && userApiKey.startsWith("sk-or-") ? userApiKey : null) ||
     process.env.OPENROUTER_API_KEY
@@ -50,7 +45,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     for (const model of OPENROUTER_FREE_MODELS) {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 12000)
+        const timeoutId = setTimeout(() => controller.abort(), 6000)
 
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
@@ -91,15 +86,15 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
           }
         } else {
           const errText = await res.text().catch(() => "")
-          console.warn(`[AI OpenRouter] Model ${model} (${res.status}):`, errText)
+          console.warn(`[AI OpenRouter] Model ${model} (${res.status}) failover to next model:`, errText)
         }
       } catch (err: any) {
-        console.warn(`[AI OpenRouter] Model ${model} failed:`, err?.message || err)
+        console.warn(`[AI OpenRouter] Model ${model} failed, attempting next:`, err?.message || err)
       }
     }
   }
 
-  // 2. GROQ ATTEMPT (Secondary Fallback Tier)
+  // 2. GROQ ATTEMPT (Priority 2: Instant Auto-Failover Backup)
   const groqKey =
     process.env.GROQ_API_KEY ||
     (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
@@ -108,7 +103,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     for (const model of GROQ_MODELS) {
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000)
+        const timeoutId = setTimeout(() => controller.abort(), 6000)
 
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
@@ -131,6 +126,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
           const data = await res.json()
           const text = data.choices?.[0]?.message?.content
           if (text && text.trim().length > 10) {
+            console.log(`[AI Failover] Successfully recovered via Groq (${model})`)
             return {
               text: text.trim(),
               model,
