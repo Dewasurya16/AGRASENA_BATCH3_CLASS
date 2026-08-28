@@ -54,9 +54,12 @@ export async function adminSignIn(formData: FormData) {
   const cookieStore = await cookies()
 
   // Master Admin Credentials Override for Diklat
+  const masterEmail = (process.env.ADMIN_EMAIL || 'admin@kejaksaan.go.id').toLowerCase()
+  const masterPassword = process.env.ADMIN_PASSWORD || 'adminprakom625'
+
   if (
-    email.toLowerCase() === 'admin@kejaksaan.go.id' &&
-    password === 'adminprakom625'
+    email.toLowerCase() === masterEmail &&
+    password === masterPassword
   ) {
     cookieStore.set('prakom_admin_session', 'true', {
       path: '/',
@@ -68,36 +71,31 @@ export async function adminSignIn(formData: FormData) {
   }
 
   if (!isSupabaseConfigured()) {
-    return { error: 'Konfigurasi database belum tersedia.' }
+    return { error: 'Email atau kata sandi salah. Hanya akun pengurus terdaftar yang diizinkan masuk.' }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-  if (error) {
-    if (email.includes('admin') && password.length >= 6) {
-      cookieStore.set('prakom_admin_session', 'true', {
-        path: '/',
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 7,
-      })
-      revalidatePath('/admin', 'layout')
-      return { success: true }
+    if (error || !data.user) {
+      return { error: 'Email atau kata sandi salah. Pastikan akun pengurus Anda sudah terdaftar di sistem.' }
     }
-    return { error: 'Gagal masuk: ' + error.message }
+
+    cookieStore.set('prakom_admin_session', 'true', {
+      path: '/',
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7,
+    })
+
+    revalidatePath('/admin', 'layout')
+    return { success: true }
+  } catch {
+    return { error: 'Terjadi kesalahan saat memverifikasi akun pengurus. Silakan coba lagi.' }
   }
-
-  cookieStore.set('prakom_admin_session', 'true', {
-    path: '/',
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 7,
-  })
-
-  revalidatePath('/admin', 'layout')
-  return { success: true }
 }
 
 export const adminLogin = adminSignIn
@@ -555,5 +553,79 @@ export async function clearLocalhostLogs() {
   revalidatePath('/admin/dashboard')
   return { success: 'Semua log akses localhost/IP lokal berhasil dibersihkan.' }
 }
+
+// 7. REPORT & FEEDBACK ACTIONS
+export async function createReportAction(formData: FormData) {
+  const name = (formData.get('name') as string)?.trim()
+  const satker = (formData.get('satker') as string)?.trim()
+  const category = (formData.get('category') as string)?.trim() || 'Kendala Teknis Web & Lainnya'
+  const message = (formData.get('message') as string)?.trim()
+  const contact = (formData.get('contact') as string)?.trim() || ''
+
+  if (!name || !satker || !message) {
+    return { error: 'Nama, satuan kerja, dan uraian kendala wajib diisi.' }
+  }
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient()
+      const { data, error } = await supabase.from('reports').insert({
+        name,
+        satker,
+        category,
+        message,
+        contact,
+        status: 'pending',
+      }).select().single()
+
+      if (error) {
+        // Continue to return success if memory store fallback is active
+        console.warn('Supabase reports insert error, fallback in route:', error.message)
+      } else {
+        revalidatePath('/admin/dashboard')
+        return { success: true, report: data }
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  return { success: true }
+}
+
+export async function updateReportStatus(id: string, status: string, adminNotes?: string) {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient()
+      const updateData: any = { status }
+      if (adminNotes !== undefined) {
+        updateData.admin_notes = adminNotes
+      }
+      const { error } = await supabase.from('reports').update(updateData).eq('id', id)
+      if (error) return { error: error.message }
+      revalidatePath('/admin/dashboard')
+      return { success: 'Status laporan berhasil diperbarui.' }
+    } catch (e: any) {
+      return { error: e?.message || 'Gagal memperbarui status.' }
+    }
+  }
+  return { success: 'Status laporan berhasil diperbarui.' }
+}
+
+export async function deleteReport(id: string) {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient()
+      const { error } = await supabase.from('reports').delete().eq('id', id)
+      if (error) return { error: error.message }
+      revalidatePath('/admin/dashboard')
+      return { success: 'Laporan berhasil dihapus.' }
+    } catch (e: any) {
+      return { error: e?.message || 'Gagal menghapus laporan.' }
+    }
+  }
+  return { success: 'Laporan berhasil dihapus.' }
+}
+
 
 

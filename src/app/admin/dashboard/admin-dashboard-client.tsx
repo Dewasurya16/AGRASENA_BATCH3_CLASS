@@ -103,6 +103,7 @@ interface AdminDashboardClientProps {
   initialTasks: any[]
   initialAnnouncements: any[]
   initialVisitorLogs?: VisitorLog[]
+  initialReports?: any[]
 }
 
 const ITEMS_PER_PAGE = 5
@@ -190,10 +191,11 @@ export function AdminDashboardClient({
   initialTasks,
   initialAnnouncements,
   initialVisitorLogs = [],
+  initialReports = [],
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
+    "overview" | "visitors" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -207,6 +209,15 @@ export function AdminDashboardClient({
   const [adminReplyTextMap, setAdminReplyTextMap] = React.useState<Record<string, string>>({})
   const [isReplyingAdminMap, setIsReplyingAdminMap] = React.useState<Record<string, boolean>>({})
 
+  // Reports State for Admin
+  const [adminReports, setAdminReports] = React.useState<any[]>(initialReports || [])
+  const [reportSearch, setReportSearch] = React.useState("")
+  const [reportStatusFilter, setReportStatusFilter] = React.useState<"all" | "pending" | "in_progress" | "resolved">("all")
+  const [reportCategoryFilter, setReportCategoryFilter] = React.useState("Semua")
+  const [adminNotesTextMap, setAdminNotesTextMap] = React.useState<Record<string, string>>({})
+  const [isUpdatingReportMap, setIsUpdatingReportMap] = React.useState<Record<string, boolean>>({})
+  const [reportPage, setReportPage] = React.useState(1)
+
   const fetchDiscussions = async () => {
     try {
       const res = await fetch("/api/discussions")
@@ -219,9 +230,85 @@ export function AdminDashboardClient({
     }
   }
 
+  const fetchReports = async () => {
+    try {
+      const res = await fetch("/api/reports")
+      const data = await res.json()
+      if (data.reports) {
+        setAdminReports(data.reports)
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
   React.useEffect(() => {
     fetchDiscussions()
+    fetchReports()
   }, [])
+
+  const handleUpdateReportStatus = async (id: string, newStatus: string, notes?: string) => {
+    setIsUpdatingReportMap((prev) => ({ ...prev, [id]: true }))
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_status",
+          id,
+          status: newStatus,
+          admin_notes: notes !== undefined ? notes : (adminNotesTextMap[id] || ""),
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        const label = newStatus === "resolved" ? "Selesai" : newStatus === "in_progress" ? "Sedang Diproses" : "Pending"
+        showFeedback("success", `Status laporan berhasil diubah ke '${label}'.`)
+        fetchReports()
+      } else {
+        showFeedback("error", data.error || "Gagal memperbarui status laporan.")
+      }
+    } catch {
+      showFeedback("error", "Terjadi gangguan saat memperbarui status laporan.")
+    } finally {
+      setIsUpdatingReportMap((prev) => ({ ...prev, [id]: false }))
+    }
+  }
+
+  const handleDeleteReport = async (id: string) => {
+    if (!confirm("Hapus laporan / aspirasi ini? Data yang dihapus tidak dapat dikembalikan.")) return
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
+      })
+      if (res.ok) {
+        showFeedback("success", "Laporan berhasil dihapus.")
+        setAdminReports((prev) => prev.filter((r) => r.id !== id))
+      } else {
+        showFeedback("error", "Gagal menghapus laporan.")
+      }
+    } catch {
+      showFeedback("error", "Terjadi kesalahan saat menghapus laporan.")
+    }
+  }
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        fetchDiscussions(),
+        fetchReports(),
+        router.refresh(),
+      ])
+      showFeedback("success", "Data berhasil disinkronisasi.")
+    } catch {
+      showFeedback("error", "Gagal melakukan sinkronisasi data.")
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const handleAdminReplySubmit = async (threadId: string) => {
     const text = adminReplyTextMap[threadId]?.trim()
@@ -918,12 +1005,6 @@ export function AdminDashboardClient({
     showFeedback("success", "Berkas backup data (JSON) berhasil diunduh!")
   }
 
-  const handleManualRefresh = () => {
-    setIsRefreshing(true)
-    router.refresh()
-    setTimeout(() => setIsRefreshing(false), 600)
-  }
-
   // --- CRUD: MATERIALS ---
   const handleUploadSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -1421,6 +1502,30 @@ export function AdminDashboardClient({
     )
   }
 
+  // Reports Calculations
+  const pendingReportsCount = adminReports.filter((r) => (r.status || "pending") === "pending").length
+  const inProgressReportsCount = adminReports.filter((r) => r.status === "in_progress").length
+  const resolvedReportsCount = adminReports.filter((r) => r.status === "resolved").length
+
+  const filteredReports = React.useMemo(() => {
+    return adminReports.filter((r) => {
+      const matchStatus = reportStatusFilter === "all" || (r.status || "pending") === reportStatusFilter
+      const matchCategory = reportCategoryFilter === "Semua" || r.category === reportCategoryFilter
+      const q = reportSearch.toLowerCase().trim()
+      const matchSearch =
+        !q ||
+        (r.name && r.name.toLowerCase().includes(q)) ||
+        (r.satker && r.satker.toLowerCase().includes(q)) ||
+        (r.message && r.message.toLowerCase().includes(q)) ||
+        (r.category && r.category.toLowerCase().includes(q)) ||
+        (r.contact && r.contact.toLowerCase().includes(q))
+      return matchStatus && matchCategory && matchSearch
+    })
+  }, [adminReports, reportStatusFilter, reportCategoryFilter, reportSearch])
+
+  const totalReportPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE) || 1
+  const paginatedReports = filteredReports.slice((reportPage - 1) * ITEMS_PER_PAGE, reportPage * ITEMS_PER_PAGE)
+
   // Navigation Items list
   const navItems = [
     { id: "overview", label: "Ringkasan", icon: BarChart3, count: null, color: "text-blue-600" },
@@ -1431,6 +1536,14 @@ export function AdminDashboardClient({
       count: totalVisitors,
       color: "text-emerald-600",
       highlight: true,
+    },
+    {
+      id: "reports",
+      label: "Laporan & Saran Peserta",
+      icon: MessageCircle,
+      count: pendingReportsCount,
+      color: "text-orange-600",
+      highlight: pendingReportsCount > 0,
     },
     { id: "materials", label: "Pustaka Modul PDF (120 JP)", icon: FileText, count: initialMaterials.length, color: "text-indigo-600" },
     { id: "schedules", label: "Jadwal 35 Hari", icon: Calendar, count: initialSchedules.length, color: "text-sky-600" },
@@ -1607,10 +1720,15 @@ export function AdminDashboardClient({
                 <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                   {activeTab === "overview" && "Ringkasan Operasional"}
                   {activeTab === "visitors" && "Statistik & Riwayat Pengunjung"}
+                  {activeTab === "reports" && "Laporan Kendala & Kotak Saran Peserta"}
                   {activeTab === "materials" && "Pustaka Berkas Modul PDF (120 JP)"}
                   {activeTab === "schedules" && "Jadwal Perkuliahan 35 Hari"}
                   {activeTab === "tasks" && "Penugasan & Uji Praktek"}
                   {activeTab === "announcements" && "Pengumuman Kelas"}
+                  {activeTab === "discussions" && "Moderasi Forum Diskusi"}
+                  {activeTab === "templates" && "Pusat Template BPS & TIK"}
+                  {activeTab === "exam_prep" && "Checklist Kelulusan & Ujian"}
+                  {activeTab === "paper_gen" && "AI Makalah Inovasi Satker"}
                 </h2>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block">
@@ -1661,7 +1779,7 @@ export function AdminDashboardClient({
               </div>
               <button
                 onClick={() => setFeedback(null)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -1673,30 +1791,55 @@ export function AdminDashboardClient({
           {/* ========================================================================= */}
           {activeTab === "overview" && (
             <div className="space-y-6">
-              {/* 5 KPI Hero Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* 6 KPI Hero Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                 {/* 1. Visitors KPI (Highlight Card) */}
                 <div
                   onClick={() => setActiveTab("visitors")}
                   className="group rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-800 p-5 text-white space-y-3 shadow-md relative overflow-hidden cursor-pointer hover:shadow-lg transition-all hover:scale-[1.01]"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-100">Total Pengunjung</span>
+                    <span className="text-xs font-bold text-emerald-100">Pengunjung</span>
                     <Users className="h-5 w-5 text-emerald-200 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
                     <div className="text-3xl font-black">{totalVisitors}</div>
                     <div className="text-[11px] text-emerald-100 font-semibold mt-0.5">
-                      {uniqueIps} IP Unik • {todayVisitors} Hari Ini
+                      {uniqueIps} IP • {todayVisitors} Hari Ini
                     </div>
                   </div>
                   <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
-                    <span>Lihat Statistik & IP</span>
+                    <span>Statistik & IP</span>
                     <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
 
-                {/* 2. Materials */}
+                {/* 2. Reports & Feedback (NEW KPI) */}
+                <div
+                  onClick={() => setActiveTab("reports")}
+                  className={`rounded-3xl border p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group ${
+                    pendingReportsCount > 0
+                      ? "bg-gradient-to-br from-orange-50 to-amber-50/70 border-orange-300"
+                      : "bg-white border-slate-200/90"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-600">Laporan & Saran</span>
+                    <MessageCircle className={`h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform ${pendingReportsCount > 0 ? "animate-pulse" : ""}`} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-black text-slate-900">{adminReports.length}</div>
+                    <div className="text-[11px] text-orange-700 font-semibold mt-0.5">
+                      {pendingReportsCount} Menunggu • {resolvedReportsCount} Selesai
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-orange-200/60 flex items-center justify-between text-[11px] font-bold text-orange-700">
+                    <span>Tindak Lanjut Tiket</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+
+                {/* 3. Materials */}
                 <div
                   onClick={() => setActiveTab("materials")}
                   className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
@@ -1717,7 +1860,7 @@ export function AdminDashboardClient({
                   </div>
                 </div>
 
-                {/* 3. Schedules */}
+                {/* 4. Schedules */}
                 <div
                   onClick={() => setActiveTab("schedules")}
                   className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
@@ -1738,7 +1881,7 @@ export function AdminDashboardClient({
                   </div>
                 </div>
 
-                {/* 4. Tasks */}
+                {/* 5. Tasks */}
                 <div
                   onClick={() => setActiveTab("tasks")}
                   className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
@@ -1759,7 +1902,7 @@ export function AdminDashboardClient({
                   </div>
                 </div>
 
-                {/* 5. Announcements */}
+                {/* 6. Announcements */}
                 <div
                   onClick={() => setActiveTab("announcements")}
                   className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
@@ -1779,7 +1922,11 @@ export function AdminDashboardClient({
                     <ArrowRight className="h-3.5 w-3.5" />
                   </div>
                 </div>
-                {/* 6. Forum Diskusi */}
+              </div>
+
+              {/* Extended Row for Discussions & Templates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Forum Diskusi */}
                 <div
                   onClick={() => setActiveTab("discussions")}
                   className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-3 shadow-2xs hover:shadow-md transition cursor-pointer group"
@@ -2260,6 +2407,303 @@ export function AdminDashboardClient({
                       totalPages={totalVisitorPages}
                       totalItems={filteredVisitorLogs.length}
                       onPageChange={setVisitorPage}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 2.1 REPORTS & FEEDBACK TAB (5 PER HALAMAN) */}
+          {/* ========================================================================= */}
+          {activeTab === "reports" && (
+            <div className="space-y-6">
+              {/* 4 Reports KPI Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-3xl bg-white border border-slate-200/90 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">Total Seluruh Laporan</span>
+                    <MessageCircle className="h-5 w-5 text-slate-700" />
+                  </div>
+                  <div className="text-3xl font-black text-slate-900">{adminReports.length}</div>
+                  <p className="text-[11px] text-slate-500 font-semibold">Semua tiket kendala & saran masuk</p>
+                </div>
+
+                <div className="rounded-3xl bg-orange-50/70 border border-orange-200 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-orange-700">Menunggu Tindak Lanjut</span>
+                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div className="text-3xl font-black text-orange-800">{pendingReportsCount}</div>
+                  <p className="text-[11px] text-orange-600 font-semibold">Status: Pending</p>
+                </div>
+
+                <div className="rounded-3xl bg-blue-50/70 border border-blue-200 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-700">Sedang Diproses</span>
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="text-3xl font-black text-blue-800">{inProgressReportsCount}</div>
+                  <p className="text-[11px] text-blue-600 font-semibold">Dalam penanganan pengurus</p>
+                </div>
+
+                <div className="rounded-3xl bg-emerald-50/70 border border-emerald-200 p-5 space-y-2 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-700">Selesai Ditangani</span>
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div className="text-3xl font-black text-emerald-800">{resolvedReportsCount}</div>
+                  <p className="text-[11px] text-emerald-600 font-semibold">Status: Resolved / Selesai</p>
+                </div>
+              </div>
+
+              {/* Main Reports Management Card */}
+              <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      Daftar Laporan Kendala & Aspirasi Peserta
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Laporan yang dikirim peserta melalui formulir pusat bantuan (FAQ) tanpa perlu login (Menampilkan 5 per halaman)
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={fetchReports}
+                    className="flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer self-start sm:self-auto"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                    <span>Muat Ulang Tiket</span>
+                  </button>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="flex flex-col md:flex-row items-center gap-3 pt-1">
+                  {/* Search */}
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={reportSearch}
+                      onChange={(e) => {
+                        setReportSearch(e.target.value)
+                        setReportPage(1)
+                      }}
+                      placeholder="Cari berdasarkan nama, satker, kategori, nomor WA, atau isi uraian..."
+                      className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                    />
+                  </div>
+
+                  {/* Status Pills */}
+                  <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                    {[
+                      { id: "all", label: "Semua" },
+                      { id: "pending", label: "⏳ Pending" },
+                      { id: "in_progress", label: "🛠️ Diproses" },
+                      { id: "resolved", label: "✅ Selesai" },
+                    ].map((st) => (
+                      <button
+                        key={st.id}
+                        onClick={() => {
+                          setReportStatusFilter(st.id as any)
+                          setReportPage(1)
+                        }}
+                        className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                          reportStatusFilter === st.id
+                            ? "bg-slate-900 text-white"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reports List */}
+                {adminReports.length === 0 ? (
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 p-10 text-center space-y-3">
+                    <MessageCircle className="h-10 w-10 text-slate-300 mx-auto" />
+                    <h4 className="font-bold text-sm text-slate-900">Belum Ada Laporan Masuk</h4>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                      Laporan dari peserta diklat yang dikirim via formulir FAQ akan otomatis muncul di sini.
+                    </p>
+                  </div>
+                ) : filteredReports.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 p-8 text-center space-y-2">
+                    <Search className="h-8 w-8 text-slate-400 mx-auto" />
+                    <p className="text-xs font-bold text-slate-700">
+                      Tidak ditemukan laporan yang sesuai dengan kriteria pencarian & filter.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setReportSearch("")
+                        setReportStatusFilter("all")
+                        setReportCategoryFilter("Semua")
+                      }}
+                      className="text-xs text-blue-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Reset Filter
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {paginatedReports.map((report, idx) => {
+                        const globalIndex = (reportPage - 1) * ITEMS_PER_PAGE + idx + 1
+                        const st = report.status || "pending"
+                        const isUpdating = isUpdatingReportMap[report.id] || false
+
+                        return (
+                          <div
+                            key={report.id || idx}
+                            className={`rounded-2xl border p-5 space-y-3 transition-all ${
+                              st === "pending"
+                                ? "bg-amber-50/30 border-amber-200 hover:border-amber-300"
+                                : st === "in_progress"
+                                ? "bg-blue-50/30 border-blue-200 hover:border-blue-300"
+                                : "bg-white border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            {/* Card Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="h-6 w-6 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                                  {globalIndex}
+                                </span>
+                                <span className="font-black text-sm text-slate-900">
+                                  {report.name || "Peserta Anonim"}
+                                </span>
+                                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                  {report.satker || "Satuan Kerja"}
+                                </span>
+                                {report.contact && (
+                                  <a
+                                    href={`https://api.whatsapp.com/send?phone=${report.contact.replace(/[^0-9]/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition"
+                                  >
+                                    <MessageCircle className="h-3 w-3 text-emerald-600" />
+                                    <span>WA: {report.contact}</span>
+                                    <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                  </a>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {/* Status Badge */}
+                                <span
+                                  className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
+                                    st === "pending"
+                                      ? "bg-amber-100 text-amber-800 border-amber-300 animate-pulse"
+                                      : st === "in_progress"
+                                      ? "bg-blue-100 text-blue-800 border-blue-300"
+                                      : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                  }`}
+                                >
+                                  {st === "pending" ? "⏳ Menunggu" : st === "in_progress" ? "🛠️ Sedang Diproses" : "✅ Selesai"}
+                                </span>
+                                <span className="text-[11px] text-slate-400 font-medium">
+                                  {report.created_at ? formatWibDate(report.created_at) : "-"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Category & Message */}
+                            <div className="space-y-1.5">
+                              <span className="inline-block text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                                📌 {report.category}
+                              </span>
+                              <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 text-xs font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                {report.message}
+                              </div>
+                            </div>
+
+                            {/* Admin Notes Section */}
+                            <div className="pt-2 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                              <div className="flex-1 flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  defaultValue={report.admin_notes || ""}
+                                  placeholder="Catatan tindak lanjut admin / nomor tiket / PIC..."
+                                  onChange={(e) =>
+                                    setAdminNotesTextMap((prev) => ({
+                                      ...prev,
+                                      [report.id]: e.target.value,
+                                    }))
+                                  }
+                                  className="h-8 flex-1 rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none"
+                                />
+                                <button
+                                  onClick={() =>
+                                    handleUpdateReportStatus(
+                                      report.id,
+                                      st,
+                                      adminNotesTextMap[report.id] !== undefined
+                                        ? adminNotesTextMap[report.id]
+                                        : report.admin_notes
+                                    )
+                                  }
+                                  disabled={isUpdating}
+                                  className="px-2.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 font-bold text-slate-700 transition cursor-pointer"
+                                >
+                                  Simpan Catatan
+                                </button>
+                              </div>
+
+                              {/* Status Action Buttons */}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {st !== "pending" && (
+                                  <button
+                                    onClick={() => handleUpdateReportStatus(report.id, "pending")}
+                                    disabled={isUpdating}
+                                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                  >
+                                    Tandai Pending
+                                  </button>
+                                )}
+                                {st !== "in_progress" && (
+                                  <button
+                                    onClick={() => handleUpdateReportStatus(report.id, "in_progress")}
+                                    disabled={isUpdating}
+                                    className="px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold transition cursor-pointer"
+                                  >
+                                    Tandai Diproses
+                                  </button>
+                                )}
+                                {st !== "resolved" && (
+                                  <button
+                                    onClick={() => handleUpdateReportStatus(report.id, "resolved")}
+                                    disabled={isUpdating}
+                                    className="px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-black transition cursor-pointer shadow-2xs"
+                                  >
+                                    Tandai Selesai
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteReport(report.id)}
+                                  disabled={isUpdating}
+                                  title="Hapus laporan ini"
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Pagination */}
+                    <PaginationControls
+                      currentPage={reportPage}
+                      totalPages={totalReportPages}
+                      totalItems={filteredReports.length}
+                      onPageChange={setReportPage}
                     />
                   </div>
                 )}

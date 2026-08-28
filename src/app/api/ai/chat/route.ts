@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getAutoRoadmapData, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
+import { getAutoRoadmapData } from "@/lib/roadmap-utils"
 import { TEMPLATES_DATA } from "@/lib/templates-data"
+import { generateAiCompletion } from "@/lib/ai-provider"
 
 export async function POST(req: NextRequest) {
   try {
@@ -117,12 +118,12 @@ ${templatesContext}
 
 KEMAMPUAN & ATURAN MENJAWAB:
 1. PENGETAHUAN UMUM & BEBAS DI LUAR DATA KELAS (SERBA BISA LAYAKNYA CHATGPT/CLAUDE):
-   - Anda adalah LLM cerdas yang berpengetahuan luas. Jika pengguna menanyakan hal UMUM di luar diklat (contoh: geografi seperti "sulawesi daerah mana", sejarah, sains, tips hidup/kerja, penulisan esai, matematika, bahasa asing, humor, dsb.), JAWAB DENGAN TUNTAS, LENGKAP, DAN AKURAT tanpa membatasi diri pada data kelas.
+   - Anda adalah LLM cerdas yang berpengetahuan luas. Jika pengguna menanyakan hal UMUM di luar diklat (contoh: geografi, sejarah, sains, tips hidup/kerja, penulisan esai, matematika, bahasa asing, humor, dsb.), JAWAB DENGAN TUNTAS, LENGKAP, DAN AKURAT tanpa membatasi diri pada data kelas.
    - Jawab secara langsung, jelas, dan informatif!
 2. KODING, TROUBLESHOOTING & TEKNOLOGI:
    - Jawab pertanyaan pemrograman apa pun (Python, SQL, JavaScript, Bash, Rust, Go, PHP, Docker, Git, Linux, dsb.) dengan contoh kode yang bersih dan penjelasan siap pakai.
 3. SINKRONISASI JADWAL HARIAN DIKLAT:
-   - Jika pengguna menanyakan jadwal hari tertentu (misal: "jadwal hari ke-5", "jadwal hari jumat", "jadwal besok", dsb.), BACA LANGSUNG dari [MASTER JADWAL 35 HARI LENGKAP] di atas dan sebutkan secara persis sesi, jam, pengampu, dan ruangannya.
+   - Jika pengguna menanyakan jadwal hari tertentu, BACA LANGSUNG dari [MASTER JADWAL 35 HARI LENGKAP] di atas dan sebutkan secara persis sesi, jam, pengampu, dan ruangannya.
 4. PENGUASAAN MODUL & MATERI DIKLAT:
    - Mampu menjelaskan secara mendalam materi SPBE (Perpres 95/2018), 6 Domain SPBE, Arsitektur Sistem, Manajemen Database, Jaringan, CSIRT Keamanan Informasi, dan Tata Kelola TI Kejaksaan.
 5. ANGKA KREDIT & DUPAK BPS:
@@ -130,17 +131,12 @@ KEMAMPUAN & ATURAN MENJAWAB:
 
 Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks yang jelas!`
 
-    // 4. Determine Groq API Key with automatic robust fallback
-    const keyCodes = [103,115,107,95,78,114,107,87,117,100,98,88,118,102,98,79,112,120,122,110,104,102,114,50,87,71,100,121,98,51,70,89,51,67,104,103,52,73,104,103,74,74,71,103,82,90,85,69,88,85,106,119,78,80,66,77]
-    const fallbackKey = String.fromCharCode(...keyCodes)
-    const apiKey = process.env.GROQ_API_KEY || userApiKey || fallbackKey
-
     // Sanitize incoming messages
     const cleanMessages = Array.isArray(messages)
       ? messages
           .filter((m: any) => m && typeof m.content === "string" && m.content.trim())
           .map((m: any) => ({
-            role: m.role === "assistant" ? "assistant" : "user",
+            role: (m.role === "assistant" ? "assistant" : "user") as "assistant" | "user",
             content: String(m.content).trim(),
           }))
       : []
@@ -152,56 +148,21 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
       })
     }
 
-    // 5. Call Groq API with Multi-Model Fallback
-    const CANDIDATE_MODELS = [
-      "qwen/qwen3.8-27b",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "groq/compound",
-    ]
-
-    for (const model of CANDIDATE_MODELS) {
-      try {
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...cleanMessages.slice(-8),
-            ],
-            temperature: 0.5,
-            max_tokens: 2000,
-          }),
-        })
-
-        if (groqResponse.ok) {
-          const data = await groqResponse.json()
-          const reply = data.choices?.[0]?.message?.content
-          if (reply) {
-            return NextResponse.json({
-              reply,
-              model,
-              todayDay: currentDayNumber,
-              todayStage: todayDetail.stageName,
-            })
-          }
-        } else {
-          const errBody = await groqResponse.text()
-          console.warn(`[AI Chat] Model ${model} returned ${groqResponse.status}:`, errBody)
-        }
-      } catch (apiErr) {
-        console.warn(`[AI Chat] Model ${model} fetch failed:`, apiErr)
-      }
-    }
+    // 4. Generate AI Completion via OpenRouter (with Multi-Model & Groq Fallback)
+    const result = await generateAiCompletion({
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...cleanMessages.slice(-8),
+      ],
+      temperature: 0.45,
+      max_tokens: 2000,
+      userApiKey,
+    })
 
     return NextResponse.json({
-      reply: "Halo Rekan Prakom! Server AI sedang memproses permintaan dengan antrean tinggi. Silakan kirimkan kembali pertanyaan Anda.",
-      model: "system-fallback",
+      reply: result.text,
+      model: result.model,
+      provider: result.provider,
       todayDay: currentDayNumber,
       todayStage: todayDetail.stageName,
     })

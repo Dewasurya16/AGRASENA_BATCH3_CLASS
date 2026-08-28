@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { generateAiCompletion } from "@/lib/ai-provider"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -54,8 +55,6 @@ export async function POST(req: NextRequest) {
     if (!title) {
       return NextResponse.json({ error: "Judul modul wajib disertakan." }, { status: 400 })
     }
-
-    const apiKey = process.env.GROQ_API_KEY
 
     // 1. Attempt real PDF text extraction
     let extractedPdfText = ""
@@ -160,53 +159,24 @@ STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI LENGKAP TANPA P
 • **Strategi Belajar Peserta:** Langkah konkret penguasaan modul dan penyusunan bukti fisik angka kredit.`
     }
 
-    // 3. Multi-Model Auto-Fallback Chain (Prevents Rate Limits & 400 Errors)
-    const CANDIDATE_MODELS = [
-      "qwen/qwen3.8-27b",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "groq/compound",
-    ]
+    // 3. Generate AI Summary via OpenRouter (with Multi-Model & Groq Fallback)
+    const result = await generateAiCompletion({
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 3800,
+    })
 
-    if (apiKey) {
-      for (const model of CANDIDATE_MODELS) {
-        try {
-          const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: systemInstruction },
-                { role: "user", content: userPrompt },
-              ],
-              temperature: 0.3,
-              max_tokens: 3500,
-            }),
-          })
-
-          if (groqResponse.ok) {
-            const data = await groqResponse.json()
-            const aiSummary = data.choices?.[0]?.message?.content
-            if (aiSummary && aiSummary.length > 200) {
-              return NextResponse.json({
-                summary: aiSummary,
-                model,
-                extractedChars: extractedPdfText ? extractedPdfText.length : 0,
-                source: extractedPdfText ? "pdf-extracted" : "curriculum-synthesis",
-              })
-            }
-          } else {
-            const errData = await groqResponse.json().catch(() => ({}))
-            console.warn(`[AI Summarizer] Model ${model} returned status ${groqResponse.status}:`, errData?.error?.message)
-          }
-        } catch (apiErr) {
-          console.warn(`[AI Summarizer] Model ${model} network error:`, apiErr)
-        }
-      }
+    if (result.text && result.text.length > 200) {
+      return NextResponse.json({
+        summary: result.text,
+        model: result.model,
+        provider: result.provider,
+        extractedChars: extractedPdfText ? extractedPdfText.length : 0,
+        source: extractedPdfText ? "pdf-extracted" : "curriculum-synthesis",
+      })
     }
 
     // Comprehensive Fallback Curriculum Summary (if API is offline)

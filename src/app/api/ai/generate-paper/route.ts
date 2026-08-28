@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { generateAiCompletion } from "@/lib/ai-provider"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -11,8 +12,6 @@ export async function POST(req: NextRequest) {
     if (!topicTitle || !authorSatker) {
       return NextResponse.json({ error: "Judul topik inovasi dan nama satker wajib diisi." }, { status: 400 })
     }
-
-    const apiKey = process.env.GROQ_API_KEY
 
     const systemPrompt = `Anda adalah Widyaiswara Pembimbing Utama Penulisan Makalah Proyek Akhir / Seminar Rencana Aksi Inovasi Pelatihan Fungsional Pranata Komputer (Batch 3) Kejaksaan RI.
 Tugas Anda adalah menyusun PROPOSAL MAKALAH RANCANG BANGUN INOVASI TEKNOLOGI INFORMASI SATKER secara LENGKAP, OTENTIK, AKADEMIK, DAN RAPI DENGAN FORMAT BAKU BIROKRASI KEJAKSAAN RI.`
@@ -123,58 +122,28 @@ STRUKTUR MAKALAH:
 • **Dukungan Pimpinan:** Diterbitkannya Surat Keputusan (SK) Standar Operasional Prosedur Inovasi dari Kepala Kejaksaan Negeri.
 • **Keberlanjutan Anggaran:** Alokasi pemeliharaan perangkat server dan lisensi keamanan pada DIPA tahun berikutnya.`
 
-    if (!apiKey) {
+    // Generate AI Paper via OpenRouter (with Multi-Model & Groq Fallback)
+    const result = await generateAiCompletion({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 3800,
+    })
+
+    if (result.text && result.text.length > 200) {
       return NextResponse.json({
-        paper: `# 🎓 PROPOSAL MAKALAH INOVASI SATKER\n## ${topicTitle.toUpperCase()}\n**Penyusun:** ${authorName || "Peserta"} (${authorSatker})\n\n*(Server AI sedang offline)*`,
-        model: "offline",
+        paper: result.text,
+        model: result.model,
+        provider: result.provider,
+        authorSatker,
+        topicTitle,
       })
     }
 
-    const CANDIDATE_MODELS = [
-      "qwen/qwen3.8-27b",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-20b",
-      "groq/compound",
-    ]
-
-    for (const model of CANDIDATE_MODELS) {
-      try {
-        const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-            temperature: 0.25,
-            max_tokens: 3500,
-          }),
-        })
-
-        if (groqResponse.ok) {
-          const data = await groqResponse.json()
-          const paper = data.choices?.[0]?.message?.content
-          if (paper && paper.length > 200) {
-            return NextResponse.json({
-              paper,
-              model,
-              authorSatker,
-              topicTitle,
-            })
-          }
-        }
-      } catch (apiErr) {
-        console.warn(`[Paper Gen] Model ${model} failed:`, apiErr)
-      }
-    }
-
     return NextResponse.json({
-      error: "GROQ_ERROR",
+      error: "AI_BUSY",
       message: "Server AI sedang sibuk. Silakan coba kembali dalam beberapa detik.",
     }, { status: 500 })
   } catch (err: any) {

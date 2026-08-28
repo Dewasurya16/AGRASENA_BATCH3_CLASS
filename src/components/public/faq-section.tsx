@@ -26,9 +26,12 @@ import {
   Users,
   Shield,
   Clock,
-  Laptop
+  Laptop,
+  Loader2,
+  Info
 } from "lucide-react"
 import Link from "next/link"
+import { Modal } from "@/components/ui/modal"
 
 interface FAQItem {
   id: string
@@ -262,19 +265,29 @@ export function FaqSection() {
   const [formOpen, setFormOpen] = React.useState(false)
   const [formName, setFormName] = React.useState("")
   const [formSatker, setFormSatker] = React.useState("")
+  const [formContact, setFormContact] = React.useState("")
   const [formCategory, setFormCategory] = React.useState("Kendala LMS & Pengumpulan Tugas")
   const [formMessage, setFormMessage] = React.useState("")
   const [formCopied, setFormCopied] = React.useState(false)
+  const [isSubmittingReport, setIsSubmittingReport] = React.useState(false)
+  const [reportFeedback, setReportFeedback] = React.useState<{
+    type: "success" | "error"
+    message: string
+  } | null>(null)
+
+  // WhatsApp Notice Modal State
+  const [isWANoticeOpen, setIsWANoticeOpen] = React.useState(false)
 
   const buildCustomReportMessage = () => {
     const name = formName.trim() || "[Nama Tidak Diisi]"
     const satker = formSatker.trim() || "[Satuan Kerja Tidak Diisi]"
+    const contact = formContact.trim() ? `\n📱 *Kontak/WA:* ${formContact.trim()}` : ""
     const msg = formMessage.trim() || "[Belum ada uraian kendala]"
 
     return `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM BATCH 3*
 ━━━━━━━━━━━━━━━━━━━━
 👤 *Nama Lengkap:* ${name}
-🏢 *Satuan Kerja:* ${satker}
+🏢 *Satuan Kerja:* ${satker}${contact}
 📌 *Kategori:* ${formCategory}
 
 💬 *Uraian Detail:*
@@ -284,18 +297,65 @@ ${msg}
 _Dikirim via Formulir Pusat Bantuan Web Kelas Prakom Batch 3_`
   }
 
-  const handleSendCustomWhatsApp = (e: React.FormEvent) => {
-    e.preventDefault()
-    const text = buildCustomReportMessage()
-    const encoded = encodeURIComponent(text)
-    window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank")
-  }
-
   const handleCopyCustomReport = () => {
     const text = buildCustomReportMessage()
     navigator.clipboard.writeText(text)
     setFormCopied(true)
     setTimeout(() => setFormCopied(false), 2500)
+  }
+
+  const handleSubmitReportToAdmin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formName.trim() || !formSatker.trim() || !formMessage.trim()) {
+      setReportFeedback({
+        type: "error",
+        message: "Nama lengkap, satuan kerja, dan uraian kendala wajib diisi.",
+      })
+      return
+    }
+
+    setIsSubmittingReport(true)
+    setReportFeedback(null)
+
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          name: formName.trim(),
+          satker: formSatker.trim(),
+          category: formCategory,
+          contact: formContact.trim(),
+          message: formMessage.trim(),
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setReportFeedback({
+          type: "error",
+          message: data.error || "Gagal mengirim laporan. Silakan coba kembali.",
+        })
+      } else {
+        setReportFeedback({
+          type: "success",
+          message:
+            "Laporan Anda berhasil dikirim ke Admin Pengurus Kelas! Kendala telah masuk ke dashboard admin dan akan segera ditindaklanjuti.",
+        })
+        setFormName("")
+        setFormSatker("")
+        setFormContact("")
+        setFormMessage("")
+      }
+    } catch {
+      setReportFeedback({
+        type: "error",
+        message: "Terjadi gangguan koneksi saat mengirim laporan ke admin. Silakan coba lagi.",
+      })
+    } finally {
+      setIsSubmittingReport(false)
+    }
   }
 
   const templateAdminMessage = `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM BATCH 3*
@@ -311,14 +371,20 @@ _Dikirim via Formulir Pusat Bantuan Web Kelas Prakom Batch 3_`
 _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
 
   const handleCopyTemplate = () => {
-    navigator.clipboard.writeText(templateAdminMessage)
+    const text = formMessage.trim() ? buildCustomReportMessage() : templateAdminMessage
+    navigator.clipboard.writeText(text)
     setCopiedFormat(true)
     setTimeout(() => setCopiedFormat(false), 2500)
   }
 
-  const handleOpenWhatsAppAdmin = () => {
-    const encoded = encodeURIComponent(templateAdminMessage)
+  const handleOpenWhatsAppDirect = () => {
+    const text = formMessage.trim() ? buildCustomReportMessage() : templateAdminMessage
+    const encoded = encodeURIComponent(text)
     window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank")
+  }
+
+  const handleTriggerWANotice = () => {
+    setIsWANoticeOpen(true)
   }
 
   return (
@@ -361,7 +427,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
               <span>{formOpen ? "Tutup Formulir Lapor" : "Tulis Laporan / Saran"}</span>
             </button>
             <button
-              onClick={handleOpenWhatsAppAdmin}
+              onClick={handleTriggerWANotice}
               className="flex items-center justify-center gap-2 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-md hover:scale-102 transition-all cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
@@ -403,7 +469,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
               </h3>
 
               <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed">
-                Jika Anda mengalami masalah seperti <strong className="text-[#18181B] dark:text-white">link Zoom error / tidak bisa join</strong>, <strong className="text-[#18181B] dark:text-white">modul PDF gagal diunduh</strong>, <strong className="text-[#18181B] dark:text-white">tenggat upload tugas LMS bermasalah</strong>, atau ingin menyampaikan kritik dan saran, <span className="font-bold text-[#EA580C] dark:text-amber-400">segera isi formulir di bawah atau hubungi Admin Kelas</span> tanpa perlu login.
+                Jika Anda mengalami masalah seperti <strong className="text-[#18181B] dark:text-white">link Zoom error / tidak bisa join</strong>, <strong className="text-[#18181B] dark:text-white">modul PDF gagal diunduh</strong>, <strong className="text-[#18181B] dark:text-white">tenggat upload tugas LMS bermasalah</strong>, atau ingin menyampaikan kritik dan saran, <span className="font-bold text-[#EA580C] dark:text-amber-400">segera kirim laporan langsung ke Admin Pengurus Kelas</span> di bawah tanpa perlu login.
               </p>
             </div>
           </div>
@@ -421,7 +487,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
 
             <button
               type="button"
-              onClick={handleOpenWhatsAppAdmin}
+              onClick={handleTriggerWANotice}
               className="flex items-center justify-center gap-2 rounded-2xl bg-[#0D824B] hover:bg-[#0A6C3E] px-4 py-2.5 text-xs font-black text-white transition shadow-sm cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
@@ -442,7 +508,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
               className="pt-4 border-t border-[#FFD280]/60 dark:border-amber-900/60"
             >
               <form
-                onSubmit={handleSendCustomWhatsApp}
+                onSubmit={handleSubmitReportToAdmin}
                 className="rounded-2xl bg-white dark:bg-[#161B26] p-5 sm:p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
               >
                 <div className="flex items-center justify-between">
@@ -451,37 +517,69 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                       <Send className="h-3.5 w-3.5" />
                     </span>
                     <h4 className="font-black text-sm text-[#18181B] dark:text-white">
-                      Formulir Laporan Kendala & Kotak Saran (Tanpa Login)
+                      Formulir Laporan Kendala & Kotak Saran (Langsung ke Admin)
                     </h4>
                   </div>
-                  <span className="text-[10px] font-bold text-[#8C9BAE] dark:text-slate-400">
-                    Otomatis Diforward ke Admin
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                    Masuk ke Dashboard Pengurus
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {reportFeedback && (
+                  <div
+                    className={`rounded-xl p-3 text-xs font-bold border flex items-center gap-2 ${
+                      reportFeedback.type === "success"
+                        ? "bg-[#E6F7ED] dark:bg-emerald-950/80 text-[#0D824B] dark:text-emerald-300 border-[#A7F3D0] dark:border-emerald-800"
+                        : "bg-[#FFEAE9] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300 border-[#FFCDCA] dark:border-rose-800"
+                    }`}
+                  >
+                    {reportFeedback.type === "success" ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0D824B] dark:text-emerald-400" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-[#E11D48] dark:text-rose-400" />
+                    )}
+                    <span>{reportFeedback.message}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
-                      Nama Lengkap / Panggilan:
+                      Nama Lengkap <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
+                      required
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      placeholder="Contoh: Budi Santoso"
+                      placeholder="Contoh: Budi Santoso, S.Kom."
                       className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
-                      Satuan Kerja (Satker):
+                      Satuan Kerja (Satker) <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
+                      required
                       value={formSatker}
                       onChange={(e) => setFormSatker(e.target.value)}
-                      placeholder="Contoh: Kejati Sulsel / Kejari Jakarta Pusat"
+                      placeholder="Contoh: Kejati Sulsel / Kejari Soppeng"
+                      className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
+                      No. WhatsApp / HP (Opsional):
+                    </label>
+                    <input
+                      type="text"
+                      value={formContact}
+                      onChange={(e) => setFormContact(e.target.value)}
+                      placeholder="Contoh: 081234567890"
                       className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
                     />
                   </div>
@@ -507,20 +605,21 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
-                    Uraian Detail Kendala / Masukan:
+                    Uraian Detail Kendala / Masukan <span className="text-rose-500">*</span>:
                   </label>
                   <textarea
                     rows={3}
+                    required
                     value={formMessage}
                     onChange={(e) => setFormMessage(e.target.value)}
-                    placeholder="Tuliskan kendala yang Anda alami atau kritik & saran perbaikan..."
+                    placeholder="Tuliskan kendala yang Anda alami secara rinci atau kritik & saran perbaikan..."
                     className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] p-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                   <span className="text-[11px] text-[#8C9BAE] dark:text-slate-400">
-                    💡 Pesan akan diformat otomatis untuk diteruskan ke Helpdesk Admin.
+                    💡 Laporan langsung diterima dan dapat ditindaklanjuti oleh Pengurus di Dashboard Admin.
                   </span>
 
                   <div className="flex items-center gap-2">
@@ -544,10 +643,20 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
 
                     <button
                       type="submit"
-                      className="flex items-center gap-1.5 rounded-xl bg-[#0D824B] hover:bg-[#0A6C3E] px-4 py-2 text-xs font-black text-white transition shadow-sm cursor-pointer"
+                      disabled={isSubmittingReport}
+                      className="flex items-center gap-1.5 rounded-xl bg-[#18181B] dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 text-xs font-black text-white transition shadow-sm cursor-pointer"
                     >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      <span>Kirim ke WhatsApp Admin</span>
+                      {isSubmittingReport ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Mengirim ke Admin...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-3.5 w-3.5" />
+                          <span>Kirim Laporan ke Admin</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -595,11 +704,11 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
             <HelpCircle className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
             <h4 className="font-bold text-base text-[#18181B] dark:text-white">Pertanyaan Tidak Ditemukan</h4>
             <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-md mx-auto">
-              Belum ada jawaban untuk kata kunci "{searchQuery}". Anda bisa langsung menanyakannya ke Admin Kelas atau AI Copilot!
+              Belum ada jawaban untuk kata kunci "{searchQuery}". Anda bisa langsung mengirimkan kendala ke Admin Kelas atau menanyakannya di Forum Diskusi!
             </p>
             <div className="pt-2 flex justify-center gap-2">
               <button
-                onClick={handleOpenWhatsAppAdmin}
+                onClick={handleTriggerWANotice}
                 className="rounded-full bg-[#0D824B] text-white px-5 py-2 text-xs font-bold shadow-sm cursor-pointer"
               >
                 Tanya Admin via WA
@@ -730,7 +839,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={handleOpenWhatsAppAdmin}
+              onClick={handleTriggerWANotice}
               className="flex items-center gap-2 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-6 py-3 text-xs sm:text-sm font-black text-white shadow-md hover:scale-102 transition-all cursor-pointer"
             >
               <MessageCircle className="h-4 w-4" />
@@ -740,6 +849,88 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
           </div>
         </div>
       </div>
+
+      {/* 6. WHATSAPP NOTICE & REDIRECTION MODAL */}
+      <Modal
+        isOpen={isWANoticeOpen}
+        onClose={() => setIsWANoticeOpen(false)}
+        title="Pemberitahuan Komunikasi WhatsApp"
+        description="Koordinasi resmi Diklat Prakom Batch 3 Kejaksaan RI X Agrasena"
+      >
+        <div className="space-y-5">
+          {/* Informative Alert Banner */}
+          <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs">
+                <MessageCircle className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-black uppercase text-emerald-800 dark:text-emerald-300">
+                Admin Kelas & Grup WhatsApp Angkatan
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+              Untuk koordinasi langsung atau kendala yang mendesak, silakan hubungi langsung <strong>Pengurus / Admin Kelas resmi</strong> (Ketua Kelas, Sekretaris, atau Tim Helpdesk) atau sampaikan melalui <strong>Grup WhatsApp Resmi Angkatan Prakom Batch 3</strong> agar dapat dikoordinasikan secara terpadu bersama Widyaiswara Pusdiklat.
+            </p>
+          </div>
+
+          {/* Tips Box */}
+          <div className="rounded-2xl bg-slate-50 dark:bg-[#1E2433] p-4 border border-slate-200 dark:border-slate-700 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+              <Info className="h-4 w-4 text-amber-500" />
+              <span>Format Pesan Laporan Cepat:</span>
+            </div>
+            <pre className="p-3 rounded-xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-slate-700 font-mono text-[11px] text-slate-800 dark:text-slate-200 overflow-x-auto whitespace-pre-wrap">
+              {templateAdminMessage}
+            </pre>
+          </div>
+
+          {/* Modal Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleCopyTemplate}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2.5 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
+            >
+              {copiedFormat ? (
+                <>
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  <span className="text-emerald-700 font-black">Format Tersalin!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 text-slate-500" />
+                  <span>Salin Format Pesan</span>
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsWANoticeOpen(false)
+                  setFormOpen(true)
+                  // Smooth scroll to form
+                  window.scrollTo({ top: 300, behavior: "smooth" })
+                }}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 text-xs font-black hover:bg-slate-800 transition cursor-pointer"
+              >
+                <Send className="h-3.5 w-3.5" />
+                <span>Formulir Web</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenWhatsAppDirect}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-2xl bg-[#0D824B] hover:bg-[#0A6C3E] text-white px-4 py-2.5 text-xs font-black shadow-sm transition cursor-pointer"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Buka WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
