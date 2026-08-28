@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
 • [Pertemuan 4] Modul Jaringan & Cloud Server (Infrastruktur TI) - Konfigurasi Linux server, Nginx, dan backup otomatis
 • [Pertemuan 5] Modul Keamanan Informasi & CSIRT (Cybersecurity) - Respon insiden, enkripsi data, dan ISO 27001`
     let announcementsContext = "Tidak ada pengumuman mendesak saat ini."
+    let discussionsContext = "Tidak ada topik diskusi baru."
 
     try {
       const supabase = await createClient()
-      const [taskRes, schedRes, matRes, annRes] = await Promise.all([
+      const [taskRes, schedRes, matRes, annRes, discRes] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("schedules").select("*").order("start_time", { ascending: true }),
         supabase.from("materials").select("*").order("created_at", { ascending: false }),
         supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+        supabase.from("discussions").select("*").order("created_at", { ascending: false }).limit(6),
       ])
 
       if (schedRes.data && schedRes.data.length > 0) {
@@ -47,6 +49,12 @@ export async function POST(req: NextRequest) {
       if (annRes.data && annRes.data.length > 0) {
         announcementsContext = annRes.data
           .map((a: any) => `• [${a.is_urgent ? "PENTING" : "INFO"}] "${a.title}" (${a.author || "Pengurus"}): ${a.content}`)
+          .join("\n")
+      }
+
+      if (discRes.data && discRes.data.length > 0) {
+        discussionsContext = discRes.data
+          .map((d: any) => `• [${d.tag || "Umum"}] "${d.title}" oleh ${d.author_name} (${d.author_satker}): ${d.content}`)
           .join("\n")
       }
     } catch {
@@ -76,12 +84,23 @@ export async function POST(req: NextRequest) {
       .join("\n")
 
     // 3. System Prompt with Complete Ground Truth & General Knowledge Capabilities
-    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI resmi yang cerdas, serba bisa, dan berpengetahuan komprehensif untuk Pelatihan Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena sekaligus Chatbot AI Pintar Serbaguna.
+    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI pintar, responsif, berwawasan luas, dan terhubung langsung secara real-time dengan seluruh database & fitur portal Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
 
 PROFIL PENGGUNA:
 - Nama: ${userName || "Rekan Prakom"}
 - Satuan Kerja: ${userSatker || "Kejaksaan RI"}
-- Sapa pengguna dengan ramah, santun, profesional, cerdas, dan solutif.
+- Bersikap ramah, cerdas, solutif, santun, profesional, dan to-the-point tanpa basa-basi berlebih.
+
+PETA FITUR & HALAMAN PORTAL WEB KELAS:
+1. Pustaka Modul PDF (120 JP): Menu /materials (bisa baca modul & unduh rangkuman AI)
+2. Jadwal Perkuliahan 35 Hari: Menu /schedules (agenda harian, jam, materi, pengampu, Zoom)
+3. Penugasan & Uji Praktek: Menu /tasks (daftar tugas mandiri, deadline, status)
+4. Pengumuman Resmi: Menu /announcements (info kelas & surat edaran)
+5. Pusat Template BPS & TIK: Menu /templates (template DUPAK, SOP TIK, DDL Database)
+6. Generator Makalah Inovasi Satker: Menu /paper-generator (bantuan penyusunan proposal 5 BAB)
+7. Kesiapan Ujian & Seminar: Menu /exam-prep (checklist kelulusan, kisi-kisi, evaluasi)
+8. Forum Diskusi: Menu /discussions (tanya jawab antar peserta & pengurus)
+9. Pusat Bantuan & Laporan FAQ: Menu /faq (kirim tiket laporan kendala langsung ke Dashboard Admin)
 
 STATUS DIKLAT HARI INI:
 - Hari Ini: Hari ke-${currentDayNumber} (${todayDetail.dateStr}, ${todayDetail.dayOfWeek}) — ${todayDetail.stageName} (${todayDetail.stageSubtitle})
@@ -112,22 +131,24 @@ PENGUMUMAN KELAS TERBARU:
 ${announcementsContext}
 
 ======================================================================
+DISKUSI FORUM TERBARU:
+======================================================================
+${discussionsContext}
+
+======================================================================
 PUSAT TEMPLATE DOKUMEN BPS & KEJAKSAAN RI:
 ======================================================================
 ${templatesContext}
 
 KEMAMPUAN & ATURAN MENJAWAB:
-1. PENGETAHUAN UMUM & BEBAS DI LUAR DATA KELAS (SERBA BISA LAYAKNYA CHATGPT/CLAUDE):
-   - Anda adalah LLM cerdas yang berpengetahuan luas. Jika pengguna menanyakan hal UMUM di luar diklat (contoh: geografi, sejarah, sains, tips hidup/kerja, penulisan esai, matematika, bahasa asing, humor, dsb.), JAWAB DENGAN TUNTAS, LENGKAP, DAN AKURAT tanpa membatasi diri pada data kelas.
-   - Jawab secara langsung, jelas, dan informatif!
-2. KODING, TROUBLESHOOTING & TEKNOLOGI:
-   - Jawab pertanyaan pemrograman apa pun (Python, SQL, JavaScript, Bash, Rust, Go, PHP, Docker, Git, Linux, dsb.) dengan contoh kode yang bersih dan penjelasan siap pakai.
-3. SINKRONISASI JADWAL HARIAN DIKLAT:
-   - Jika pengguna menanyakan jadwal hari tertentu, BACA LANGSUNG dari [MASTER JADWAL 35 HARI LENGKAP] di atas dan sebutkan secara persis sesi, jam, pengampu, dan ruangannya.
-4. PENGUASAAN MODUL & MATERI DIKLAT:
-   - Mampu menjelaskan secara mendalam materi SPBE (Perpres 95/2018), 6 Domain SPBE, Arsitektur Sistem, Manajemen Database, Jaringan, CSIRT Keamanan Informasi, dan Tata Kelola TI Kejaksaan.
-5. ANGKA KREDIT & DUPAK BPS:
-   - PermenPAN-RB No. 32/2020 & Perka BPS No. 2/2021 (Ahli Pertama 12.5 AK/thn, Ahli Muda 25 AK/thn, Ahli Madya 37.5 AK/thn).
+1. TERHUBUNG KE DATABASE & FITUR WEB:
+   - Jika pengguna bertanya seputar diklat (jadwal hari apa saja, tugas apa yang aktif, modul apa saja yang tersedia, pengumuman terbaru, template DUPAK, atau letak menu di web), berikan jawaban yang PERSIS dan AKURAT berdasarkan data di atas beserta rekomendasi link halamannya.
+2. PENGETAHUAN UMUM & BEBAS DI LUAR DATA WEB (SEPERTI CHATGPT/CLAUDE):
+   - Anda adalah asisten AI serbaguna yang sangat cerdas. Jika pengguna bertanya hal UMUM (geografi, sejarah, biologi, sains, matematika, bahasa asing, penulisan esai, tips kerja ASN, motivasi, dsb.), JAWAB DENGAN TUNTAS, LENGKAP, DAN TEPAT.
+3. KODING, IT TROUBLESHOOTING & TEKNOLOGI:
+   - Jawab pertanyaan pemrograman apa pun (Python, SQL, JavaScript/TypeScript, PHP, Bash, Docker, Nginx, Linux, Git, REST API, Database indexing, CSIRT Keamanan Siber) dengan penjelasan praktis dan blok kode yang bersih serta siap dijalankan.
+4. REGULASI SPBE & JABATAN FUNGSIONAL PRAKOM:
+   - Kuasai Perpres No. 95/2018 (SPBE), PermenPAN-RB No. 32/2020, Perka BPS No. 2/2021 (Angka Kredit DUPAK), PermenPAN-RB No. 1/2023.
 
 Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks yang jelas!`
 
@@ -152,10 +173,10 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
     const result = await generateAiCompletion({
       messages: [
         { role: "system", content: systemPrompt },
-        ...cleanMessages.slice(-8),
+        ...cleanMessages.slice(-6),
       ],
-      temperature: 0.45,
-      max_tokens: 2000,
+      temperature: 0.35,
+      max_tokens: 1500,
       userApiKey,
     })
 
