@@ -162,34 +162,38 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     process.env.GROQ_API_KEY ||
     (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
 
+  // Dynamic timeout: scales with max_tokens so 4000-token papers get up to 35s while quick chats get 15s
+  const raceTimeoutMs = Math.max(15000, Math.min(50000, Math.floor(max_tokens * 9)))
+  const fallbackTimeoutMs = Math.max(10000, Math.min(35000, Math.floor(max_tokens * 7)))
+
   // 1. FAST HIGH-SPEED RACE (Concurrent Multi-Model Dispatch)
   const raceCandidates: Promise<GenerateAiResult>[] = []
 
   if (openRouterKey) {
     // OpenRouter GLM 5.2 Free Priority Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, 6000)
+      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
     )
     // OpenRouter Minimax M3 Free Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, 6000)
+      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
     )
     // OpenRouter Cohere North Mini Code Free Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("cohere/north-mini-code:free", messages, openRouterKey, temperature, max_tokens, 6000)
+      fetchOpenRouterSingle("cohere/north-mini-code:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
     )
   }
 
   if (groqKey) {
-    // Groq High-Speed Racers (< 1s latency)
+    // Groq High-Speed Racers
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, 6000)
+      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
     )
     raceCandidates.push(
-      fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, 6000)
+      fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
     )
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.6-27b", messages, groqKey, temperature, max_tokens, 6000)
+      fetchGroqSingle("qwen/qwen3.6-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
     )
   }
 
@@ -208,7 +212,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (groqKey) {
     for (const gm of GROQ_MODELS) {
       try {
-        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, 4000)
+        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, fallbackTimeoutMs)
       } catch {
         // Next
       }
@@ -218,7 +222,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (openRouterKey) {
     for (const m of OPENROUTER_FREE_MODELS) {
       try {
-        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, 4000)
+        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, fallbackTimeoutMs)
       } catch {
         // Next
       }
@@ -227,7 +231,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
 
   // 3. Emergency Static Fallback
   return {
-    text: "Halo Rekan Prakom! Server AI sedang memproses permintaan dengan beban antrean tinggi. Silakan ulangi pertanyaan Anda.",
+    text: "Halo Rekan Prakom! Server AI sedang memproses permintaan dengan beban antrean tinggi. Silakan ulangi permintaan Anda.",
     model: "system-fallback",
     provider: "fallback",
   }

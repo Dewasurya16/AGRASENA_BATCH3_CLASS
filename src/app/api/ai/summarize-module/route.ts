@@ -62,25 +62,26 @@ export async function POST(req: NextRequest) {
       extractedPdfText = await extractTextFromPdf(file_url)
     }
 
-    // 2. Build Groq AI Prompt based on real extracted PDF text
+    // 2. Build AI Prompt based on real extracted PDF text / curriculum
     const systemInstruction = `Anda adalah Widyaiswara Utama dan Pakar Kurikulum Resmi Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
-Tugas Anda adalah menyusun Rangkuman Bahan Ajar yang sangat terstruktur, komprehensif, akademis, mendalam, dan langsung siap dipelajari oleh peserta diklat.
+Tugas Anda adalah menyusun RANGKUMAN MATERI BELAJAR MODUL yang SANGAT MENDALAM, KOMPREHENSIF, AKADEMIS, SISTEMATIS BAB PER BAB, DAN LANGSUNG SIAP DIPELAJARI OLEH PESERTA DIKLAT UNTUK PERSIAPAN UJIAN MOOC & SIDANG SEMINAR.
 
-ATURAN MUTLAK & PENTING:
-1. DILARANG KERAS memberikan kalimat pembuka basa-basi, disclaimer, atau peringatan seperti "Saya tidak memiliki akses...", "Peringatan:", "Tanpa informasi tersebut...", atau meminta pengguna mengunggah teks.
-2. LANGSUNG sajikan RANGKUMAN LENGKAP & MENDALAM per bab dengan format Markdown yang rapi (#, ##, ###, bullet points •, dan penomoran).
-3. Kupas tuntas konsep utama, dasar hukum SPBE (Perpres 95/2018), PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021, arsitektur teknis, implementasi praktis di lingkungan Kejaksaan RI, dan tips uji kompetensi.`
+STANDAR KUALITAS RANGKUMAN:
+1. DILARANG KERAS membuat rangkuman yang singkat, sepotong-sepotong, atau dangkal.
+2. DILARANG memberikan kata pengantar basa-basi, disclaimer, atau permohonan maaf seperti "Saya tidak memiliki akses...", "Peringatan:", atau meminta pengguna mengunggah teks baru.
+3. LANGSUNG sajikan RANGKUMAN LENGKAP & MENDALAM per bab dengan format Markdown yang rapi (#, ##, ###, bullet points •, dan penomoran).
+4. Kupas tuntas konsep utama, landasan hukum SPBE (Perpres 95/2018), PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021 (DUPAK & SKP), arsitektur teknis, implementasi praktis di lingkungan Kejaksaan RI, dan tips uji kompetensi.`
 
     let userPrompt = ""
 
     if (extractedPdfText && extractedPdfText.length > 100) {
-      // Send up to 18,000 characters of the real PDF text
-      const truncatedText = extractedPdfText.slice(0, 18000)
+      // Send up to 20,000 characters of the real PDF text
+      const truncatedText = extractedPdfText.slice(0, 20000)
 
-      userPrompt = `Berikut adalah KUTIPAN TEKS ASLI DARI DOKUMEN BERKAS PDF MODUL (Total ${extractedPdfText.length} karakter):
+      userPrompt = `Berikut adalah KUTIPAN TEKS DOKUMEN BERKAS PDF MODUL (Total ${extractedPdfText.length} karakter):
 =====================================================
 JUDUL MODUL: ${title}
-MATA KULIAH: ${subject_name || "Diklat Fungsional Prakom"}
+MATA KULIAH / TAHAP: ${subject_name || "Diklat Fungsional Prakom 120 JP"}
 BERKAS: ${file_name}
 
 TEKS DOKUMEN PDF:
@@ -88,55 +89,57 @@ ${truncatedText}
 =====================================================
 
 PETUNJUK FORMAT PENULISAN:
-- Gunakan format hierarki heading (#, ##, ###), bullet point tebal (• **Poin:** Uraian), dan penomoran rapi agar mudah dibaca sebagai catatan belajar.
+- Gunakan hierarki heading (#, ##, ###), bullet point tebal (• **Poin:** Uraian), dan penomoran rapi agar mudah dipelajari.
 - Jangan gunakan tabel markdown pipa (| col | col |).
+- Uraikan setiap bab secara mendalam dalam paragraf-paragraf yang utuh dan jelas.
 
 TUGAS ANDA:
-Susunlah RANGKUMAN BELAJAR LENGKAP & MENDALAM DARI DOKUMEN ASLI DI ATAS:
+Susunlah RANGKUMAN BELAJAR LENGKAP, MENDALAM & BERBOBOT DARI DOKUMEN DI ATAS:
 
-# 📘 1. IDENTITAS & RUANG LINGKUP MODUL
+# 📘 1. IDENTITAS, RUANG LINGKUP & REGULASI MODUL
 • **Judul Modul:** ${title}
-• **Tahapan & Topik:** ${subject_name || "Diklat Fungsional Prakom 120 JP"}
-• **Dasar Regulasi Terkait:** PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021, Perpres No. 95/2018 (SPBE)
-• **Tujuan Pembelajaran:** (Uraikan tujuan umum & kompetensi yang dicapai)
+• **Mata Kuliah / Tahapan:** ${subject_name || "Diklat Fungsional Prakom 120 JP"}
+• **Dasar Hukum Terkait:** PermenPAN-RB No. 32/2020 (JF Prakom), Perka BPS No. 2/2021 (Petunjuk Teknis Butir Kegiatan & Angka Kredit), PermenPAN-RB No. 1/2023, Perpres No. 95/2018 (SPBE).
+• **Tujuan Pembelajaran & Kompetensi Akhir:** (Uraikan kompetensi teknis yang harus dikuasai peserta setelah mempelajari modul ini)
 
-# 📖 2. BEDAH MATERI BAB PER BAB (MENDALAM & TUNTAS)
-(Uraikan secara detail tiap bab, teori, formula, tahapan SDLC/Teknis, dan penjelasan penting yang terdapat dalam dokumen)
+# 📖 2. BEDAH MATERI LENGKAP BAB PER BAB (MENDALAM & TUNTAS)
+(Bedah secara terperinci setiap bab, landasan teori, metodologi, standar operasional, arsitektur teknis, dan prosedur kerja yang termuat dalam dokumen modul)
 
-# 🎯 3. KONSEP KUNCI & INDIKATOR HASIL BELAJAR
-• **Konsep Inti:** (Daftar istilah dan konsep teknis yang wajib dikuasai)
-• **Parameter Keberhasilan:** (Indikator penguasaan materi)
+# 🎯 3. KONSEP KUNCI, FORMULA & GLOSARIUM TEKNIS
+• **Konsep & Terminologi Utama:** (Jelaskan minimal 5-8 istilah teknis penting yang menjadi pokok bahasan modul)
+• **Formula / Standar Kinerja:** (Parameter perhitungan, bobot angka kredit, atau metrik evaluasi terkait materi)
 
-# 🏢 4. PENERAPAN PRAKTIS DI KEJAKSAAN RI
-• **Studi Kasus & Implementasi Satker:** (Penerapan modul ini di Kejati, Kejari, maupun Badiklat)
+# 🏢 4. STUDI KASUS & PENERAPAN NYATA DI KEJAKSAAN RI
+• **Implementasi di Satuan Kerja (Kejati / Kejari / Badiklat):** (Berikan contoh skenario nyata bagaimana materi ini diterapkan oleh Pranata Komputer dalam mendukung operasional penegakan hukum dan administrasi perkara di Kejaksaan)
+• **Peningkatan Kualitas Layanan Publik:** (Dampak positif penerapan materi terhadap kepuasan masyarakat dan transparansi PTSP)
 
-# 💡 5. KISI-KISI UJIAN MOOC & TIPS KELULUSAN
-• **Poin Kritis / Potensi Soal Ujian:** (Poin-poin penting yang sering menjadi materi uji kompetensi)
-• **Rekomendasi Tindak Lanjut Belajar:** (Langkah praktis peserta)`
+# 💡 5. KISI-KISI EVALUASI KOMPREHENSIF MOOC & TIPS KELULUSAN
+• **Poin Kritis / Potensi Soal Ujian Komprehensif:** (Uraikan topik-topik krusial yang paling sering diujikan pada evaluasi MOOC dan ujian akhir)
+• **Strategi Belajar & Dokumentasi Bukti Fisik:** (Langkah praktis bagi peserta untuk menguasai materi dan menyusun bukti fisik SKP/DUPAK)`
     } else {
       userPrompt = `Susunlah RANGKUMAN KOMPREHENSIF & MENDALAM BAB PER BAB untuk materi modul Diklat Fungsional Pranata Komputer Kejaksaan RI:
 
 - Judul Modul: ${title}
-- Tahapan Diklat: ${subject_name || "Tahap 1 • MOOC"}
+- Tahapan Diklat: ${subject_name || "Tahap 1 • MOOC (120 JP)"}
 - Minggu Pertemuan: Ke-${week_number || 1}
 - Topik / Deskripsi: ${description || "Materi Pembelajaran Kurikulum Fungsional Prakom 120 JP"}
 
-STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI LENGKAP TANPA PERINGATAN/DISCLAIMER):
+STRUKTUR RANGKUMAN LENGKAP & MENDALAM YANG HARUS ANDA BUAT (LANGSUNG MATERI LENGKAP TANPA DISCLAIMER):
 
-# 📘 1. IDENTITAS & RUANG LINGKUP MODUL
+# 📘 1. IDENTITAS, RUANG LINGKUP & REGULASI MODUL
 • **Judul Modul:** ${title}
 • **Mata Kuliah / Tahap:** ${subject_name || "Diklat Fungsional Prakom 120 JP"}
-• **Dasar Hukum & Regulasi:** PermenPAN-RB No. 32/2020 (Jabatan Fungsional Pranata Komputer), Perka BPS No. 2/2021 (Petunjuk Teknis Penilaian Angka Kredit Prakom), PermenPAN-RB No. 1/2023, Perpres No. 95/2018 (SPBE).
+• **Dasar Hukum & Regulasi:** PermenPAN-RB No. 32/2020 (Jabatan Fungsional Pranata Komputer), Perka BPS No. 2/2021 (Petunjuk Teknis Penilaian Angka Kredit Prakom), PermenPAN-RB No. 1/2023, Perpres No. 95/2018 (SPBE), Perpres No. 132/2022 (Arsitektur SPBE Nasional).
 • **Tujuan Pembelajaran:** Menguasai tata kelola, implementasi teknis, dan standar baku fungsional Pranata Komputer pada materi ${title}.
 
-# 📖 2. BEDAH MATERI BAB PER BAB (KOMPREHENSIF)
+# 📖 2. BEDAH MATERI LENGKAP BAB PER BAB (KOMPREHENSIF & TUNTAS)
 ### Bab I: Pendahuluan & Kerangka Konseptual
-• **Latar Belakang & Urgensi:** Uraian pentingnya materi ${title} dalam mendukung transformasi digital Kejaksaan RI.
+• **Latar Belakang & Urgensi:** Uraian mendalam pentingnya materi ${title} dalam mendukung transformasi digital Kejaksaan RI.
 • **Prinsip Utama:** Standarisasi mutu layanan, transparansi data, dan akuntabilitas penegakan hukum.
 
 ### Bab II: Tata Kelola, Standar & Best Practices
-• **Struktur Manajemen & Alur Kerja:** Tahapan perencanaan, implementasi, dan pengawasan operasional.
-• **Kepatuhan Terhadap Regulasi:** Penyelarasan dengan Arsitektur SPBE Nasional dan standar ISO/IEC.
+• **Struktur Manajemen & Alur Kerja:** Tahapan perencanaan, implementasi, dan pengawasan operasional sistem TIK.
+• **Kepatuhan Terhadap Regulasi:** Penyelarasan dengan Arsitektur SPBE Nasional dan standar ISO/IEC 27001.
 
 ### Bab III: Aspek Teknis & Metodologi Pelaksanaan
 • **Komponen & Arsitektur Solusi:** Perancangan modul, integrasi data perkara, dan pengamanan sistem.
@@ -154,7 +157,7 @@ STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI LENGKAP TANPA P
 • **Penerapan Sistem di Satker:** Implementasi praktis pada Kejaksaan Tinggi (Kejati), Kejaksaan Negeri (Kejari), dan Cabang Kejaksaan Negeri.
 • **Dampak Layanan Publik:** Peningkatan kecepatan penanganan perkara dan transparansi layanan PTSP.
 
-# 💡 5. KISI-KISI UJIAN MOOC & TIPS KELULUSAN
+# 💡 5. KISI-KISI EVALUASI KOMPREHENSIF MOOC & TIPS KELULUSAN
 • **Fokus Uji Kompetensi:** Topik-topik penting yang kerap diujikan pada evaluasi MOOC dan seminar akhir.
 • **Strategi Belajar Peserta:** Langkah konkret penguasaan modul dan penyusunan bukti fisik angka kredit.`
     }
@@ -165,8 +168,8 @@ STRUKTUR RANGKUMAN YANG HARUS ANDA BUAT (LANGSUNG SAJIKAN MATERI LENGKAP TANPA P
         { role: "system", content: systemInstruction },
         { role: "user", content: userPrompt },
       ],
-      temperature: 0.3,
-      max_tokens: 3800,
+      temperature: 0.35,
+      max_tokens: 4096,
     })
 
     if (result.text && result.text.length > 200) {
