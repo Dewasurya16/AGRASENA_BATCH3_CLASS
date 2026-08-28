@@ -183,26 +183,14 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     process.env.GROQ_API_KEY ||
     (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
 
-  // Dynamic timeout: scales with max_tokens
-  const raceTimeoutMs = Math.max(15000, Math.min(50000, Math.floor(max_tokens * 9)))
-  const fallbackTimeoutMs = Math.max(10000, Math.min(35000, Math.floor(max_tokens * 7)))
+  // Fast Vercel-optimized timeout (under 5 seconds to guarantee instant response)
+  const raceTimeoutMs = 5000
 
   // 1. FAST HIGH-SPEED RACE (Concurrent Multi-Model Dispatch)
   const raceCandidates: Promise<GenerateAiResult>[] = []
 
-  if (openRouterKey) {
-    // OpenRouter GLM 5.2 Free Priority Racer
-    raceCandidates.push(
-      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
-    )
-    // OpenRouter Minimax M3 Free Racer
-    raceCandidates.push(
-      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
-    )
-  }
-
   if (groqKey) {
-    // Groq High-Speed Racers (Prioritizing non-thinking models that output full 5 chapters)
+    // Groq High-Speed Racers
     raceCandidates.push(
       fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
@@ -214,6 +202,16 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     )
   }
 
+  if (openRouterKey) {
+    // OpenRouter Free Racers
+    raceCandidates.push(
+      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
+    )
+    raceCandidates.push(
+      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
+    )
+  }
+
   if (raceCandidates.length > 0) {
     try {
       const winner = await Promise.any(raceCandidates)
@@ -221,32 +219,28 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
         return winner
       }
     } catch {
-      // Parallel race failed, proceed to fallback sequence
+      // Parallel race failed, proceed to fast recovery
     }
   }
 
-  // 2. BACKUP POOL (Sequential Recovery)
+  // 2. QUICK RECOVERY (Only 1 direct backup attempt)
   if (groqKey) {
-    for (const gm of GROQ_MODELS) {
-      try {
-        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, fallbackTimeoutMs, mustIncludeKeyPhrases)
-      } catch {
-        // Next
-      }
+    try {
+      return await fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, 2500, mustIncludeKeyPhrases)
+    } catch {
+      // Next
     }
   }
 
   if (openRouterKey) {
-    for (const m of OPENROUTER_FREE_MODELS) {
-      try {
-        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, fallbackTimeoutMs, mustIncludeKeyPhrases)
-      } catch {
-        // Next
-      }
+    try {
+      return await fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, 2500, mustIncludeKeyPhrases)
+    } catch {
+      // Next
     }
   }
 
-  // 3. Emergency Static Fallback
+  // 3. Emergency Fallback
   return {
     text: "Halo Rekan Prakom! Server AI sedang memproses permintaan dengan beban antrean tinggi. Silakan ulangi permintaan Anda.",
     model: "system-fallback",
