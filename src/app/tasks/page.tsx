@@ -30,8 +30,8 @@ export default async function TasksPage() {
 
   const now = new Date().getTime()
   const activeTasks = tasks.filter((t) => t.status !== "completed")
-  // Pick nearest active task that hasn't passed 23:59:59 today, or earliest active
-  const closestTask = activeTasks.find((t) => getTaskDeadlineTimestamp(t.due_date) >= now) || activeTasks[0] || tasks[0]
+  const futureTasks = activeTasks.filter((t) => getTaskDeadlineTimestamp(t.due_date) > now)
+  const closestTask = futureTasks.length > 0 ? futureTasks[0] : null
 
   return (
     <PublicShell>

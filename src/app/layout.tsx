@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -12,8 +12,21 @@ const outfit = Outfit({
   weight: ['400', '500', '600', '700', '800'],
 })
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#10141C' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agrasena-batch-3-class.vercel.app'),
+  applicationName: 'Web Kelas Prakom 625',
   title: {
     default: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI X Agrasena',
     template: '%s | Diklat Prakom Batch 3 Kejaksaan RI',
@@ -33,6 +46,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'Dewa Sinar Surya, S.Kom.', url: 'https://github.com/Dewasurya16' }],
   creator: 'Dewa Sinar Surya, S.Kom.',
   publisher: 'Pusdiklat Kejaksaan RI X Agrasena',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Prakom 625',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     type: 'website',
     locale: 'id_ID',
@@ -57,6 +78,13 @@ export const metadata: Metadata = {
       'Portal backup materi modul 120 JP, roadmap 35 hari, AI generator makalah inovasi 5 Bab, dan template DUPAK resmi.',
     images: ['/Logo.webp'],
   },
+  icons: {
+    icon: [
+      { url: '/Logo.webp', href: '/Logo.webp' },
+    ],
+    shortcut: '/Logo.webp',
+    apple: '/Logo.webp',
+  },
   robots: {
     index: true,
     follow: true,
@@ -70,7 +98,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={outfit.variable} suppressHydrationWarning>
-      <body className="min-h-screen bg-[#F4F6FA] dark:bg-[#0B0D11] text-[#131E29] dark:text-[#F1F5F9] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830] transition-colors duration-200">
+      <body className="min-h-screen bg-[#F4F6FA] dark:bg-[#14181F] text-[#131E29] dark:text-[#D8E0EC] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830] transition-colors duration-250">
         <ThemeProvider>
           <div className="relative flex min-h-screen flex-col">
             {children}

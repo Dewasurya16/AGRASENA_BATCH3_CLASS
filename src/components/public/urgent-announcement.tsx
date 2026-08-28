@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from "react"
-import { BellRing, Pin, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Bell, X, ArrowRight, BellRing } from "lucide-react"
+import Link from "next/link"
 
 export interface UrgentAnnouncementProps {
   announcements?: Array<{
@@ -17,47 +19,79 @@ export interface UrgentAnnouncementProps {
 export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
   const [isDismissed, setIsDismissed] = React.useState(false)
 
-  const activeAnnouncement =
-    announcements && announcements.length > 0
-      ? announcements.find((a) => a.is_urgent)
-      : null
+  const item = announcements?.find((a) => a.is_urgent) ?? null
 
-  if (isDismissed || !activeAnnouncement) return null
+  if (isDismissed || !item) return null
+
+  const formattedDate = new Date(item.created_at).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
 
   return (
-    <div className="relative overflow-hidden rounded-[28px] bg-[#FFEADA]/60 dark:bg-[#2A1810]/70 border border-[#FFCDCA] dark:border-amber-900/50 p-4 sm:p-5 shadow-sm transition-all duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#FF7643] text-white shadow-md shadow-[#FF7643]/20">
-            <BellRing className="h-5 w-5 animate-pulse" />
+    <AnimatePresence>
+      <motion.aside
+        aria-label="Pengumuman penting"
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+        className="relative overflow-hidden rounded-[14px] bg-gradient-to-r from-amber-500/[0.08] via-amber-500/[0.04] to-orange-500/[0.02] dark:from-amber-950/40 dark:via-[#1C1713] dark:to-[#181E2C] border border-amber-500/25 dark:border-amber-500/35 p-3.5 sm:p-4 shadow-xs transition-all"
+      >
+        <div className="flex items-start gap-3 sm:gap-3.5">
+          {/* Refined Icon Pod */}
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 dark:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 mt-0.5">
+            <Bell className="h-4 w-4 animate-[swing_2s_ease-in-out_infinite]" />
           </div>
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#FF7643] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                <Pin className="h-2.5 w-2.5" />
-                Pengumuman Cepat
-              </span>
-              <h3 className="text-sm font-bold text-[#131E29] dark:text-white tracking-tight">
-                {activeAnnouncement.title}
-              </h3>
-            </div>
-            <p className="text-xs text-[#52647C] dark:text-slate-300 leading-relaxed max-w-3xl">
-              {activeAnnouncement.content}
-            </p>
-            <p className="text-[10px] text-[#FF7643] dark:text-[#FFA07A] font-semibold pt-0.5">
-              Dari: {activeAnnouncement.author} • {new Date(activeAnnouncement.created_at).toLocaleDateString("id-ID")}
-            </p>
-          </div>
-        </div>
 
-        <button
-          onClick={() => setIsDismissed(true)}
-          className="self-start sm:self-center shrink-0 rounded-full bg-white/80 dark:bg-[#1E2433] p-1.5 text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors shadow-sm cursor-pointer"
-          title="Tutup Pengumuman"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+          {/* Main Content Area */}
+          <div className="flex flex-col gap-2 min-w-0 flex-1">
+            {/* Top Bar: Badge + Title */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 dark:bg-amber-500/30 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 border border-amber-500/35 shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+                  Pengumuman Mendesak
+                </span>
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  {item.author} · {formattedDate}
+                </span>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight leading-snug">
+              {item.title}
+            </h4>
+
+            {/* Content Body: Full Text Visibility */}
+            <div className="text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line font-normal">
+              {item.content}
+            </div>
+
+            {/* Bottom Actions Bar with Navigation to /announcements */}
+            <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2">
+              <Link href="/announcements">
+                <button className="inline-flex items-center gap-1.5 rounded-[8px] bg-amber-500/20 hover:bg-amber-500/30 dark:bg-amber-500/25 dark:hover:bg-amber-500/35 border border-amber-500/35 px-3 py-1.5 text-xs font-black text-amber-900 dark:text-amber-200 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
+                  <BellRing className="h-3.5 w-3.5" />
+                  <span>Lihat Semua Pengumuman</span>
+                  <ArrowRight className="h-3 w-3 text-amber-800 dark:text-amber-300" />
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Close Action Button */}
+          <button
+            onClick={() => setIsDismissed(true)}
+            aria-label="Tutup pengumuman"
+            className="p-1 rounded-[6px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-amber-500/15 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0 absolute right-3 top-3"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </motion.aside>
+    </AnimatePresence>
   )
 }

@@ -29,7 +29,7 @@ export default async function AnnouncementsPage() {
   return (
     <PublicShell>
       <div className="space-y-6">
-        <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-6 border border-slate-200 dark:border-[#2A3550] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFEAE9] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300">
               <BellRing className="h-6 w-6" />
@@ -50,7 +50,7 @@ export default async function AnnouncementsPage() {
         </div>
 
         {announcements.length === 0 ? (
-          <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-12 text-center border border-dashed border-slate-200 dark:border-[#2A3550] space-y-3">
             <Sparkles className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
             <h4 className="font-bold text-base text-[#18181B] dark:text-white">Belum Ada Pengumuman Aktif</h4>
             <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-md mx-auto">

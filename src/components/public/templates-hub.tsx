@@ -543,72 +543,72 @@ export function TemplatesHub() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       {/* Header Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             <Layers className="h-3.5 w-3.5" />
             <span>Format Resmi BPS & Kejaksaan RI</span>
           </span>
-          <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+          <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
             Standar Perka BPS No. 2/2021 & PermenPAN-RB 1/2023
           </span>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+        <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
           Pusat Download Template Dokumen TIK, <br className="hidden sm:block" />
-          <span className="text-[#0D824B] dark:text-emerald-400">DUPAK / SKP BPS & Administrasi Satker</span>
+          <span className="text-emerald-700 dark:text-emerald-400">DUPAK / SKP BPS & Administrasi Satker</span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
           Koleksi formulir dan naskah dinas resmi yang telah disesuaikan 100% dengan regulasi <strong>Badan Pusat Statistik (BPS)</strong> selaku Instansi Pembina Jabatan Fungsional Pranata Komputer dan <strong>Tata Naskah Dinas Kejaksaan RI</strong>.
         </p>
       </motion.div>
 
       {/* Compliance Highlights Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
-          <Award className="h-5 w-5 text-[#0D824B] shrink-0 mt-0.5" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
+          <Award className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Perka BPS No. 2 Tahun 2021</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">Sesuai Lampiran I-IV Juknis Penilaian Angka Kredit Prakom (SPMK 5 Sub-Unsur & Logbook).</p>
+            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Perka BPS No. 2 Tahun 2021</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Sesuai Lampiran I-IV Juknis Penilaian Angka Kredit Prakom (SPMK 5 Sub-Unsur & Logbook).</p>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
-          <Building2 className="h-5 w-5 text-[#EA580C] shrink-0 mt-0.5" />
+        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
+          <Building2 className="h-4 w-4 text-orange-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Tata Naskah Dinas Kejaksaan</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">Format baku kop surat, penomoran PRINT & BA, dan pejabat pengesahan Kejati/Kejari.</p>
+            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Tata Naskah Dinas Kejaksaan</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Format baku kop surat, penomoran PRINT & BA, dan pejabat pengesahan Kejati/Kejari.</p>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-[#161B26] p-4 border-2 border-slate-200 dark:border-slate-800 flex items-start gap-3 shadow-2xs">
-          <BookOpen className="h-5 w-5 text-purple-600 shrink-0 mt-0.5" />
+        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
+          <BookOpen className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-xs font-black text-[#131E29] dark:text-white">Standar Pusdiklat Badiklat</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">Format naskah proposal seminar rencana aksi inovasi siap diuji di hadapan Widyaiswara.</p>
+            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Standar Pusdiklat Badiklat</h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Format naskah proposal seminar rencana aksi inovasi siap diuji di hadapan Widyaiswara.</p>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari template SPT, DUPAK BPS, SOP..."
-              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D824B] focus:outline-none"
+              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -618,10 +618,10 @@ export function TemplatesHub() {
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
                   selectedCategory === cat
-                    ? "bg-[#0D824B] text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045]"
                 }`}
               >
                 {cat}
@@ -632,56 +632,56 @@ export function TemplatesHub() {
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {filteredTemplates.map((template) => (
           <motion.div
             key={template.id}
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            className="flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5.5 border-2 border-slate-200 dark:border-slate-800 hover:border-[#0D824B] dark:hover:border-emerald-500 shadow-sm transition-all duration-300"
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] hover:border-slate-400 dark:hover:border-slate-500 shadow-2xs transition-all duration-200"
           >
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-bold text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   {template.category}
                 </span>
-                <span className="font-mono text-[11px] font-bold text-[#EA580C] dark:text-amber-400 bg-[#FFF9F5] dark:bg-amber-950/60 px-2 py-0.5 rounded-lg border border-[#FFEADA] dark:border-slate-700">
+                <span className="font-mono text-[10px] font-bold text-orange-600 dark:text-amber-400 bg-orange-50 dark:bg-[#161B26] px-2 py-0.5 rounded-[6px] border border-orange-200 dark:border-[#2A3550]">
                   {template.format}
                 </span>
               </div>
 
-              <h3 className="font-black text-base text-[#131E29] dark:text-white line-clamp-2 leading-snug">
+              <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
                 {template.title}
               </h3>
 
-              <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                 {template.description}
               </p>
 
-              <div className="pt-1">
-                <span className="text-[10px] text-slate-500 font-mono block truncate">
+              <div className="pt-0.5">
+                <span className="text-[10px] text-slate-400 font-mono block truncate">
                   ⚖️ Dasar: {template.legalReference}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 gap-2">
+            <div className="flex items-center justify-between border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3 gap-2">
               <button
                 type="button"
                 onClick={() => setPreviewTemplate(template)}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#0D824B] dark:text-emerald-400 hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3.5 w-3.5" />
                 <span>{template.file_url?.endsWith(".pdf") ? "Pratinjau PDF" : "Lihat Format"}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleDownload(template)}
-                className="flex items-center gap-1.5 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
+                className="flex items-center gap-1 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white px-3 py-1.5 rounded-[6px] text-xs font-black shadow-2xs transition cursor-pointer"
               >
-                <Download className="h-3.5 w-3.5" />
+                <Download className="h-3 w-3" />
                 <span>Unduh {template.format.split(" ")[0]}</span>
               </button>
             </div>
@@ -698,23 +698,23 @@ export function TemplatesHub() {
           description={`${previewTemplate.category} • Format: ${previewTemplate.format}`}
           className="max-w-4xl"
         >
-          <div className="space-y-4 pt-1">
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <div className="space-y-3.5 pt-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 dark:bg-[#161B26] p-2.5 rounded-[8px] border border-slate-200 dark:border-[#2A3550] text-xs font-semibold text-slate-600 dark:text-slate-300">
               <span>⚖️ Dasar Regulasi: {previewTemplate.legalReference}</span>
               {previewTemplate.contentDoc && (
                 <button
                   type="button"
                   onClick={handleCopyContent}
-                  className="flex items-center gap-1 bg-white dark:bg-slate-700 text-slate-700 dark:text-white px-3 py-1 rounded-xl font-bold border border-slate-200 dark:border-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                  className="flex items-center gap-1 bg-white dark:bg-[#1B2130] text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-[6px] font-bold border border-slate-200 dark:border-[#2A3550] hover:bg-slate-100 transition cursor-pointer text-xs"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
                   <span>{copied ? "Tersalin!" : "Salin Teks"}</span>
                 </button>
               )}
             </div>
 
             {previewTemplate.file_url?.toLowerCase().endsWith(".pdf") ? (
-              <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-900 h-[60vh]">
+              <div className="rounded-[10px] border border-slate-200 dark:border-[#2A3550] overflow-hidden bg-slate-100 dark:bg-slate-900 h-[60vh]">
                 <iframe
                   src={previewTemplate.file_url}
                   title={previewTemplate.title}
@@ -722,30 +722,30 @@ export function TemplatesHub() {
                 />
               </div>
             ) : previewTemplate.contentDoc ? (
-              <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#181D28] p-4 sm:p-6 overflow-y-auto max-h-[55vh] shadow-inner">
+              <div className="rounded-[10px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] p-4 overflow-y-auto max-h-[55vh] shadow-inner">
                 <pre className="font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
                   {previewTemplate.contentDoc}
                 </pre>
               </div>
             ) : (
-              <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <FileText className="h-10 w-10 mx-auto text-slate-400" />
+              <div className="p-6 text-center bg-slate-50 dark:bg-[#161B26] rounded-[10px] border border-slate-200 dark:border-[#2A3550] space-y-1.5">
+                <FileText className="h-8 w-8 mx-auto text-slate-400" />
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Dokumen {previewTemplate.format} ({previewTemplate.file_name || "Lampiran"}) siap diunduh
                 </p>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-              <span className="text-xs text-slate-500 font-mono">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1.5">
+              <span className="text-xs text-slate-400 font-mono">
                 Format resmi BPS & Kejaksaan RI — Siap diedit di {previewTemplate.format}
               </span>
               <button
                 type="button"
                 onClick={() => handleDownload(previewTemplate)}
-                className="flex items-center gap-2 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-5 py-2 rounded-2xl text-xs font-black shadow-md transition cursor-pointer w-full sm:w-auto justify-center"
+                className="flex items-center gap-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white px-4 py-2 rounded-[8px] text-xs font-black shadow-xs transition cursor-pointer w-full sm:w-auto justify-center"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-3.5 w-3.5" />
                 <span>Unduh File ({previewTemplate.format})</span>
               </button>
             </div>

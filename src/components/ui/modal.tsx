@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 
@@ -23,6 +24,12 @@ export function Modal({
   className,
   bodyClassName,
 }: ModalProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose()
@@ -37,46 +44,52 @@ export function Modal({
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto p-2 sm:p-6 flex min-h-screen items-center justify-center">
-      {/* Backdrop */}
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] overflow-y-auto p-3 sm:p-6 flex min-h-screen items-center justify-center">
+      {/* Full-Screen Deep Frosted Backdrop Blur (Direct on document.body) */}
       <div
-        className="fixed inset-0 bg-[#0A1612]/60 dark:bg-black/80 backdrop-blur-md transition-opacity animate-fadeIn"
+        className="fixed inset-0 bg-slate-950/75 dark:bg-black/85 transition-all duration-300 animate-fadeIn"
+        style={{
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+        }}
         onClick={onClose}
       />
 
       {/* Modal Card Container */}
       <div
         className={cn(
-          "relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[94vh] flex flex-col rounded-[32px] bg-white dark:bg-[#12161F] shadow-2xl shadow-black/25 dark:shadow-black/70 border-2 border-slate-200 dark:border-slate-800 transition-all animate-scaleUp my-auto overflow-hidden",
+          "relative z-10 w-full max-w-lg sm:max-w-xl md:max-w-2xl max-h-[94vh] flex flex-col rounded-[16px] bg-white dark:bg-[#1B2130] shadow-2xl shadow-black/60 dark:shadow-black/90 border border-slate-200 dark:border-[#2A3550] transition-all animate-scaleUp my-auto overflow-hidden",
           className
         )}
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-100 dark:border-slate-800 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
+        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-100 dark:border-[#2A3550] bg-[#FAFBFD] dark:bg-[#1E2535] shrink-0">
           <div className="pr-4 space-y-0.5">
-            <h3 className="text-base sm:text-lg font-black text-[#131E29] dark:text-white tracking-tight">{title}</h3>
+            <h3 className="text-base sm:text-lg font-black text-[#131E29] dark:text-[#D8E0EC] tracking-tight">{title}</h3>
             {description && (
-              <p className="text-xs text-[#6B7C93] dark:text-slate-400 leading-relaxed">{description}</p>
+              <p className="text-xs text-[#6B7C93] dark:text-[#8A9BB8] leading-relaxed">{description}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup Modal"
-            className="rounded-full bg-slate-200/80 dark:bg-slate-800 p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shrink-0 cursor-pointer"
+            className="rounded-full bg-slate-100 dark:bg-[#253045] p-2 text-slate-500 dark:text-[#7A8FA8] hover:bg-slate-200 dark:hover:bg-[#2D3A52] hover:text-slate-800 dark:hover:text-[#D8E0EC] transition shrink-0 cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Modal Body with internal scrolling */}
-        <div className={cn("flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain text-[#18181B] dark:text-slate-100", bodyClassName)}>
+        <div className={cn("flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain text-[#18181B] dark:text-[#D8E0EC]", bodyClassName)}>
           {children}
         </div>
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }

@@ -25,32 +25,94 @@
     --pastel-coral-text: #E11D48;
     --pastel-purple: #F3E8FF;
     --pastel-purple-text: #7E22CE;
+
+    /* Dark mode overrides for dark theme via CSS vars */
+    --dark-bg: #10141C;
+    --dark-card: #171C27;
+    --dark-border: #232A38;
+    --dark-text: #E2E8F0;
+    --dark-muted: #7D8FA6;
   }
 
   .dark,
   [data-theme="dark"] {
-    --bg-main: #0B0D11;
-    --card-bg: #13171F;
-    --text-primary: #F1F5F9;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
+    /* 
+      Dark palette yang nyaman di mata:
+      - Background: charcoal abu-biru hangat, bukan pure black
+      - Text: off-white sedikit biru-dingin, bukan pure white
+      - Secondary: mid-tone abu, cukup kontras tapi tidak keras
+    */
+    --bg-main: #14181F;         /* charcoal hangat, bukan pitch black */
+    --card-bg: #1B2130;         /* card sedikit lebih terang dari bg */
+    --text-primary: #D8E0EC;    /* off-white lembut, tidak menyilaukan */
+    --text-secondary: #8A9BB8;  /* abu-biru mid-tone */
+    --text-muted: #556070;      /* muted tone lebih gelap */
     color-scheme: dark;
   }
   
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
     font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
+    /* Smooth theme transition */
+    transition-property: background-color, color, border-color;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Heading text wrap balance — prevents orphaned words */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+
+  /* Short descriptive text - prevent awkward wrapping */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Tabular nums for all dynamic numbers (clock, counters, progress) */
+  .tabular-nums,
+  [data-tabular],
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Base Body Colors */
+/* Dark body — override memastikan tidak ada konflik dengan var() */
 .dark body,
 [data-theme="dark"] body {
-  background-color: #0B0D11;
-  color: #F1F5F9;
+  background-color: #14181F;
+  color: #D8E0EC;
 }
+
+/* ── Pastel backgrounds in dark mode ── 
+   Pastel terang seperti #E6F7ED (mint), #E8F2FE (blue), #FFF4D6 (yellow)
+   diubah menjadi versi dark yang lembut via filter/overlay
+   tanpa harus edit tiap komponen satu per satu */
+.dark [class*="bg-[#E6F7ED]"],
+.dark [class*="dark:bg-emerald-950"],
+.dark [class*="dark:bg-sky-950"],
+.dark [class*="dark:bg-rose-950"],
+.dark [class*="dark:bg-amber-950"],
+.dark [class*="dark:bg-indigo-950"],
+.dark [class*="dark:bg-purple-950"] {
+  opacity: 0.85;
+}
+
+/* ── Page section wrappers ── 
+   Semua elemen yang punya dark:bg-[hardcode] gelap
+   tapi belum diubah akan terbantu dari utility override di bawah */
 
 /* Custom Soft Shadows */
 .soft-card-shadow {
@@ -59,7 +121,7 @@
 
 .dark .soft-card-shadow,
 [data-theme="dark"] .soft-card-shadow {
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25), 0 3px 8px -2px rgba(0, 0, 0, 0.15);
 }
 
 .soft-card-hover {
@@ -98,3 +160,78 @@ html {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
 }
+
+/* ============================================================
+   DARK MODE GLOBAL SOFTENING
+   Override semua kelas Tailwind dark:* yang terlalu keras
+   agar tidak ada halaman yang menyiksa mata.
+   Urutan: bg → border → text → shadow
+   ============================================================ */
+
+/* --- Backgrounds --- */
+/* slate-900 / [#0A0F1A] → softer charcoal */
+.dark .dark\:bg-slate-900,
+.dark [class*="dark:bg-slate-900"] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(24 30 43 / var(--tw-bg-opacity)) !important;  /* #181E2B */
+}
+.dark .dark\:bg-slate-900\/60,
+.dark .dark\:bg-slate-900\/50 {
+  background-color: rgb(24 30 43 / 0.55) !important;
+}
+/* slate-800 → softer */
+.dark .dark\:bg-slate-800 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(30 37 52 / var(--tw-bg-opacity)) !important;  /* #1E2534 */
+}
+.dark .dark\:bg-slate-800\/60,
+.dark .dark\:bg-slate-800\/80 {
+  background-color: rgb(30 37 52 / 0.6) !important;
+}
+
+/* --- Borders --- */
+.dark .dark\:border-slate-800 {
+  border-color: rgb(38 48 66 / 1) !important;  /* lebih subtle */
+}
+.dark .dark\:border-slate-700 {
+  border-color: rgb(48 60 82 / 1) !important;
+}
+
+/* --- Text --- */
+/* Teks "slate-100" (hampir putih) → lebih lembut */
+.dark .dark\:text-slate-100 {
+  color: rgb(216 224 236 / 1) !important;  /* #D8E0EC */
+}
+/* Teks "white" di dark mode → jangan full white */
+.dark .dark\:text-white {
+  color: rgb(225 232 242 / 1) !important;  /* #E1E8F2 */
+}
+/* Teks "slate-200" */
+.dark .dark\:text-slate-200 {
+  color: rgb(195 208 225 / 1) !important;  /* #C3D0E1 */
+}
+
+/* --- Modal & card hardcoded darks --- */
+/* #12161F dan sejenisnya sudah dihandle di atas */
+
+/* --- Scrollbar styling di dark mode agar tidak kontras --- */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #1B2130;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2D3A52;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3D4E6A;
+}
+
+/* --- Backdrop/overlay di dark mode --- */
+.dark .dark\:bg-black\/80 {
+  background-color: rgb(10 15 25 / 0.72) !important;
+}
+

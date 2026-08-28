@@ -10,7 +10,7 @@ import Link from "next/link"
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen flex flex-col text-[#131E29] dark:text-slate-100 antialiased selection:bg-[#0D3830] selection:text-white">
+    <div className="relative min-h-screen flex flex-col text-[#131E29] dark:text-[#D8E0EC] antialiased selection:bg-[#0D3830] selection:text-white">
       {/* 1. Dynamic Ambient Background Animation */}
       <AnimatedBackground />
 
@@ -19,7 +19,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
       {/* 3. Main Single-Column Fluid Container */}
       <main className="flex-1 w-full">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
+        <div className="mx-auto max-w-6xl px-3.5 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-6 sm:space-y-8 pb-24 sm:pb-12">
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -32,10 +32,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* 4. Sleek Modern Minimalist Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 dark:border-slate-800 bg-white/70 dark:bg-[#12161F]/80 backdrop-blur-md py-6 sm:py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-5 text-xs text-[#6B7C93] dark:text-slate-400">
+      <footer className="mt-auto border-t border-slate-200/90 dark:border-[#2A3550] bg-white/80 dark:bg-[#14181F]/90 backdrop-blur-md py-6 sm:py-7">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0">
               <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col text-left">

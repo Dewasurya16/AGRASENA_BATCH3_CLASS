@@ -60,17 +60,17 @@ export function MobileNav() {
   return (
     <>
       {/* 1. Top Mobile Bar */}
-      <header className="sticky top-0 z-40 block lg:hidden w-full bg-white/80 backdrop-blur-md border-b border-slate-200/70 px-4 py-3">
+      <header className="sticky top-0 z-40 block lg:hidden w-full bg-white/90 dark:bg-[#14181F]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-[#2A3550] px-4 py-3">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl overflow-hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[8px] overflow-hidden">
               <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-extrabold text-[#131E29] leading-tight">
-                Prakom <span className="text-[#FF7643]">Batch 3</span>
+              <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
+                Prakom <span className="text-orange-600 dark:text-orange-400">Batch 3</span>
               </span>
-              <span className="text-[9px] text-[#6B7C93] font-semibold">
+              <span className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold">
                 Kejaksaan RI X Agrasena (Prakom 625)
               </span>
             </div>
@@ -79,9 +79,9 @@ export function MobileNav() {
           <button
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle Menu"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F8FAFC] text-[#131E29] border border-slate-200 hover:bg-slate-100 transition active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-slate-100 dark:bg-[#161B26] text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2A3550] hover:bg-slate-200 dark:hover:bg-[#253045] transition active:scale-95"
           >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </header>
@@ -96,7 +96,7 @@ export function MobileNav() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs lg:hidden"
             />
 
             {/* Drawer Content */}
@@ -105,30 +105,30 @@ export function MobileNav() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 280 }}
-              className="fixed inset-y-0 left-0 z-50 w-[85%] max-w-sm bg-white p-6 shadow-2xl flex flex-col justify-between overflow-y-auto lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[85%] max-w-sm bg-white dark:bg-[#1B2130] p-5 shadow-2xl flex flex-col justify-between overflow-y-auto lg:hidden border-r border-slate-200 dark:border-[#2A3550]"
             >
-              <div className="space-y-6">
+              <div className="space-y-5">
                 {/* Header in Drawer */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0D3830] text-white shadow-md">
-                      <GraduationCap className="h-5 w-5" />
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#2A3550]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-slate-900 dark:bg-indigo-600 text-white shadow-xs">
+                      <GraduationCap className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="font-extrabold text-sm text-[#131E29]">Prakom Batch 3</h4>
-                      <p className="text-[10px] text-[#0D824B] font-bold">Total 120 JP • 35 Hari</p>
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100">Prakom Batch 3</h4>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Total 120 JP • 35 Hari</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl p-2 text-[#8C9BAE] hover:bg-slate-100"
+                    className="rounded-[6px] p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-[#253045]"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
 
                 {/* Nav Links */}
-                <nav className="space-y-2">
+                <nav className="space-y-1">
                   {navItems.map((item) => {
                     const isActive =
                       item.href === "/"
@@ -139,14 +139,14 @@ export function MobileNav() {
                       <Link
                         key={item.id}
                         href={item.href}
-                        className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-between rounded-[8px] px-3.5 py-2.5 text-xs font-bold transition-all ${
                           isActive
-                            ? "bg-[#0D3830] text-white shadow-md"
-                            : "text-[#52647C] hover:bg-slate-50 hover:text-[#131E29]"
+                            ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-xs"
+                            : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#161B26] hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className={isActive ? "text-white" : "text-[#8C9BAE]"}>
+                        <div className="flex items-center gap-2.5">
+                          <span className={isActive ? "text-white" : "text-slate-400"}>
                             {item.icon}
                           </span>
                           <span>{item.label}</span>
@@ -154,10 +154,10 @@ export function MobileNav() {
 
                         {item.badge && (
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
                               isActive
                                 ? "bg-white/20 text-white"
-                                : "bg-[#FFEADA] text-[#EA580C]"
+                                : "bg-orange-100 dark:bg-amber-950/80 text-orange-700 dark:text-amber-300"
                             }`}
                           >
                             {item.badge}
@@ -170,13 +170,13 @@ export function MobileNav() {
               </div>
 
               {/* Drawer Bottom CTA */}
-              <div className="mt-8 rounded-2xl bg-[#F8FAFC] p-4 border border-slate-200/70 text-center space-y-2">
-                <p className="text-xs font-bold text-[#131E29]">Portal LMS Kejaksaan RI</p>
+              <div className="mt-6 rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3.5 border border-slate-200/80 dark:border-[#2A3550] text-center space-y-2">
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Portal LMS Kejaksaan RI</p>
                 <a
                   href="https://pengembangan.kejaksaan.go.id/dashboard"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 w-full rounded-xl bg-[#0D3830] px-3 py-2 text-xs font-bold text-white shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 w-full rounded-[8px] bg-slate-900 dark:bg-indigo-600 px-3 py-2 text-xs font-black text-white shadow-xs hover:bg-slate-800"
                 >
                   <span>Buka LMS Dashboard</span>
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -187,9 +187,9 @@ export function MobileNav() {
         )}
       </AnimatePresence>
 
-      {/* 3. Floating Bottom Navigation Dock for Mobile (iPhone & Android thumb reach) */}
+      {/* 3. Floating Bottom Navigation Dock for Mobile */}
       <nav className="fixed bottom-3 left-4 right-4 z-40 block lg:hidden">
-        <div className="mx-auto max-w-md rounded-full bg-white/90 backdrop-blur-lg px-3 py-2 shadow-xl shadow-slate-900/10 border border-slate-200/80 flex items-center justify-around">
+        <div className="mx-auto max-w-md rounded-[14px] bg-white/95 dark:bg-[#1B2130]/95 backdrop-blur-lg px-2.5 py-1.5 shadow-lg border border-slate-200/90 dark:border-[#2A3550] flex items-center justify-around">
           {bottomDockItems.map((tab, idx) => {
             const isActive =
               tab.href === "/"
@@ -200,19 +200,19 @@ export function MobileNav() {
               <Link
                 key={idx}
                 href={tab.href}
-                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-full transition-all ${
-                  isActive ? "text-[#0D3830] font-extrabold" : "text-[#8C9BAE] hover:text-[#131E29]"
+                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-[8px] transition-all ${
+                  isActive ? "text-slate-900 dark:text-indigo-300 font-black" : "text-slate-400 dark:text-slate-400 hover:text-slate-700"
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeDockPill"
-                    className="absolute inset-0 rounded-full bg-[#E6F7ED] -z-10"
+                    className="absolute inset-0 rounded-[8px] bg-slate-100 dark:bg-[#253045] -z-10"
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
                   />
                 )}
                 <span>{tab.icon}</span>
-                <span className="text-[9px] mt-0.5 tracking-tight">{tab.label}</span>
+                <span className="text-[9px] mt-0.5 tracking-tight font-bold">{tab.label}</span>
               </Link>
             )
           })}

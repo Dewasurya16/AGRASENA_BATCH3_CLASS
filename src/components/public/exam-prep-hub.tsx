@@ -155,167 +155,167 @@ export function ExamPrepHub() {
   const seminarCountdown = getCountdown(targetFinalSeminar)
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       {/* Header Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-3.5"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             <GraduationCap className="h-3.5 w-3.5" />
             <span>Pusat Kesiapan Kelulusan Diklat</span>
           </span>
-          <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+          <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
             Target Kelulusan 100%
           </span>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+        <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
           Countdown & Checklist Persiapan <br className="hidden sm:block" />
-          <span className="text-[#0D824B] dark:text-emerald-400">Ujian Evaluasi & Seminar Akhir</span>
+          <span className="text-emerald-700 dark:text-emerald-400">Ujian Evaluasi & Seminar Akhir</span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
           Pantau hitung mundur hari H Ujian Komprehensif MOOC, pengumpulan naskah makalah, dan jadwal sidang seminar evaluasi akhir. Lengkapi 10 checklist kelulusan resmi agar persiapan Anda matang 100%.
         </p>
       </motion.div>
 
       {/* 3 Milestone Countdown Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {/* Milestone 1: MOOC Exam */}
-        <div className="rounded-[28px] bg-gradient-to-br from-white to-[#F0FDF4] dark:from-[#161B26] dark:to-emerald-950/30 p-6 border-2 border-emerald-200 dark:border-emerald-800 shadow-sm space-y-4">
+        <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="rounded-full bg-[#0D824B] text-white px-3 py-1 text-[11px] font-black uppercase tracking-wider">
+            <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
               Hari Ke-30
             </span>
-            <Calendar className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
+            <Calendar className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-base font-black text-[#131E29] dark:text-white">Ujian Komprehensif MOOC</h3>
-            <p className="text-xs text-slate-500">23 September 2026 • 08:00 WIB</p>
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Ujian Komprehensif MOOC</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">23 September 2026 • 08:00 WIB</p>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-center bg-white dark:bg-[#12161F] p-3 rounded-2xl border border-emerald-200 dark:border-slate-700">
+          <div className="grid grid-cols-4 gap-1 text-center bg-slate-50 dark:bg-[#161B26] p-2.5 rounded-[8px] border border-slate-200/70 dark:border-[#2A3550]">
             <div>
-              <span className="text-lg font-black text-[#0D824B] dark:text-emerald-400">{moocCountdown.days}</span>
+              <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">{moocCountdown.days}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Hari</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#0D824B] dark:text-emerald-400">{moocCountdown.hours}</span>
+              <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">{moocCountdown.hours}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Jam</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#0D824B] dark:text-emerald-400">{moocCountdown.minutes}</span>
+              <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">{moocCountdown.minutes}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Mnt</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#0D824B] dark:text-emerald-400">{moocCountdown.seconds}</span>
+              <span className="text-base sm:text-lg font-black text-emerald-700 dark:text-emerald-400">{moocCountdown.seconds}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Dtk</span>
             </div>
           </div>
           <Link href="/quiz">
-            <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-bold mt-2">
+            <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-bold rounded-[8px] mt-1">
               Latihan Tryout MOOC
             </Button>
           </Link>
         </div>
 
         {/* Milestone 2: Paper Submission */}
-        <div className="rounded-[28px] bg-gradient-to-br from-white to-[#FFF9F5] dark:from-[#161B26] dark:to-amber-950/30 p-6 border-2 border-amber-200 dark:border-amber-800 shadow-sm space-y-4">
+        <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="rounded-full bg-[#EA580C] text-white px-3 py-1 text-[11px] font-black uppercase tracking-wider">
+            <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 text-orange-700 dark:text-amber-300 border border-orange-200 dark:border-amber-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
               Hari Ke-33
             </span>
-            <FileText className="h-4 w-4 text-[#EA580C] dark:text-amber-400" />
+            <FileText className="h-4 w-4 text-orange-600 dark:text-amber-400" />
           </div>
           <div>
-            <h3 className="text-base font-black text-[#131E29] dark:text-white">Batas Unggah Makalah Akhir</h3>
-            <p className="text-xs text-slate-500">28 September 2026 • 18:00 WIB</p>
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Batas Unggah Makalah</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">28 September 2026 • 18:00 WIB</p>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-center bg-white dark:bg-[#12161F] p-3 rounded-2xl border border-amber-200 dark:border-slate-700">
+          <div className="grid grid-cols-4 gap-1 text-center bg-slate-50 dark:bg-[#161B26] p-2.5 rounded-[8px] border border-slate-200/70 dark:border-[#2A3550]">
             <div>
-              <span className="text-lg font-black text-[#EA580C] dark:text-amber-400">{paperCountdown.days}</span>
+              <span className="text-base sm:text-lg font-black text-orange-600 dark:text-amber-400">{paperCountdown.days}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Hari</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#EA580C] dark:text-amber-400">{paperCountdown.hours}</span>
+              <span className="text-base sm:text-lg font-black text-orange-600 dark:text-amber-400">{paperCountdown.hours}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Jam</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#EA580C] dark:text-amber-400">{paperCountdown.minutes}</span>
+              <span className="text-base sm:text-lg font-black text-orange-600 dark:text-amber-400">{paperCountdown.minutes}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Mnt</span>
             </div>
             <div>
-              <span className="text-lg font-black text-[#EA580C] dark:text-amber-400">{paperCountdown.seconds}</span>
+              <span className="text-base sm:text-lg font-black text-orange-600 dark:text-amber-400">{paperCountdown.seconds}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Dtk</span>
             </div>
           </div>
           <Link href="/paper-generator">
-            <Button variant="orange" size="sm" className="w-full justify-center text-xs font-bold mt-2">
-              Susun Makalah dengan AI
+            <Button variant="orange" size="sm" className="w-full justify-center text-xs font-bold rounded-[8px] mt-1">
+              Susun Makalah AI
             </Button>
           </Link>
         </div>
 
         {/* Milestone 3: Final Seminar */}
-        <div className="rounded-[28px] bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#161B26] dark:to-purple-950/30 p-6 border-2 border-purple-200 dark:border-purple-800 shadow-sm space-y-4">
+        <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="rounded-full bg-purple-700 text-white px-3 py-1 text-[11px] font-black uppercase tracking-wider">
-              Hari Ke-35 (Penutupan)
+            <span className="rounded-full bg-purple-50 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+              Hari Ke-35
             </span>
             <Award className="h-4 w-4 text-purple-600 dark:text-purple-400" />
           </div>
           <div>
-            <h3 className="text-base font-black text-[#131E29] dark:text-white">Sidang Seminar & Evaluasi Akhir</h3>
-            <p className="text-xs text-slate-500">30 September 2026 • 08:00 WIB</p>
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Sidang Seminar Akhir</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">30 September 2026 • 08:00 WIB</p>
           </div>
-          <div className="grid grid-cols-4 gap-1.5 text-center bg-white dark:bg-[#12161F] p-3 rounded-2xl border border-purple-200 dark:border-slate-700">
+          <div className="grid grid-cols-4 gap-1 text-center bg-slate-50 dark:bg-[#161B26] p-2.5 rounded-[8px] border border-slate-200/70 dark:border-[#2A3550]">
             <div>
-              <span className="text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.days}</span>
+              <span className="text-base sm:text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.days}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Hari</span>
             </div>
             <div>
-              <span className="text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.hours}</span>
+              <span className="text-base sm:text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.hours}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Jam</span>
             </div>
             <div>
-              <span className="text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.minutes}</span>
+              <span className="text-base sm:text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.minutes}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Mnt</span>
             </div>
             <div>
-              <span className="text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.seconds}</span>
+              <span className="text-base sm:text-lg font-black text-purple-700 dark:text-purple-400">{seminarCountdown.seconds}</span>
               <span className="block text-[9px] uppercase font-bold text-slate-400">Dtk</span>
             </div>
           </div>
           <Link href="/templates">
-            <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-bold mt-2">
-              Unduh Template Seminar
+            <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-bold rounded-[8px] mt-1">
+              Template Seminar
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Interactive 10-Point Checklist */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-6 sm:p-8 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
-          <div className="space-y-1">
-            <h3 className="text-base sm:text-lg font-black text-[#131E29] dark:text-white flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-[#0D824B] dark:text-emerald-400" />
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-6 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-[#2A3550] pb-3.5">
+          <div className="space-y-0.5">
+            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span>10 Checklist Kesiapan Kelulusan Diklat</span>
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Centang setiap poin yang telah Anda penuhi. Data otomatis tersimpan di browser Anda.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <span className="text-sm font-black text-[#0D824B] dark:text-emerald-400">
+              <span className="text-xs sm:text-sm font-black text-emerald-700 dark:text-emerald-400">
                 {completedCount} dari {CHECKLIST_ITEMS.length} Selesai
               </span>
-              <span className="block text-[11px] font-bold text-slate-400">({progressPercent}%)</span>
+              <span className="block text-[10px] font-bold text-slate-400">({progressPercent}%)</span>
             </div>
             <button
               type="button"

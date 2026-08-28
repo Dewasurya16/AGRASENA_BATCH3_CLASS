@@ -52,6 +52,8 @@ export interface LiveSessionBannerProps {
     day?: string | null
   }>
   todayTasks?: TaskItem[]
+  /** 'home' = dark banner (default), 'schedule' = light info card untuk halaman Rundown */
+  variant?: 'home' | 'schedule'
 }
 
 const RUANG_DIKLAT_URL =
@@ -89,6 +91,7 @@ export function LiveSessionBanner({
   currentDayNumber,
   todaySchedules = [],
   todayTasks = [],
+  variant = 'home',
 }: LiveSessionBannerProps) {
   const [mounted, setMounted] = React.useState(false)
   const [currentTimeStr, setCurrentTimeStr] = React.useState("")
@@ -123,15 +126,29 @@ export function LiveSessionBanner({
   }, [todaySchedules, activeDayNum])
 
   // Cari hari diklat aktif berikutnya (untuk pengingat akhir pekan / malam hari)
-  const nextActiveDayNum = React.useMemo(() => {
-    if (activeDayNum < 35) return activeDayNum + 1
-    return 35
+  // PENTING: Jika hari ini adalah akhir pekan (Sabtu/Minggu), activeDayNum sudah menunjuk ke hari Senin berikutnya (misal Hari 6).
+  // JANGAN melompat ke hari Selasa (activeDayNum + 1). Tahan tetap pada hari Senin (activeDayNum).
+  const upcomingDayNum = React.useMemo(() => {
+    const now = new Date()
+    const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return activeDayNum
+    }
+    // Jika Jumat malam setelah jam 16:00, sesi berikutnya adalah Senin (activeDayNum + 1)
+    if (dayOfWeek === 5 && (now.getHours() * 60 + now.getMinutes() >= 16 * 60)) {
+      return Math.min(35, activeDayNum + 1)
+    }
+    // Jika hari kerja biasa malam hari setelah jam 16:00, sesi berikutnya adalah hari esoknya
+    if (now.getHours() * 60 + now.getMinutes() >= 16 * 60) {
+      return Math.min(35, activeDayNum + 1)
+    }
+    return activeDayNum
   }, [activeDayNum])
 
-  const nextCurriculum = RAW_DAYS_DATA.find((d) => d.day === nextActiveDayNum) || RAW_DAYS_DATA[0]
+  const upcomingCurriculum = RAW_DAYS_DATA.find((d) => d.day === upcomingDayNum) || RAW_DAYS_DATA[0]
 
-  // Sesi perkuliahan hari berikutnya
-  const nextDaySchedules = React.useMemo(() => {
+  // Sesi perkuliahan hari mendatang
+  const upcomingDaySchedules = React.useMemo(() => {
     const sourceSchedules =
       todaySchedules && todaySchedules.length > 0
         ? todaySchedules
@@ -141,17 +158,17 @@ export function LiveSessionBanner({
       .filter((s) => {
         const explicitDay = getScheduleDayNumber(s)
         if (explicitDay !== null) {
-          return explicitDay === nextActiveDayNum
+          return explicitDay === upcomingDayNum
         }
         const dayVal = String(s.day || "").toLowerCase().trim()
-        return dayVal === `hari ${nextActiveDayNum}` || dayVal === String(nextActiveDayNum)
+        return dayVal === `hari ${upcomingDayNum}` || dayVal === String(upcomingDayNum)
       })
       .sort((a, b) => {
         const aStart = parseTimeToMinutes(a.start_time) ?? 0
         const bStart = parseTimeToMinutes(b.start_time) ?? 0
         return aStart - bStart
       })
-  }, [todaySchedules, nextActiveDayNum])
+  }, [todaySchedules, upcomingDayNum])
 
   const fallbackSession = {
     id: `live-day-${activeDayNum}`,
@@ -167,9 +184,9 @@ export function LiveSessionBanner({
     daysSchedules[0] || fallbackSession
   )
 
-  const firstNextSession = nextDaySchedules[0] || {
-    id: `next-day-${nextActiveDayNum}`,
-    subject_name: `[Hari ${nextActiveDayNum}] Perkuliahan Diklat Fungsional Prakom`,
+  const firstUpcomingSession = upcomingDaySchedules[0] || {
+    id: `upcoming-day-${upcomingDayNum}`,
+    subject_name: `[Hari ${upcomingDayNum}] Perkuliahan Diklat Fungsional Prakom`,
     start_time: "09:30",
     end_time: "10:15",
     lecturer: "Widyaiswara Pusdiklat",
@@ -197,15 +214,15 @@ export function LiveSessionBanner({
       // 1. Akhir Pekan (Sabtu & Minggu) -> SELAMAT BERLIBUR
       if (!isWeekday) {
         setPhase('weekend')
-        setActiveSession(firstNextSession)
+        setActiveSession(firstUpcomingSession)
 
         // Hitung countdown presisi menuju jam mulai sesi pertama hari Senin
-        const nextStartMins = parseTimeToMinutes(firstNextSession.start_time) ?? (9 * 60 + 30)
+        const nextStartMins = parseTimeToMinutes(firstUpcomingSession.start_time) ?? (9 * 60 + 30)
         const nextStartH = Math.floor(nextStartMins / 60)
         const nextStartM = nextStartMins % 60
-        const cleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
+        const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
 
-        const targetDateObj = parseDiklatDate(nextCurriculum.date) || new Date()
+        const targetDateObj = parseDiklatDate(upcomingCurriculum.date) || new Date()
         targetDateObj.setHours(nextStartH, nextStartM, 0, 0)
         const diffMs = targetDateObj.getTime() - now.getTime()
 
@@ -214,13 +231,13 @@ export function LiveSessionBanner({
           const days = Math.floor(totalHours / 24)
           const remHours = totalHours % 24
           if (days > 0) {
-            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${nextCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
           } else {
             const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${nextCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
           }
         } else {
-          setCountdownText(`Sesi dimulai ${nextCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
         }
         return
       }
@@ -280,9 +297,9 @@ export function LiveSessionBanner({
         // Jika Jumat Sore/Malam -> Masuk fase akhir pekan (Selamat Berlibur)
         if (dayOfWeek === 5 && totalMins >= 16 * 60) {
           setPhase('weekend')
-          setActiveSession(firstNextSession)
-          const cleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
-          setCountdownText(`Sesi pekan depan: ${nextCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          setActiveSession(firstUpcomingSession)
+          const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+          setCountdownText(`Sesi pekan depan: ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
           return
         }
 
@@ -309,8 +326,9 @@ export function LiveSessionBanner({
       if (totalMins >= 16 * 60 && totalMins <= 23 * 60 + 59) {
         if (dayOfWeek === 5) {
           setPhase('weekend')
-          setActiveSession(firstNextSession)
-          setCountdownText(`Sesi dimulai Senin, 09:30 WIB`)
+          setActiveSession(firstUpcomingSession)
+          const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
           return
         }
         setPhase('task_time')
@@ -336,7 +354,7 @@ export function LiveSessionBanner({
     updateTime()
     const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
-  }, [daysSchedules, activeDayNum, firstNextSession, nextCurriculum])
+  }, [daysSchedules, activeDayNum, firstUpcomingSession, upcomingCurriculum])
 
   // Cari tugas aktif hari ini dari Supabase atau fallback
   const matchedTask = todayTasks.find((t) => {
@@ -353,152 +371,268 @@ export function LiveSessionBanner({
 
   const cleanStart = cleanTimeDisplay(activeSession.start_time, "08:00")
   const cleanEnd = cleanTimeDisplay(activeSession.end_time, "15:30")
-  const nextCleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
-  const nextCleanEnd = cleanTimeDisplay(firstNextSession.end_time, "10:15")
+  const nextCleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+  const nextCleanEnd = cleanTimeDisplay(firstUpcomingSession.end_time, "10:15")
 
+  /* ────────────────────────────────────────────────
+     VARIANT: 'schedule' — card ringan untuk halaman Rundown
+     Layout lebih informatif, tidak pakai dark banner
+  ─────────────────────────────────────────────────── */
+  if (variant === 'schedule') {
+    const phaseLabel = {
+      in_class: 'Sesi Aktif',
+      in_break: 'Jeda Istirahat',
+      task_time: 'Waktu Tugas',
+      prep_time: 'Persiapan Sesi',
+      weekend: 'Libur Akhir Pekan',
+    }[phase]
+
+    const phaseColor = {
+      in_class: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300',
+      in_break: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300',
+      task_time: 'bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800/60 text-violet-700 dark:text-violet-300',
+      prep_time: 'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300',
+      weekend: 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400',
+    }[phase]
+
+    const phaseDot = {
+      in_class: 'bg-indigo-500',
+      in_break: 'bg-amber-500',
+      task_time: 'bg-violet-500',
+      prep_time: 'bg-sky-500',
+      weekend: 'bg-slate-400',
+    }[phase]
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+        className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200 dark:border-[#2A3550] shadow-sm overflow-hidden transition-colors duration-200"
+      >
+        {/* Header strip */}
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 dark:border-[#2A3550] bg-slate-50/60 dark:bg-[#1E2535]/60">
+          <div className="flex items-center gap-2.5">
+            {/* Status dot + label */}
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${phaseColor}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${phaseDot} ${phase === 'in_class' ? 'animate-ping' : ''}`} />
+              {phaseLabel}
+            </span>
+            {/* Day info */}
+            {todayCurriculum && (
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                Hari Ke-{todayCurriculum.day} ({todayCurriculum.dayOfWeek}) • Tahap {todayCurriculum.stage} • {todayCurriculum.stageName}
+              </span>
+            )}
+          </div>
+          {/* Live clock */}
+          {currentTimeStr && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold tabular-nums text-indigo-500 dark:text-indigo-400">
+              <Clock className="h-3 w-3" />
+              {currentTimeStr.replace(' WIB', '')} <span className="text-[9px] font-black tracking-wider opacity-70">WIB</span>
+            </span>
+          )}
+        </div>
+
+        {/* Body: sesi aktif atau info hari ini */}
+        <div className="px-4 py-3.5 flex flex-col sm:flex-row sm:items-start gap-4">
+          {/* Left: info sesi */}
+          <div className="flex-1 flex flex-col gap-2">
+            {phase !== 'weekend' ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-[#8A9BB8]">
+                    {cleanStart} – {cleanEnd} WIB
+                  </span>
+                  <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/40">
+                    Hari ke-{activeDayNum}
+                  </span>
+                </div>
+                <p className="text-[14px] font-black text-[#131E29] dark:text-[#D8E0EC] leading-snug">
+                  {activeSession.subject_name}
+                </p>
+                {activeSession.lecturer && (
+                  <p className="text-[11px] text-slate-500 dark:text-[#8A9BB8]">
+                    Pengampu: <span className="font-semibold text-slate-700 dark:text-[#C0CEDF]">{activeSession.lecturer}</span>
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] font-black text-[#131E29] dark:text-[#D8E0EC]">
+                  Selamat Berlibur — Sesi berikutnya ({upcomingCurriculum.dayOfWeek}, {upcomingCurriculum.date}):
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-[#8A9BB8]">
+                  {upcomingCurriculum ? `${upcomingCurriculum.dayOfWeek}, ${firstUpcomingSession?.start_time ? cleanTimeDisplay(firstUpcomingSession.start_time, "09:30") : "09:30"} WIB • Hari Ke-${upcomingCurriculum.day} • ${firstUpcomingSession?.subject_name?.replace(/\[Hari\s*\d+\]\s*/i, "") || ""}` : "Sesi berikutnya akan diumumkan"}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Right: actions */}
+          <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+            {phase !== 'weekend' && activeSession.zoom_url && (
+              <a
+                href={activeSession.zoom_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-[11px] font-black text-white transition-all cursor-pointer"
+              >
+                <Video className="h-3.5 w-3.5" />
+                Buka Ruang Kelas
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </a>
+            )}
+            {/* Tombol relevan untuk halaman rundown: buka portal LMS */}
+            <a
+              href={RUANG_DIKLAT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] px-4 py-2 text-[11px] font-black text-slate-600 dark:text-[#C0CEDF] transition-all cursor-pointer border border-slate-200 dark:border-[#2A3550]"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Buka Portal Diklat
+            </a>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  /* ─── VARIANT: 'home' — dark banner (default) ─── */
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className={`relative overflow-hidden rounded-[32px] p-5 sm:p-7 text-white shadow-xl border transition-all ${
+      transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+      className={`relative overflow-hidden rounded-[14px] p-4 sm:p-5 text-white shadow-lg border transition-all ${
         phase === 'in_class'
-          ? "bg-gradient-to-r from-[#0D3830] via-[#0E443B] to-[#0A2E27] shadow-[#0D3830]/25 border-emerald-500/20"
+          ? "bg-gradient-to-r from-[#171C35] via-[#1B2342] to-[#121625] shadow-indigo-950/30 border-indigo-500/25"
           : phase === 'in_break'
-          ? "bg-gradient-to-r from-[#1B3630] via-[#144439] to-[#0A2E27] shadow-emerald-950/30 border-amber-500/30"
+          ? "bg-gradient-to-r from-[#1A1F35] via-[#182638] to-[#121828] shadow-slate-950/30 border-amber-500/25"
           : phase === 'task_time'
-          ? "bg-gradient-to-r from-[#1E1B4B] via-[#2A1B4E] to-[#111827] shadow-indigo-950/40 border-indigo-500/30"
+          ? "bg-gradient-to-r from-[#1A1842] via-[#241944] to-[#101524] shadow-indigo-950/30 border-indigo-500/25"
           : phase === 'prep_time'
-          ? "bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0D2822] shadow-black/30 border-sky-500/20"
-          : "bg-gradient-to-r from-[#0A2821] via-[#133E35] to-[#08221B] shadow-[#0D3830]/30 border-emerald-500/30"
+          ? "bg-gradient-to-r from-[#0F1626] via-[#182338] to-[#111624] shadow-black/30 border-sky-500/20"
+          : "bg-gradient-to-r from-[#161C32] via-[#1A223E] to-[#121626] shadow-indigo-950/30 border-indigo-500/25"
       }`}
     >
-      {/* Decorative ambient glows based on active phase */}
+      {/* Decorative ambient subtle glows */}
       <div
-        className={`absolute -left-12 -top-12 h-48 w-48 rounded-full blur-3xl pointer-events-none ${
+        className={`absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl pointer-events-none ${
           phase === 'in_class'
-            ? "bg-[#E6F7ED]/25"
+            ? "bg-indigo-500/15"
             : phase === 'in_break'
-            ? "bg-amber-400/20"
+            ? "bg-amber-500/15"
             : phase === 'task_time'
-            ? "bg-indigo-500/25"
+            ? "bg-indigo-500/15"
             : phase === 'prep_time'
-            ? "bg-amber-400/15"
-            : "bg-emerald-400/20"
+            ? "bg-amber-500/10"
+            : "bg-indigo-500/15"
         }`}
       />
       <div
-        className={`absolute -right-10 -bottom-10 h-48 w-48 rounded-full blur-3xl pointer-events-none ${
+        className={`absolute -right-8 -bottom-8 h-40 w-40 rounded-full blur-3xl pointer-events-none ${
           phase === 'in_class'
-            ? "bg-[#FF7643]/30"
+            ? "bg-violet-500/15"
             : phase === 'in_break'
-            ? "bg-emerald-400/25"
+            ? "bg-emerald-500/15"
             : phase === 'task_time'
-            ? "bg-purple-500/25"
+            ? "bg-purple-500/15"
             : phase === 'prep_time'
-            ? "bg-emerald-400/20"
-            : "bg-amber-400/20"
+            ? "bg-emerald-500/15"
+            : "bg-violet-500/15"
         }`}
       />
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
         {/* Left Status & Contextual Info */}
-        <div className="space-y-3 max-w-2xl">
+        <div className="flex flex-col gap-2.5 max-w-3xl flex-1 min-w-0">
           
-          {/* Phase Badges Rail */}
+          {/* Phase Badges Rail (Streamlined to 2-3 clean chips) */}
           <div className="flex flex-wrap items-center gap-2">
             
             {/* 1. Sesi Pembelajaran Aktif */}
             {phase === 'in_class' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
-                <span className="flex h-2 w-2 rounded-full bg-white animate-ping" />
-                Sesi Pembelajaran Aktif
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/90 text-white border border-rose-400/50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <span className="flex h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                Sesi Aktif
               </span>
             )}
 
             {/* 2. Jeda Istirahat Antar Sesi */}
             {phase === 'in_break' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500 text-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                <Coffee className="h-3.5 w-3.5 text-slate-950" />
-                Jeda Istirahat • Menuju Sesi Berikutnya
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 border border-amber-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <Coffee className="h-3 w-3 text-slate-950" />
+                Jeda Istirahat
               </span>
             )}
 
             {/* 3. Kelas Selesai -> Waktu Tugas Mandiri */}
             {phase === 'task_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-xs">
+              <span className="flex items-center gap-1.5 rounded-full bg-indigo-600/90 text-white border border-indigo-400/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
                 <CheckCircle2 className="h-3 w-3 text-emerald-300" />
-                Kelas Selesai • Waktu Pengerjaan Tugas
+                Waktu Tugas Mandiri
               </span>
             )}
 
             {/* 4. Dini Hari -> Persiapan Kelas Pagi Ini */}
             {phase === 'prep_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                <Coffee className="h-3.5 w-3.5 text-slate-950" />
-                Persiapan Kelas Hari Ini • Menunggu Sesi Mulai
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <Coffee className="h-3 w-3 text-slate-950" />
+                Persiapan Kelas Pagi Ini
               </span>
             )}
 
             {/* 5. Weekend / Hari Libur -> SELAMAT BERLIBUR */}
             {phase === 'weekend' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/90 text-slate-950 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider shadow-md border border-emerald-400">
-                <span>🏖️</span>
-                <span>Libur Akhir Pekan • Selamat Berlibur!</span>
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Libur Akhir Pekan
               </span>
             )}
 
             {/* Day & Stage Tag */}
-            <span className="rounded-full bg-white/15 text-slate-100 border border-white/10 px-3 py-1 text-[10px] font-extrabold">
-              {phase === 'weekend' ? `Rehat • Menuju Hari ${nextActiveDayNum}` : displayDayName}
+            <span className="rounded-full bg-white/10 text-slate-200 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold">
+              {phase === 'weekend' ? `Rehat • Menuju Hari ${upcomingDayNum} (${upcomingCurriculum.dayOfWeek}, ${upcomingCurriculum.date})` : displayDayName}
             </span>
 
             {/* Realtime Clock */}
-            {mounted && (
-              <span className="rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-mono text-slate-200 font-bold border border-white/5">
-                ⏰ {currentTimeStr}
+            {mounted && currentTimeStr && (
+              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono text-indigo-300 font-bold border border-white/5 tabular-nums">
+                ⏰ {currentTimeStr.replace(' WIB', '')} <span className="text-[9px] opacity-70">WIB</span>
               </span>
             )}
 
             {/* Dynamic Countdown Pill */}
-            {mounted && countdownText && (
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold border ${
-                phase === 'weekend'
-                  ? "bg-amber-400/25 text-amber-200 border-amber-400/40"
-                  : phase === 'in_break'
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                  : phase === 'task_time'
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                  : phase === 'prep_time'
-                  ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                  : "bg-white/10 text-slate-300 border-white/10"
-              }`}>
+            {mounted && countdownText && phase !== 'weekend' && (
+              <span className="rounded-full bg-white/10 text-slate-300 border border-white/10 px-2 py-0.5 text-[10px] font-bold">
                 ⏳ {countdownText}
               </span>
             )}
           </div>
 
           {/* Main Title & Metadata by Phase */}
-          <div>
+          <div className="space-y-1.5">
             {phase === 'in_class' && (
               <>
-                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
                   {activeSession.subject_name}
                 </h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5 text-[#FFD280]" />
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
+                  <span className="flex items-center gap-1 text-amber-300 font-bold">
+                    <Clock className="h-3 w-3 text-amber-400" />
                     Jam Diklat: {cleanStart} – {cleanEnd} WIB
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
-                      {activeSession.lecturer}
+                      <User className="h-3 w-3 text-emerald-300" />
+                      Pengampu: {activeSession.lecturer}
                     </span>
                   )}
                   <span className="flex items-center gap-1 text-slate-400">
-                    <MapPin className="h-3.5 w-3.5 text-sky-400" />
+                    <MapPin className="h-3 w-3 text-sky-400" />
                     {activeSession.room || "Ruang Zoom Diklat"}
                   </span>
                 </div>
@@ -507,22 +641,22 @@ export function LiveSessionBanner({
 
             {phase === 'in_break' && (
               <>
-                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
                   Jeda Sesi — Sesi Berikutnya: {activeSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
                 </h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Clock className="h-3.5 w-3.5 text-amber-400" />
+                    <Clock className="h-3 w-3 text-amber-400" />
                     Jadwal Mulai: {cleanStart} – {cleanEnd} WIB
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1">
-                      <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
+                      <User className="h-3 w-3 text-emerald-300" />
                       Pengampu: {activeSession.lecturer}
                     </span>
                   )}
                   <span className="flex items-center gap-1 text-slate-400">
-                    <MapPin className="h-3.5 w-3.5 text-sky-400" />
+                    <MapPin className="h-3 w-3 text-sky-400" />
                     {activeSession.room || "Ruang Zoom Diklat"}
                   </span>
                 </div>
@@ -531,16 +665,16 @@ export function LiveSessionBanner({
 
             {phase === 'task_time' && (
               <>
-                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
                   Tugas Hari ke-{activeDayNum}: {matchedTask.title}
                 </h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Flame className="h-3.5 w-3.5 text-amber-400 animate-pulse" />
+                    <Flame className="h-3 w-3 text-amber-400 animate-pulse" />
                     Batas Upload: {matchedTask.due_date || "Malam ini 23:59 WIB"}
                   </span>
                   <span className="flex items-center gap-1 text-slate-300">
-                    <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
+                    <BookOpen className="h-3 w-3 text-indigo-300" />
                     Mata Kuliah: {activeSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
                   </span>
                 </div>
@@ -549,17 +683,17 @@ export function LiveSessionBanner({
 
             {phase === 'prep_time' && (
               <>
-                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
+                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
                   Persiapan Sesi Hari ke-{activeDayNum}: {activeSession.subject_name}
                 </h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
+                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-emerald-300 font-bold">
-                    <Sun className="h-3.5 w-3.5 text-amber-400" />
+                    <Sun className="h-3 w-3 text-amber-400" />
                     Perkuliahan Dimulai Pukul {cleanStart} WIB (Pagi Ini)
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1 text-slate-300">
-                      <User className="h-3.5 w-3.5 text-[#A7F3D0]" />
+                      <User className="h-3 w-3 text-emerald-300" />
                       Pengampu: {activeSession.lecturer}
                     </span>
                   )}
@@ -567,51 +701,43 @@ export function LiveSessionBanner({
               </>
             )}
 
-            {/* Weekend / Libur Mode with Highlighted Next Session Schedule Box */}
+            {/* Weekend / Libur Mode with Compact Next Session Schedule Bar */}
             {phase === 'weekend' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div>
-                  <h3 className="text-base sm:text-2xl font-black text-white tracking-tight leading-snug flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug flex items-center gap-1.5">
                     <span>Selamat Berlibur & Selamat Rehat, Rekan Prakom! ✨</span>
                   </h3>
-                  <p className="text-xs text-slate-200 leading-relaxed mt-1">
-                    Tidak ada sesi perkuliahan aktif hari ini. Selamat menikmati waktu rehat bersama keluarga dan me-recharge energi untuk perkuliahan berikutnya.
+                  <p className="text-[11px] sm:text-xs text-slate-300/80 leading-relaxed">
+                    Tidak ada sesi perkuliahan aktif hari ini. Selamat menikmati waktu rehat bersama keluarga.
                   </p>
                 </div>
 
-                {/* Box Pengingat Jadwal Mendatang Terperinci Sesuai Jamnya */}
-                <div className="p-3.5 rounded-2xl bg-black/30 border border-emerald-400/30 backdrop-blur-sm space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-300">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-amber-400" />
-                      Pengingat Jadwal Sesi Berikutnya ({nextCurriculum.dayOfWeek}, {nextCurriculum.date}):
+                {/* Compact Schedule Highlight Bar */}
+                <div className="p-2.5 sm:px-3.5 sm:py-2 rounded-[10px] bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 shrink-0">
+                      <Calendar className="h-3 w-3 text-amber-400" />
+                      {upcomingCurriculum.dayOfWeek}, {upcomingCurriculum.date}:
                     </span>
-                    <span className="text-[10px] bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-700">
-                      Hari ke-{nextActiveDayNum} • {nextCurriculum.stageName}
+                    <span className="font-mono bg-sky-950/80 text-sky-300 px-1.5 py-0.5 rounded text-[10px] font-bold border border-sky-800/60 shrink-0">
+                      {cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")} – {cleanTimeDisplay(firstUpcomingSession.end_time, "10:15")} WIB
                     </span>
-                  </div>
-
-                  <div className="text-xs font-bold text-white flex flex-wrap items-center gap-2">
-                    <span className="font-mono bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800">
-                      ⏰ {nextCleanStart} – {nextCleanEnd} WIB
-                    </span>
-                    <span className="text-sm font-black text-white">
-                      {firstNextSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
+                    <span className="font-bold text-white text-[11px] sm:text-xs truncate">
+                      {firstUpcomingSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
-                    {firstNextSession.lecturer && (
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3 text-emerald-300" />
-                        Pengampu: <strong className="text-white">{firstNextSession.lecturer}</strong>
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 shrink-0">
+                    {firstUpcomingSession.lecturer && (
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <User className="h-2.5 w-2.5 text-emerald-300" />
+                        <span>{firstUpcomingSession.lecturer}</span>
                       </span>
                     )}
-                    {nextDaySchedules.length > 1 && (
-                      <span className="text-slate-300">
-                        • Sesi ke-2: <strong className="text-amber-200">{cleanTimeDisplay(nextDaySchedules[1].start_time)} WIB ({nextDaySchedules[1].subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")})</strong>
-                      </span>
-                    )}
+                    <span className="rounded-full bg-emerald-950/80 text-emerald-300 px-2 py-0.5 font-bold border border-emerald-800/60">
+                      Hari ke-{upcomingDayNum}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -620,8 +746,8 @@ export function LiveSessionBanner({
 
         </div>
 
-        {/* Right Dynamic Actions by Phase */}
-        <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto shrink-0">
+        {/* Right Dynamic Actions by Phase (Compact, tactile buttons) */}
+        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch gap-2 shrink-0 w-full lg:w-48">
           
           {/* Action on Active Class (08:00 - 16:00) or Break */}
           {(phase === 'in_class' || phase === 'in_break') && (
@@ -629,27 +755,27 @@ export function LiveSessionBanner({
               href={activeSession.zoom_url || activeSession.meeting_link || RUANG_DIKLAT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-full bg-[#FF7643] hover:bg-[#F06530] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#FF7643]/30 hover:scale-102 active:scale-98 transition-all cursor-pointer"
+              className="flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
             >
-              <Video className="h-4 w-4 text-white animate-bounce" />
-              <span>Masuk Ruang Zoom / LMS</span>
-              <ExternalLink className="h-3.5 w-3.5 text-white/80" />
+              <Video className="h-3.5 w-3.5 text-white" />
+              <span>Masuk Ruang Zoom</span>
+              <ExternalLink className="h-3 w-3 text-white/80" />
             </a>
           )}
 
           {/* Action on Task Time (16:00 - 23:59) */}
           {phase === 'task_time' && (
             <>
-              <Link href="/tasks">
-                <button className="flex items-center gap-2 rounded-full bg-[#FF7643] hover:bg-[#F06530] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#FF7643]/30 hover:scale-102 active:scale-98 transition-all cursor-pointer">
-                  <Upload className="h-4 w-4 text-white" />
-                  <span>Buka & Kumpulkan Tugas</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-[#FFD280]" />
+              <Link href="/tasks" className="w-full">
+                <button className="w-full flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
+                  <Upload className="h-3.5 w-3.5 text-white" />
+                  <span>Kumpulkan Tugas</span>
+                  <ArrowRight className="h-3 w-3 text-indigo-200" />
                 </button>
               </Link>
-              <Link href="/materials">
-                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5 text-amber-300" />
+              <Link href="/materials" className="w-full">
+                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
                   <span>Bahan Ajar PDF</span>
                 </button>
               </Link>
@@ -659,15 +785,15 @@ export function LiveSessionBanner({
           {/* Action on Prep Time (00:00 - 08:00) */}
           {phase === 'prep_time' && (
             <>
-              <Link href="/materials">
-                <button className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-600/30 hover:scale-102 active:scale-98 transition-all cursor-pointer">
-                  <BookOpen className="h-4 w-4 text-white" />
-                  <span>Pelajari Modul Hari ke-{activeDayNum}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-emerald-200" />
+              <Link href="/materials" className="w-full">
+                <button className="w-full flex items-center justify-center gap-2 rounded-[8px] bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5 text-white" />
+                  <span>Pelajari Modul</span>
+                  <ArrowRight className="h-3 w-3 text-emerald-200" />
                 </button>
               </Link>
-              <Link href="/schedules">
-                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
+              <Link href="/schedules" className="w-full">
+                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
                   <Calendar className="h-3.5 w-3.5 text-sky-300" />
                   <span>Jadwal Sesi</span>
                 </button>
@@ -675,23 +801,23 @@ export function LiveSessionBanner({
             </>
           )}
 
-          {/* Action on Weekend -> Explore Modul & Roadmap */}
+          {/* Action on Weekend -> Explore Modul & Roadmap (2 compact buttons) */}
           {phase === 'weekend' && (
-            <div className="flex flex-col sm:flex-row items-center gap-2.5">
-              <Link href="/schedules">
-                <button className="flex items-center gap-2 rounded-full bg-[#0D824B] hover:bg-emerald-600 px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-950/40 hover:scale-102 active:scale-98 transition-all cursor-pointer">
-                  <Calendar className="h-4 w-4 text-emerald-200" />
-                  <span>Lihat Jadwal {nextCurriculum.dayOfWeek}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-white" />
+            <>
+              <Link href="/schedules" className="w-full">
+                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
+                  <Calendar className="h-3.5 w-3.5 text-indigo-200" />
+                  <span>Jadwal {upcomingCurriculum.dayOfWeek}</span>
+                  <ArrowRight className="h-3 w-3 text-white" />
                 </button>
               </Link>
-              <Link href="/materials">
-                <button className="flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 px-4 py-3 text-xs font-black text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5 text-amber-300" />
+              <Link href="/materials" className="w-full">
+                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
                   <span>Modul 120 JP</span>
                 </button>
               </Link>
-            </div>
+            </>
           )}
 
         </div>
@@ -700,4 +826,5 @@ export function LiveSessionBanner({
     </motion.div>
   )
 }
+
 

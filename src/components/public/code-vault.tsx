@@ -1327,39 +1327,39 @@ export function CodeVault() {
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-4 py-2 text-xs font-black text-white transition shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-2 text-xs font-black text-white transition shadow-2xs cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span>+ Tambah / Upload Codingan</span>
           </button>
         </div>
       </div>
 
       {/* Main Switcher: IDE vs Snippet Library */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-[#2A3550] pb-2">
         <button
           type="button"
           onClick={() => setActiveMainTab("ide")}
-          className={`flex items-center gap-2 rounded-full px-5 py-2 text-xs font-black transition-all cursor-pointer ${
+          className={`flex items-center gap-2 rounded-[8px] px-4 py-1.5 text-xs font-black transition-all cursor-pointer ${
             activeMainTab === "ide"
-              ? "bg-[#0D3830] dark:bg-emerald-600 text-white shadow-md"
-              : "bg-white dark:bg-[#161B26] border border-slate-200 dark:border-slate-800 text-[#52647C] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+              : "bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#253045]"
           }`}
         >
-          <TerminalIcon className="h-4 w-4 text-[#A7F3D0]" />
+          <TerminalIcon className="h-3.5 w-3.5 text-emerald-400" />
           <span>⚡ Cloud Web IDE & Workspace</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveMainTab("library")}
-          className={`flex items-center gap-2 rounded-full px-5 py-2 text-xs font-black transition-all cursor-pointer ${
+          className={`flex items-center gap-2 rounded-[8px] px-4 py-1.5 text-xs font-black transition-all cursor-pointer ${
             activeMainTab === "library"
-              ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-md"
-              : "bg-white dark:bg-[#161B26] border border-slate-200 dark:border-slate-800 text-[#52647C] dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+              : "bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#253045]"
           }`}
         >
-          <Code2 className="h-4 w-4 text-[#FFD280]" />
+          <Code2 className="h-3.5 w-3.5 text-amber-400" />
           <span>📚 Pustaka Codingan ({allSnippets.length})</span>
         </button>
       </div>
@@ -1369,7 +1369,7 @@ export function CodeVault() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[36px] bg-[#121215] border-2 border-slate-800 shadow-2xl overflow-hidden flex flex-col"
+          className="rounded-[14px] bg-[#12161F] border border-[#2A3550] shadow-xl overflow-hidden flex flex-col"
         >
           {/* 1. IDE TOP TITLEBAR & CONTROLS */}
           <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#18181B] border-b border-slate-800 gap-3">

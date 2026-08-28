@@ -9,6 +9,9 @@ export interface RoadmapDayDetail {
   dayOfWeek: string
   dotsCount: number
   status: "completed" | "in_progress" | "upcoming"
+  isTodayExact: boolean
+  isNextUpcoming: boolean
+  targetTimestamp?: number
   badgeLabel1: string
   badgeLabel2: string
   sessions: Array<{
@@ -28,6 +31,7 @@ export interface RoadmapProgressSummary {
   completedDays: number
   currentStageName: string
   isDiklatFinished: boolean
+  isTodayActive: boolean
 }
 
 export const RUANG_DIKLAT_URL =
@@ -190,11 +194,13 @@ function cleanTimeFormat(timeStr?: string | null, fallback = "08:00"): string {
   return timeStr.trim()
 }
 
-function parseTimeToMins(timeStr?: string | null): number {
+export function parseTimeToMins(timeStr?: string | null): number {
   if (!timeStr) return 0
   const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})/)
   if (match) {
-    return parseInt(match[1], 10) * 60 + parseInt(match[2], 10)
+    const h = parseInt(match[1], 10)
+    const m = parseInt(match[2], 10)
+    return h * 60 + m
   }
   return 0
 }
@@ -223,41 +229,34 @@ export function getAutoRoadmapData(
       ? supabaseSchedules
       : DEFAULT_SCHEDULES_DATA
 
+  const now = new Date()
+  const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+
   const days: RoadmapDayDetail[] = RAW_DAYS_DATA.map((item) => {
     let status: "completed" | "in_progress" | "upcoming" = "upcoming"
     let badgeLabel1 = "BELUM MULAI"
     let badgeLabel2 = "JADWAL MENDATANG"
 
-    if (item.day < currentDay) {
-      status = "completed"
-      badgeLabel1 = "SELESAI"
-      badgeLabel2 = "SELESAI"
-    } else if (item.day === currentDay) {
-      status = "in_progress"
-      badgeLabel1 = "BERJALAN"
-      badgeLabel2 = "JADWAL HARI INI"
-    }
+    const itemDate = parseDiklatDate(item.date)
+    const isTodayExact = !!itemDate && itemDate.getTime() === todayAtMidnight.getTime()
+    const isPast = !!itemDate && itemDate.getTime() < todayAtMidnight.getTime()
+    const isNextUpcoming = !isTodayExact && item.day === currentDay && !!itemDate && itemDate.getTime() > todayAtMidnight.getTime()
 
     // Match sessions from Supabase for this day with STRICT day identification & sort chronologically
     const matchedSessions = effectiveSchedules
       .filter((s) => {
         const explicitDay = getScheduleDayNumber(s)
         if (explicitDay !== null) {
-          // If explicit day was found, it must STRICTLY match this day number
           return explicitDay === item.day
         }
-
-        // Fallback: If no day number is found, check if day name matches
         const dayStr = String(s.day || "").toLowerCase().trim()
         if (dayStr && (dayStr === item.dayOfWeek.toLowerCase() || dayStr === `hari ${item.day}`)) {
           return true
         }
-
         return false
       })
       .sort((a, b) => parseTimeToMins(a.start_time) - parseTimeToMins(b.start_time))
       .map((s) => {
-        // Clean [Hari X] prefix from display title if present
         const cleanTitle = s.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "").trim()
         const start = cleanTimeFormat(s.start_time, "08:00")
         const end = cleanTimeFormat(s.end_time, "15:30")
@@ -271,6 +270,34 @@ export function getAutoRoadmapData(
         }
       })
 
+    // Calculate target timestamp (start of first session or 09:30 on that date)
+    let targetTimestamp: number | undefined
+    if (itemDate) {
+      const firstSessionTime = matchedSessions[0]?.time?.split("-")[0]?.trim() || "09:30"
+      const startMins = parseTimeToMins(firstSessionTime) || (9 * 60 + 30)
+      const t = new Date(itemDate)
+      t.setHours(Math.floor(startMins / 60), startMins % 60, 0, 0)
+      targetTimestamp = t.getTime()
+    }
+
+    if (isPast || item.day < currentDay) {
+      status = "completed"
+      badgeLabel1 = "SELESAI"
+      badgeLabel2 = "SELESAI"
+    } else if (isTodayExact) {
+      status = "in_progress"
+      badgeLabel1 = "BERJALAN"
+      badgeLabel2 = "JADWAL HARI INI"
+    } else if (isNextUpcoming) {
+      status = "upcoming"
+      badgeLabel1 = `HARI KE-${item.day}`
+      badgeLabel2 = `SESI MENDATANG (${item.dayOfWeek})`
+    } else {
+      status = "upcoming"
+      badgeLabel1 = "BELUM MULAI"
+      badgeLabel2 = "JADWAL MENDATANG"
+    }
+
     return {
       dayNumber: item.day,
       stageNumber: item.stage,
@@ -280,10 +307,18 @@ export function getAutoRoadmapData(
       dayOfWeek: item.dayOfWeek,
       dotsCount: item.dots,
       status,
+      isTodayExact,
+      isNextUpcoming,
+      targetTimestamp,
       badgeLabel1,
       badgeLabel2,
       sessions: matchedSessions,
     }
+  })
+
+  const isTodayActive = RAW_DAYS_DATA.some((d) => {
+    const dDate = parseDiklatDate(d.date)
+    return !!dDate && dDate.getTime() === todayAtMidnight.getTime()
   })
 
   return {
@@ -295,6 +330,7 @@ export function getAutoRoadmapData(
       completedDays,
       currentStageName,
       isDiklatFinished: currentDay >= totalDays,
+      isTodayActive,
     },
   }
 }

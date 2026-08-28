@@ -46,52 +46,52 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
   const list = showcases && showcases.length > 0 ? showcases : DEFAULT_SHOWCASES
 
   return (
-    <section id="showcase" className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <section id="showcase" className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#131E29] dark:text-white">
+          <h3 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
             Galeri Showcase & Karya Terbaik
           </h3>
-          <p className="text-xs text-[#6B7C93] dark:text-slate-400">
-            Kumpulan hasil tugas besar, aplikasi, dan karya proyek terbaik dari mahasiswa
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Kumpulan hasil tugas besar, aplikasi, dan karya proyek terbaik dari peserta
           </p>
         </div>
 
-        <span className="text-xs font-bold text-[#FF7643] dark:text-amber-300 bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 rounded-full flex items-center gap-1.5">
-          <Trophy className="h-4 w-4" />
+        <span className="text-xs font-bold text-orange-600 dark:text-amber-300 bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 self-start sm:self-auto border border-orange-200 dark:border-amber-800">
+          <Trophy className="h-3.5 w-3.5" />
           Featured Projects
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {list.map((item, idx) => (
           <div
             key={item.id}
-            className="flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5 soft-card-shadow border border-slate-100 dark:border-slate-800"
+            className="flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs"
           >
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-[#B47D00] dark:text-amber-300 bg-[#FFF4D6] dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full">
-                  <Star className="h-3 w-3 fill-[#B47D00] dark:fill-amber-400" />
+                <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-[4px] border border-amber-200 dark:border-amber-800">
+                  <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
                   Top #{idx + 1}
                 </span>
-                <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-2.5 py-0.5 text-[11px] font-bold text-[#0D824B] dark:text-emerald-300">
+                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   {item.subject_name}
                 </span>
               </div>
 
-              <h4 className="font-bold text-base text-[#131E29] dark:text-white line-clamp-1">
+              <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 line-clamp-1">
                 {item.title}
               </h4>
 
-              <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-3 leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                 {item.description}
               </p>
             </div>
 
-            <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-              <div className="flex items-center gap-1.5 text-xs text-[#6B7C93] dark:text-slate-400">
-                <Users className="h-3.5 w-3.5 text-[#0D3830] dark:text-emerald-400 shrink-0" />
+            <div className="space-y-2.5 border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="truncate">{item.student_names}</span>
               </div>
 
@@ -102,7 +102,7 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
                   rel="noopener noreferrer"
                   className="block"
                 >
-                  <Button variant="secondary" size="sm" className="w-full" trailingIcon={<ExternalLink className="h-3 w-3" />}>
+                  <Button variant="secondary" size="sm" className="w-full justify-center rounded-[8px] text-xs font-bold" trailingIcon={<ExternalLink className="h-3 w-3" />}>
                     Lihat Proyek
                   </Button>
                 </a>

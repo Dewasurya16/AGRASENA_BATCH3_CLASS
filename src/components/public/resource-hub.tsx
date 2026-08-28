@@ -442,38 +442,38 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       {/* 1. Header Card */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-5"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 <FileText className="h-3.5 w-3.5" />
                 <span>Pustaka Bahan Ajar 120 JP</span>
               </span>
-              <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
                 Akses Instan 24 Jam
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
               Pustaka Modul Bahan Ajar PDF & <br className="hidden sm:block" />
-              <span className="text-[#0D824B] dark:text-emerald-400">AI Ringkasan Belajar</span>
+              <span className="text-emerald-700 dark:text-emerald-400">AI Ringkasan Belajar</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Seluruh modul pelatihan fungsional 120 JP telah diarsipkan lengkap. Baca langsung di browser dengan PDF Reader responsif, buat rangkuman otomatis dengan asisten AI, dan simpan catatan belajar pribadi Anda.
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <span className="rounded-full bg-slate-100 dark:bg-[#1E2433] px-4 py-2 text-xs font-black text-[#18181B] dark:text-white border border-slate-200 dark:border-slate-700">
+            <span className="rounded-[8px] bg-slate-100 dark:bg-[#161B26] px-3.5 py-1.5 text-xs font-black text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2A3550]">
               Total {items.length} Modul Resmi
             </span>
           </div>
@@ -481,16 +481,16 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
       </motion.div>
 
       {/* 2. Filter & Search Controls */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <div className="relative sm:col-span-1">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari judul modul / mata kuliah..."
-              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D824B] focus:outline-none"
+              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -498,7 +498,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-3.5 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
             >
               {subjects.map((sub) => (
                 <option key={sub} value={sub}>
@@ -512,7 +512,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(e.target.value)}
-              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] px-3.5 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
             >
               {weeks.map((wk) => (
                 <option key={wk} value={wk}>
@@ -526,49 +526,49 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
 
       {/* 3. Module Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-          <FileText className="mx-auto h-12 w-12 text-[#8C9BAE] dark:text-slate-500" />
-          <h4 className="font-bold text-base text-[#131E29] dark:text-white">Tidak Ada Modul yang Sesuai</h4>
-          <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-sm mx-auto">
+        <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-10 text-center border border-dashed border-slate-200/90 dark:border-[#2A3550] space-y-2.5">
+          <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-500" />
+          <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">Tidak Ada Modul yang Sesuai</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
             Coba ubah kata kunci pencarian atau reset filter tahapan diklat dan minggu pertemuan.
           </p>
-          <Button variant="secondary" size="sm" onClick={resetFilters} icon={<RotateCcw className="h-3.5 w-3.5" />}>
+          <Button variant="secondary" size="sm" className="rounded-[8px]" onClick={resetFilters} icon={<RotateCcw className="h-3.5 w-3.5" />}>
             Reset Filter
           </Button>
         </div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <motion.div layout className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
           {filtered.map((item) => (
             <motion.div
               key={item.id}
               layout
-              initial={{ opacity: 0, scale: 0.96 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="group flex flex-col justify-between rounded-[28px] bg-white dark:bg-[#161B26] p-5.5 border-2 border-slate-200 dark:border-slate-800 hover:border-[#0D824B] dark:hover:border-emerald-500 shadow-sm transition-all duration-300"
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="group flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] hover:border-slate-400 dark:hover:border-slate-500 shadow-2xs transition-all duration-200"
             >
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-bold text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     Pertemuan {item.week_number}
                   </span>
-                  <span className="font-mono text-[11px] font-semibold text-[#8C9BAE] dark:text-slate-400">
+                  <span className="font-mono text-[11px] font-semibold text-slate-400">
                     {formatFileSize(item.file_size)}
                   </span>
                 </div>
 
-                <h4 className="font-black text-base text-[#131E29] dark:text-white group-hover:text-[#0D824B] dark:group-hover:text-emerald-300 transition-colors line-clamp-2">
+                <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors line-clamp-2">
                   {item.title}
                 </h4>
-                <p className="text-xs font-bold text-[#FF7643] dark:text-amber-400">{item.subject_name}</p>
-                <p className="text-xs text-[#6B7C93] dark:text-slate-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs font-bold text-orange-600 dark:text-amber-400">{item.subject_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                   {item.description || "Modul kurikulum 120 JP Fungsional Pranata Komputer Keahlian."}
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-4 text-xs text-[#6B7C93] dark:text-slate-400 gap-3">
-                <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#8C9BAE] dark:text-slate-400 truncate max-w-[180px]">
-                  <FileText className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3 text-xs text-slate-500 dark:text-slate-400 gap-3">
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 truncate max-w-[180px]">
+                  <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   {item.file_name}
                 </span>
 
@@ -576,6 +576,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                   <Button
                     variant="secondary"
                     size="sm"
+                    className="rounded-[8px] text-xs font-bold"
                     onClick={() => {
                       setPreviewMaterial(item)
                       setReaderTab("pdf")
@@ -593,6 +594,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                     <Button
                       variant="primary"
                       size="sm"
+                      className="rounded-[8px] text-xs font-bold"
                       icon={<Download className="h-3.5 w-3.5" />}
                     >
                       Unduh

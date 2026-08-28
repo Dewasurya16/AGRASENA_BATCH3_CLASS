@@ -217,41 +217,41 @@ export function DiscussionsHub() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       {/* Header Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 <MessageSquare className="h-3.5 w-3.5" />
                 <span>Forum Kolaborasi Peserta</span>
               </span>
-              <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
                 Akses Instan Tanpa Login
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
               Papan Diskusi & Tanya Jawab <br className="hidden sm:block" />
-              <span className="text-[#0D824B] dark:text-emerald-400">Komunitas Prakom Batch 3</span>
+              <span className="text-emerald-700 dark:text-emerald-400">Komunitas Prakom Batch 3</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Ruang bertukar solusi teknis, tips pengerjaan tugas harian LMS, konfigurasi server, dan persiapan naskah seminar antar-rekan Pranata Komputer Kejaksaan se-Indonesia.
             </p>
           </div>
 
           <Button
             variant="orange"
-            size="lg"
+            size="sm"
             onClick={() => setIsModalOpen(true)}
-            className="font-black text-xs uppercase tracking-wider shadow-md shrink-0 cursor-pointer self-start sm:self-center"
+            className="font-black text-xs uppercase tracking-wider shadow-2xs shrink-0 cursor-pointer self-start sm:self-center rounded-[8px]"
             icon={<Plus className="h-4 w-4" />}
           >
             Tulis Pertanyaan
@@ -260,16 +260,16 @@ export function DiscussionsHub() {
       </motion.div>
 
       {/* Filter and Search Controls */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari topik diskusi / satker..."
-              className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#0D824B] focus:outline-none"
+              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -279,10 +279,10 @@ export function DiscussionsHub() {
                 key={t}
                 type="button"
                 onClick={() => setSelectedTag(t)}
-                className={`rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
                   selectedTag === t
-                    ? "bg-[#0D824B] text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045]"
                 }`}
               >
                 {t}
@@ -293,15 +293,15 @@ export function DiscussionsHub() {
       </div>
 
       {/* Thread Cards List */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         {filteredThreads.length === 0 ? (
-          <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-            <MessageSquare className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" />
-            <h4 className="font-bold text-base text-[#131E29] dark:text-white">Tidak Ada Diskusi yang Sesuai</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-10 text-center border border-dashed border-slate-200/90 dark:border-[#2A3550] space-y-2.5">
+            <MessageSquare className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600" />
+            <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">Tidak Ada Diskusi yang Sesuai</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Jadilah yang pertama menuliskan pertanyaan atau topik diskusi untuk rekan seangkatan.
             </p>
-            <Button variant="orange" size="sm" onClick={() => setIsModalOpen(true)}>
+            <Button variant="orange" size="sm" className="rounded-[8px]" onClick={() => setIsModalOpen(true)}>
               Tulis Pertanyaan Baru
             </Button>
           </div>
@@ -314,64 +314,64 @@ export function DiscussionsHub() {
               <motion.div
                 key={thread.id}
                 layout
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[28px] bg-white dark:bg-[#161B26] p-5 sm:p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+                className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3.5"
               >
                 {/* Author Info & Tag */}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 flex items-center justify-center text-[#0D824B] dark:text-emerald-300 font-black text-xs">
+                    <div className="h-7 w-7 rounded-full bg-emerald-100 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-800 dark:text-emerald-300 font-black text-xs">
                       {thread.authorName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="text-xs font-black text-[#131E29] dark:text-white leading-none">
+                      <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 leading-none">
                         {thread.authorName}
                       </h4>
-                      <span className="text-[11px] text-slate-500 font-medium">
+                      <span className="text-[10px] text-slate-400 font-medium">
                         {thread.authorSatker}
                       </span>
                     </div>
                   </div>
 
-                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[10px] font-bold text-[#0D824B] dark:text-emerald-400 border border-slate-200 dark:border-slate-700">
+                  <span className="rounded-full bg-slate-100 dark:bg-[#161B26] px-2.5 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-400 border border-slate-200/70 dark:border-[#2A3550]">
                     {thread.tag}
                   </span>
                 </div>
 
                 {/* Title and Content */}
-                <div className="space-y-1.5">
-                  <h3 className="text-sm sm:text-base font-black text-[#18181B] dark:text-white leading-snug">
+                <div className="space-y-1">
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-snug">
                     {thread.title}
                   </h3>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                     {thread.content}
                   </p>
                 </div>
 
                 {/* Bottom Action Bar */}
-                <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 text-xs">
+                <div className="flex items-center justify-between border-t border-slate-100 dark:border-[#2A3550] pt-2.5 text-xs">
                   <button
                     type="button"
                     onClick={() => handleUpvote(thread.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] font-bold transition cursor-pointer text-xs ${
                       isVoted
-                        ? "bg-[#E6F7ED] dark:bg-emerald-950/50 text-[#0D824B] dark:text-emerald-400 border border-[#A7F3D0] dark:border-emerald-800"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                        : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#253045]"
                     }`}
                   >
-                    <ThumbsUp className="h-3.5 w-3.5" />
+                    <ThumbsUp className="h-3 w-3" />
                     <span>Bermanfaat ({thread.upvotes})</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setExpandedThreadId(isExpanded ? null : thread.id)}
-                    className="flex items-center gap-1.5 font-bold text-[#0D824B] dark:text-emerald-400 hover:underline cursor-pointer"
+                    className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer text-xs"
                   >
-                    <MessageSquare className="h-3.5 w-3.5" />
+                    <MessageSquare className="h-3 w-3" />
                     <span>{thread.replies.length} Tanggapan</span>
-                    {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   </button>
                 </div>
 

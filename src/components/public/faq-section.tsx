@@ -388,49 +388,49 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* 1. Header Hero Card */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-5"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#EA580C] dark:text-amber-300 border border-[#FFD280] dark:border-amber-800">
+              <span className="flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-amber-950/80 px-3 py-0.5 text-xs font-black uppercase text-orange-700 dark:text-amber-300 border border-orange-200 dark:border-amber-800">
                 <HelpCircle className="h-3.5 w-3.5" />
                 <span>Pusat Bantuan & Tanya Jawab</span>
               </span>
-              <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-1 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
+              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
                 Respon Cepat Pengurus
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
               Pusat Bantuan, FAQ & <br className="hidden sm:block" />
-              <span className="text-[#FF7643] dark:text-[#FFA07A]">Kontak Admin Kelas</span>
+              <span className="text-orange-600 dark:text-amber-400">Kontak Admin Kelas</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Temukan panduan lengkap seputar perkuliahan 120 JP, pengumpulan tugas harian, portal LMS Kejaksaan, simulasi kuis MOOC, serta sampaikan kendala teknis, masukan, dan saran langsung ke Tim Admin Kelas Diklat Prakom Batch 3.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 self-start sm:self-center">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 self-start sm:self-center">
             <button
               onClick={() => setFormOpen(!formOpen)}
-              className="flex items-center justify-center gap-2 rounded-full bg-[#18181B] dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 px-5 py-3 text-xs sm:text-sm font-black text-white shadow-md transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-2xs transition-all cursor-pointer"
             >
-              <Send className="h-4 w-4" />
-              <span>{formOpen ? "Tutup Formulir Lapor" : "Tulis Laporan / Saran"}</span>
+              <Send className="h-3.5 w-3.5" />
+              <span>{formOpen ? "Tutup Formulir" : "Tulis Laporan / Saran"}</span>
             </button>
             <button
               onClick={handleTriggerWANotice}
-              className="flex items-center justify-center gap-2 rounded-full bg-[#0D824B] hover:bg-[#0A6C3E] px-5 py-3 text-xs sm:text-sm font-black text-white shadow-md hover:scale-102 transition-all cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-emerald-700 hover:bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-2xs transition-all cursor-pointer"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-3.5 w-3.5" />
               <span>Hubungi WA</span>
             </button>
           </div>
@@ -441,57 +441,53 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.35, delay: 0.1 }}
-        className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#FFF5EC] via-[#FFF9F5] to-[#FFEADA]/60 dark:from-[#231710] dark:via-[#1A1412] dark:to-[#161B26] p-6 sm:p-7 border-2 border-[#FFD280] dark:border-amber-900/60 shadow-md space-y-5"
+        transition={{ duration: 0.3, delay: 0.05 }}
+        className="relative overflow-hidden rounded-[12px] bg-amber-50/70 dark:bg-[#1B2130] p-4 sm:p-6 border border-amber-200/80 dark:border-[#2A3550] shadow-2xs space-y-4"
       >
-        {/* Decorative Aura */}
-        <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-[#FF7643]/15 dark:bg-amber-500/10 blur-2xl pointer-events-none" />
-        <div className="absolute -left-8 -bottom-8 h-36 w-36 rounded-full bg-amber-400/10 blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#EA580C] text-white shadow-md shadow-[#EA580C]/30">
-              <AlertTriangle className="h-6 w-6 animate-pulse" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-orange-600 text-white shadow-2xs">
+              <AlertTriangle className="h-5 w-5" />
             </div>
 
-            <div className="space-y-1.5 max-w-3xl">
+            <div className="space-y-1 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#EA580C] text-white px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+                <span className="rounded-full bg-orange-600 text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
                   Pemberitahuan Penting
                 </span>
-                <span className="text-xs font-extrabold text-[#18181B] dark:text-white">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                   Layanan Bantuan & Aspirasi Peserta Diklat
                 </span>
               </div>
 
-              <h3 className="text-base sm:text-lg font-black text-[#18181B] dark:text-white leading-snug">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-snug">
                 Mengalami Kendala Teknis atau Memiliki Masukan & Saran Perbaikan?
               </h3>
 
-              <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed">
-                Jika Anda mengalami masalah seperti <strong className="text-[#18181B] dark:text-white">link Zoom error / tidak bisa join</strong>, <strong className="text-[#18181B] dark:text-white">modul PDF gagal diunduh</strong>, <strong className="text-[#18181B] dark:text-white">tenggat upload tugas LMS bermasalah</strong>, atau ingin menyampaikan kritik dan saran, <span className="font-bold text-[#EA580C] dark:text-amber-400">segera kirim laporan langsung ke Admin Pengurus Kelas</span> di bawah tanpa perlu login.
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Jika Anda mengalami masalah seperti <strong className="text-slate-900 dark:text-slate-100">link Zoom error</strong>, <strong className="text-slate-900 dark:text-slate-100">modul PDF gagal diunduh</strong>, <strong className="text-slate-900 dark:text-slate-100">tenggat upload tugas LMS bermasalah</strong>, atau ingin menyampaikan kritik dan saran, <span className="font-bold text-orange-600 dark:text-amber-400">segera kirim laporan langsung ke Admin Pengurus Kelas</span> di bawah tanpa perlu login.
               </p>
             </div>
           </div>
 
           {/* Action Button Box */}
-          <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 self-stretch sm:self-auto md:w-56">
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0 self-stretch sm:self-auto md:w-52">
             <button
               type="button"
               onClick={() => setFormOpen(!formOpen)}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-[#18181B] dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 px-4 py-2.5 text-xs font-black text-white transition shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-2 text-xs font-black text-white transition shadow-2xs cursor-pointer"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3.5 w-3.5" />
               <span>{formOpen ? "Tutup Formulir" : "Buka Formulir Lapor"}</span>
             </button>
 
             <button
               type="button"
               onClick={handleTriggerWANotice}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-[#0D824B] hover:bg-[#0A6C3E] px-4 py-2.5 text-xs font-black text-white transition shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-emerald-700 hover:bg-emerald-600 px-3.5 py-2 text-xs font-black text-white transition shadow-2xs cursor-pointer"
             >
-              <MessageCircle className="h-4 w-4" />
-              <span>Chat WhatsApp Admin</span>
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span>Chat WA Admin</span>
               <ExternalLink className="h-3 w-3 text-emerald-200" />
             </button>
           </div>
@@ -504,47 +500,47 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              className="pt-4 border-t border-[#FFD280]/60 dark:border-amber-900/60"
+              transition={{ duration: 0.2 }}
+              className="pt-3 border-t border-amber-200/60 dark:border-[#2A3550]"
             >
               <form
                 onSubmit={handleSubmitReportToAdmin}
-                className="rounded-2xl bg-white dark:bg-[#161B26] p-5 sm:p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+                className="rounded-[10px] bg-white dark:bg-[#161B26] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3.5"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#FFEADA] dark:bg-amber-950/80 text-[#EA580C] dark:text-amber-400">
-                      <Send className="h-3.5 w-3.5" />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-orange-100 dark:bg-amber-950/80 text-orange-600 dark:text-amber-400">
+                      <Send className="h-3 w-3" />
                     </span>
-                    <h4 className="font-black text-sm text-[#18181B] dark:text-white">
+                    <h4 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       Formulir Laporan Kendala & Kotak Saran (Langsung ke Admin)
                     </h4>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-                    Masuk ke Dashboard Pengurus
+                  <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-[4px] border border-emerald-200 dark:border-emerald-800">
+                    Masuk ke Dashboard
                   </span>
                 </div>
 
                 {reportFeedback && (
                   <div
-                    className={`rounded-xl p-3 text-xs font-bold border flex items-center gap-2 ${
+                    className={`rounded-[8px] p-2.5 text-xs font-bold border flex items-center gap-2 ${
                       reportFeedback.type === "success"
-                        ? "bg-[#E6F7ED] dark:bg-emerald-950/80 text-[#0D824B] dark:text-emerald-300 border-[#A7F3D0] dark:border-emerald-800"
-                        : "bg-[#FFEAE9] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300 border-[#FFCDCA] dark:border-rose-800"
+                        ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                        : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
                     }`}
                   >
                     {reportFeedback.type === "success" ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0D824B] dark:text-emerald-400" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-[#E11D48] dark:text-rose-400" />
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
                     )}
                     <span>{reportFeedback.message}</span>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
+                    <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
                       Nama Lengkap <span className="text-rose-500">*</span>
                     </label>
                     <input
@@ -552,47 +548,47 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                       required
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      placeholder="Contoh: Budi Santoso, S.Kom."
-                      className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
+                      placeholder="Budi Santoso, S.Kom."
+                      className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] px-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
-                      Satuan Kerja (Satker) <span className="text-rose-500">*</span>
+                    <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                      Satuan Kerja <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={formSatker}
                       onChange={(e) => setFormSatker(e.target.value)}
-                      placeholder="Contoh: Kejati Sulsel / Kejari Soppeng"
-                      className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
+                      placeholder="Kejati Sulsel / Kejari Soppeng"
+                      className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] px-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
-                      No. WhatsApp / HP (Opsional):
+                    <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                      No. WA (Opsional):
                     </label>
                     <input
                       type="text"
                       value={formContact}
                       onChange={(e) => setFormContact(e.target.value)}
-                      placeholder="Contoh: 081234567890"
-                      className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
+                      placeholder="081234567890"
+                      className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] px-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
+                  <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
                     Kategori Kendala / Aspirasi:
                   </label>
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] px-3 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+                    className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="Kendala Link Zoom & Ruang Perkuliahan">🔗 Kendala Link Zoom & Ruang Perkuliahan</option>
                     <option value="Kendala LMS & Pengumpulan Tugas">📝 Kendala Portal LMS & Pengumpulan Tugas</option>
@@ -604,7 +600,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-[#18181B] dark:text-slate-300">
+                  <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
                     Uraian Detail Kendala / Masukan <span className="text-rose-500">*</span>:
                   </label>
                   <textarea
@@ -613,12 +609,12 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                     value={formMessage}
                     onChange={(e) => setFormMessage(e.target.value)}
                     placeholder="Tuliskan kendala yang Anda alami secara rinci atau kritik & saran perbaikan..."
-                    className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#1E2433] p-3 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-500 focus:border-[#0D824B] focus:outline-none"
+                    className="w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                  <span className="text-[11px] text-[#8C9BAE] dark:text-slate-400">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <span className="text-[10px] text-slate-400">
                     💡 Laporan langsung diterima dan dapat ditindaklanjuti oleh Pengurus di Dashboard Admin.
                   </span>
 
@@ -626,16 +622,16 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                     <button
                       type="button"
                       onClick={handleCopyCustomReport}
-                      className="flex items-center gap-1.5 rounded-xl bg-slate-100 dark:bg-[#1E2433] px-3.5 py-2 text-xs font-bold text-[#18181B] dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-[6px] bg-slate-100 dark:bg-[#1B2130] px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253045] transition cursor-pointer border border-slate-200/70 dark:border-[#2A3550]"
                     >
                       {formCopied ? (
                         <>
-                          <Check className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />
-                          <span className="text-[#0D824B] dark:text-emerald-400">Tersalin!</span>
+                          <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                          <span className="text-emerald-600 dark:text-emerald-400">Tersalin!</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                          <Copy className="h-3 w-3 text-slate-500 dark:text-slate-400" />
                           <span>Salin Format</span>
                         </>
                       )}
@@ -644,17 +640,17 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                     <button
                       type="submit"
                       disabled={isSubmittingReport}
-                      className="flex items-center gap-1.5 rounded-xl bg-[#18181B] dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-500 disabled:opacity-50 px-4 py-2 text-xs font-black text-white transition shadow-sm cursor-pointer"
+                      className="flex items-center gap-1.5 rounded-[6px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 disabled:opacity-50 px-3.5 py-1.5 text-xs font-black text-white transition shadow-2xs cursor-pointer"
                     >
                       {isSubmittingReport ? (
                         <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          <span>Mengirim ke Admin...</span>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>Mengirim...</span>
                         </>
                       ) : (
                         <>
-                          <Send className="h-3.5 w-3.5" />
-                          <span>Kirim Laporan ke Admin</span>
+                          <Send className="h-3 w-3" />
+                          <span>Kirim Laporan</span>
                         </>
                       )}
                     </button>
@@ -667,28 +663,28 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
       </motion.div>
 
       {/* 3. Search & Filter Category Pills */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-4 sm:p-5 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5">
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-2.5">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE] dark:text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Ketik kata kunci pertanyaan (contoh: jadwal, tugas, zoom, angka kredit, kuis, lms, lab)..."
-            className="h-11 w-full rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1E2433] pl-10 pr-4 text-xs font-medium text-[#18181B] dark:text-white placeholder-[#9AA8BA] dark:placeholder-slate-400 focus:border-[#18181B] dark:focus:border-emerald-500 focus:outline-none"
+            className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
           />
         </div>
 
         {/* Categories Carousel */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-xs"
-                  : "bg-[#F4F6FA] dark:bg-[#1E2433] border border-slate-200 dark:border-slate-700 text-[#52647C] dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-[#18181B] dark:hover:text-white"
+                  ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+                  : "bg-slate-100 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045]"
               }`}
             >
               {cat}
@@ -698,18 +694,18 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
       </div>
 
       {/* 4. FAQ Accordion Grid */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {filteredFaqs.length === 0 ? (
-          <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-            <HelpCircle className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
-            <h4 className="font-bold text-base text-[#18181B] dark:text-white">Pertanyaan Tidak Ditemukan</h4>
-            <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-md mx-auto">
+          <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-10 text-center border border-dashed border-slate-200/90 dark:border-[#2A3550] space-y-2.5">
+            <HelpCircle className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto" />
+            <h4 className="font-black text-sm text-slate-900 dark:text-slate-100">Pertanyaan Tidak Ditemukan</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Belum ada jawaban untuk kata kunci "{searchQuery}". Anda bisa langsung mengirimkan kendala ke Admin Kelas atau menanyakannya di Forum Diskusi!
             </p>
-            <div className="pt-2 flex justify-center gap-2">
+            <div className="pt-1 flex justify-center gap-2">
               <button
                 onClick={handleTriggerWANotice}
-                className="rounded-full bg-[#0D824B] text-white px-5 py-2 text-xs font-bold shadow-sm cursor-pointer"
+                className="rounded-[6px] bg-emerald-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-2xs cursor-pointer"
               >
                 Tanya Admin via WA
               </button>
@@ -718,7 +714,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                   setSearchQuery("")
                   setSelectedCategory("Semua")
                 }}
-                className="rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 text-xs font-bold cursor-pointer"
+                className="rounded-[6px] bg-slate-100 dark:bg-[#161B26] text-slate-700 dark:text-slate-300 px-3 py-1.5 text-xs font-bold cursor-pointer border border-slate-200/70 dark:border-[#2A3550]"
               >
                 Reset Pencarian
               </button>
@@ -730,40 +726,40 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
             return (
               <motion.div
                 key={faq.id}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-[24px] transition-all overflow-hidden border-2 ${
+                className={`rounded-[10px] transition-all overflow-hidden border ${
                   isExpanded
-                    ? "bg-white dark:bg-[#161B26] border-[#18181B] dark:border-emerald-600 shadow-md"
-                    : "bg-white dark:bg-[#12161F] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+                    ? "bg-white dark:bg-[#1B2130] border-slate-400 dark:border-indigo-500 shadow-2xs"
+                    : "bg-white dark:bg-[#1B2130] border-slate-200/90 dark:border-[#2A3550] hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs"
                 }`}
               >
                 {/* Accordion Header */}
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : faq.id)}
-                  className="w-full flex items-center justify-between p-4 sm:p-5 text-left gap-4 cursor-pointer"
+                  className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left gap-3 cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#F4F6FA] dark:bg-[#1E2433] text-xs font-black text-[#18181B] dark:text-white">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-slate-100 dark:bg-[#161B26] text-xs font-black text-slate-900 dark:text-slate-100">
                       Q
                     </span>
                     <div className="space-y-0.5">
-                      <span className="text-[10px] font-bold text-[#FF7643] dark:text-amber-400 uppercase tracking-wider">
+                      <span className="text-[9px] font-black text-orange-600 dark:text-amber-400 uppercase tracking-wider">
                         {faq.category}
                       </span>
-                      <h3 className="text-xs sm:text-sm font-black text-[#18181B] dark:text-white leading-snug">
+                      <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 leading-snug">
                         {faq.question}
                       </h3>
                     </div>
                   </div>
 
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-transform ${
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-transform ${
                     isExpanded
-                      ? "bg-[#18181B] dark:bg-emerald-600 text-white rotate-180"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                      ? "bg-slate-900 dark:bg-indigo-600 text-white rotate-180"
+                      : "bg-slate-100 dark:bg-[#161B26] text-slate-500 dark:text-slate-400"
                   }`}>
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-3.5 w-3.5" />
                   </div>
                 </button>
 
@@ -774,31 +770,30 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="border-t border-slate-100 dark:border-slate-800 px-5 pb-5 pt-3 space-y-3"
+                      transition={{ duration: 0.15 }}
+                      className="border-t border-slate-100 dark:border-[#2A3550] px-4 pb-4 pt-2.5 space-y-2.5"
                     >
                       {faq.highlight && (
-                        <div className="flex items-center gap-2 rounded-xl bg-[#E6F7ED] dark:bg-emerald-950/70 p-2.5 border border-[#A7F3D0] dark:border-emerald-800 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
-                          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0D824B] dark:text-emerald-400" />
+                        <div className="flex items-center gap-1.5 rounded-[6px] bg-emerald-50 dark:bg-emerald-950/70 p-2 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                           <span>{faq.highlight}</span>
                         </div>
                       )}
 
-                      <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                         {faq.answer}
                       </p>
 
                       {faq.links && faq.links.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                          <span className="text-[11px] font-bold text-[#8C9BAE] dark:text-slate-400">Tautan Terkait:</span>
+                        <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-slate-100 dark:border-[#2A3550]">
+                          <span className="text-[10px] font-bold text-slate-400">Tautan Terkait:</span>
                           {faq.links.map((l, lIdx) => (
                             <Link
                               key={lIdx}
                               href={l.href}
-                              className="inline-flex items-center gap-1 text-xs font-black text-[#0D824B] dark:text-emerald-400 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
                             >
                               <span>{l.text}</span>
-                              <ExternalLink className="h-3 w-3" />
                             </Link>
                           ))}
                         </div>

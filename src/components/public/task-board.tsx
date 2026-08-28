@@ -23,19 +23,19 @@ export function TaskBoard({ tasks = [] }: { tasks?: TaskRecord[] }) {
   })
 
   return (
-    <section id="tasks" className="space-y-6">
+    <section id="tasks" className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#131E29] dark:text-white">
+          <h3 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
             Daftar Tugas & Deadline
           </h3>
-          <p className="text-xs text-[#6B7C93] dark:text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Pantau status pengerjaan tugas akademik dan batas waktu pengumpulan
           </p>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 rounded-2xl bg-white dark:bg-[#12161F] p-1.5 border border-slate-200 dark:border-slate-800 shadow-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 rounded-[8px] bg-slate-100 dark:bg-[#1B2130] p-1 border border-slate-200/80 dark:border-[#2A3550] shadow-2xs self-start sm:self-auto">
           {[
             { id: "all", label: "Semua" },
             { id: "todo", label: "Belum Selesai" },
@@ -44,10 +44,10 @@ export function TaskBoard({ tasks = [] }: { tasks?: TaskRecord[] }) {
             <button
               key={f.id}
               onClick={() => setFilterStatus(f.id)}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+              className={`rounded-[6px] px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
                 filterStatus === f.id
-                  ? "bg-[#18181B] dark:bg-emerald-600 text-white shadow-xs"
-                  : "text-[#6B7C93] dark:text-slate-400 hover:text-[#18181B] dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-[#253045]"
               }`}
             >
               {f.label}
@@ -57,52 +57,52 @@ export function TaskBoard({ tasks = [] }: { tasks?: TaskRecord[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-[32px] bg-white dark:bg-[#12161F] p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-          <BookOpen className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
-          <h4 className="font-bold text-base text-[#18181B] dark:text-white">Belum Ada Tugas Aktif</h4>
-          <p className="text-xs text-[#6B7C93] dark:text-slate-400 max-w-md mx-auto">
+        <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-10 text-center border border-dashed border-slate-200/90 dark:border-[#2A3550] space-y-2.5">
+          <BookOpen className="h-9 w-9 text-slate-300 dark:text-slate-600 mx-auto" />
+          <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">Belum Ada Tugas Aktif</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
             Tidak ada tugas yang perlu dikumpulkan saat ini.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {filtered.map((task) => (
             <div
               key={task.id}
-              className="rounded-[28px] bg-white dark:bg-[#161B26] p-6 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-[#18181B] dark:hover:border-slate-600 transition-all flex flex-col justify-between space-y-4"
+              className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs hover:border-slate-400 dark:hover:border-slate-500 transition-all flex flex-col justify-between space-y-3"
             >
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-[10px] font-black uppercase text-[#EA580C] dark:text-amber-300 border border-amber-200 dark:border-amber-900">
+                  <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-[9px] font-black uppercase text-orange-700 dark:text-amber-300 border border-orange-200 dark:border-amber-900/60">
                     {task.subject_name.startsWith("Tahap") ? task.subject_name : `Tahap • ${task.subject_name}`}
                   </span>
                   <span className={`text-xs font-bold flex items-center gap-1 shrink-0 ${
-                    task.status === "completed" ? "text-[#0D824B] dark:text-emerald-400" : "text-[#EA580C] dark:text-amber-400"
+                    task.status === "completed" ? "text-emerald-700 dark:text-emerald-400" : "text-orange-600 dark:text-amber-400"
                   }`}>
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-3 w-3" />
                     <span>{new Date(task.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })} (23:59 WIB)</span>
                   </span>
                 </div>
 
-                <h4 className="font-black text-base text-[#18181B] dark:text-white">{task.title}</h4>
+                <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">{task.title}</h4>
                 {task.description && (
-                  <p className="text-xs text-[#52647C] dark:text-slate-400 leading-relaxed line-clamp-3">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">
                     {task.description}
                   </p>
                 )}
               </div>
 
               {task.submission_link && (
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-[11px] text-[#6B7C93] dark:text-slate-400 font-medium">Pengumpulan: Portal LMS</span>
+                <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between">
+                  <span className="text-[11px] text-slate-400 font-medium">Pengumpulan: Portal LMS</span>
                   <a
                     href={task.submission_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-black text-[#FF7643] dark:text-amber-400 hover:underline"
+                    className="flex items-center gap-1 text-xs font-black text-orange-600 dark:text-amber-400 hover:underline"
                   >
                     <span>Kirim Tugas</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               )}

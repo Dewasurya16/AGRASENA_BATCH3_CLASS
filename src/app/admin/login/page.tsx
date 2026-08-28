@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { GraduationCap, Lock, Mail, ArrowRight, ArrowLeft, Loader2 } from "lucide-react"
+import { GraduationCap, Lock, Mail, ArrowRight, ArrowLeft, Loader2, ShieldCheck } from "lucide-react"
 import { adminLogin } from "../actions"
 import Link from "next/link"
 
@@ -33,57 +33,59 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#FBFBFD] select-none">
-      {/* Decorative Pastel Glows */}
-      <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-[#FFE3EB]/60 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-[#D7F3FE]/60 blur-3xl pointer-events-none" />
+    <div className="relative min-h-screen flex items-center justify-center p-4 sm:p-6 bg-[#F8FAFC] dark:bg-[#0F141C] text-slate-900 dark:text-slate-100 select-none">
+      {/* Decorative Subtle Ambient Glows */}
+      <div className="absolute top-1/4 left-1/4 h-80 w-80 rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl pointer-events-none" />
 
-      {/* Main _oX Login Window Card */}
+      {/* Main Login Card */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-md rounded-[32px] bg-white border-2 border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+        className="relative z-10 w-full max-w-md rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] shadow-xl shadow-slate-900/5 dark:shadow-black/40 overflow-hidden"
       >
-        {/* Top _oX Window Titlebar */}
-        <div className="flex items-center justify-between px-5 py-2.5 bg-[#FFF2D1] border-b-2 border-slate-200">
+        {/* Top Header Badge */}
+        <div className="flex items-center justify-between px-5 py-3 bg-slate-50 dark:bg-[#161B26] border-b border-slate-200/80 dark:border-[#2A3550]">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-black text-[#B47D00]">Portal Pengurus Diklat</span>
-            <span className="rounded-full bg-white/70 px-2 py-0.5 text-[9px] font-black text-[#855D00]">
-              Prakom Batch 3
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Portal Admin Diklat
             </span>
           </div>
-          <span className="font-mono text-xs font-black text-slate-700">_oX</span>
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/60 dark:border-emerald-800/50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+            Batch 3
+          </span>
         </div>
 
-        <div className="p-6 sm:p-8 space-y-6">
-          {/* Header */}
+        <div className="p-6 sm:p-7 space-y-6">
+          {/* Brand Header */}
           <div className="text-center space-y-2">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#18181B] text-white shadow-md mb-2">
-              <GraduationCap className="h-7 w-7 text-[#FFD280]" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[12px] bg-gradient-to-tr from-[#0F172A] to-[#1E293B] dark:from-[#1E2535] dark:to-[#2D3748] text-white shadow-md mb-1">
+              <ShieldCheck className="h-6 w-6 text-amber-400" />
             </div>
-            <h2 className="text-2xl font-black text-[#18181B] tracking-tight">
-              Masuk Akun Pengurus
+            <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              Autentikasi Pengurus
             </h2>
-            <p className="text-xs text-[#6B7C93]">
-              Kelola materi PDF, jadwal 35 hari, tugas, dan pengumuman kelas.
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+              Masuk untuk mengelola modul 120 JP, jadwal, tugas, dan aspirasi kelas.
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-2xl bg-[#FFEAE9] p-3.5 text-xs font-bold text-[#E11D48] border border-[#FFCDCA]">
+              <div className="rounded-[10px] bg-rose-50 dark:bg-rose-950/40 p-3 text-xs font-bold text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                 {error}
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-black text-[#18181B]">
-                Email Pengurus / Admin
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Email Pengurus
               </label>
               <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE]" />
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   name="email"
                   type="email"
@@ -91,17 +93,17 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@kejaksaan.go.id"
-                  className="h-11 w-full rounded-2xl border-2 border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-[#18181B] placeholder-[#9AA8BA] focus:border-[#18181B] focus:outline-none"
+                  className="h-10 w-full rounded-[10px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/50 dark:bg-[#141824] pl-10 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition-all"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-black text-[#18181B]">
-                Password
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Kata Sandi
               </label>
               <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#8C9BAE]" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   name="password"
                   type="password"
@@ -109,7 +111,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="h-11 w-full rounded-2xl border-2 border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-[#18181B] placeholder-[#9AA8BA] focus:border-[#18181B] focus:outline-none"
+                  className="h-10 w-full rounded-[10px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/50 dark:bg-[#141824] pl-10 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition-all"
                 />
               </div>
             </div>
@@ -117,34 +119,34 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center justify-center gap-2 w-full rounded-full bg-[#18181B] py-3.5 text-xs sm:text-sm font-black text-white hover:bg-[#27272A] hover:scale-101 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 w-full rounded-[10px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 py-2.5 text-xs font-black text-white transition-all shadow-md cursor-pointer disabled:opacity-50 mt-2"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-[#FFD280]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
                   <span>Memverifikasi Akun...</span>
                 </>
               ) : (
                 <>
-                  <span>Masuk ke Dashboard Admin</span>
-                  <ArrowRight className="h-4 w-4 text-[#FFD280]" />
+                  <span>Masuk ke Dashboard</span>
+                  <ArrowRight className="h-4 w-4 text-amber-400" />
                 </>
               )}
             </button>
           </form>
 
           {/* Quick Demo Info & Back link */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-[#6B7C93]">
+          <div className="pt-3 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-xs">
             <Link
               href="/"
-              className="flex items-center gap-1.5 font-bold text-[#18181B] hover:text-[#FF7643] transition"
+              className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Kembali ke Beranda</span>
+              <span>Ke Beranda</span>
             </Link>
 
-            <span className="font-mono text-[11px] text-[#0D824B] font-bold">
-              Status: Siap Digunakan
+            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+              ● Sistem Siap
             </span>
           </div>
         </div>
@@ -152,3 +154,4 @@ export default function AdminLoginPage() {
     </div>
   )
 }
+

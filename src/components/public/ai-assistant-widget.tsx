@@ -285,23 +285,31 @@ export function AIAssistantWidget() {
       const savedName = localStorage.getItem('prakom_user_name')
       const savedSatker = localStorage.getItem('prakom_user_satker')
 
+      const now = new Date()
+      const dayOfWeek = now.getDay()
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      const todayObj = RAW_DAYS_DATA.find((d) => d.day === today) || RAW_DAYS_DATA[0]
+
+      const welcomeDateText = isWeekend
+        ? `Saat ini adalah **Masa Rehat Akhir Pekan (Sabtu/Minggu)**. Perkuliahan aktif berikutnya akan dimulai pada **Senin, 31 Agustus 2026 (Hari ke-6 • Tahap 2 TMO)**.`
+        : `Hari ini adalah **Hari ke-${today} (${todayObj.date}) — ${todayObj.stageName}**.`
+
       if (savedName) {
         setUserName(savedName)
         setUserSatker(savedSatker || '')
         setTempNameInput(savedName)
         setTempSatkerInput(savedSatker || '')
         setIsNameSet(true)
-        const todayObj = RAW_DAYS_DATA.find((d) => d.day === today) || RAW_DAYS_DATA[0]
         setMessages([
           {
             id: 'msg-welcome',
             sender: 'ai',
             text: `Halo Pak/Ibu **${savedName}**${savedSatker ? ` (${savedSatker})` : ''}! 👋
 
-Hari ini adalah **Hari ke-${today} (${todayObj.date}) — ${todayObj.stageName}**.
+${welcomeDateText}
 
 Saya siap membantu:
-• 📅 Jadwal diklat hari ini & besok
+• 📅 Jadwal diklat hari ini, besok, & pekan depan
 • 💻 Pemecahan error kodingan (SQL, Python, Bash, JS, Docker, dsb.)
 • 📈 Perhitungan Angka Kredit (AK / DUPAK) & SPBE
 • 📝 Panduan tugas & pertanyaan umum lainnya
@@ -594,15 +602,15 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
   return (
     <>
       {/* Floating Trigger Button on Bottom-Right */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40">
         <motion.button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative flex items-center gap-2 rounded-full bg-[#0D3830] dark:bg-emerald-600 hover:bg-[#082822] dark:hover:bg-emerald-700 px-4 py-3 text-white shadow-xl shadow-black/25 border-2 border-white/20 cursor-pointer"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="relative flex items-center gap-2 rounded-[10px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-2.5 text-white shadow-xl shadow-black/20 border border-white/10 cursor-pointer"
         >
-          <Bot className="h-5 w-5 text-white" />
+          <Bot className="h-4 w-4 text-white" />
           <span className="font-bold text-xs">
             {userName ? `Hai, ${userName.split(' ')[0]}` : 'Tanya AI'}
           </span>
@@ -614,26 +622,26 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[420px] md:w-[460px] h-[560px] max-h-[82vh] rounded-[28px] bg-white dark:bg-[#12161F] border-2 border-slate-200 dark:border-slate-800 shadow-2xl shadow-black/30 flex flex-col overflow-hidden text-[#18181B] dark:text-[#F1F5F9]"
+            className="fixed bottom-20 sm:bottom-20 right-2 sm:right-6 z-50 w-[calc(100vw-1rem)] sm:w-[420px] md:w-[460px] h-[520px] sm:h-[560px] max-h-[82vh] rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
           >
             {/* 1. Header (Clean & Minimalist) */}
-            <div className="flex items-center justify-between p-3.5 px-4 bg-[#FAFBFD] dark:bg-[#181D28] border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between p-3 px-4 bg-slate-50 dark:bg-[#161B26] border-b border-slate-200/80 dark:border-[#2A3550]">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#0D3830] dark:bg-emerald-600 text-white shadow-xs">
-                  <Bot className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs">
+                  <Bot className="h-3.5 w-3.5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h4 className="font-bold text-xs text-[#131E29] dark:text-white">AI Copilot Prakom</h4>
-                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#0D824B] dark:text-emerald-400 px-1.5 py-0.2 text-[9px] font-bold">
+                    <h4 className="font-black text-xs text-slate-900 dark:text-slate-100">AI Copilot Prakom</h4>
+                    <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.2 text-[9px] font-bold">
                       Hari {currentDayNum}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 font-medium">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                     {userName ? `${userName}${userSatker ? ` • ${userSatker}` : ''}` : 'Asisten Cerdas Diklat 120 JP'}
                   </p>
                 </div>
@@ -645,7 +653,7 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                     type="button"
                     onClick={() => setIsEditingProfile(!isEditingProfile)}
                     title="Ubah Profil Nama"
-                    className={`rounded-full p-1.5 transition cursor-pointer ${isEditingProfile ? 'bg-slate-200 dark:bg-slate-700 text-[#0D3830]' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                    className={`rounded-[6px] p-1.5 transition cursor-pointer ${isEditingProfile ? 'bg-slate-200 dark:bg-slate-700 text-slate-900' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                   >
                     <Edit3 className="h-3.5 w-3.5" />
                   </button>
@@ -654,27 +662,27 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                   type="button"
                   onClick={handleResetChat}
                   title="Reset Percakapan"
-                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="rounded-[6px] p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   title="Tutup"
-                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="rounded-[6px] p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
 
             {/* 2. Edit Profile Modal (If user wants to edit name) */}
             {isEditingProfile && (
-              <div className="p-3.5 bg-[#F8FAFC] dark:bg-[#181D28] border-b border-slate-200 dark:border-slate-800 space-y-2.5">
+              <div className="p-3 bg-slate-50 dark:bg-[#161B26] border-b border-slate-200 dark:border-[#2A3550] space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                   <span className="flex items-center gap-1.5">
-                    <User className="h-3.5 w-3.5 text-[#0D3830] dark:text-emerald-400" />
+                    <User className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Ubah Nama & Satker Anda</span>
                   </span>
                   <button
@@ -692,18 +700,18 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                     value={tempNameInput}
                     onChange={(e) => setTempNameInput(e.target.value)}
                     placeholder="Nama Lengkap"
-                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#12161F] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                    className="w-full rounded-[8px] border border-slate-300 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
                   />
                   <input
                     type="text"
                     value={tempSatkerInput}
                     onChange={(e) => setTempSatkerInput(e.target.value)}
                     placeholder="Satuan Kerja (Kejari / Kejati)"
-                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#12161F] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                    className="w-full rounded-[8px] border border-slate-300 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
                   />
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-[#0D3830] dark:bg-emerald-600 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer"
+                    className="w-full rounded-[8px] bg-slate-900 dark:bg-indigo-600 py-1.5 text-xs font-bold text-white shadow-2xs cursor-pointer"
                   >
                     Simpan Perubahan
                   </button>
@@ -713,8 +721,8 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
 
             {/* 3. Name Onboarding Form (First time greeting) */}
             {!isNameSet && (
-              <div className="p-4 bg-[#E6F7ED] dark:bg-emerald-950/60 border-b border-[#A7F3D0] dark:border-emerald-800 space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0D824B] dark:text-emerald-300">
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 border-b border-emerald-200 dark:border-emerald-800 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
                   <User className="h-4 w-4" />
                   <span>Perkenalkan Diri Anda:</span>
                 </div>
@@ -725,18 +733,18 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                     value={tempNameInput}
                     onChange={(e) => setTempNameInput(e.target.value)}
                     placeholder="Nama Lengkap (Contoh: Budi Santoso, S.Kom.)"
-                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#12161F] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                    className="w-full rounded-[8px] border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#1B2130] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
                   />
                   <input
                     type="text"
                     value={tempSatkerInput}
                     onChange={(e) => setTempSatkerInput(e.target.value)}
                     placeholder="Satuan Kerja (Contoh: Kejari Soppeng)"
-                    className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#12161F] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
+                    className="w-full rounded-[8px] border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-[#1B2130] p-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none"
                   />
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-[#0D824B] hover:bg-[#0A6C3E] py-2 text-xs font-bold text-white shadow-xs cursor-pointer"
+                    className="w-full rounded-[8px] bg-emerald-700 hover:bg-emerald-600 py-1.5 text-xs font-bold text-white shadow-2xs cursor-pointer"
                   >
                     Simpan & Mulai Diskusi
                   </button>
@@ -745,13 +753,13 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
             )}
 
             {/* 4. Quick Prompt Chips */}
-            <div className="p-2 px-3 bg-[#F4F6FA] dark:bg-[#151922] border-b border-slate-200 dark:border-slate-800/80 overflow-x-auto no-scrollbar flex items-center gap-1.5">
+            <div className="p-2 px-3 bg-slate-50 dark:bg-[#161B26] border-b border-slate-200/80 dark:border-[#2A3550] overflow-x-auto no-scrollbar flex items-center gap-1.5">
               {QUICK_PROMPTS.map((qp, idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(qp)}
-                  className="rounded-full bg-white dark:bg-[#1E2433] border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:border-[#0D3830] dark:hover:border-emerald-500 hover:text-[#0D3830] dark:hover:text-emerald-400 transition-all shrink-0 cursor-pointer shadow-2xs"
+                  className="rounded-[6px] bg-white dark:bg-[#1B2130] border border-slate-200/80 dark:border-[#2A3550] px-2.5 py-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:border-slate-400 dark:hover:border-indigo-500 transition-all shrink-0 cursor-pointer shadow-2xs"
                 >
                   {qp}
                 </button>
@@ -766,17 +774,17 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                   className={`flex gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.sender === 'ai' && (
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-[#0D3830] dark:bg-emerald-600 text-white mt-0.5">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-slate-900 dark:bg-indigo-600 text-white mt-0.5">
                       <Bot className="h-3.5 w-3.5" />
                     </div>
                   )}
 
                   <div className="max-w-[88%] space-y-1">
                     <div
-                      className={`rounded-2xl p-3 leading-relaxed ${
+                      className={`rounded-[10px] p-3 leading-relaxed ${
                         msg.sender === 'user'
-                          ? 'bg-[#0D3830] dark:bg-emerald-700 text-white rounded-tr-xs shadow-xs font-medium'
-                          : 'bg-white dark:bg-[#1A202C] text-[#18181B] dark:text-[#E2E8F0] border border-slate-200 dark:border-slate-700/80 rounded-tl-xs shadow-2xs'
+                          ? 'bg-slate-900 dark:bg-indigo-600 text-white rounded-tr-xs shadow-2xs font-medium'
+                          : 'bg-white dark:bg-[#161B26] text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-[#2A3550] rounded-tl-xs shadow-2xs'
                       }`}
                     >
                       {/* Rich Markdown Parser (Eliminates raw ** asterisks) */}
@@ -784,7 +792,7 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
 
                       {/* Code Block if any */}
                       {msg.codeSnippet && (
-                        <div className="mt-2 rounded-xl bg-[#0F1319] p-2.5 text-emerald-300 font-mono text-[11px] overflow-x-auto relative">
+                        <div className="mt-2 rounded-[8px] bg-[#0F1319] p-2.5 text-emerald-300 font-mono text-[11px] overflow-x-auto relative">
                           <div className="flex items-center justify-between text-[9px] text-slate-400 border-b border-slate-800 pb-1 mb-1.5">
                             <span>Script / Query</span>
                             <button
@@ -812,10 +820,10 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
 
               {isTyping && (
                 <div className="flex gap-2 items-center text-xs text-slate-400">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0D3830] dark:bg-emerald-600 text-white">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-slate-900 dark:bg-indigo-600 text-white">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex items-center gap-1 bg-white dark:bg-[#1A202C] border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-2xl text-[11px]">
+                  <div className="flex items-center gap-1 bg-white dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] px-3 py-1.5 rounded-[8px] text-[11px]">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
@@ -828,7 +836,7 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
             </div>
 
             {/* 6. Input Footer */}
-            <div className="p-2.5 px-3 bg-[#FAFBFD] dark:bg-[#181D28] border-t border-slate-200 dark:border-slate-800">
+            <div className="p-2.5 px-3 bg-slate-50 dark:bg-[#161B26] border-t border-slate-200/80 dark:border-[#2A3550]">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
@@ -841,12 +849,12 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ketik pertanyaan atau kendala kodingan Anda..."
-                  className="flex-1 rounded-full border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-[#12161F] px-3.5 py-1.5 text-xs text-[#18181B] dark:text-[#F1F5F9] placeholder-slate-400 focus:border-[#0D3830] dark:focus:border-emerald-500 focus:outline-none"
+                  className="flex-1 rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isTyping}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D3830] dark:bg-emerald-600 hover:bg-[#082822] text-white disabled:opacity-40 transition shadow-xs cursor-pointer shrink-0"
+                  className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white disabled:opacity-40 transition shadow-2xs cursor-pointer shrink-0"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </button>

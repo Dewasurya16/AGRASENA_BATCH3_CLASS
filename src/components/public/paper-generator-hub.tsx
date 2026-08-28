@@ -327,42 +327,42 @@ export function PaperGeneratorHub() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5">
       {/* Header Banner */}
       <motion.div
-        initial={{ opacity: 0, y: 14 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="rounded-[36px] bg-white dark:bg-[#12161F] p-6 sm:p-8 lg:p-10 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
+        transition={{ duration: 0.3 }}
+        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3.5 py-1 text-xs font-black uppercase text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800">
+          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             <GraduationCap className="h-3.5 w-3.5" />
             <span>Asisten Draf Seminar Diklat</span>
           </span>
-          <span className="rounded-full bg-[#FFEADA] dark:bg-amber-950/80 px-3 py-1 text-xs font-bold text-[#EA580C] dark:text-amber-300">
+          <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
             Standar Format Pusdiklat Kejaksaan RI
           </span>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-black text-[#18181B] dark:text-white tracking-tight leading-tight">
+        <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
           AI Generator Draf Proposal Makalah & <br className="hidden sm:block" />
-          <span className="text-[#0D824B] dark:text-emerald-400">Rencana Aksi Inovasi Satker</span>
+          <span className="text-emerald-700 dark:text-emerald-400">Rencana Aksi Inovasi Satker</span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-400 leading-relaxed max-w-3xl">
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
           Susun draf kerangka proposal inovasi teknologi informasi (5 Bab Lengkap: Pendahuluan, Regulasi SPBE, Arsitektur Sistem, Rencana Aksi 6 Bulan, dan Rekomendasi). Unduh langsung dalam format <strong>Microsoft Word (.doc)</strong> dengan standar naskah dinas resmi (Margin 4-3-3-4) untuk disempurnakan sesuai data satker Anda.
         </p>
       </motion.div>
 
       {/* Preset Inspiration Topics */}
-      <div className="rounded-[28px] bg-white dark:bg-[#12161F] p-5 sm:p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs font-black text-[#131E29] dark:text-white uppercase tracking-wider">
-          <Lightbulb className="h-4 w-4 text-amber-500" />
+      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+        <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+          <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
           <span>Pilih Topik Inspirasi Proyek Inovasi Satker:</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {PRESET_TOPICS.map((preset) => {
             const isSelected = topicTitle === preset.title
             return (
@@ -370,19 +370,19 @@ export function PaperGeneratorHub() {
                 key={preset.id}
                 type="button"
                 onClick={() => handleSelectPreset(preset)}
-                className={`flex flex-col text-left p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
+                className={`flex flex-col text-left p-3 rounded-[8px] border transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-[#E6F7ED] dark:bg-emerald-950/40 border-[#0D824B] dark:border-emerald-500 shadow-xs"
-                    : "bg-[#F8FAFC] dark:bg-[#161B26] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 dark:border-emerald-500 shadow-2xs"
+                    : "bg-slate-50 dark:bg-[#161B26] border-slate-200/80 dark:border-[#2A3550] hover:border-slate-300 dark:hover:border-slate-600"
                 }`}
               >
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] font-bold uppercase text-[#0D824B] dark:text-emerald-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                  <span className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-[4px] border border-slate-200 dark:border-slate-700">
                     {preset.category}
                   </span>
-                  {isSelected && <Check className="h-3.5 w-3.5 text-[#0D824B] dark:text-emerald-400" />}
+                  {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
                 </div>
-                <h4 className="text-xs font-bold text-[#131E29] dark:text-white line-clamp-2 leading-snug">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
                   {preset.title}
                 </h4>
               </button>
@@ -392,18 +392,18 @@ export function PaperGeneratorHub() {
       </div>
 
       {/* Main Grid: Form on Left, Output Paper on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Form Inputs */}
         <div className="lg:col-span-5 space-y-4">
-          <form onSubmit={handleGenerate} className="rounded-[28px] bg-white dark:bg-[#12161F] p-5 sm:p-6 border-2 border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="text-sm font-black text-[#131E29] dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Building2 className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
+          <form onSubmit={handleGenerate} className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3.5">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-[#2A3550] pb-2.5">
+              <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               <span>Data Penyusun & Satuan Kerja</span>
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Nama Lengkap Peserta:
                 </label>
                 <input
@@ -411,13 +411,13 @@ export function PaperGeneratorHub() {
                   value={authorName}
                   onChange={(e) => setAuthorName(e.target.value)}
                   placeholder="Contoh: Budi Santoso, S.Kom."
-                  className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] px-3 text-xs font-semibold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+                  className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                     NIP / NRP:
                   </label>
                   <input
@@ -425,11 +425,11 @@ export function PaperGeneratorHub() {
                     value={authorNip}
                     onChange={(e) => setAuthorNip(e.target.value)}
                     placeholder="1995xxxx xxxxx"
-                    className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] px-3 text-xs font-semibold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+                    className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                     Jenjang Jabatan:
                   </label>
                   <input
@@ -437,13 +437,13 @@ export function PaperGeneratorHub() {
                     value={authorRank}
                     onChange={(e) => setAuthorRank(e.target.value)}
                     placeholder="Ahli Pertama (III/a)"
-                    className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] px-3 text-xs font-semibold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+                    className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Asal Satuan Kerja (Kejati / Kejari / Cabjari):
                 </label>
                 <input

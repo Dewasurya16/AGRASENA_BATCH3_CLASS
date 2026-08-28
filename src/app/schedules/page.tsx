@@ -31,7 +31,7 @@ export default async function SchedulesPage() {
   return (
     <PublicShell>
       <div className="space-y-6">
-        <LiveSessionBanner todaySchedules={schedules} todayTasks={tasks} />
+        <LiveSessionBanner todaySchedules={schedules} todayTasks={tasks} variant="schedule" />
         <SchedulesList schedules={schedules} />
       </div>
     </PublicShell>

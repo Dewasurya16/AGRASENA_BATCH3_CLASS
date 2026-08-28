@@ -62,9 +62,21 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Build structured 35-Day Roadmap Master Schedule (Token-Efficient & Complete)
+    const now = new Date()
+    // Current WIB (UTC+7)
+    const wibDate = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60 * 1000)
+    const dayOfWeekIdx = wibDate.getDay() // 0 = Minggu, 6 = Sabtu
+    const isSaturday = dayOfWeekIdx === 6
+    const isSunday = dayOfWeekIdx === 0
+    const isWeekend = isSaturday || isSunday
+
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    const calendarTodayStr = `${dayNames[dayOfWeekIdx]}, ${wibDate.getDate()} ${monthNames[wibDate.getMonth()]} ${wibDate.getFullYear()}`
+
     const roadmapData = getAutoRoadmapData(currentDayNumber, rawSchedules)
     const todayDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber) || roadmapData.days[0]
-    const tomorrowDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber + 1) || roadmapData.days[1]
+    const nextDiklatDay = roadmapData.days.find((d) => d.dayNumber === 6) || roadmapData.days[5] || todayDetail
 
     const all35DaysScheduleText = roadmapData.days
       .map((d) => {
@@ -91,6 +103,22 @@ PROFIL PENGGUNA:
 - Satuan Kerja: ${userSatker || "Kejaksaan RI"}
 - Bersikap ramah, cerdas, solutif, santun, profesional, dan to-the-point tanpa basa-basi berlebih.
 
+WAKTU & KALENDER REAL-TIME SAAT INI (WIB):
+- Tanggal Kalender Nyata Hari Ini: ${calendarTodayStr} (Hari ${dayNames[dayOfWeekIdx]})
+- Status Jadwal Hari Ini: ${isWeekend ? `LIBUR AKHIR PEKAN (${dayNames[dayOfWeekIdx]}) — TIDAK ADA PERKULIAHAN / SESI ZOOM HARI INI!` : `HARI KERJA DIKLAT AKTIF (${todayDetail.stageName})`}
+- Status Jadwal Besok: ${isSaturday ? "LIBUR AKHIR PEKAN (Hari Minggu) — TIDAK ADA SESI / PERKULIAHAN" : isSunday ? `Hari ke-6 (Senin, 31 Agu 2026) — Tahap 2 • TMO Dimulai` : `Hari ke-${currentDayNumber + 1}`}
+- Sesi Perkuliahan Mendatang Terdekat: Hari ke-${nextDiklatDay.dayNumber} (${nextDiklatDay.dayOfWeek}, ${nextDiklatDay.dateStr} — ${nextDiklatDay.stageName})
+  * 09:30 – 10:15 WIB: Building Learning Commitment (Tiyar Tunjungsari, S.Kom., M.T.I.)
+  * 13:00 – 13:45 WIB: PRE TEST (Pusdiklat BPS)
+- Jam Belajar Resmi Diklat: 08:00 - 15:30 WIB (Hanya pada hari kerja: Senin s.d. Jumat)
+
+ATURAN KRITIS MENGENAI JADWAL HARI INI & BESOK (SANGAT PENTING):
+1. JIKA HARI INI SABTU ATAU MINGGU:
+   - Jika pengguna bertanya: "hari ini ada jadwal ga?", "hari ini ada ga?", "jadwal hari ini apa?", "hari ini kuliah ga?", "besok ada jadwal ga?":
+     * WAJIB MENJAWAB DENGAN JELAS & TEGAS: "Hari ini (${dayNames[dayOfWeekIdx]}, ${wibDate.getDate()} ${monthNames[wibDate.getMonth()]} ${wibDate.getFullYear()}) **TIDAK ADA JADWAL PERKULIAHAN** karena merupakan **HARI LIBUR AKHIR PEKAN**."
+     * Jelaskan bahwa besok (${isSaturday ? "hari Minggu juga masih libur" : "hari Senin perkuliahan dimulai kembali"}), dan sesi perkuliahan aktif baru akan dimulai pada **${isSaturday ? "LUSA (Senin, 31 Agustus 2026)" : "BESOK (Senin, 31 Agustus 2026)"}** untuk **Hari ke-6 (Tahap 2 • TMO)**.
+     * DILARANG KERAS mengatakan bahwa hari ini adalah hari Senin atau hari ini ada jadwal aktif!
+
 PETA FITUR & HALAMAN PORTAL WEB KELAS:
 1. Pustaka Modul PDF (120 JP): Menu /materials (bisa baca modul & unduh rangkuman AI)
 2. Jadwal Perkuliahan 35 Hari: Menu /schedules (agenda harian, jam, materi, pengampu, Zoom)
@@ -101,14 +129,6 @@ PETA FITUR & HALAMAN PORTAL WEB KELAS:
 7. Kesiapan Ujian & Seminar: Menu /exam-prep (checklist kelulusan, kisi-kisi, evaluasi)
 8. Forum Diskusi: Menu /discussions (tanya jawab antar peserta & pengurus)
 9. Pusat Bantuan & Laporan FAQ: Menu /faq (kirim tiket laporan kendala langsung ke Dashboard Admin)
-
-STATUS DIKLAT HARI INI:
-- Hari Ini: Hari ke-${currentDayNumber} (${todayDetail.dateStr}, ${todayDetail.dayOfWeek}) — ${todayDetail.stageName} (${todayDetail.stageSubtitle})
-- Status Hari Ini: ${todayDetail.status.toUpperCase()}
-- Sesi Hari Ini:
-${todayDetail.sessions && todayDetail.sessions.length > 0 ? todayDetail.sessions.map((s) => `  * ${s.time} WIB: ${s.title}${s.instructor ? ` (${s.instructor})` : ""}`).join("\n") : "  * Pembelajaran Mandiri MOOC"}
-- Jadwal Besok: Hari ke-${currentDayNumber + 1} (${tomorrowDetail?.dateStr || "-"}, ${tomorrowDetail?.dayOfWeek || "-"}) — ${tomorrowDetail?.stageName || "-"}
-- Jam Belajar Resmi Diklat: 08:00 - 15:30 WIB (Senin s.d. Jumat)
 
 ======================================================================
 MASTER JADWAL 35 HARI LENGKAP (SUMBER KEBENARAN UTAMA / GROUND TRUTH):

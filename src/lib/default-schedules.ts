@@ -222,7 +222,7 @@ export const DEFAULT_SCHEDULES_DATA: ScheduleRecord[] = [
   {
     "id": "ea97e476-f2cb-4985-9c40-5d75912db647",
     "created_at": "2026-08-27T00:43:12.06328+00:00",
-    "subject_name": "[Hari 1] Building Learning Commitment (Lanjutan Sesi Sebelumnya)",
+    "subject_name": "[Hari 6] Building Learning Commitment (Lanjutan Sesi Sebelumnya)",
     "day": "Senin",
     "start_time": "10:30:00",
     "end_time": "12:00:00",
