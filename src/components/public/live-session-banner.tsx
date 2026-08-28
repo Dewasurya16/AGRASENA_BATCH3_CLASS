@@ -24,7 +24,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import Link from "next/link"
-import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber } from "@/lib/roadmap-utils"
+import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber, parseDiklatDate } from "@/lib/roadmap-utils"
 import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
 
 export interface TaskItem {
@@ -99,7 +99,7 @@ export function LiveSessionBanner({
   const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[0]
   const displayDayName = currentDayName || `Hari ${activeDayNum} • ${todayCurriculum.stageName}`
 
-  // Urutkan seluruh sesi jadwal untuk hari aktif secara kronologis
+  // Sesi perkuliahan hari ini (hari aktif)
   const daysSchedules = React.useMemo(() => {
     const sourceSchedules =
       todaySchedules && todaySchedules.length > 0
@@ -122,6 +122,37 @@ export function LiveSessionBanner({
       })
   }, [todaySchedules, activeDayNum])
 
+  // Cari hari diklat aktif berikutnya (untuk pengingat akhir pekan / malam hari)
+  const nextActiveDayNum = React.useMemo(() => {
+    if (activeDayNum < 35) return activeDayNum + 1
+    return 35
+  }, [activeDayNum])
+
+  const nextCurriculum = RAW_DAYS_DATA.find((d) => d.day === nextActiveDayNum) || RAW_DAYS_DATA[0]
+
+  // Sesi perkuliahan hari berikutnya
+  const nextDaySchedules = React.useMemo(() => {
+    const sourceSchedules =
+      todaySchedules && todaySchedules.length > 0
+        ? todaySchedules
+        : (DEFAULT_SCHEDULES_DATA as any[])
+
+    return sourceSchedules
+      .filter((s) => {
+        const explicitDay = getScheduleDayNumber(s)
+        if (explicitDay !== null) {
+          return explicitDay === nextActiveDayNum
+        }
+        const dayVal = String(s.day || "").toLowerCase().trim()
+        return dayVal === `hari ${nextActiveDayNum}` || dayVal === String(nextActiveDayNum)
+      })
+      .sort((a, b) => {
+        const aStart = parseTimeToMinutes(a.start_time) ?? 0
+        const bStart = parseTimeToMinutes(b.start_time) ?? 0
+        return aStart - bStart
+      })
+  }, [todaySchedules, nextActiveDayNum])
+
   const fallbackSession = {
     id: `live-day-${activeDayNum}`,
     subject_name: `[Hari ${activeDayNum}] Tata Kelola TI & SPBE Nasional (120 JP)`,
@@ -136,6 +167,16 @@ export function LiveSessionBanner({
     daysSchedules[0] || fallbackSession
   )
 
+  const firstNextSession = nextDaySchedules[0] || {
+    id: `next-day-${nextActiveDayNum}`,
+    subject_name: `[Hari ${nextActiveDayNum}] Perkuliahan Diklat Fungsional Prakom`,
+    start_time: "09:30",
+    end_time: "10:15",
+    lecturer: "Widyaiswara Pusdiklat",
+    room: "Ruang Diklat LMS",
+    zoom_url: RUANG_DIKLAT_URL,
+  }
+
   React.useEffect(() => {
     setMounted(true)
     const updateTime = () => {
@@ -143,7 +184,7 @@ export function LiveSessionBanner({
       const hours = now.getHours()
       const minutes = now.getMinutes()
       const seconds = now.getSeconds()
-      const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu
+      const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
 
       const hStr = String(hours).padStart(2, "0")
       const mStr = String(minutes).padStart(2, "0")
@@ -153,15 +194,38 @@ export function LiveSessionBanner({
       const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
       const totalMins = hours * 60 + minutes
 
-      // 1. Akhir Pekan (Sabtu & Minggu)
+      // 1. Akhir Pekan (Sabtu & Minggu) -> SELAMAT BERLIBUR
       if (!isWeekday) {
         setPhase('weekend')
-        setCountdownText("Sesi dilanjutkan Senin, 08:00 WIB")
-        setActiveSession(daysSchedules[0] || fallbackSession)
+        setActiveSession(firstNextSession)
+
+        // Hitung countdown presisi menuju jam mulai sesi pertama hari Senin
+        const nextStartMins = parseTimeToMinutes(firstNextSession.start_time) ?? (9 * 60 + 30)
+        const nextStartH = Math.floor(nextStartMins / 60)
+        const nextStartM = nextStartMins % 60
+        const cleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
+
+        const targetDateObj = parseDiklatDate(nextCurriculum.date) || new Date()
+        targetDateObj.setHours(nextStartH, nextStartM, 0, 0)
+        const diffMs = targetDateObj.getTime() - now.getTime()
+
+        if (diffMs > 0) {
+          const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
+          const days = Math.floor(totalHours / 24)
+          const remHours = totalHours % 24
+          if (days > 0) {
+            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${nextCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+          } else {
+            const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${nextCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+          }
+        } else {
+          setCountdownText(`Sesi dimulai ${nextCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+        }
         return
       }
 
-      // 2. Jika ada data jadwal spesifik di Supabase untuk hari ini
+      // 2. Jika ada data jadwal spesifik di Supabase untuk hari aktif ini
       if (daysSchedules.length > 0) {
         // Cari apakah ada sesi yang sedang berlangsung saat ini
         const currentLive = daysSchedules.find((s) => {
@@ -213,6 +277,15 @@ export function LiveSessionBanner({
         }
 
         // Jika semua sesi untuk hari ini sudah selesai (Sore / Malam)
+        // Jika Jumat Sore/Malam -> Masuk fase akhir pekan (Selamat Berlibur)
+        if (dayOfWeek === 5 && totalMins >= 16 * 60) {
+          setPhase('weekend')
+          setActiveSession(firstNextSession)
+          const cleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
+          setCountdownText(`Sesi pekan depan: ${nextCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          return
+        }
+
         setPhase('task_time')
         setActiveSession(daysSchedules[daysSchedules.length - 1])
         const remaining = Math.max(0, (24 * 60) - totalMins)
@@ -234,6 +307,12 @@ export function LiveSessionBanner({
       }
 
       if (totalMins >= 16 * 60 && totalMins <= 23 * 60 + 59) {
+        if (dayOfWeek === 5) {
+          setPhase('weekend')
+          setActiveSession(firstNextSession)
+          setCountdownText(`Sesi dimulai Senin, 09:30 WIB`)
+          return
+        }
         setPhase('task_time')
         setActiveSession(fallbackSession)
         const remainingMinutes = (24 * 60) - totalMins
@@ -257,7 +336,7 @@ export function LiveSessionBanner({
     updateTime()
     const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
-  }, [daysSchedules, activeDayNum])
+  }, [daysSchedules, activeDayNum, firstNextSession, nextCurriculum])
 
   // Cari tugas aktif hari ini dari Supabase atau fallback
   const matchedTask = todayTasks.find((t) => {
@@ -274,6 +353,8 @@ export function LiveSessionBanner({
 
   const cleanStart = cleanTimeDisplay(activeSession.start_time, "08:00")
   const cleanEnd = cleanTimeDisplay(activeSession.end_time, "15:30")
+  const nextCleanStart = cleanTimeDisplay(firstNextSession.start_time, "09:30")
+  const nextCleanEnd = cleanTimeDisplay(firstNextSession.end_time, "10:15")
 
   return (
     <motion.div
@@ -289,12 +370,12 @@ export function LiveSessionBanner({
           ? "bg-gradient-to-r from-[#1E1B4B] via-[#2A1B4E] to-[#111827] shadow-indigo-950/40 border-indigo-500/30"
           : phase === 'prep_time'
           ? "bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0D2822] shadow-black/30 border-sky-500/20"
-          : "bg-gradient-to-r from-[#131E29] via-[#1E293B] to-[#0F172A] shadow-black/20 border-slate-700/60"
+          : "bg-gradient-to-r from-[#0A2821] via-[#133E35] to-[#08221B] shadow-[#0D3830]/30 border-emerald-500/30"
       }`}
     >
       {/* Decorative ambient glows based on active phase */}
       <div
-        className={`absolute -left-12 -top-12 h-44 w-44 rounded-full blur-3xl pointer-events-none ${
+        className={`absolute -left-12 -top-12 h-48 w-48 rounded-full blur-3xl pointer-events-none ${
           phase === 'in_class'
             ? "bg-[#E6F7ED]/25"
             : phase === 'in_break'
@@ -303,11 +384,11 @@ export function LiveSessionBanner({
             ? "bg-indigo-500/25"
             : phase === 'prep_time'
             ? "bg-amber-400/15"
-            : "bg-sky-500/10"
+            : "bg-emerald-400/20"
         }`}
       />
       <div
-        className={`absolute -right-10 -bottom-10 h-44 w-44 rounded-full blur-3xl pointer-events-none ${
+        className={`absolute -right-10 -bottom-10 h-48 w-48 rounded-full blur-3xl pointer-events-none ${
           phase === 'in_class'
             ? "bg-[#FF7643]/30"
             : phase === 'in_break'
@@ -316,14 +397,14 @@ export function LiveSessionBanner({
             ? "bg-purple-500/25"
             : phase === 'prep_time'
             ? "bg-emerald-400/20"
-            : "bg-indigo-500/15"
+            : "bg-amber-400/20"
         }`}
       />
 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         
         {/* Left Status & Contextual Info */}
-        <div className="space-y-2.5 max-w-2xl">
+        <div className="space-y-3 max-w-2xl">
           
           {/* Phase Badges Rail */}
           <div className="flex flex-wrap items-center gap-2">
@@ -360,29 +441,32 @@ export function LiveSessionBanner({
               </span>
             )}
 
-            {/* 5. Weekend / Hari Libur */}
+            {/* 5. Weekend / Hari Libur -> SELAMAT BERLIBUR */}
             {phase === 'weekend' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider">
-                <Calendar className="h-3 w-3 text-sky-400" />
-                Akhir Pekan • Belajar Mandiri
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/90 text-slate-950 px-3.5 py-1 text-[10px] font-black uppercase tracking-wider shadow-md border border-emerald-400">
+                <span>🏖️</span>
+                <span>Libur Akhir Pekan • Selamat Berlibur!</span>
               </span>
             )}
 
             {/* Day & Stage Tag */}
             <span className="rounded-full bg-white/15 text-slate-100 border border-white/10 px-3 py-1 text-[10px] font-extrabold">
-              {displayDayName}
+              {phase === 'weekend' ? `Rehat • Menuju Hari ${nextActiveDayNum}` : displayDayName}
             </span>
 
-            {/* Realtime Clock & Dynamic Countdown */}
+            {/* Realtime Clock */}
             {mounted && (
               <span className="rounded-full bg-black/35 px-2.5 py-1 text-[10px] font-mono text-slate-200 font-bold border border-white/5">
                 ⏰ {currentTimeStr}
               </span>
             )}
 
+            {/* Dynamic Countdown Pill */}
             {mounted && countdownText && (
               <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold border ${
-                phase === 'in_break'
+                phase === 'weekend'
+                  ? "bg-amber-400/25 text-amber-200 border-amber-400/40"
+                  : phase === 'in_break'
                   ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
                   : phase === 'task_time'
                   ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
@@ -483,22 +567,54 @@ export function LiveSessionBanner({
               </>
             )}
 
+            {/* Weekend / Libur Mode with Highlighted Next Session Schedule Box */}
             {phase === 'weekend' && (
-              <>
-                <h3 className="text-base sm:text-xl font-black text-white tracking-tight leading-snug">
-                  Sesi Mendatang (Senin): {activeSession.subject_name}
-                </h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-medium mt-1">
-                  <span className="flex items-center gap-1 text-sky-300">
-                    <Calendar className="h-3.5 w-3.5 text-sky-400" />
-                    Jadwal Dilanjutkan Senin Pukul 08:00 WIB
-                  </span>
-                  <span className="flex items-center gap-1 text-slate-300">
-                    <BookOpen className="h-3.5 w-3.5 text-[#FFD280]" />
-                    Manfaatkan akhir pekan untuk mereview modul & kuis MOOC
-                  </span>
+              <div className="space-y-2.5">
+                <div>
+                  <h3 className="text-base sm:text-2xl font-black text-white tracking-tight leading-snug flex items-center gap-2">
+                    <span>Selamat Berlibur & Selamat Rehat, Rekan Prakom! ✨</span>
+                  </h3>
+                  <p className="text-xs text-slate-200 leading-relaxed mt-1">
+                    Tidak ada sesi perkuliahan aktif hari ini. Selamat menikmati waktu rehat bersama keluarga dan me-recharge energi untuk perkuliahan berikutnya.
+                  </p>
                 </div>
-              </>
+
+                {/* Box Pengingat Jadwal Mendatang Terperinci Sesuai Jamnya */}
+                <div className="p-3.5 rounded-2xl bg-black/30 border border-emerald-400/30 backdrop-blur-sm space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-amber-300">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-amber-400" />
+                      Pengingat Jadwal Sesi Berikutnya ({nextCurriculum.dayOfWeek}, {nextCurriculum.date}):
+                    </span>
+                    <span className="text-[10px] bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-700">
+                      Hari ke-{nextActiveDayNum} • {nextCurriculum.stageName}
+                    </span>
+                  </div>
+
+                  <div className="text-xs font-bold text-white flex flex-wrap items-center gap-2">
+                    <span className="font-mono bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800">
+                      ⏰ {nextCleanStart} – {nextCleanEnd} WIB
+                    </span>
+                    <span className="text-sm font-black text-white">
+                      {firstNextSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
+                    {firstNextSession.lecturer && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3 text-emerald-300" />
+                        Pengampu: <strong className="text-white">{firstNextSession.lecturer}</strong>
+                      </span>
+                    )}
+                    {nextDaySchedules.length > 1 && (
+                      <span className="text-slate-300">
+                        • Sesi ke-2: <strong className="text-amber-200">{cleanTimeDisplay(nextDaySchedules[1].start_time)} WIB ({nextDaySchedules[1].subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")})</strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
@@ -559,23 +675,23 @@ export function LiveSessionBanner({
             </>
           )}
 
-          {/* Action on Weekend */}
+          {/* Action on Weekend -> Explore Modul & Roadmap */}
           {phase === 'weekend' && (
-            <>
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <Link href="/schedules">
+                <button className="flex items-center gap-2 rounded-full bg-[#0D824B] hover:bg-emerald-600 px-5 py-3 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-950/40 hover:scale-102 active:scale-98 transition-all cursor-pointer">
+                  <Calendar className="h-4 w-4 text-emerald-200" />
+                  <span>Lihat Jadwal {nextCurriculum.dayOfWeek}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-white" />
+                </button>
+              </Link>
               <Link href="/materials">
-                <button className="flex items-center gap-2 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-600 px-5 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <BookOpen className="h-4 w-4 text-amber-400" />
-                  <span>Akses Materi 120 JP</span>
-                  <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                <button className="flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 px-4 py-3 text-xs font-black text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Modul 120 JP</span>
                 </button>
               </Link>
-              <Link href="/quiz">
-                <button className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-black text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                  <span>Latihan Kuis MOOC</span>
-                </button>
-              </Link>
-            </>
+            </div>
           )}
 
         </div>

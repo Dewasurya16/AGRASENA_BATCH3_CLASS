@@ -6,27 +6,33 @@ import { Sparkles, Bot, RefreshCw, MessageSquareHeart, Zap, Bell, CheckCircle2, 
 
 const AI_GREETINGS = [
   {
+    greeting: "Selamat Berlibur & Selamat Beristirahat! 🏖️",
+    message: "Hari ini tidak ada sesi tatap muka online. Selamat menikmati waktu rehat santai bersama keluarga dan recharge energi untuk sesi perkuliahan berikutnya!",
+    tip: "💡 Pengingat Jadwal: Perkuliahan Hari ke-6 (Building Learning Commitment) dimulai Senin pukul 09:30 WIB.",
+    urgency: "success",
+  },
+  {
     greeting: "Semangat Pagi, Sobat Prakom 625! ☀️",
-    message: "Hari ini kita masuk ke materi seru seputar Arsitektur Data Terdistribusi. Jangan lupa siapin kopi dan cemilan biar belajarnya makin asik!",
+    message: "Tahap 2 Tatap Muka Online (TMO) segera dimulai. Siapkan koneksi stabil dan modul perkuliahan agar sesi Zoom berjalan lancar!",
     tip: "💡 Tips AI: Luangkan 15 menit untuk baca rangkuman slide sebelum masuk ke sesi praktikum ya!",
     urgency: "normal",
   },
   {
     greeting: "Waktunya Gaspol, Rekan-rekan! 🚀",
-    message: "Tahap 1 MOOC sedang berlangsung. Yang belum unduh modul pertemuan 3 dan 4, yuk langsung amankan berkasnya di Pustaka Materi.",
-    tip: "⚠️ Reminder AI: Tugas Mandiri Tata Kelola TI deadline tanggal 28 Agustus pukul 23:59 WIB. Jangan mepet-mepet ya!",
+    message: "Modul materi 120 JP dan bank soal kuis MOOC tersimpan rapi dan bisa diakses kapan saja untuk latihan mandiri.",
+    tip: "⚠️ Reminder AI: Cek tab Tugas Mandiri secara berkala untuk memastikan tidak ada tugas yang terlewat.",
     urgency: "warning",
   },
   {
     greeting: "Hai Sobat Kejaksaan & Agrasena! 👋",
-    message: "Santai tapi konsisten, itu kuncinya! Progres kelas kita udah mencapai 28% dari total 120 JP. Keren banget perjuangannya!",
+    message: "Santai tapi konsisten, itu kuncinya! Progres kelas kita terus bertambah menuju kelulusan 120 JP. Keren banget perjuangannya!",
     tip: "🎯 Fun Fact: Prakom Keahlian memegang peranan krusial dalam transformasi digital SPBE Kejaksaan RI!",
     urgency: "success",
   },
   {
-    greeting: "Selamat Siang! Tetap Fokus ya ✨",
-    message: "Kalau ada materi yang agak bingung, diskusiin aja bareng teman-teman di grup WA kelas atau buka kembali modul PDF cadangan kita.",
-    tip: "📖 Tips Belajar: Buka materi PDF langsung via tombol Preview tanpa perlu ribet download berulang kali.",
+    greeting: "Selamat Siang! Tetap Semangat ✨",
+    message: "Kalau ada materi yang agak rumit, tanyakan langsung ke AI Asisten Prakom di pojok kanan bawah atau diskusikan di forum kelas.",
+    tip: "📖 Tips Belajar: Gunakan AI Generator Makalah untuk membuat draf awal proposal inovasi satker Anda.",
     urgency: "normal",
   },
 ]
