@@ -16,8 +16,12 @@ export interface GenerateAiResult {
   provider: "openrouter" | "groq" | "fallback"
 }
 
-// Highly responsive active Free Models on OpenRouter
+// Highly responsive active Free Models on OpenRouter (Prioritizing GLM 5.2)
 const OPENROUTER_FREE_MODELS = [
+  "z-ai/glm-5.2:free",
+  "z-ai/glm-5.3-flash",
+  "~z-ai/glm-latest",
+  "z-ai/glm-5.2",
   "openrouter/free",
   "minimax/minimax-m3:free",
   "cohere/north-mini-code:free",
