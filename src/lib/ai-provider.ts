@@ -16,14 +16,15 @@ export interface GenerateAiResult {
   provider: "openrouter" | "groq" | "fallback"
 }
 
-// Highly responsive active Free Models on OpenRouter (Prioritizing GLM 5.2)
+// 100% Free Models on OpenRouter (Prioritizing Free GLM 5.2)
 const OPENROUTER_FREE_MODELS = [
   "z-ai/glm-5.2:free",
-  "z-ai/glm-5.3-flash",
   "openrouter/free",
   "minimax/minimax-m3:free",
   "cohere/north-mini-code:free",
   "nvidia/nemotron-3-super-120b-a12b:free",
+  "inclusionai/ling-3.0-flash-fin:free",
+  "minimax/minimax-m2.7:free",
 ]
 
 const GROQ_MODELS = [
