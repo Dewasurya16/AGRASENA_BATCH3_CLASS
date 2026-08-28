@@ -86,3 +86,15 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Performance & Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+/* GPU Acceleration utilities */
+.transform-gpu {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}

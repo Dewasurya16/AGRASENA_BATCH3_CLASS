@@ -84,39 +84,22 @@ export function TwinkleHero() {
               />
 
               {/* 2. Cute Floating Emoji: Sparkle Semangat (Top-Right) */}
-              <motion.div
-                animate={{
-                  y: [-4, 4, -4],
-                  rotate: [0, 4, 0],
-                }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-1 -right-2 sm:right-0 flex items-center gap-1 rounded-full bg-white/95 dark:bg-[#1A202C]/95 px-3 py-1 text-[11px] font-black text-[#FF7643] dark:text-[#FFA07A] border border-slate-200 dark:border-slate-700 shadow-md backdrop-blur-sm"
+              <div
+                className="absolute -top-1 -right-2 sm:right-0 flex items-center gap-1 rounded-full bg-white/95 dark:bg-[#1A202C]/95 px-3 py-1 text-[11px] font-black text-[#FF7643] dark:text-[#FFA07A] border border-slate-200 dark:border-slate-700 shadow-md backdrop-blur-sm transform-gpu hover:scale-105 transition-transform cursor-default"
               >
                 <span>✨ Semangat!</span>
-              </motion.div>
+              </div>
 
               {/* 3. Cute Floating Emoji: Laptop Coding (Top-Left) */}
-              <motion.div
-                animate={{
-                  y: [4, -4, 4],
-                  rotate: [-2, 2, -2],
-                }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-4 -left-2 sm:left-0 flex items-center gap-1 rounded-full bg-white/95 dark:bg-[#1A202C]/95 px-3 py-1 text-[10px] font-black text-[#18181B] dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-md backdrop-blur-sm"
+              <div
+                className="absolute top-4 -left-2 sm:left-0 flex items-center gap-1 rounded-full bg-white/95 dark:bg-[#1A202C]/95 px-3 py-1 text-[10px] font-black text-[#18181B] dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-md backdrop-blur-sm transform-gpu hover:scale-105 transition-transform cursor-default"
               >
                 <span>💻 Prakom 625</span>
-              </motion.div>
+              </div>
 
               {/* 4. Cute Interactive Yellow Smiley Sticker (Bottom-Left) */}
-              <motion.div
-                whileHover={{ scale: 1.2, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                animate={{
-                  y: [5, -5, 5],
-                  rotate: [-3, 3, -3],
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-2 -left-3 sm:left-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-amber-400 border-[2.5px] border-[#18181B] shadow-lg cursor-pointer"
+              <div
+                className="absolute -bottom-2 -left-3 sm:left-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-amber-400 border-[2.5px] border-[#18181B] shadow-lg cursor-pointer transform-gpu hover:scale-115 hover:rotate-12 transition-transform active:scale-95"
               >
                 <div className="flex flex-col items-center justify-center">
                   <div className="flex gap-1.5 mb-1">
@@ -125,18 +108,14 @@ export function TwinkleHero() {
                   </div>
                   <div className="h-1.5 w-4 rounded-b-full border-b-[2px] border-[#18181B]" />
                 </div>
-              </motion.div>
+              </div>
 
               {/* 5. Cute Floating Badge: 120 JP Ready (Bottom-Right) */}
-              <motion.div
-                animate={{
-                  y: [-3, 3, -3],
-                }}
-                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-1 -right-2 sm:right-2 flex items-center gap-1 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/90 px-3.5 py-1 text-[11px] font-black text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800 shadow-md backdrop-blur-sm"
+              <div
+                className="absolute -bottom-1 -right-2 sm:right-2 flex items-center gap-1 rounded-full bg-[#E6F7ED] dark:bg-emerald-950/90 px-3.5 py-1 text-[11px] font-black text-[#0D824B] dark:text-emerald-300 border border-[#A7F3D0] dark:border-emerald-800 shadow-md backdrop-blur-sm transform-gpu hover:scale-105 transition-transform cursor-default"
               >
                 <span>☕ 120 JP Ready</span>
-              </motion.div>
+              </div>
 
               {/* 6. Floating Ambient Mini Emoji Stars */}
               <div className="absolute top-1/3 -right-3 text-lg animate-bounce pointer-events-none">
