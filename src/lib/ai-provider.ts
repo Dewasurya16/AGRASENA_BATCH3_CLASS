@@ -8,6 +8,7 @@ export interface GenerateAiOptions {
   temperature?: number
   max_tokens?: number
   userApiKey?: string
+  mustIncludeKeyPhrases?: string[]
 }
 
 export interface GenerateAiResult {
@@ -29,8 +30,8 @@ const OPENROUTER_FREE_MODELS = [
 const GROQ_MODELS = [
   "qwen/qwen3.8-27b",
   "groq/compound-mini",
-  "qwen/qwen3.6-27b",
   "groq/compound",
+  "qwen/qwen3.6-27b",
   "openai/gpt-oss-120b",
 ]
 
@@ -53,7 +54,8 @@ async function fetchOpenRouterSingle(
   apiKey: string,
   temperature: number,
   max_tokens: number,
-  timeoutMs = 6000
+  timeoutMs = 15000,
+  mustIncludeKeyPhrases?: string[]
 ): Promise<GenerateAiResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -90,6 +92,15 @@ async function fetchOpenRouterSingle(
       throw new Error(`Empty response from ${model}`)
     }
 
+    if (mustIncludeKeyPhrases && mustIncludeKeyPhrases.length > 0) {
+      const hasKeyPhrase = mustIncludeKeyPhrases.some((phrase) =>
+        text.toLowerCase().includes(phrase.toLowerCase())
+      )
+      if (!hasKeyPhrase) {
+        throw new Error(`Incomplete response from ${model}: missing key phrases`)
+      }
+    }
+
     return {
       text,
       model: data.model || model,
@@ -106,7 +117,8 @@ async function fetchGroqSingle(
   apiKey: string,
   temperature: number,
   max_tokens: number,
-  timeoutMs = 6000
+  timeoutMs = 15000,
+  mustIncludeKeyPhrases?: string[]
 ): Promise<GenerateAiResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -141,6 +153,15 @@ async function fetchGroqSingle(
       throw new Error(`Empty response from Groq ${model}`)
     }
 
+    if (mustIncludeKeyPhrases && mustIncludeKeyPhrases.length > 0) {
+      const hasKeyPhrase = mustIncludeKeyPhrases.some((phrase) =>
+        text.toLowerCase().includes(phrase.toLowerCase())
+      )
+      if (!hasKeyPhrase) {
+        throw new Error(`Incomplete response from Groq ${model}: missing key phrases`)
+      }
+    }
+
     return {
       text,
       model,
@@ -152,7 +173,7 @@ async function fetchGroqSingle(
 }
 
 export async function generateAiCompletion(options: GenerateAiOptions): Promise<GenerateAiResult> {
-  const { messages, temperature = 0.4, max_tokens = 2500, userApiKey } = options
+  const { messages, temperature = 0.35, max_tokens = 2500, userApiKey, mustIncludeKeyPhrases } = options
 
   const openRouterKey =
     (userApiKey && userApiKey.startsWith("sk-or-") ? userApiKey : null) ||
@@ -162,7 +183,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     process.env.GROQ_API_KEY ||
     (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
 
-  // Dynamic timeout: scales with max_tokens so 4000-token papers get up to 35s while quick chats get 15s
+  // Dynamic timeout: scales with max_tokens
   const raceTimeoutMs = Math.max(15000, Math.min(50000, Math.floor(max_tokens * 9)))
   const fallbackTimeoutMs = Math.max(10000, Math.min(35000, Math.floor(max_tokens * 7)))
 
@@ -172,28 +193,24 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (openRouterKey) {
     // OpenRouter GLM 5.2 Free Priority Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
+      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
     // OpenRouter Minimax M3 Free Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
-    )
-    // OpenRouter Cohere North Mini Code Free Racer
-    raceCandidates.push(
-      fetchOpenRouterSingle("cohere/north-mini-code:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs)
+      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
   }
 
   if (groqKey) {
-    // Groq High-Speed Racers
+    // Groq High-Speed Racers (Prioritizing non-thinking models that output full 5 chapters)
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
+      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
     raceCandidates.push(
-      fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
+      fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.6-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs)
+      fetchGroqSingle("groq/compound", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
   }
 
@@ -212,7 +229,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (groqKey) {
     for (const gm of GROQ_MODELS) {
       try {
-        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, fallbackTimeoutMs)
+        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, fallbackTimeoutMs, mustIncludeKeyPhrases)
       } catch {
         // Next
       }
@@ -222,7 +239,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (openRouterKey) {
     for (const m of OPENROUTER_FREE_MODELS) {
       try {
-        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, fallbackTimeoutMs)
+        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, fallbackTimeoutMs, mustIncludeKeyPhrases)
       } catch {
         // Next
       }
