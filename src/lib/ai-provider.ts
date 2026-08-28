@@ -74,13 +74,19 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
         if (res.ok) {
           const data = await res.json()
           const choice = data.choices?.[0]
-          const text = choice?.message?.content || choice?.message?.reasoning || ""
+          let rawText = choice?.message?.content || choice?.message?.reasoning || ""
           
-          if (typeof text === "string" && text.trim().length > 10) {
-            return {
-              text: text.trim(),
-              model: data.model || model,
-              provider: "openrouter",
+          // Remove <think>...</think> if present from reasoning models
+          if (typeof rawText === "string") {
+            const cleanedText = rawText.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/```thinking[\s\S]*?```/gi, "").trim()
+            const finalText = cleanedText.length > 5 ? cleanedText : rawText.trim()
+            
+            if (finalText.length > 10) {
+              return {
+                text: finalText,
+                model: data.model || model,
+                provider: "openrouter",
+              }
             }
           }
         } else {
