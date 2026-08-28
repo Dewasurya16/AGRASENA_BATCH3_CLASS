@@ -6,7 +6,9 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'Prakom 625',
     description:
       'Portal Resmi Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena — Backup Modul 120 JP, Jadwal 35 Hari, & AI Copilot.',
-    start_url: '/',
+    id: '/?source=pwa',
+    start_url: '/?source=pwa',
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#10141C',
@@ -14,6 +16,36 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'id',
     dir: 'ltr',
     categories: ['education', 'productivity', 'utilities'],
+    shortcuts: [
+      {
+        name: 'Roadmap 35 Hari',
+        short_name: 'Roadmap',
+        description: 'Jadwal dan Roadmap 35 Hari Diklat',
+        url: '/schedules',
+        icons: [{ src: '/icon-192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Pustaka Materi PDF',
+        short_name: 'Materi',
+        description: 'Modul & Materi 120 JP',
+        url: '/materials',
+        icons: [{ src: '/icon-192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'AI Generator Makalah',
+        short_name: 'AI Makalah',
+        description: 'Generator Draf Proposal Inovasi 5 Bab',
+        url: '/paper-generator',
+        icons: [{ src: '/icon-192x192.png', sizes: '192x192' }],
+      },
+      {
+        name: 'Bank Soal Ujian',
+        short_name: 'Bank Soal',
+        description: 'Latihan Ujian & Bank Soal Prakom',
+        url: '/exam-prep',
+        icons: [{ src: '/icon-192x192.png', sizes: '192x192' }],
+      },
+    ],
     icons: [
       {
         src: '/icon-192x192.png',

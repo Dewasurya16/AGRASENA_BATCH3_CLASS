@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { VisitorTracker } from '@/components/public/visitor-tracker'
 import { PWARegister } from '@/components/pwa-register'
+import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -108,6 +109,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             {children}
           </div>
+          <PWAInstallPrompt />
           <PWARegister />
           <VisitorTracker />
           <Analytics />
