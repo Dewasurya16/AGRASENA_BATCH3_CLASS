@@ -13,9 +13,54 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-  title: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI X Agrasena',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://agrasena-batch-3-class.vercel.app'),
+  title: {
+    default: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI X Agrasena',
+    template: '%s | Diklat Prakom Batch 3 Kejaksaan RI',
+  },
   description:
-    'Platform backup materi perkuliahan, jadwal harian, penugasan, Cloud IDE, dan bank soal ujian MOOC 120 JP.',
+    'Portal resmi backup materi perkuliahan 120 JP, jadwal roadmap 35 hari, generator draf proposal inovasi 5 Bab, template DUPAK/SPMK BPS, forum diskusi, dan bank soal ujian Diklat Fungsional Pranata Komputer Kejaksaan RI Tahun 2026.',
+  keywords: [
+    'Diklat Pranata Komputer',
+    'Prakom Kejaksaan RI',
+    'Agrasena Batch 3',
+    'SPBE Kejaksaan RI',
+    'DUPAK Prakom',
+    'Badan Diklat Kejaksaan RI',
+    'AI Makalah Diklat',
+    'Roadmap Prakom',
+  ],
+  authors: [{ name: 'Dewa Sinar Surya, S.Kom.', url: 'https://github.com/Dewasurya16' }],
+  creator: 'Dewa Sinar Surya, S.Kom.',
+  publisher: 'Pusdiklat Kejaksaan RI X Agrasena',
+  openGraph: {
+    type: 'website',
+    locale: 'id_ID',
+    url: 'https://agrasena-batch-3-class.vercel.app',
+    title: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI X Agrasena',
+    description:
+      'Portal backup materi modul 120 JP, roadmap 35 hari, AI generator makalah inovasi 5 Bab, dan template DUPAK resmi.',
+    siteName: 'Web Kelas Diklat Prakom Batch 3',
+    images: [
+      {
+        url: '/Logo.webp',
+        width: 512,
+        height: 512,
+        alt: 'Logo Diklat Prakom Kejaksaan RI',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI',
+    description:
+      'Portal backup materi modul 120 JP, roadmap 35 hari, AI generator makalah inovasi 5 Bab, dan template DUPAK resmi.',
+    images: ['/Logo.webp'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({

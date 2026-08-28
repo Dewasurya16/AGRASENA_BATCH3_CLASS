@@ -3867,28 +3867,28 @@ export function AdminDashboardClient({
                     </h4>
                     <ul className="text-xs text-slate-700 space-y-2">
                       <li className="flex items-start gap-1.5">
-                        <span className="font-bold shrink-0">• Provider Utama:</span>
-                        <span>OpenRouter Free Pool (<code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-rose-700 font-bold">z-ai/glm-5.2:free</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">minimax/minimax-m3:free</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">cohere/north-mini-code:free</code>)</span>
+                        <span className="font-bold shrink-0">• Engine AI Utama:</span>
+                        <span>Groq & OpenRouter High-Speed Hybrid (<code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-emerald-700 font-bold">qwen/qwen3.8-27b</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-blue-700 font-bold">groq/compound-mini</code>)</span>
                       </li>
                       <li className="flex items-start gap-1.5">
-                        <span className="font-bold shrink-0">• Provider Cadangan:</span>
-                        <span>Groq Cloud API (<code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-blue-700 font-bold">qwen/qwen3.8-27b</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">openai/gpt-oss-20b</code>)</span>
+                        <span className="font-bold shrink-0">• Fail-Safe Cadangan:</span>
+                        <span>Deterministic 5-Chapter Builder Lokal (<strong className="text-emerald-700 font-bold">100% Uptime & 0 Detik Downtime</strong> saat API luar rate limited)</span>
                       </li>
                       <li className="flex items-start gap-1.5">
-                        <span className="font-bold shrink-0">• Mode Kecepatan:</span>
-                        <span><em>Concurrent Parallel Race</em> (<code className="font-mono text-[11px]">Promise.any</code>) — respon tercepat dalam <strong>1.5 - 3.5 detik</strong></span>
+                        <span className="font-bold shrink-0">• Token Budgeting Guard:</span>
+                        <span><strong className="text-slate-900 font-mono">max_tokens: 2,800</strong> (~10.000 Karakter) — Sangat aman dari limit 8.000 TPM Free Tier</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Waktu Eksekusi (Timeout):</span>
+                        <span>Parallel Race Capped <strong className="text-slate-900">5.0 Detik</strong> (Anti-Timeout Vercel Serverless)</span>
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="font-bold shrink-0">• Biaya Token:</span>
-                        <span className="text-emerald-700 font-bold">100% Gratis ($0.000 / Tanpa Saldo Berbayar)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="font-bold shrink-0">• Suhu (Temperature):</span>
-                        <span>0.35 (Konsistensi Akademik & Akurasi Regulasi SPBE)</span>
+                        <span className="text-emerald-700 font-bold">100% Gratis ($0.000 / Bebas Biaya Operasional)</span>
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="font-bold shrink-0">• Format Ekspor:</span>
-                        <span>Dokumen Microsoft Word (.doc) A4 Margin 3cm x 2.5cm + Pratinjau Naskah</span>
+                        <span>Dokumen Microsoft Word (.doc) Standar Naskah Dinas (Margin 4cm Kiri, 3cm Atas/Kanan/Bawah)</span>
                       </li>
                     </ul>
                   </div>
