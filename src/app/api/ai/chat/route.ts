@@ -203,6 +203,8 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
 
     return NextResponse.json({
       reply: result.text,
+      message: result.text,
+      text: result.text,
       model: result.model,
       provider: result.provider,
       todayDay: currentDayNumber,

@@ -327,20 +327,21 @@ export function AdminDashboardClient({
       })
       const latencyMs = Date.now() - startTime
       const data = await res.json()
-      if (res.ok && data.message) {
+      const replyText = data.reply || data.message || data.text
+      if (res.ok && replyText) {
         setAiTestResult({
           success: true,
           latencyMs,
           provider: data.provider || "openrouter/groq",
           model: data.model || "z-ai/glm-5.2:free",
-          text: data.message
+          text: replyText
         })
         showFeedback("success", `AI Engine aktif & merespon dalam ${(latencyMs / 1000).toFixed(2)} detik!`)
       } else {
         setAiTestResult({
           success: false,
           latencyMs,
-          error: data.error || "Gagal mendapatkan respon dari AI Engine."
+          error: data.error || data.message || "Gagal mendapatkan respon dari AI Engine."
         })
         showFeedback("error", data.error || "Gagal menguji AI Engine.")
       }

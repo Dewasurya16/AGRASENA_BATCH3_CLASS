@@ -28,17 +28,23 @@ const OPENROUTER_FREE_MODELS = [
 
 const GROQ_MODELS = [
   "qwen/qwen3.8-27b",
-  "openai/gpt-oss-20b",
+  "groq/compound-mini",
+  "qwen/qwen3.6-27b",
+  "groq/compound",
   "openai/gpt-oss-120b",
 ]
 
 function cleanModelText(rawText: string): string {
   if (!rawText || typeof rawText !== "string") return ""
-  const cleaned = rawText
+  let cleaned = rawText
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
     .replace(/```thinking[\s\S]*?```/gi, "")
     .trim()
-  return cleaned.length > 5 ? cleaned : rawText.trim()
+  if (cleaned.length < 5 && rawText.trim().length > 5) {
+    cleaned = rawText.replace(/<\/?(think|thought)>/gi, "").trim()
+  }
+  return cleaned.length > 0 ? cleaned : rawText.trim()
 }
 
 async function fetchOpenRouterSingle(
@@ -47,7 +53,7 @@ async function fetchOpenRouterSingle(
   apiKey: string,
   temperature: number,
   max_tokens: number,
-  timeoutMs = 12000
+  timeoutMs = 6000
 ): Promise<GenerateAiResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -100,7 +106,7 @@ async function fetchGroqSingle(
   apiKey: string,
   temperature: number,
   max_tokens: number,
-  timeoutMs = 12000
+  timeoutMs = 6000
 ): Promise<GenerateAiResult> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
@@ -127,7 +133,9 @@ async function fetchGroqSingle(
     }
 
     const data = await res.json()
-    const text = cleanModelText(data.choices?.[0]?.message?.content || "")
+    const choice = data.choices?.[0]
+    const raw = choice?.message?.content || choice?.message?.reasoning || ""
+    const text = cleanModelText(raw)
 
     if (text.length < 5) {
       throw new Error(`Empty response from Groq ${model}`)
@@ -160,25 +168,28 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   if (openRouterKey) {
     // OpenRouter GLM 5.2 Free Priority Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, 12000)
+      fetchOpenRouterSingle("z-ai/glm-5.2:free", messages, openRouterKey, temperature, max_tokens, 6000)
     )
     // OpenRouter Minimax M3 Free Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, 12000)
+      fetchOpenRouterSingle("minimax/minimax-m3:free", messages, openRouterKey, temperature, max_tokens, 6000)
     )
     // OpenRouter Cohere North Mini Code Free Racer
     raceCandidates.push(
-      fetchOpenRouterSingle("cohere/north-mini-code:free", messages, openRouterKey, temperature, max_tokens, 12000)
+      fetchOpenRouterSingle("cohere/north-mini-code:free", messages, openRouterKey, temperature, max_tokens, 6000)
     )
   }
 
   if (groqKey) {
     // Groq High-Speed Racers (< 1s latency)
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, 12000)
+      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, 6000)
     )
     raceCandidates.push(
-      fetchGroqSingle("openai/gpt-oss-20b", messages, groqKey, temperature, max_tokens, 12000)
+      fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, 6000)
+    )
+    raceCandidates.push(
+      fetchGroqSingle("qwen/qwen3.6-27b", messages, groqKey, temperature, max_tokens, 6000)
     )
   }
 
@@ -194,20 +205,20 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   }
 
   // 2. BACKUP POOL (Sequential Recovery)
-  if (openRouterKey) {
-    for (const m of OPENROUTER_FREE_MODELS) {
+  if (groqKey) {
+    for (const gm of GROQ_MODELS) {
       try {
-        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, 5000)
+        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, 4000)
       } catch {
         // Next
       }
     }
   }
 
-  if (groqKey) {
-    for (const gm of GROQ_MODELS) {
+  if (openRouterKey) {
+    for (const m of OPENROUTER_FREE_MODELS) {
       try {
-        return await fetchGroqSingle(gm, messages, groqKey, temperature, max_tokens, 5000)
+        return await fetchOpenRouterSingle(m, messages, openRouterKey, temperature, max_tokens, 4000)
       } catch {
         // Next
       }
