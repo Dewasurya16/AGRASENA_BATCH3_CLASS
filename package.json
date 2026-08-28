@@ -11,11 +11,9 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
-    "@types/animejs": "^3.1.13",
     "@types/jszip": "^3.4.0",
     "@types/pdf-parse": "^1.1.5",
     "@vercel/analytics": "^2.0.1",
-    "animejs": "^4.5.0",
     "clsx": "^2.1.1",
     "framer-motion": "^13.1.1",
     "jszip": "^3.10.1",
