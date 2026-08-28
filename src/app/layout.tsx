@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { VisitorTracker } from '@/components/public/visitor-tracker'
+import { PWARegister } from '@/components/pwa-register'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -64,7 +65,7 @@ export const metadata: Metadata = {
     siteName: 'Web Kelas Diklat Prakom Batch 3',
     images: [
       {
-        url: '/Logo.webp',
+        url: '/icon-512x512.png',
         width: 512,
         height: 512,
         alt: 'Logo Diklat Prakom Kejaksaan RI',
@@ -76,14 +77,18 @@ export const metadata: Metadata = {
     title: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI',
     description:
       'Portal backup materi modul 120 JP, roadmap 35 hari, AI generator makalah inovasi 5 Bab, dan template DUPAK resmi.',
-    images: ['/Logo.webp'],
+    images: ['/icon-512x512.png'],
   },
   icons: {
     icon: [
-      { url: '/Logo.webp', href: '/Logo.webp' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
-    shortcut: '/Logo.webp',
-    apple: '/Logo.webp',
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   robots: {
     index: true,
@@ -103,6 +108,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col">
             {children}
           </div>
+          <PWARegister />
           <VisitorTracker />
           <Analytics />
         </ThemeProvider>
