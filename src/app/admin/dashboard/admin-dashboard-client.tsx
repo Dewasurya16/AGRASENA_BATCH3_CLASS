@@ -78,7 +78,8 @@ import {
   ThumbsUp,
   Send,
   Lightbulb,
-  Award
+  Award,
+  Zap
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
@@ -121,7 +122,7 @@ function PaginationControls({
   pageSize?: number
   onPageChange: (page: number) => void
 }) {
-  if (totalItems <= pageSize) return null
+  if (totalPages <= 1) return null
 
   const startItem = (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, totalItems)
@@ -217,6 +218,19 @@ export function AdminDashboardClient({
   const [adminNotesTextMap, setAdminNotesTextMap] = React.useState<Record<string, string>>({})
   const [isUpdatingReportMap, setIsUpdatingReportMap] = React.useState<Record<string, boolean>>({})
   const [reportPage, setReportPage] = React.useState(1)
+  const [selectedReportForModal, setSelectedReportForModal] = React.useState<any | null>(null)
+
+  // AI Diagnostic & Live Test State
+  const [isTestingAi, setIsTestingAi] = React.useState(false)
+  const [aiTestPrompt, setAiTestPrompt] = React.useState("Uji kesiapan asisten AI Diklat Prakom Kejaksaan RI Batch 3")
+  const [aiTestResult, setAiTestResult] = React.useState<{
+    success: boolean
+    latencyMs?: number
+    provider?: string
+    model?: string
+    text?: string
+    error?: string
+  } | null>(null)
 
   const fetchDiscussions = async () => {
     try {
@@ -286,12 +300,121 @@ export function AdminDashboardClient({
       if (res.ok) {
         showFeedback("success", "Laporan berhasil dihapus.")
         setAdminReports((prev) => prev.filter((r) => r.id !== id))
+        if (selectedReportForModal?.id === id) {
+          setSelectedReportForModal(null)
+        }
       } else {
         showFeedback("error", "Gagal menghapus laporan.")
       }
     } catch {
       showFeedback("error", "Terjadi kesalahan saat menghapus laporan.")
     }
+  }
+
+  const handleTestAiConnection = async () => {
+    setIsTestingAi(true)
+    setAiTestResult(null)
+    const startTime = Date.now()
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "user", content: aiTestPrompt || "Uji kesiapan asisten AI Diklat Prakom Kejaksaan RI Batch 3" }
+          ]
+        })
+      })
+      const latencyMs = Date.now() - startTime
+      const data = await res.json()
+      if (res.ok && data.message) {
+        setAiTestResult({
+          success: true,
+          latencyMs,
+          provider: data.provider || "openrouter/groq",
+          model: data.model || "z-ai/glm-5.2:free",
+          text: data.message
+        })
+        showFeedback("success", `AI Engine aktif & merespon dalam ${(latencyMs / 1000).toFixed(2)} detik!`)
+      } else {
+        setAiTestResult({
+          success: false,
+          latencyMs,
+          error: data.error || "Gagal mendapatkan respon dari AI Engine."
+        })
+        showFeedback("error", data.error || "Gagal menguji AI Engine.")
+      }
+    } catch (err: any) {
+      const latencyMs = Date.now() - startTime
+      setAiTestResult({
+        success: false,
+        latencyMs,
+        error: err.message || "Koneksi ke API AI terputus."
+      })
+      showFeedback("error", "Koneksi ke API AI gagal.")
+    } finally {
+      setIsTestingAi(false)
+    }
+  }
+
+  const handleExportReportsCSV = () => {
+    if (adminReports.length === 0) {
+      showFeedback("error", "Belum ada data laporan untuk diekspor.")
+      return
+    }
+    const headers = [
+      "No Tiket",
+      "Waktu Kirim (WIB)",
+      "Nama Peserta",
+      "Satker Kejaksaan",
+      "Kontak WhatsApp",
+      "Kategori",
+      "Status Tiket",
+      "Isi Laporan / Aspirasi",
+      "Catatan Tindak Lanjut Admin"
+    ]
+    const rows = adminReports.map((r, i) => [
+      `"${r.id || i + 1}"`,
+      `"${r.created_at ? formatWibDate(r.created_at) : '-'}"`,
+      `"${(r.name || 'Anonim').replace(/"/g, '""')}"`,
+      `"${(r.satker || '-').replace(/"/g, '""')}"`,
+      `"${(r.contact || '-').replace(/"/g, '""')}"`,
+      `"${(r.category || '-').replace(/"/g, '""')}"`,
+      `"${r.status === 'resolved' ? 'Selesai' : r.status === 'in_progress' ? 'Diproses' : 'Pending'}"`,
+      `"${(r.message || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`,
+      `"${(r.admin_notes || '').replace(/"/g, '""').replace(/\n/g, ' ')}"`
+    ])
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `rekap-laporan-aspirasi-prakom-batch3-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    showFeedback("success", "Rekap laporan & saran berhasil diekspor ke CSV!")
+  }
+
+  const generateWaLink = (report: any) => {
+    const rawContact = (report.contact || "").replace(/[^0-9]/g, "")
+    let phone = rawContact
+    if (phone.startsWith("08")) phone = "628" + phone.slice(2)
+    else if (phone.startsWith("8")) phone = "62" + phone
+
+    const notes = adminNotesTextMap[report.id] || report.admin_notes || "Laporan Anda telah dicatat oleh pengurus kelas dan segera kami tindaklanjuti."
+
+    const text = encodeURIComponent(
+      `*PEMBERITAHUAN TINDAK LANJUT PUSAT BANTUAN DIKLAT PRAKOM BATCH 3*\n` +
+      `Kejaksaan Republik Indonesia\n\n` +
+      `Halo Rekan *${report.name || "Peserta"}* (${report.satker || "Satker Kejaksaan"}),\n\n` +
+      `Menindaklanjuti tiket laporan/aspirasi yang Anda kirimkan melalui Portal Diklat Kelas:\n` +
+      `📌 *Kategori:* ${report.category || "Umum"}\n` +
+      `📝 *Uraian:* "${(report.message || "").slice(0, 120)}${(report.message || "").length > 120 ? "..." : ""}"\n\n` +
+      `📋 *Tanggapan/Tindak Lanjut Panitia/Pengurus:*\n` +
+      `${notes}\n\n` +
+      `Jika ada pertanyaan lebih lanjut, silakan balas pesan ini. Tetap semangat mengikuti seluruh rangkaian Diklat! 🙏✨`
+    )
+    return `https://api.whatsapp.com/send?phone=${phone}&text=${text}`
   }
 
   const handleManualRefresh = async () => {
@@ -904,6 +1027,45 @@ export function AdminDashboardClient({
     return initialAnnouncements.slice(start, start + ITEMS_PER_PAGE)
   }, [initialAnnouncements, announcementPage])
 
+  // --- REPORTS FILTER & METRICS ---
+  const pendingReportsCount = React.useMemo(() => {
+    return adminReports.filter((r) => !r.status || r.status === "pending").length
+  }, [adminReports])
+
+  const inProgressReportsCount = React.useMemo(() => {
+    return adminReports.filter((r) => r.status === "in_progress").length
+  }, [adminReports])
+
+  const resolvedReportsCount = React.useMemo(() => {
+    return adminReports.filter((r) => r.status === "resolved").length
+  }, [adminReports])
+
+  const filteredReports = React.useMemo(() => {
+    return adminReports.filter((r) => {
+      const q = reportSearch.toLowerCase().trim()
+      const matchesSearch =
+        q === "" ||
+        (r.name || "").toLowerCase().includes(q) ||
+        (r.satker || "").toLowerCase().includes(q) ||
+        (r.category || "").toLowerCase().includes(q) ||
+        (r.contact || "").toLowerCase().includes(q) ||
+        (r.message || "").toLowerCase().includes(q) ||
+        (r.admin_notes || "").toLowerCase().includes(q)
+
+      const status = r.status || "pending"
+      const matchesStatus = reportStatusFilter === "all" || status === reportStatusFilter
+      const matchesCategory = reportCategoryFilter === "Semua" || (r.category || "") === reportCategoryFilter
+
+      return matchesSearch && matchesStatus && matchesCategory
+    })
+  }, [adminReports, reportSearch, reportStatusFilter, reportCategoryFilter])
+
+  const totalReportPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE) || 1
+  const paginatedReports = React.useMemo(() => {
+    const start = (reportPage - 1) * ITEMS_PER_PAGE
+    return filteredReports.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredReports, reportPage])
+
   // --- ACTIONS ---
   const handleCopyIp = (ip: string) => {
     navigator.clipboard.writeText(ip)
@@ -1501,30 +1663,6 @@ export function AdminDashboardClient({
       </span>
     )
   }
-
-  // Reports Calculations
-  const pendingReportsCount = adminReports.filter((r) => (r.status || "pending") === "pending").length
-  const inProgressReportsCount = adminReports.filter((r) => r.status === "in_progress").length
-  const resolvedReportsCount = adminReports.filter((r) => r.status === "resolved").length
-
-  const filteredReports = React.useMemo(() => {
-    return adminReports.filter((r) => {
-      const matchStatus = reportStatusFilter === "all" || (r.status || "pending") === reportStatusFilter
-      const matchCategory = reportCategoryFilter === "Semua" || r.category === reportCategoryFilter
-      const q = reportSearch.toLowerCase().trim()
-      const matchSearch =
-        !q ||
-        (r.name && r.name.toLowerCase().includes(q)) ||
-        (r.satker && r.satker.toLowerCase().includes(q)) ||
-        (r.message && r.message.toLowerCase().includes(q)) ||
-        (r.category && r.category.toLowerCase().includes(q)) ||
-        (r.contact && r.contact.toLowerCase().includes(q))
-      return matchStatus && matchCategory && matchSearch
-    })
-  }, [adminReports, reportStatusFilter, reportCategoryFilter, reportSearch])
-
-  const totalReportPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE) || 1
-  const paginatedReports = filteredReports.slice((reportPage - 1) * ITEMS_PER_PAGE, reportPage * ITEMS_PER_PAGE)
 
   // Navigation Items list
   const navItems = [
@@ -2462,61 +2600,104 @@ export function AdminDashboardClient({
               <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-black text-slate-900">
-                      Daftar Laporan Kendala & Aspirasi Peserta
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-orange-600" />
+                      <span>Daftar Laporan Kendala & Aspirasi Peserta</span>
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Laporan yang dikirim peserta melalui formulir pusat bantuan (FAQ) tanpa perlu login (Menampilkan 5 per halaman)
                     </p>
                   </div>
 
-                  <button
-                    onClick={fetchReports}
-                    className="flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer self-start sm:self-auto"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
-                    <span>Muat Ulang Tiket</span>
-                  </button>
+                  <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                    <button
+                      onClick={handleExportReportsCSV}
+                      className="flex items-center gap-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200 transition cursor-pointer shadow-2xs"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Ekspor Rekap (CSV)</span>
+                    </button>
+                    <button
+                      onClick={fetchReports}
+                      className="flex items-center gap-1.5 rounded-full bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition cursor-pointer"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                      <span>Muat Ulang Tiket</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Filter Bar */}
-                <div className="flex flex-col md:flex-row items-center gap-3 pt-1">
-                  {/* Search */}
-                  <div className="relative flex-1 w-full">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      value={reportSearch}
-                      onChange={(e) => {
-                        setReportSearch(e.target.value)
-                        setReportPage(1)
-                      }}
-                      placeholder="Cari berdasarkan nama, satker, kategori, nomor WA, atau isi uraian..."
-                      className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
-                    />
-                  </div>
-
-                  {/* Status Pills */}
-                  <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    {[
-                      { id: "all", label: "Semua" },
-                      { id: "pending", label: "⏳ Pending" },
-                      { id: "in_progress", label: "🛠️ Diproses" },
-                      { id: "resolved", label: "✅ Selesai" },
-                    ].map((st) => (
-                      <button
-                        key={st.id}
-                        onClick={() => {
-                          setReportStatusFilter(st.id as any)
+                {/* Filter Bar: Search & Status */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-col md:flex-row items-center gap-3">
+                    {/* Search */}
+                    <div className="relative flex-1 w-full">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={reportSearch}
+                        onChange={(e) => {
+                          setReportSearch(e.target.value)
                           setReportPage(1)
                         }}
-                        className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
-                          reportStatusFilter === st.id
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        placeholder="Cari berdasarkan nama, satker, kategori, nomor WA, atau isi uraian..."
+                        className="h-10 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-10 pr-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                      />
+                    </div>
+
+                    {/* Status Pills */}
+                    <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                      {[
+                        { id: "all", label: "Semua Status" },
+                        { id: "pending", label: "⏳ Pending" },
+                        { id: "in_progress", label: "🛠️ Diproses" },
+                        { id: "resolved", label: "✅ Selesai" },
+                      ].map((st) => (
+                        <button
+                          key={st.id}
+                          onClick={() => {
+                            setReportStatusFilter(st.id as any)
+                            setReportPage(1)
+                          }}
+                          className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                            reportStatusFilter === st.id
+                              ? "bg-slate-900 text-white"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }`}
+                        >
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Category Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    <span className="text-[11px] font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                      <Filter className="h-3 w-3" />
+                      <span>Kategori:</span>
+                    </span>
+                    {[
+                      "Semua",
+                      "Kendala Teknis & Akses",
+                      "Jadwal & Zoom",
+                      "Tugas & Modul",
+                      "Saran & Aspirasi Kelas",
+                      "Lainnya"
+                    ].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setReportCategoryFilter(cat)
+                          setReportPage(1)
+                        }}
+                        className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-[11px] font-bold transition cursor-pointer ${
+                          reportCategoryFilter === cat
+                            ? "bg-orange-600 text-white shadow-2xs"
+                            : "bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100"
                         }`}
                       >
-                        {st.label}
+                        {cat}
                       </button>
                     ))}
                   </div>
@@ -2576,15 +2757,16 @@ export function AdminDashboardClient({
                                 <span className="font-black text-sm text-slate-900">
                                   {report.name || "Peserta Anonim"}
                                 </span>
-                                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
                                   {report.satker || "Satuan Kerja"}
                                 </span>
                                 {report.contact && (
                                   <a
-                                    href={`https://api.whatsapp.com/send?phone=${report.contact.replace(/[^0-9]/g, '')}`}
+                                    href={generateWaLink(report)}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition"
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition shadow-2xs"
+                                    title="Kirim pesan balasan WhatsApp dengan format resmi"
                                   >
                                     <MessageCircle className="h-3 w-3 text-emerald-600" />
                                     <span>WA: {report.contact}</span>
@@ -2614,9 +2796,18 @@ export function AdminDashboardClient({
 
                             {/* Category & Message */}
                             <div className="space-y-1.5">
-                              <span className="inline-block text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
-                                📌 {report.category}
-                              </span>
+                              <div className="flex items-center justify-between">
+                                <span className="inline-block text-[11px] font-bold text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                                  📌 {report.category}
+                                </span>
+                                <button
+                                  onClick={() => setSelectedReportForModal(report)}
+                                  className="text-[11px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Eye className="h-3 w-3 text-blue-600" />
+                                  <span>Lihat Rincian Tiket</span>
+                                </button>
+                              </div>
                               <div className="p-3.5 rounded-xl bg-white border border-slate-200/90 text-xs font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">
                                 {report.message}
                               </div>
@@ -2628,7 +2819,7 @@ export function AdminDashboardClient({
                                 <input
                                   type="text"
                                   defaultValue={report.admin_notes || ""}
-                                  placeholder="Catatan tindak lanjut admin / nomor tiket / PIC..."
+                                  placeholder="Catatan tindak lanjut admin / solusi / nomor tiket..."
                                   onChange={(e) =>
                                     setAdminNotesTextMap((prev) => ({
                                       ...prev,
@@ -2656,6 +2847,18 @@ export function AdminDashboardClient({
 
                               {/* Status Action Buttons */}
                               <div className="flex items-center gap-1.5 shrink-0">
+                                {report.contact && (
+                                  <a
+                                    href={generateWaLink(report)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition flex items-center gap-1"
+                                    title="Buka WhatsApp dengan draft balasan resmi"
+                                  >
+                                    <Send className="h-3 w-3" />
+                                    <span>Balas WA</span>
+                                  </a>
+                                )}
                                 {st !== "pending" && (
                                   <button
                                     onClick={() => handleUpdateReportStatus(report.id, "pending")}
@@ -3620,55 +3823,192 @@ export function AdminDashboardClient({
           {/* ========================================================================= */}
           {activeTab === "paper_gen" && (
             <div className="space-y-6">
+              {/* Main AI Engine Specification Card */}
               <div className="rounded-3xl bg-white border border-slate-200/90 p-6 space-y-5 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        Dual-Engine Active
+                      </span>
+                      <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                        100% Free Tier ($0.000)
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2 mt-1.5">
                       <GraduationCap className="h-5 w-5 text-rose-600" />
-                      <span>AI Generator Makalah Proyek Akhir & Inovasi Satker</span>
+                      <span>AI Engine & Generator Makalah Proyek Akhir Satker</span>
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Mesin penyusun naskah akademik 5 Bab lengkap terintegrasi Groq AI berstandar Pusdiklat Kejaksaan RI
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Mesin penyusun naskah akademik 5 Bab lengkap terintegrasi <strong>OpenRouter (Z.ai GLM 5.2 Free)</strong> & Auto-Failover <strong>Groq High-Speed</strong> berstandar Pusdiklat Kejaksaan RI.
                     </p>
                   </div>
-                  <a
-                    href="/paper-generator"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-full bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 border border-rose-200 hover:bg-rose-100 transition shadow-2xs"
-                  >
-                    <span>Uji Generator Publik</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+                  <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+                    <a
+                      href="/paper-generator"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 rounded-full bg-rose-600 px-4 py-2 text-xs font-black text-white hover:bg-rose-700 transition shadow-sm"
+                    >
+                      <span>Buka Generator Makalah</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                  {/* Left Box: AI Specification */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
                     <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                       <Bot className="h-4 w-4 text-rose-600" />
-                      <span>Spesifikasi Engine AI:</span>
+                      <span>Spesifikasi & Arsitektur Engine AI:</span>
                     </h4>
-                    <ul className="text-xs text-slate-600 space-y-1">
-                      <li>• <strong>Model AI:</strong> Groq <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">groq/compound-mini</code></li>
-                      <li>• <strong>Suhu (Temperature):</strong> 0.25 (Akademik Konsisten & Terstruktur)</li>
-                      <li>• <strong>Struktur Output:</strong> 5 Bab Lengkap (Pendahuluan, Regulasi, Arsitektur, Aksi, Rekomendasi)</li>
-                      <li>• <strong>Format Ekspor:</strong> Dokumen Microsoft Word (.doc) A4 Margin 3cm x 2.5cm</li>
+                    <ul className="text-xs text-slate-700 space-y-2">
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Provider Utama:</span>
+                        <span>OpenRouter Free Pool (<code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-rose-700 font-bold">z-ai/glm-5.2:free</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">minimax/minimax-m3:free</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">cohere/north-mini-code:free</code>)</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Provider Cadangan:</span>
+                        <span>Groq Cloud API (<code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border text-blue-700 font-bold">qwen/qwen3.8-27b</code>, <code className="font-mono bg-white px-1.5 py-0.5 rounded text-[11px] border">openai/gpt-oss-20b</code>)</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Mode Kecepatan:</span>
+                        <span><em>Concurrent Parallel Race</em> (<code className="font-mono text-[11px]">Promise.any</code>) — respon tercepat dalam <strong>1.5 - 3.5 detik</strong></span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Biaya Token:</span>
+                        <span className="text-emerald-700 font-bold">100% Gratis ($0.000 / Tanpa Saldo Berbayar)</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Suhu (Temperature):</span>
+                        <span>0.35 (Konsistensi Akademik & Akurasi Regulasi SPBE)</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="font-bold shrink-0">• Format Ekspor:</span>
+                        <span>Dokumen Microsoft Word (.doc) A4 Margin 3cm x 2.5cm + Pratinjau Naskah</span>
+                      </li>
                     </ul>
                   </div>
 
-                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
+                  {/* Right Box: Preset Inovasi */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
                     <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                       <Lightbulb className="h-4 w-4 text-amber-500" />
-                      <span>Topik Preset Inovasi Satker:</span>
+                      <span>Topik Preset Proyek Perubahan / Inovasi Satker:</span>
                     </h4>
-                    <ul className="text-xs text-slate-600 space-y-1">
-                      <li>1. Otomasi Backup & Replikasi DB Perkara Tilang & CMS PTSP</li>
-                      <li>2. Dashboard Monitoring Indeks SPBE Satker</li>
-                      <li>3. Notifikasi Digital Jadwal Sidang Berbasis WhatsApp API</li>
-                      <li>4. Penguatan Keamanan Server & SOP CSIRT Kejaksaan</li>
-                      <li>5. Single Sign-On (SSO) Hak Akses Pegawai</li>
-                    </ul>
+                    <div className="space-y-1.5 text-xs text-slate-700">
+                      <div className="p-2 bg-white rounded-xl border border-slate-200">
+                        <span className="font-black text-rose-700 mr-1.5">1.</span>
+                        <strong>Otomasi Backup & Replikasi DB:</strong> Perkara Tilang & CMS PTSP Kejaksaan
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-200">
+                        <span className="font-black text-rose-700 mr-1.5">2.</span>
+                        <strong>Dashboard Monitoring SPBE:</strong> Pemantauan Indeks SPBE Satker Real-Time
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-200">
+                        <span className="font-black text-rose-700 mr-1.5">3.</span>
+                        <strong>Notifikasi Jadwal Sidang:</strong> Integrasi WhatsApp Gateway & API Kejaksaan
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-200">
+                        <span className="font-black text-rose-700 mr-1.5">4.</span>
+                        <strong>SOP CSIRT & Keamanan:</strong> Hardening Server & Pencegahan Kebocoran Data
+                      </div>
+                      <div className="p-2 bg-white rounded-xl border border-slate-200">
+                        <span className="font-black text-rose-700 mr-1.5">5.</span>
+                        <strong>Single Sign-On (SSO):</strong> Manajemen Identitas Pegawai & RBAC Satker
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                {/* Live Diagnostic & Latency Tester Widget */}
+                <div className="pt-4 border-t border-slate-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                      <Zap className="h-4 w-4 text-amber-600" />
+                      <span>Uji Koneksi & Latensi AI Engine Langsung (Live Health Check)</span>
+                    </h4>
+                    <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                      Endpoint: <code className="font-mono text-[10px] bg-slate-100 px-1 py-0.5 rounded">/api/ai/chat</code>
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={aiTestPrompt}
+                      onChange={(e) => setAiTestPrompt(e.target.value)}
+                      placeholder="Masukkan prompt uji atau biarkan default..."
+                      className="h-10 flex-1 w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none transition"
+                    />
+                    <button
+                      onClick={handleTestAiConnection}
+                      disabled={isTestingAi}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shadow-2xs shrink-0"
+                    >
+                      {isTestingAi ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+                          <span>Menguji Kecepatan...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-4 w-4 text-amber-400" />
+                          <span>Jalankan Tes Latensi</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {aiTestResult && (
+                    <div
+                      className={`p-4 rounded-2xl border transition-all space-y-2 text-xs ${
+                        aiTestResult.success
+                          ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
+                          : "bg-rose-50/70 border-rose-200 text-rose-900"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2 border-emerald-200/50">
+                        <div className="flex items-center gap-2 font-bold">
+                          {aiTestResult.success ? (
+                            <>
+                              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                              <span>Status: KONEKSI AI STABIL & CEPAT</span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="h-4 w-4 text-rose-600" />
+                              <span>Status: GAGAL MERESPON</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="bg-white/80 px-2 py-0.5 rounded font-mono font-bold border">
+                            ⏱️ {aiTestResult.latencyMs ? (aiTestResult.latencyMs / 1000).toFixed(2) : "0"} detik ({aiTestResult.latencyMs} ms)
+                          </span>
+                          {aiTestResult.model && (
+                            <span className="bg-white/80 px-2 py-0.5 rounded font-mono font-bold border">
+                              🤖 Model: {aiTestResult.model}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {aiTestResult.text && (
+                        <div className="p-3 bg-white/90 rounded-xl border border-emerald-200 text-slate-800 font-medium whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
+                          {aiTestResult.text}
+                        </div>
+                      )}
+
+                      {aiTestResult.error && (
+                        <p className="text-rose-700 font-bold">
+                          Error: {aiTestResult.error}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -4864,6 +5204,213 @@ export function AdminDashboardClient({
                 </p>
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {/* 8. Modal: Detail Laporan & Form Tindak Lanjut Peserta */}
+      {selectedReportForModal && (
+        <Modal
+          isOpen={Boolean(selectedReportForModal)}
+          onClose={() => setSelectedReportForModal(null)}
+          title={`Detail Laporan: ${selectedReportForModal.name || "Peserta Anonim"}`}
+          className="max-w-2xl"
+        >
+          <div className="space-y-4 pt-2">
+            {/* Header Meta Info */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full border border-orange-200">
+                    📌 {selectedReportForModal.category}
+                  </span>
+                  <span
+                    className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                      selectedReportForModal.status === "pending"
+                        ? "bg-amber-100 text-amber-800 border-amber-300"
+                        : selectedReportForModal.status === "in_progress"
+                        ? "bg-blue-100 text-blue-800 border-blue-300"
+                        : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                    }`}
+                  >
+                    {selectedReportForModal.status === "pending"
+                      ? "⏳ Menunggu"
+                      : selectedReportForModal.status === "in_progress"
+                      ? "🛠️ Sedang Diproses"
+                      : "✅ Selesai"}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 font-semibold">
+                  {selectedReportForModal.created_at ? formatWibDate(selectedReportForModal.created_at) : "-"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-slate-500 font-bold block text-[11px]">Nama Pengirim:</span>
+                  <span className="font-black text-slate-900">{selectedReportForModal.name || "Anonim"}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 font-bold block text-[11px]">Satuan Kerja:</span>
+                  <span className="font-black text-slate-900">{selectedReportForModal.satker || "Satker Kejaksaan"}</span>
+                </div>
+                {selectedReportForModal.contact && (
+                  <div className="sm:col-span-2 pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-500 font-bold block text-[11px]">Kontak WhatsApp:</span>
+                      <span className="font-black text-emerald-700">{selectedReportForModal.contact}</span>
+                    </div>
+                    <a
+                      href={generateWaLink(selectedReportForModal)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs transition shadow-2xs"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      <span>Balas Pesan WA</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Isi Pesan / Laporan */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-orange-600" />
+                <span>Uraian Lengkap Laporan / Kendala / Aspirasi:</span>
+              </label>
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs leading-relaxed font-medium text-slate-900 whitespace-pre-wrap selection:bg-orange-100 max-h-60 overflow-y-auto">
+                {selectedReportForModal.message}
+              </div>
+            </div>
+
+            {/* Form Catatan & Tindak Lanjut Admin */}
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-black text-slate-900 flex items-center justify-between">
+                <span>Catatan Tindak Lanjut / Jawaban Solusi Admin:</span>
+                <span className="text-[10px] text-slate-400 font-normal">Tersimpan di database</span>
+              </label>
+              <textarea
+                rows={3}
+                defaultValue={adminNotesTextMap[selectedReportForModal.id] || selectedReportForModal.admin_notes || ""}
+                onChange={(e) =>
+                  setAdminNotesTextMap((prev) => ({
+                    ...prev,
+                    [selectedReportForModal.id]: e.target.value,
+                  }))
+                }
+                placeholder="Tuliskan catatan solusi, PIC penanganan, atau tindak lanjut pengurus..."
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:outline-none"
+              />
+            </div>
+
+            {/* Status Update Quick Buttons in Modal */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-xs font-black text-slate-900">Ubah Status Tiket:</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateReportStatus(
+                      selectedReportForModal.id,
+                      "pending",
+                      adminNotesTextMap[selectedReportForModal.id] !== undefined
+                        ? adminNotesTextMap[selectedReportForModal.id]
+                        : selectedReportForModal.admin_notes
+                    )
+                    setSelectedReportForModal((prev: any) => prev ? { ...prev, status: "pending" } : null)
+                  }}
+                  className={`py-2 rounded-xl text-xs font-black transition border cursor-pointer ${
+                    selectedReportForModal.status === "pending"
+                      ? "bg-amber-100 text-amber-900 border-amber-400"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  ⏳ Pending
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateReportStatus(
+                      selectedReportForModal.id,
+                      "in_progress",
+                      adminNotesTextMap[selectedReportForModal.id] !== undefined
+                        ? adminNotesTextMap[selectedReportForModal.id]
+                        : selectedReportForModal.admin_notes
+                    )
+                    setSelectedReportForModal((prev: any) => prev ? { ...prev, status: "in_progress" } : null)
+                  }}
+                  className={`py-2 rounded-xl text-xs font-black transition border cursor-pointer ${
+                    selectedReportForModal.status === "in_progress"
+                      ? "bg-blue-100 text-blue-900 border-blue-400"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  🛠️ Diproses
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateReportStatus(
+                      selectedReportForModal.id,
+                      "resolved",
+                      adminNotesTextMap[selectedReportForModal.id] !== undefined
+                        ? adminNotesTextMap[selectedReportForModal.id]
+                        : selectedReportForModal.admin_notes
+                    )
+                    setSelectedReportForModal((prev: any) => prev ? { ...prev, status: "resolved" } : null)
+                  }}
+                  className={`py-2 rounded-xl text-xs font-black transition border cursor-pointer ${
+                    selectedReportForModal.status === "resolved"
+                      ? "bg-emerald-600 text-white border-emerald-700"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  ✅ Selesai
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  handleDeleteReport(selectedReportForModal.id)
+                }}
+                className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-800 p-2 rounded-lg hover:bg-rose-50 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Hapus Laporan</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedReportForModal(null)}
+                  className="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateReportStatus(
+                      selectedReportForModal.id,
+                      selectedReportForModal.status || "pending",
+                      adminNotesTextMap[selectedReportForModal.id] !== undefined
+                        ? adminNotesTextMap[selectedReportForModal.id]
+                        : selectedReportForModal.admin_notes
+                    )
+                    setSelectedReportForModal(null)
+                  }}
+                  className="rounded-full bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-slate-800 cursor-pointer shadow-sm"
+                >
+                  Simpan Catatan & Keluar
+                </button>
+              </div>
+            </div>
           </div>
         </Modal>
       )}
