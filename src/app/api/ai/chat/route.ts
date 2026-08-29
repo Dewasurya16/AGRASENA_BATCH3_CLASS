@@ -3,11 +3,24 @@ import { createClient } from "@/lib/supabase/server"
 import { getAutoRoadmapData } from "@/lib/roadmap-utils"
 import { TEMPLATES_DATA } from "@/lib/templates-data"
 import { generateAiCompletion } from "@/lib/ai-provider"
+import { checkRateLimit, getClientIp, sanitizeInput } from "@/lib/security"
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(clientIp, 'ai_chat', 30, 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: `Terlalu banyak permintaan AI. Silakan tunggu ${rateLimit.retryAfter} detik.` },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { messages, userApiKey, userName, userSatker, currentDayNumber = 3 } = body
+
+    const cleanUserName = sanitizeInput(userName, 80)
+    const cleanUserSatker = sanitizeInput(userSatker, 100)
 
     // 1. Fetch ALL real-time data from Supabase without low limits
     let rawSchedules: any[] = []
@@ -99,8 +112,8 @@ export async function POST(req: NextRequest) {
     const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI pintar, responsif, berwawasan luas, dan terhubung langsung secara real-time dengan seluruh database & fitur portal Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
 
 PROFIL PENGGUNA:
-- Nama: ${userName || "Rekan Prakom"}
-- Satuan Kerja: ${userSatker || "Kejaksaan RI"}
+- Nama: ${cleanUserName || "Rekan Prakom"}
+- Satuan Kerja: ${cleanUserSatker || "Kejaksaan RI"}
 - Bersikap ramah, cerdas, solutif, santun, profesional, dan to-the-point tanpa basa-basi berlebih.
 
 WAKTU & KALENDER REAL-TIME SAAT INI (WIB):

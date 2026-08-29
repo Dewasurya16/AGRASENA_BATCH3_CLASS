@@ -1,11 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { isRequestAdminAuthenticated, sanitizeInput, getClientIp, checkRateLimit } from "@/lib/security"
 
 export const maxDuration = 300 // 5 minutes timeout
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+
+    // Rate Limiting: Max 20 upload attempts per 10 minutes per IP
+    const rateLimit = checkRateLimit(clientIp, 'material_upload', 20, 10 * 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json(
+        { error: `Terlalu banyak permintaan unggah. Silakan tunggu ${rateLimit.retryAfter} detik.` },
+        { status: 429 }
+      )
+    }
+
+    // Security Gate: Only authenticated admins can upload materials
+    if (!isRequestAdminAuthenticated(req)) {
+      return NextResponse.json(
+        { error: "Akses ditolak. Mengunggah modul materi memerlukan hak akses pengurus terautentikasi." },
+        { status: 401 }
+      )
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -19,7 +39,6 @@ export async function POST(req: NextRequest) {
     const contentType = req.headers.get("content-type") || ""
 
     // 1. DIRECT METADATA SAVE MODE (File uploaded directly to Supabase Storage by Browser)
-    // This mode handles 10MB - 100MB+ files without ever hitting Vercel 4.5MB Payload limit!
     if (contentType.includes("application/json")) {
       const body = await req.json()
       const {
@@ -33,9 +52,23 @@ export async function POST(req: NextRequest) {
         file_type = "application/pdf",
       } = body
 
-      if (!title || !subject_name || !file_url || !file_name) {
+      const cleanTitle = sanitizeInput(title, 200)
+      const cleanSubject = sanitizeInput(subject_name, 200)
+      const cleanDesc = description ? sanitizeInput(description, 1000) : null
+      const cleanFileName = sanitizeInput(file_name, 255).replace(/[^a-zA-Z0-9._-]/g, "_")
+      const cleanUrl = String(file_url || "").trim()
+
+      if (!cleanTitle || !cleanSubject || !cleanUrl || !cleanFileName) {
         return NextResponse.json(
           { error: "Judul modul, tahapan diklat, dan tautan berkas wajib diisi." },
+          { status: 400 }
+        )
+      }
+
+      // Security check: ensure URL is from valid HTTP(S) protocol and ends with or references PDF
+      if (!cleanUrl.startsWith("https://") && !cleanUrl.startsWith("http://")) {
+        return NextResponse.json(
+          { error: "Tautan berkas harus menggunakan protokol HTTPS yang valid." },
           { status: 400 }
         )
       }
@@ -44,14 +77,14 @@ export async function POST(req: NextRequest) {
       const { data: dbData, error: dbError } = await supabase
         .from("materials")
         .insert({
-          title: String(title).trim(),
-          subject_name: String(subject_name).trim(),
+          title: cleanTitle,
+          subject_name: cleanSubject,
           week_number: Number(week_number) || 1,
-          description: description ? String(description).trim() : null,
-          file_url: String(file_url).trim(),
-          file_name: String(file_name).trim(),
-          file_size: Number(file_size) || 0,
-          file_type: String(file_type).trim(),
+          description: cleanDesc,
+          file_url: cleanUrl,
+          file_name: cleanFileName,
+          file_size: Math.max(0, Number(file_size) || 0),
+          file_type: "application/pdf",
         })
         .select()
         .single()
@@ -79,9 +112,24 @@ export async function POST(req: NextRequest) {
     const description = (formData.get("description") as string)?.trim()
     const file = formData.get("file") as File | null
 
-    if (!title || !subject_name || !file || file.size === 0) {
+    const cleanTitle = sanitizeInput(title, 200)
+    const cleanSubject = sanitizeInput(subject_name, 200)
+    const cleanDesc = description ? sanitizeInput(description, 1000) : null
+
+    if (!cleanTitle || !cleanSubject || !file || file.size === 0) {
       return NextResponse.json(
         { error: "Judul, tahapan diklat, dan berkas PDF wajib diisi." },
+        { status: 400 }
+      )
+    }
+
+    // Strict PDF MIME and Extension check
+    const isPdfExt = file.name.toLowerCase().endsWith(".pdf")
+    const isPdfMime = file.type === "application/pdf" || file.type === "application/x-pdf" || file.type === ""
+
+    if (!isPdfExt && !isPdfMime) {
+      return NextResponse.json(
+        { error: "Format berkas tidak diizinkan. Hanya berkas PDF (.pdf) yang diperbolehkan." },
         { status: 400 }
       )
     }
@@ -97,10 +145,11 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient()
 
-    // Clean & sanitize file name
+    // Path traversal sanitization
     const sanitizedName = file.name
       .toLowerCase()
       .replace(/[^a-z0-9._-]/g, "-")
+      .replace(/\.\.+/g, "")
       .replace(/-+/g, "-")
     const filePath = `materials/${Date.now()}_${sanitizedName}`
 
@@ -111,7 +160,7 @@ export async function POST(req: NextRequest) {
     const { error: uploadError } = await supabase.storage
       .from("class-materials")
       .upload(filePath, buffer, {
-        contentType: file.type || "application/pdf",
+        contentType: "application/pdf",
         cacheControl: "3600",
         upsert: true,
       })
@@ -135,14 +184,14 @@ export async function POST(req: NextRequest) {
     const { data: dbData, error: dbError } = await supabase
       .from("materials")
       .insert({
-        title,
-        subject_name,
+        title: cleanTitle,
+        subject_name: cleanSubject,
         week_number,
-        description: description || null,
+        description: cleanDesc,
         file_url: publicUrlData.publicUrl,
-        file_name: file.name,
+        file_name: sanitizedName,
         file_size: file.size,
-        file_type: file.type || "application/pdf",
+        file_type: "application/pdf",
       })
       .select()
       .single()

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, sanitizeInput } from '@/lib/security'
 
 export const dynamic = 'force-dynamic'
 
@@ -72,6 +73,13 @@ export async function POST(request: NextRequest) {
   try {
     const rawIp = extractClientIp(request)
     const ip = rawIp === '::1' ? '127.0.0.1' : rawIp
+    
+    // Rate limit: Max 60 analytics hits per minute per IP to prevent spam
+    const rateLimit = checkRateLimit(ip, 'analytics_track', 60, 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json({ success: false, error: 'Rate limited' }, { status: 429 })
+    }
+
     const userAgent = request.headers.get('user-agent') || ''
     const { device, os, browser } = parseUserAgent(userAgent)
 
@@ -82,10 +90,10 @@ export async function POST(request: NextRequest) {
       // Body might be empty
     }
 
-    const path = (bodyData.path || request.nextUrl.searchParams.get('path') || '/').slice(0, 255)
-    const referrer = (bodyData.referrer || request.headers.get('referer') || 'Direct').slice(0, 500)
-    const screen = (bodyData.screen || '').slice(0, 50)
-    const language = (bodyData.language || request.headers.get('accept-language')?.slice(0, 10) || '').slice(0, 50)
+    const path = sanitizeInput(bodyData.path || request.nextUrl.searchParams.get('path') || '/', 255)
+    const referrer = sanitizeInput(bodyData.referrer || request.headers.get('referer') || 'Direct', 500)
+    const screen = sanitizeInput(bodyData.screen || '', 50)
+    const language = sanitizeInput(bodyData.language || request.headers.get('accept-language')?.slice(0, 10) || '', 50)
 
     const host = request.headers.get('host') || ''
     const isLocalhostIp =

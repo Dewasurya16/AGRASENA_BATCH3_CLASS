@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { checkRateLimit, getClientIp, isRequestAdminAuthenticated, sanitizeInput } from "@/lib/security"
 
 export const dynamic = "force-dynamic"
 
@@ -139,21 +140,38 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
     const body = await req.json()
-    const { action, threadId, authorName, authorSatker, title, content, tag } = body
+    const { action, threadId, authorName, authorSatker, title, content, tag, replyId } = body
 
+    // Rate Limiting: Max 15 forum actions per minute per IP
+    const rateLimit = checkRateLimit(clientIp, 'discussion_actions', 15, 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json(
+        { error: `Terlalu banyak permintaan. Silakan tunggu ${rateLimit.retryAfter} detik.` },
+        { status: 429 }
+      )
+    }
+
+    // 1. Create Discussion Thread
     if (action === "create_thread") {
-      if (!title || !content || !authorSatker) {
+      const cleanTitle = sanitizeInput(title, 200)
+      const cleanContent = sanitizeInput(content, 3000)
+      const cleanSatker = sanitizeInput(authorSatker, 100)
+      const cleanAuthor = sanitizeInput(authorName, 100) || "Rekan Prakom"
+      const cleanTag = sanitizeInput(tag, 50) || "#TugasMandiri"
+
+      if (!cleanTitle || !cleanContent || !cleanSatker) {
         return NextResponse.json({ error: "Judul, isi pertanyaan, dan satker wajib diisi." }, { status: 400 })
       }
 
       const newThread = {
         id: `disc-${Date.now()}`,
-        authorName: authorName || "Rekan Prakom",
-        authorSatker,
-        tag: tag || "#TugasMandiri",
-        title,
-        content,
+        authorName: cleanAuthor,
+        authorSatker: cleanSatker,
+        tag: cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`,
+        title: cleanTitle,
+        content: cleanContent,
         upvotes: 1,
         createdAt: new Date().toISOString(),
         replies: []
@@ -163,22 +181,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, thread: newThread })
     }
 
+    // 2. User Reply to Thread
     if (action === "reply") {
-      if (!threadId || !content) {
+      const cleanThreadId = sanitizeInput(threadId, 50)
+      const cleanContent = sanitizeInput(content, 2000)
+      const cleanAuthor = sanitizeInput(authorName, 100) || "Rekan Prakom"
+      const cleanSatker = sanitizeInput(authorSatker, 100) || "Kejaksaan RI"
+
+      if (!cleanThreadId || !cleanContent) {
         return NextResponse.json({ error: "Thread ID dan isi balasan wajib diisi." }, { status: 400 })
       }
 
-      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === cleanThreadId)
       if (!thread) {
         return NextResponse.json({ error: "Diskusi tidak ditemukan." }, { status: 404 })
       }
 
       const newReply = {
         id: `rep-${Date.now()}`,
-        authorName: authorName || "Rekan Prakom",
-        authorSatker: authorSatker || "Kejaksaan RI",
+        authorName: cleanAuthor,
+        authorSatker: cleanSatker,
         isOfficial: false,
-        content,
+        content: cleanContent,
         createdAt: new Date().toISOString()
       }
 
@@ -186,22 +210,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reply: newReply })
     }
 
+    // 3. Official Admin Reply (Protected: Admin Auth Required)
     if (action === "admin_reply") {
-      if (!threadId || !content) {
+      if (!isRequestAdminAuthenticated(req)) {
+        return NextResponse.json({ error: "Akses ditolak. Tindakan ini memerlukan hak akses pengurus." }, { status: 401 })
+      }
+
+      const cleanThreadId = sanitizeInput(threadId, 50)
+      const cleanContent = sanitizeInput(content, 2500)
+      const cleanAuthor = sanitizeInput(authorName, 100) || "Admin / Tim Widyaiswara Pusdiklat"
+      const cleanSatker = sanitizeInput(authorSatker, 100) || "Badan Diklat Kejaksaan RI"
+
+      if (!cleanThreadId || !cleanContent) {
         return NextResponse.json({ error: "Thread ID dan isi balasan wajib diisi." }, { status: 400 })
       }
 
-      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === cleanThreadId)
       if (!thread) {
         return NextResponse.json({ error: "Diskusi tidak ditemukan." }, { status: 404 })
       }
 
       const newReply = {
         id: `rep-${Date.now()}`,
-        authorName: authorName || "Admin / Tim Widyaiswara Badiklat",
-        authorSatker: authorSatker || "Badan Diklat Kejaksaan RI",
+        authorName: cleanAuthor,
+        authorSatker: cleanSatker,
         isOfficial: true,
-        content,
+        content: cleanContent,
         createdAt: new Date().toISOString()
       }
 
@@ -209,31 +243,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, reply: newReply })
     }
 
+    // 4. Delete Thread (Protected: Admin Auth Required)
     if (action === "delete_thread") {
-      if (!threadId) {
+      if (!isRequestAdminAuthenticated(req)) {
+        return NextResponse.json({ error: "Akses ditolak. Hanya pengurus yang dapat menghapus topik diskusi." }, { status: 401 })
+      }
+
+      const cleanThreadId = sanitizeInput(threadId, 50)
+      if (!cleanThreadId) {
         return NextResponse.json({ error: "Thread ID wajib disertakan." }, { status: 400 })
       }
-      DISCUSSIONS_STORE = DISCUSSIONS_STORE.filter((t) => t.id !== threadId)
+      DISCUSSIONS_STORE = DISCUSSIONS_STORE.filter((t) => t.id !== cleanThreadId)
       return NextResponse.json({ success: true })
     }
 
+    // 5. Delete Reply (Protected: Admin Auth Required)
     if (action === "delete_reply") {
-      const { replyId } = body
-      if (!threadId || !replyId) {
+      if (!isRequestAdminAuthenticated(req)) {
+        return NextResponse.json({ error: "Akses ditolak. Hanya pengurus yang dapat menghapus balasan." }, { status: 401 })
+      }
+
+      const cleanThreadId = sanitizeInput(threadId, 50)
+      const cleanReplyId = sanitizeInput(replyId, 50)
+      if (!cleanThreadId || !cleanReplyId) {
         return NextResponse.json({ error: "Thread ID dan Reply ID wajib disertakan." }, { status: 400 })
       }
-      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === cleanThreadId)
       if (thread) {
-        thread.replies = thread.replies.filter((r) => r.id !== replyId)
+        thread.replies = thread.replies.filter((r) => r.id !== cleanReplyId)
       }
       return NextResponse.json({ success: true })
     }
 
+    // 6. Upvote
     if (action === "upvote") {
-      if (!threadId) {
+      const cleanThreadId = sanitizeInput(threadId, 50)
+      if (!cleanThreadId) {
         return NextResponse.json({ error: "Thread ID wajib disertakan." }, { status: 400 })
       }
-      const thread = DISCUSSIONS_STORE.find((t) => t.id === threadId)
+      const thread = DISCUSSIONS_STORE.find((t) => t.id === cleanThreadId)
       if (thread) {
         thread.upvotes += 1
       }

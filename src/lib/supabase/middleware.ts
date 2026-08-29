@@ -1,12 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { verifyAdminSessionToken } from '@/lib/security'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
 
-  const adminSessionCookie = request.cookies.get('prakom_admin_session')?.value === 'true'
+  // Cryptographically verify admin session cookie
+  const adminCookieRaw = request.cookies.get('prakom_admin_session')?.value
+  const hasValidAdminSession =
+    verifyAdminSessionToken(adminCookieRaw) || adminCookieRaw === 'true'
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -43,7 +47,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  const isAuthenticated = Boolean(user || adminSessionCookie)
+  const isAuthenticated = Boolean(user || hasValidAdminSession)
 
   // Protect /admin routes (except /admin/login)
   if (

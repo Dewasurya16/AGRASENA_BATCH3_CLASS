@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateAiCompletion } from "@/lib/ai-provider"
+import { checkRateLimit, getClientIp, sanitizeInput } from "@/lib/security"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
@@ -133,30 +134,47 @@ Draf rancang bangun inovasi "${title}" di ${satker} merupakan langkah strategis 
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(clientIp, 'paper_generate', 10, 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json(
+        { error: `Terlalu banyak permintaan generate makalah. Silakan tunggu ${rateLimit.retryAfter} detik.` },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { authorName, authorNip, authorSatker, authorRank, topicTitle, problemStatement, desiredOutcome } = body
 
-    if (!topicTitle || !authorSatker) {
+    const cleanTitle = sanitizeInput(topicTitle, 200)
+    const cleanSatker = sanitizeInput(authorSatker, 150)
+    const cleanName = sanitizeInput(authorName, 100) || "Peserta Pelatihan"
+    const cleanNip = sanitizeInput(authorNip, 50) || "19950101 202203 1 002"
+    const cleanRank = sanitizeInput(authorRank, 100) || "Pranata Komputer Ahli Pertama (Gol. III/a)"
+    const cleanProblem = sanitizeInput(problemStatement, 500) || "Keterbatasan otomatisasi sistem dan risiko integritas data operasional"
+    const cleanOutcome = sanitizeInput(desiredOutcome, 500) || "Terwujudnya tata kelola SPBE yang terintegrasi, peningkatan akurasi data perkara, efisiensi waktu layanan publik, serta penguatan keamanan informasi satker"
+
+    if (!cleanTitle || !cleanSatker) {
       return NextResponse.json({ error: "Judul topik inovasi dan nama satker wajib diisi." }, { status: 400 })
     }
 
     const systemPrompt = `Anda adalah Widyaiswara Penilai Makalah Diklat Pranata Komputer Kejaksaan RI. Tugas Anda menyusun Proposal Makalah Rencana Aksi Inovasi Satker yang LENGKAP 5 BAB (BAB I s/d BAB V). Format naskah harus padat, jelas, profesional, dan WAJIB MENYELESAIKAN KELIMA BAB HINGGA BAB V KESIMPULAN & REKOMENDASI.`
 
     const userPrompt = `SUSUNLAH PROPOSAL MAKALAH INOVASI SATKER (5 BAB LENGKAP, PADAT & PROFESIONAL):
-- Nama Peserta: ${authorName || "Peserta Pelatihan"}
-- NIP: ${authorNip || "19950101 202203 1 002"}
-- Jabatan: ${authorRank || "Pranata Komputer Ahli Pertama (Gol. III/a)"}
-- Satuan Kerja: ${authorSatker} (Kejaksaan Republik Indonesia)
-- Judul Inovasi: "${topicTitle}"
-- Masalah Aktual: "${problemStatement || "Keterbatasan otomatisasi sistem dan risiko integritas data operasional"}"
-- Dampak Diharapkan: "${desiredOutcome || "Terwujudnya tata kelola SPBE yang terintegrasi, peningkatan akurasi data perkara, efisiensi waktu layanan publik, serta penguatan keamanan informasi satker"}"
+- Nama Peserta: ${cleanName}
+- NIP: ${cleanNip}
+- Jabatan: ${cleanRank}
+- Satuan Kerja: ${cleanSatker} (Kejaksaan Republik Indonesia)
+- Judul Inovasi: "${cleanTitle}"
+- Masalah Aktual: "${cleanProblem}"
+- Dampak Diharapkan: "${cleanOutcome}"
 
 STRUKTUR WAJIB LENGKAP 5 BAB:
 # 🎓 PROPOSAL RENCANA AKSI INOVASI TEKNOLOGI INFORMASI
-## ${topicTitle.toUpperCase()}
-**Disusun Oleh:** ${authorName || "Peserta Diklat"} (NIP. ${authorNip || "19950101 202203 1 002"})
-**Jabatan:** ${authorRank || "Pranata Komputer Ahli Pertama (Gol. III/a)"}
-**Satuan Kerja:** ${authorSatker}
+## ${cleanTitle.toUpperCase()}
+**Disusun Oleh:** ${cleanName} (NIP. ${cleanNip})
+**Jabatan:** ${cleanRank}
+**Satuan Kerja:** ${cleanSatker}
 **Pelatihan Fungsional Pranata Komputer Keahlian (Batch 3) Kejaksaan RI Tahun 2026**
 
 ---

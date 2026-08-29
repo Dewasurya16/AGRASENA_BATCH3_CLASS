@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { checkRateLimit, getClientIp, isRequestAdminAuthenticated, sanitizeInput } from "@/lib/security"
 
 export const dynamic = "force-dynamic"
 
@@ -57,7 +58,15 @@ let IN_MEMORY_REPORTS: ReportItem[] = [
   }
 ]
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Only authenticated admins can read all contact details & tickets
+  if (!isRequestAdminAuthenticated(req)) {
+    return NextResponse.json(
+      { error: "Akses ditolak. Rekapitulasi laporan hanya dapat diakses oleh akun pengurus." },
+      { status: 401 }
+    )
+  }
+
   if (isSupabaseConfigured()) {
     try {
       const supabase = await createClient()
@@ -79,12 +88,27 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
     const body = await req.json()
     const { action, id, name, satker, category, message, contact, status, admin_notes } = body
 
-    // 1. Create Report
+    // 1. Create Public Report (Subject to Rate Limiting: Max 6 per 10 minutes per IP)
     if (action === "create" || !action) {
-      if (!name || !satker || !message) {
+      const rateLimit = checkRateLimit(clientIp, 'report_create', 6, 10 * 60 * 1000)
+      if (rateLimit.isLimited) {
+        return NextResponse.json(
+          { error: `Terlalu banyak laporan dikirim dari IP Anda. Silakan coba lagi dalam ${rateLimit.retryAfter} detik.` },
+          { status: 429 }
+        )
+      }
+
+      const cleanName = sanitizeInput(name, 100)
+      const cleanSatker = sanitizeInput(satker, 100)
+      const cleanCategory = sanitizeInput(category, 100) || "Kendala Teknis Web & Lainnya"
+      const cleanMessage = sanitizeInput(message, 3000)
+      const cleanContact = sanitizeInput(contact, 50)
+
+      if (!cleanName || !cleanSatker || !cleanMessage) {
         return NextResponse.json(
           { error: "Nama, satuan kerja, dan uraian kendala wajib diisi." },
           { status: 400 }
@@ -93,11 +117,11 @@ export async function POST(req: NextRequest) {
 
       const newReport: ReportItem = {
         id: `rep-${Date.now()}`,
-        name: name.trim(),
-        satker: satker.trim(),
-        category: category?.trim() || "Kendala Teknis Web & Lainnya",
-        message: message.trim(),
-        contact: contact ? contact.trim() : "",
+        name: cleanName,
+        satker: cleanSatker,
+        category: cleanCategory,
+        message: cleanMessage,
+        contact: cleanContact,
         status: "pending",
         admin_notes: "",
         created_at: new Date().toISOString()
@@ -121,7 +145,6 @@ export async function POST(req: NextRequest) {
             .single()
 
           if (!error && data) {
-            // Also keep memory updated
             IN_MEMORY_REPORTS = [data as ReportItem, ...IN_MEMORY_REPORTS]
             return NextResponse.json({ success: true, report: data })
           }
@@ -134,26 +157,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, report: newReport })
     }
 
-    // 2. Update Status / Notes
+    // 2. Update Status / Notes (Protected: Admin Auth Required)
     if (action === "update_status") {
-      if (!id || !status) {
+      if (!isRequestAdminAuthenticated(req)) {
+        return NextResponse.json({ error: "Akses ditolak. Memperbarui tiket memerlukan hak akses pengurus." }, { status: 401 })
+      }
+
+      const cleanId = sanitizeInput(id, 50)
+      const cleanStatus = sanitizeInput(status, 50) as "pending" | "in_progress" | "resolved"
+      const cleanAdminNotes = admin_notes !== undefined ? sanitizeInput(admin_notes, 1000) : undefined
+
+      if (!cleanId || !cleanStatus) {
         return NextResponse.json({ error: "ID laporan dan status wajib disertakan." }, { status: 400 })
       }
 
       if (isSupabaseConfigured()) {
         try {
           const supabase = await createClient()
-          const updatePayload: any = { status }
-          if (admin_notes !== undefined) {
-            updatePayload.admin_notes = admin_notes
+          const updatePayload: any = { status: cleanStatus }
+          if (cleanAdminNotes !== undefined) {
+            updatePayload.admin_notes = cleanAdminNotes
           }
-          const { error } = await supabase.from("reports").update(updatePayload).eq("id", id)
+          const { error } = await supabase.from("reports").update(updatePayload).eq("id", cleanId)
           if (!error) {
-            // Update local memory store as well
-            const existing = IN_MEMORY_REPORTS.find((r) => r.id === id)
+            const existing = IN_MEMORY_REPORTS.find((r) => r.id === cleanId)
             if (existing) {
-              existing.status = status
-              if (admin_notes !== undefined) existing.admin_notes = admin_notes
+              existing.status = cleanStatus
+              if (cleanAdminNotes !== undefined) existing.admin_notes = cleanAdminNotes
             }
             return NextResponse.json({ success: true })
           }
@@ -162,30 +192,35 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const existing = IN_MEMORY_REPORTS.find((r) => r.id === id)
+      const existing = IN_MEMORY_REPORTS.find((r) => r.id === cleanId)
       if (existing) {
-        existing.status = status
-        if (admin_notes !== undefined) existing.admin_notes = admin_notes
+        existing.status = cleanStatus
+        if (cleanAdminNotes !== undefined) existing.admin_notes = cleanAdminNotes
       }
       return NextResponse.json({ success: true })
     }
 
-    // 3. Delete Report
+    // 3. Delete Report (Protected: Admin Auth Required)
     if (action === "delete") {
-      if (!id) {
+      if (!isRequestAdminAuthenticated(req)) {
+        return NextResponse.json({ error: "Akses ditolak. Menghapus tiket memerlukan hak akses pengurus." }, { status: 401 })
+      }
+
+      const cleanId = sanitizeInput(id, 50)
+      if (!cleanId) {
         return NextResponse.json({ error: "ID laporan wajib disertakan." }, { status: 400 })
       }
 
       if (isSupabaseConfigured()) {
         try {
           const supabase = await createClient()
-          await supabase.from("reports").delete().eq("id", id)
+          await supabase.from("reports").delete().eq("id", cleanId)
         } catch {
           // Fallback
         }
       }
 
-      IN_MEMORY_REPORTS = IN_MEMORY_REPORTS.filter((r) => r.id !== id)
+      IN_MEMORY_REPORTS = IN_MEMORY_REPORTS.filter((r) => r.id !== cleanId)
       return NextResponse.json({ success: true })
     }
 

@@ -1,13 +1,46 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateAiCompletion } from "@/lib/ai-provider"
+import { checkRateLimit, getClientIp, sanitizeInput } from "@/lib/security"
 
 export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
-// Helper to extract text from a remote PDF URL using pdf-parse
+// Helper to extract text from a remote PDF URL with SSRF protection
 async function extractTextFromPdf(pdfUrl: string): Promise<string> {
-  if (!pdfUrl || !pdfUrl.startsWith("http")) return ""
+  if (!pdfUrl || typeof pdfUrl !== "string" || !pdfUrl.startsWith("https://")) return ""
+
   try {
+    const parsed = new URL(pdfUrl)
+    const hostname = parsed.hostname.toLowerCase()
+
+    // SSRF Prevention: Block loopback, link-local, and private IP ranges
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname === "169.254.169.254" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.16.") ||
+      hostname.startsWith("172.17.") ||
+      hostname.startsWith("172.18.") ||
+      hostname.startsWith("172.19.") ||
+      hostname.startsWith("172.20.") ||
+      hostname.startsWith("172.21.") ||
+      hostname.startsWith("172.22.") ||
+      hostname.startsWith("172.23.") ||
+      hostname.startsWith("172.24.") ||
+      hostname.startsWith("172.25.") ||
+      hostname.startsWith("172.26.") ||
+      hostname.startsWith("172.27.") ||
+      hostname.startsWith("172.28.") ||
+      hostname.startsWith("172.29.") ||
+      hostname.startsWith("172.30.") ||
+      hostname.startsWith("172.31.")
+    ) {
+      return ""
+    }
+
     const res = await fetch(pdfUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
       cache: "no-store",
@@ -49,10 +82,24 @@ async function extractTextFromPdf(pdfUrl: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req)
+    const rateLimit = checkRateLimit(clientIp, 'module_summary', 15, 60 * 1000)
+    if (rateLimit.isLimited) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: `Terlalu banyak permintaan rangkum modul. Silakan tunggu ${rateLimit.retryAfter} detik.` },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { title, subject_name, description, file_name, file_url, week_number } = body
 
-    if (!title) {
+    const cleanTitle = sanitizeInput(title, 200)
+    const cleanSubject = sanitizeInput(subject_name, 200)
+    const cleanDesc = sanitizeInput(description, 1000)
+    const cleanFileName = sanitizeInput(file_name, 255)
+
+    if (!cleanTitle) {
       return NextResponse.json({ error: "Judul modul wajib disertakan." }, { status: 400 })
     }
 

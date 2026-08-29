@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { generateAdminSessionToken, checkRateLimit, sanitizeInput } from '@/lib/security'
 
 const RUANG_DIKLAT_URL =
   'https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat'
@@ -48,13 +49,22 @@ export async function adminSignIn(formData: FormData) {
   const password = (formData.get('password') as string)?.trim()
 
   if (!email || !password) {
-    return { error: 'Email dan password wajib diisi.' }
+    return { error: 'Email dan kata sandi wajib diisi.' }
+  }
+
+  const normalizedEmail = email.toLowerCase()
+
+  // Brute-force protection: Max 6 login attempts per 10 minutes per email/IP
+  const rateLimit = checkRateLimit(normalizedEmail, 'admin_login', 6, 10 * 60 * 1000)
+  if (rateLimit.isLimited) {
+    return {
+      error: `Terlalu banyak percobaan masuk yang gagal. Demi keamanan, silakan coba lagi dalam ${rateLimit.retryAfter} detik.`,
+    }
   }
 
   const cookieStore = await cookies()
 
-  // Master Admin Credentials Override for Diklat
-  const normalizedEmail = email.toLowerCase()
+  // Master Admin Credentials for Diklat
   const allowedAdminEmails = [
     (process.env.ADMIN_EMAIL || 'admin@kejaksaan.go.id').toLowerCase(),
     'admin@kejaksaan.com',
@@ -68,8 +78,6 @@ export async function adminSignIn(formData: FormData) {
   const allowedAdminPasswords = [
     process.env.ADMIN_PASSWORD || 'adminprakom625',
     'adminprakom625',
-    'admin123',
-    'admin',
     'prakom625',
   ]
 
@@ -77,9 +85,12 @@ export async function adminSignIn(formData: FormData) {
     allowedAdminEmails.includes(normalizedEmail) &&
     allowedAdminPasswords.includes(password)
   ) {
-    cookieStore.set('prakom_admin_session', 'true', {
+    const sessionToken = generateAdminSessionToken()
+    cookieStore.set('prakom_admin_session', sessionToken, {
       path: '/',
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     })
     revalidatePath('/admin', 'layout')
@@ -101,9 +112,12 @@ export async function adminSignIn(formData: FormData) {
       return { error: 'Email atau kata sandi salah. Pastikan akun pengurus Anda sudah terdaftar di sistem.' }
     }
 
-    cookieStore.set('prakom_admin_session', 'true', {
+    const sessionToken = generateAdminSessionToken()
+    cookieStore.set('prakom_admin_session', sessionToken, {
       path: '/',
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     })
 
