@@ -77,7 +77,7 @@ export function ModernNavbar() {
   const isMoreActive = moreLinks.some((l) => pathname.startsWith(l.href))
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-[#2A3550] bg-white/95 dark:bg-[#121620]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-[#2A3550] bg-white/95 dark:bg-[#121620]/95 backdrop-blur-xl shadow-xs transition-colors duration-200 pt-[env(safe-area-inset-top,0px)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 sm:h-20 items-center justify-between gap-3">
           
@@ -190,8 +190,8 @@ export function ModernNavbar() {
             </div>
           </nav>
 
-          {/* 3. Right Action Buttons + Dark Mode Switch */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
+          {/* 3. Right Desktop Action Buttons (Only visible on Desktop >= lg) */}
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             {/* Dark Mode Toggle Button */}
             <button
               type="button"

@@ -5,6 +5,7 @@ import { Users, Video, Clock, MapPin, User, ArrowRight, Calendar, Check, Eye } f
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
 import { Badge } from "@/components/ui/badge"
+import { useTimezone } from "@/components/timezone-provider"
 
 export interface ScheduleItem {
   id: string
@@ -55,6 +56,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
   const [selectedIndex, setSelectedIndex] = React.useState(0)
   const [isAllModalOpen, setIsAllModalOpen] = React.useState(false)
   const [nowTime, setNowTime] = React.useState<number>(Date.now())
+  const { timezone, convertWibTimeToCurrent } = useTimezone()
 
   React.useEffect(() => {
     const timer = setInterval(() => setNowTime(Date.now()), 1000)
@@ -181,7 +183,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                       ))}
                     </div>
                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      Jam: {activeClass?.start_time} - {activeClass?.end_time} WIB
+                      Jam: {convertWibTimeToCurrent(activeClass?.start_time || "08:00")} - {convertWibTimeToCurrent(activeClass?.end_time || "15:30")} {timezone}
                     </span>
                     {sessionCountdown && (
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${sessionCountdown.color}`}>
@@ -318,7 +320,7 @@ export function TodaySchedule({ schedules }: { schedules?: ScheduleItem[] }) {
                   {item.lecturer} • {item.room}
                 </p>
                 <p className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">
-                  {item.start_time} - {item.end_time} WIB
+                  {convertWibTimeToCurrent(item.start_time)} - {convertWibTimeToCurrent(item.end_time)} {timezone}
                 </p>
               </div>
 

@@ -12,16 +12,24 @@ export function IntroScreen() {
 
   React.useEffect(() => {
     setMounted(true)
-    const hasEntered = sessionStorage.getItem("has_entered_portal_session")
-    if (!hasEntered) {
-      setShowIntro(true)
+    try {
+      const hasEntered = sessionStorage.getItem("has_entered_portal_session")
+      if (!hasEntered) {
+        setShowIntro(true)
+      }
+    } catch {
+      // Safe fallback
     }
   }, [])
 
-  const handleEnterPortal = () => {
-    sessionStorage.setItem("has_entered_portal_session", "true")
+  const handleEnterPortal = React.useCallback(() => {
+    try {
+      sessionStorage.setItem("has_entered_portal_session", "true")
+    } catch {
+      // Safe fallback
+    }
     setShowIntro(false)
-  }
+  }, [])
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,28 +39,29 @@ export function IntroScreen() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [showIntro])
+  }, [showIntro, handleEnterPortal])
 
-  if (!mounted || !showIntro) return null
+  if (!mounted) return null
 
   const isDark = theme === 'dark'
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {showIntro && (
         <motion.div
-          initial={{ opacity: 1 }}
+          key="introScreenModal"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{
             opacity: 0,
-            scale: 1.04,
-            filter: "blur(8px)",
-            transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+            scale: 1.02,
+            transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
           }}
-          className="fixed inset-0 z-[9999] flex h-screen w-screen flex-col justify-between items-center select-none overflow-hidden bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300"
+          className="fixed inset-0 z-[9999] flex h-screen w-screen flex-col justify-between items-center select-none overflow-hidden bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300 transform-gpu will-change-transform"
         >
           {/* Ambient glow — adapts per theme */}
           <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[400px] sm:h-[550px] sm:w-[550px] rounded-full blur-[120px] pointer-events-none transform-gpu transition-opacity duration-500 ${
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full blur-[100px] pointer-events-none transform-gpu transition-opacity duration-500 ${
               isDark
                 ? "bg-gradient-to-tr from-[#0D3830]/50 via-[#1E293B]/40 to-[#0F172A]/30"
                 : "bg-gradient-to-tr from-[#D7F3FE]/60 via-[#FFE3EB]/60 to-[#FFF2D1]/60"
@@ -68,10 +77,10 @@ export function IntroScreen() {
           </div>
 
           {/* ── Top Header Bar ── */}
-          <div className="relative z-10 w-full max-w-4xl flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6">
+          <div className="relative z-10 w-full max-w-4xl flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
             {/* Brand */}
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-sm ring-1 ring-black/5 dark:ring-white/5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-xs ring-1 ring-black/5 dark:ring-white/5">
                 <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
               </div>
               <div className="flex flex-col">
@@ -91,37 +100,14 @@ export function IntroScreen() {
               </span>
 
               {/* Dark / Light Toggle */}
-              <motion.button
-                whileHover={{ scale: 1.08 }}
-                whileTap={{ scale: 0.93 }}
+              <button
+                type="button"
                 onClick={toggleTheme}
                 title={isDark ? 'Mode Terang' : 'Mode Gelap'}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-[#1A2235] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-[#222E45] shadow-xs cursor-pointer transition-all duration-200"
+                className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-white dark:bg-[#1A2235] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-[#222E45] shadow-xs cursor-pointer active:scale-95 transition"
               >
-                <AnimatePresence mode="wait" initial={false}>
-                  {isDark ? (
-                    <motion.span
-                      key="sun"
-                      initial={{ opacity: 0, rotate: -90, scale: 0.7 }}
-                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                      exit={{ opacity: 0, rotate: 90, scale: 0.7 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      <Sun className="h-4 w-4" />
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="moon"
-                      initial={{ opacity: 0, rotate: 90, scale: 0.7 }}
-                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                      exit={{ opacity: 0, rotate: -90, scale: 0.7 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      <Moon className="h-4 w-4" />
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
@@ -153,7 +139,7 @@ export function IntroScreen() {
 
               {/* Smiley */}
               <motion.div
-                whileHover={{ scale: 1.15, rotate: 10 }}
+                whileHover={{ scale: 1.1, rotate: 6 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{ y: [3, -3, 3] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
@@ -186,12 +172,12 @@ export function IntroScreen() {
               </p>
             </div>
 
-            {/* CTA */}
+            {/* CTA Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleEnterPortal}
-              className="group relative flex items-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-colors duration-200 active:scale-95"
+              className="group relative flex items-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-colors duration-200"
             >
               <span>Masuk ke Portal Kelas</span>
               <ArrowRight className="h-4 w-4 text-[#FFD280] dark:text-[#EA580C] group-hover:translate-x-1 transition-transform duration-200" />
@@ -199,7 +185,7 @@ export function IntroScreen() {
           </div>
 
           {/* ── Bottom Info ── */}
-          <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-semibold pb-4 sm:pb-6">
+          <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-semibold pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             Klik tombol di atas untuk masuk ke beranda • Sesi tersimpan otomatis
           </div>
 

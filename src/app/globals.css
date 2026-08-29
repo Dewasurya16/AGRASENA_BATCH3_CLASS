@@ -64,11 +64,18 @@
     color: var(--text-primary);
     font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-top: env(safe-area-inset-top, 0px);
     /* Smooth theme transition */
     transition-property: background-color, color, border-color;
     transition-duration: 200ms;
     transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    overscroll-behavior-y: none;
+  }
+
+  /* Prevent automatic iOS Safari zoom when tapping inputs */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
   }
 
   /* Heading text wrap balance — prevents orphaned words */

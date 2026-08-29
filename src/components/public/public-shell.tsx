@@ -32,7 +32,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* 4. Sleek Modern Minimalist Footer */}
-      <footer className="mt-auto border-t border-slate-200/90 dark:border-[#2A3550] bg-white/80 dark:bg-[#14181F]/90 backdrop-blur-md py-6 sm:py-7">
+      <footer className="mt-auto border-t border-slate-200/90 dark:border-[#2A3550] bg-white/80 dark:bg-[#14181F]/90 backdrop-blur-md py-6 sm:py-7 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-3 text-center sm:text-left">
             <div className="flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0">

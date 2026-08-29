@@ -26,6 +26,7 @@ import {
 import Link from "next/link"
 import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber, parseDiklatDate } from "@/lib/roadmap-utils"
 import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
+import { useTimezone, TIMEZONES, IndonesianTimezone } from "@/components/timezone-provider"
 
 export interface TaskItem {
   id: string
@@ -97,6 +98,7 @@ export function LiveSessionBanner({
   const [currentTimeStr, setCurrentTimeStr] = React.useState("")
   const [phase, setPhase] = React.useState<DailyPhase>('in_class')
   const [countdownText, setCountdownText] = React.useState("")
+  const { timezone, setTimezone, convertWibTimeToCurrent, formatCurrentTime, getNowInCurrentZone } = useTimezone()
 
   const activeDayNum = currentDayNumber || getCurrentDiklatDay()
   const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[0]
@@ -126,20 +128,19 @@ export function LiveSessionBanner({
   }, [todaySchedules, activeDayNum])
 
   // Cari hari diklat aktif berikutnya (untuk pengingat akhir pekan / malam hari)
-  // PENTING: Jika hari ini adalah akhir pekan (Sabtu/Minggu), activeDayNum sudah menunjuk ke hari Senin berikutnya (misal Hari 6).
-  // JANGAN melompat ke hari Selasa (activeDayNum + 1). Tahan tetap pada hari Senin (activeDayNum).
   const upcomingDayNum = React.useMemo(() => {
     const now = new Date()
-    const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
+    const wibDate = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60 * 1000)
+    const dayOfWeek = wibDate.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       return activeDayNum
     }
     // Jika Jumat malam setelah jam 16:00, sesi berikutnya adalah Senin (activeDayNum + 1)
-    if (dayOfWeek === 5 && (now.getHours() * 60 + now.getMinutes() >= 16 * 60)) {
+    if (dayOfWeek === 5 && (wibDate.getHours() * 60 + wibDate.getMinutes() >= 16 * 60)) {
       return Math.min(35, activeDayNum + 1)
     }
     // Jika hari kerja biasa malam hari setelah jam 16:00, sesi berikutnya adalah hari esoknya
-    if (now.getHours() * 60 + now.getMinutes() >= 16 * 60) {
+    if (wibDate.getHours() * 60 + wibDate.getMinutes() >= 16 * 60) {
       return Math.min(35, activeDayNum + 1)
     }
     return activeDayNum
@@ -198,18 +199,24 @@ export function LiveSessionBanner({
     setMounted(true)
     const updateTime = () => {
       const now = new Date()
-      const hours = now.getHours()
-      const minutes = now.getMinutes()
-      const seconds = now.getSeconds()
-      const dayOfWeek = now.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
+      // Real target zone date for clock
+      const targetZoneDate = getNowInCurrentZone()
+      const hours = targetZoneDate.getHours()
+      const minutes = targetZoneDate.getMinutes()
+      const seconds = targetZoneDate.getSeconds()
 
       const hStr = String(hours).padStart(2, "0")
       const mStr = String(minutes).padStart(2, "0")
       const sStr = String(seconds).padStart(2, "0")
-      setCurrentTimeStr(`${hStr}:${mStr}:${sStr} WIB`)
+      setCurrentTimeStr(`${hStr}:${mStr}:${sStr} ${timezone}`)
 
-      const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5
-      const totalMins = hours * 60 + minutes
+      // Waktu WIB standar untuk penghitungan jadwal diklat
+      const wibDate = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60 * 1000)
+      const wibHours = wibDate.getHours()
+      const wibMinutes = wibDate.getMinutes()
+      const wibDayOfWeek = wibDate.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
+      const isWeekday = wibDayOfWeek >= 1 && wibDayOfWeek <= 5
+      const totalMins = wibHours * 60 + wibMinutes
 
       // 1. Akhir Pekan (Sabtu & Minggu) -> SELAMAT BERLIBUR
       if (!isWeekday) {
@@ -220,24 +227,30 @@ export function LiveSessionBanner({
         const nextStartMins = parseTimeToMinutes(firstUpcomingSession.start_time) ?? (9 * 60 + 30)
         const nextStartH = Math.floor(nextStartMins / 60)
         const nextStartM = nextStartMins % 60
-        const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+        const rawCleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+        const convertedCleanStart = convertWibTimeToCurrent(rawCleanStart)
 
         const targetDateObj = parseDiklatDate(upcomingCurriculum.date) || new Date()
-        targetDateObj.setHours(nextStartH, nextStartM, 0, 0)
-        const diffMs = targetDateObj.getTime() - now.getTime()
+        // Waktu target diatur dalam offset WIB (UTC+7)
+        const utcTargetYear = targetDateObj.getFullYear()
+        const utcTargetMonth = targetDateObj.getMonth()
+        const utcTargetDate = targetDateObj.getDate()
+        // Date.UTC timestamp for target WIB time (WIB is UTC+7)
+        const targetUtcMs = Date.UTC(utcTargetYear, utcTargetMonth, utcTargetDate, nextStartH - 7, nextStartM, 0)
+        const diffMs = targetUtcMs - now.getTime()
 
         if (diffMs > 0) {
           const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
           const days = Math.floor(totalHours / 24)
           const remHours = totalHours % 24
           if (days > 0) {
-            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone})`)
           } else {
             const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB)`)
+            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone})`)
           }
         } else {
-          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone}`)
         }
         return
       }
@@ -270,8 +283,8 @@ export function LiveSessionBanner({
           const remaining = Math.max(0, firstStart - totalMins)
           const remH = Math.floor(remaining / 60)
           const remM = remaining % 60
-          const cleanStart = cleanTimeDisplay(daysSchedules[0].start_time, "08:00")
-          setCountdownText(`Mulai dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} WIB)`)
+          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(daysSchedules[0].start_time, "08:00"))
+          setCountdownText(`Mulai dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} ${timezone})`)
           return
         }
 
@@ -288,18 +301,18 @@ export function LiveSessionBanner({
           const remaining = Math.max(0, startMins - totalMins)
           const remH = Math.floor(remaining / 60)
           const remM = remaining % 60
-          const cleanStart = cleanTimeDisplay(nextUpcoming.start_time, "08:00")
-          setCountdownText(`Sesi berikutnya dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} WIB)`)
+          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(nextUpcoming.start_time, "08:00"))
+          setCountdownText(`Sesi berikutnya dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} ${timezone})`)
           return
         }
 
         // Jika semua sesi untuk hari ini sudah selesai (Sore / Malam)
         // Jika Jumat Sore/Malam -> Masuk fase akhir pekan (Selamat Berlibur)
-        if (dayOfWeek === 5 && totalMins >= 16 * 60) {
+        if (wibDayOfWeek === 5 && totalMins >= 16 * 60) {
           setPhase('weekend')
           setActiveSession(firstUpcomingSession)
-          const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
-          setCountdownText(`Sesi pekan depan: ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(firstUpcomingSession.start_time, "09:30"))
+          setCountdownText(`Sesi pekan depan: ${upcomingCurriculum.dayOfWeek}, ${cleanStart} ${timezone}`)
           return
         }
 
@@ -308,7 +321,8 @@ export function LiveSessionBanner({
         const remaining = Math.max(0, (24 * 60) - totalMins)
         const remH = Math.floor(remaining / 60)
         const remM = remaining % 60
-        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (23:59 WIB)`)
+        const taskDueConverted = convertWibTimeToCurrent("23:59")
+        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (${taskDueConverted} ${timezone})`)
         return
       }
 
@@ -324,11 +338,11 @@ export function LiveSessionBanner({
       }
 
       if (totalMins >= 16 * 60 && totalMins <= 23 * 60 + 59) {
-        if (dayOfWeek === 5) {
+        if (wibDayOfWeek === 5) {
           setPhase('weekend')
           setActiveSession(firstUpcomingSession)
-          const cleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
-          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} WIB`)
+          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(firstUpcomingSession.start_time, "09:30"))
+          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} ${timezone}`)
           return
         }
         setPhase('task_time')
@@ -336,7 +350,8 @@ export function LiveSessionBanner({
         const remainingMinutes = (24 * 60) - totalMins
         const remH = Math.floor(remainingMinutes / 60)
         const remM = remainingMinutes % 60
-        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (23:59 WIB)`)
+        const taskDueConverted = convertWibTimeToCurrent("23:59")
+        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (${taskDueConverted} ${timezone})`)
         return
       }
 
@@ -346,7 +361,8 @@ export function LiveSessionBanner({
         const remainingMinutes = (8 * 60) - totalMins
         const remH = Math.floor(remainingMinutes / 60)
         const remM = remainingMinutes % 60
-        setCountdownText(`Mulai dalam ${remH}j ${remM}m (08:00 WIB)`)
+        const cleanStart = convertWibTimeToCurrent("08:00")
+        setCountdownText(`Mulai dalam ${remH}j ${remM}m (${cleanStart} ${timezone})`)
         return
       }
     }
@@ -354,7 +370,7 @@ export function LiveSessionBanner({
     updateTime()
     const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
-  }, [daysSchedules, activeDayNum, firstUpcomingSession, upcomingCurriculum])
+  }, [daysSchedules, activeDayNum, firstUpcomingSession, upcomingCurriculum, timezone, convertWibTimeToCurrent, getNowInCurrentZone])
 
   // Cari tugas aktif hari ini dari Supabase atau fallback
   const matchedTask = todayTasks.find((t) => {
@@ -365,14 +381,19 @@ export function LiveSessionBanner({
     id: `task-day-${activeDayNum}`,
     title: `Tugas Mandiri & Evaluasi Pemahaman Modul Hari ke-${activeDayNum}`,
     subject_name: activeSession.subject_name,
-    due_date: `${todayCurriculum.date}, 23:59 WIB`,
+    due_date: `${todayCurriculum.date}, ${convertWibTimeToCurrent("23:59")} ${timezone}`,
     submission_link: RUANG_DIKLAT_URL,
   }
 
-  const cleanStart = cleanTimeDisplay(activeSession.start_time, "08:00")
-  const cleanEnd = cleanTimeDisplay(activeSession.end_time, "15:30")
-  const nextCleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
-  const nextCleanEnd = cleanTimeDisplay(firstUpcomingSession.end_time, "10:15")
+  const rawCleanStart = cleanTimeDisplay(activeSession.start_time, "08:00")
+  const rawCleanEnd = cleanTimeDisplay(activeSession.end_time, "15:30")
+  const rawNextCleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")
+  const rawNextCleanEnd = cleanTimeDisplay(firstUpcomingSession.end_time, "10:15")
+
+  const cleanStart = convertWibTimeToCurrent(rawCleanStart)
+  const cleanEnd = convertWibTimeToCurrent(rawCleanEnd)
+  const nextCleanStart = convertWibTimeToCurrent(rawNextCleanStart)
+  const nextCleanEnd = convertWibTimeToCurrent(rawNextCleanEnd)
 
   /* ────────────────────────────────────────────────
      VARIANT: 'schedule' — card ringan untuk halaman Rundown
@@ -411,8 +432,8 @@ export function LiveSessionBanner({
         className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200 dark:border-[#2A3550] shadow-sm overflow-hidden transition-colors duration-200"
       >
         {/* Header strip */}
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 dark:border-[#2A3550] bg-slate-50/60 dark:bg-[#1E2535]/60">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 dark:border-[#2A3550] bg-slate-50/60 dark:bg-[#1E2535]/60 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
             {/* Status dot + label */}
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${phaseColor}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${phaseDot} ${phase === 'in_class' ? 'animate-ping' : ''}`} />
@@ -425,13 +446,35 @@ export function LiveSessionBanner({
               </span>
             )}
           </div>
-          {/* Live clock */}
-          {currentTimeStr && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold tabular-nums text-indigo-500 dark:text-indigo-400">
-              <Clock className="h-3 w-3" />
-              {currentTimeStr.replace(' WIB', '')} <span className="text-[9px] font-black tracking-wider opacity-70">WIB</span>
-            </span>
-          )}
+
+          <div className="flex items-center gap-2">
+            {/* Timezone pill selector */}
+            <div className="flex items-center gap-0.5 bg-slate-200/80 dark:bg-black/40 rounded-full p-0.5 border border-slate-300/80 dark:border-white/10 text-[9px] font-bold">
+              {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
+                <button
+                  key={tz}
+                  type="button"
+                  onClick={() => setTimezone(tz)}
+                  className={`px-1.5 py-0.5 rounded-full transition-all cursor-pointer ${
+                    timezone === tz
+                      ? 'bg-indigo-600 dark:bg-indigo-500 text-white font-black shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                  title={`Zona Waktu: ${tz}`}
+                >
+                  {tz}
+                </button>
+              ))}
+            </div>
+
+            {/* Live clock */}
+            {currentTimeStr && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold tabular-nums text-indigo-500 dark:text-indigo-400">
+                <Clock className="h-3 w-3" />
+                {currentTimeStr.split(' ')[0]} <span className="text-[9px] font-black tracking-wider opacity-70">{timezone}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Body: sesi aktif atau info hari ini */}
@@ -442,7 +485,7 @@ export function LiveSessionBanner({
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[11px] font-bold text-slate-500 dark:text-[#8A9BB8]">
-                    {cleanStart} – {cleanEnd} WIB
+                    {cleanStart} – {cleanEnd} {timezone}
                   </span>
                   <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-800/40">
                     Hari ke-{activeDayNum}
@@ -598,16 +641,36 @@ export function LiveSessionBanner({
               {phase === 'weekend' ? `Rehat • Menuju Hari ${upcomingDayNum} (${upcomingCurriculum.dayOfWeek}, ${upcomingCurriculum.date})` : displayDayName}
             </span>
 
-            {/* Realtime Clock */}
+            {/* Realtime Clock & Timezone Switcher */}
             {mounted && currentTimeStr && (
-              <span className="rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-mono text-indigo-300 font-bold border border-white/5 tabular-nums">
-                ⏰ {currentTimeStr.replace(' WIB', '')} <span className="text-[9px] opacity-70">WIB</span>
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-mono text-indigo-300 font-bold border border-white/10 tabular-nums">
+                  ⏰ {currentTimeStr.split(' ')[0]} <span className="text-[9px] opacity-80">{timezone}</span>
+                </span>
+                {/* Timezone Pill Toggle */}
+                <div className="flex items-center gap-0.5 bg-black/40 rounded-full p-0.5 border border-white/10 text-[9px] font-bold">
+                  {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
+                    <button
+                      key={tz}
+                      type="button"
+                      onClick={() => setTimezone(tz)}
+                      className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                        timezone === tz
+                          ? 'bg-emerald-500 text-white font-black shadow-xs'
+                          : 'text-slate-300 hover:text-white hover:bg-white/10'
+                      }`}
+                      title={`Ganti zona waktu ke ${tz}`}
+                    >
+                      {tz}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Dynamic Countdown Pill */}
             {mounted && countdownText && phase !== 'weekend' && (
-              <span className="rounded-full bg-white/10 text-slate-300 border border-white/10 px-2 py-0.5 text-[10px] font-bold">
+              <span className="rounded-full bg-white/10 text-slate-300 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold">
                 ⏳ {countdownText}
               </span>
             )}
@@ -623,7 +686,7 @@ export function LiveSessionBanner({
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-amber-300 font-bold">
                     <Clock className="h-3 w-3 text-amber-400" />
-                    Jam Diklat: {cleanStart} – {cleanEnd} WIB
+                    Jam Diklat: {cleanStart} – {cleanEnd} {timezone}
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1">
@@ -647,7 +710,7 @@ export function LiveSessionBanner({
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-amber-300 font-bold">
                     <Clock className="h-3 w-3 text-amber-400" />
-                    Jadwal Mulai: {cleanStart} – {cleanEnd} WIB
+                    Jadwal Mulai: {cleanStart} – {cleanEnd} {timezone}
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1">
@@ -671,7 +734,7 @@ export function LiveSessionBanner({
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-amber-300 font-bold">
                     <Flame className="h-3 w-3 text-amber-400 animate-pulse" />
-                    Batas Upload: {matchedTask.due_date || "Malam ini 23:59 WIB"}
+                    Batas Upload: {matchedTask.due_date || `Malam ini ${convertWibTimeToCurrent("23:59")} ${timezone}`}
                   </span>
                   <span className="flex items-center gap-1 text-slate-300">
                     <BookOpen className="h-3 w-3 text-indigo-300" />
@@ -689,7 +752,7 @@ export function LiveSessionBanner({
                 <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
                   <span className="flex items-center gap-1 text-emerald-300 font-bold">
                     <Sun className="h-3 w-3 text-amber-400" />
-                    Perkuliahan Dimulai Pukul {cleanStart} WIB (Pagi Ini)
+                    Perkuliahan Dimulai Pukul {cleanStart} {timezone} (Pagi Ini)
                   </span>
                   {activeSession.lecturer && (
                     <span className="flex items-center gap-1 text-slate-300">
@@ -721,7 +784,7 @@ export function LiveSessionBanner({
                       {upcomingCurriculum.dayOfWeek}, {upcomingCurriculum.date}:
                     </span>
                     <span className="font-mono bg-sky-950/80 text-sky-300 px-1.5 py-0.5 rounded text-[10px] font-bold border border-sky-800/60 shrink-0">
-                      {cleanTimeDisplay(firstUpcomingSession.start_time, "09:30")} – {cleanTimeDisplay(firstUpcomingSession.end_time, "10:15")} WIB
+                      {nextCleanStart} – {nextCleanEnd} {timezone}
                     </span>
                     <span className="font-bold text-white text-[11px] sm:text-xs truncate">
                       {firstUpcomingSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}

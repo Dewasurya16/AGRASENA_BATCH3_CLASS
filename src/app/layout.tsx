@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Outfit } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
+import { TimezoneProvider } from '@/components/timezone-provider'
 import { Analytics } from '@vercel/analytics/next'
 import { VisitorTracker } from '@/components/public/visitor-tracker'
 import { PWARegister } from '@/components/pwa-register'
@@ -24,6 +25,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
+  interactiveWidget: 'resizes-visual',
 }
 
 export const metadata: Metadata = {
@@ -106,13 +108,15 @@ export default function RootLayout({
     <html lang="id" className={outfit.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-[#F4F6FA] dark:bg-[#14181F] text-[#131E29] dark:text-[#D8E0EC] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830] transition-colors duration-250">
         <ThemeProvider>
-          <div className="relative flex min-h-screen flex-col">
-            {children}
-          </div>
-          <PWAInstallPrompt />
-          <PWARegister />
-          <VisitorTracker />
-          <Analytics />
+          <TimezoneProvider>
+            <div className="relative flex min-h-screen flex-col">
+              {children}
+            </div>
+            <PWAInstallPrompt />
+            <PWARegister />
+            <VisitorTracker />
+            <Analytics />
+          </TimezoneProvider>
         </ThemeProvider>
       </body>
     </html>
