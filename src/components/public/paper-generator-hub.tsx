@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { MinimalistLoader } from "@/components/ui/minimalist-loader"
 
 const PRESET_TOPICS = [
   {
@@ -569,21 +570,21 @@ export function PaperGeneratorHub() {
             </div>
 
             {/* Output Body */}
-            <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px] bg-white dark:bg-[#181D28]">
+            <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px] bg-white dark:bg-[#181D28] flex flex-col justify-center">
               {isGenerating ? (
-                <div className="flex flex-col items-center justify-center h-full min-h-[380px] text-center space-y-4 p-6">
-                  <Spinner size="xl" variant="amber" delayMs={0} />
-                  <div className="space-y-1.5 max-w-md">
-                    <h4 className="text-sm sm:text-base font-black text-[#131E29] dark:text-white">
-                      Sedang Menyusun Draf Makalah 5 Bab Lengkap...
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      AI sedang merumuskan Latar Belakang, Dasar Hukum SPBE, Arsitektur Sistem, dan Rencana Aksi untuk <strong className="text-slate-700 dark:text-slate-300">{authorSatker}</strong>.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800/40">
-                    <span>Standar Dokumen Naskah Dinas Pusdiklat</span>
-                  </div>
+                <div className="flex items-center justify-center h-full min-h-[380px] p-4">
+                  <MinimalistLoader
+                    title="Menyusun Draf Makalah AI"
+                    subtitle={`Proposal Inovasi untuk ${authorSatker}`}
+                    steps={[
+                      'Menganalisis Isu & Kendala Satker...',
+                      'Menyusun Landasan Regulasi SPBE...',
+                      'Merancang Arsitektur & Rencana Aksi 6 Bulan...',
+                      'Mengompilasi Naskah 5 Bab Standar Pusdiklat...',
+                    ]}
+                    delayMs={0}
+                    className="shadow-none border-0 bg-transparent dark:bg-transparent"
+                  />
                 </div>
               ) : generatedPaper ? (
                 <RenderPaperDocument content={generatedPaper} />
