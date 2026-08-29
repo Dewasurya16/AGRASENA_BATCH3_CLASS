@@ -14,12 +14,12 @@ export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const sizeMap = {
-  xs: 'h-3.5 w-3.5',
-  sm: 'h-4 w-4',
-  md: 'h-5 w-5',
-  lg: 'h-7 w-7',
-  xl: 'h-10 w-10',
-  '2xl': 'h-14 w-14',
+  xs: 'h-4 w-4',
+  sm: 'h-4.5 w-4.5',
+  md: 'h-6 w-6',
+  lg: 'h-8 w-8',
+  xl: 'h-12 w-12',
+  '2xl': 'h-16 w-16',
 }
 
 const colorMap = {
@@ -37,7 +37,7 @@ export function Spinner({
   type = 'ring',
   label,
   fullscreen = false,
-  delayMs = 250,
+  delayMs = 200,
   className,
   ...props
 }: SpinnerProps) {
@@ -122,11 +122,11 @@ export function Spinner({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/30 dark:bg-black/50 backdrop-blur-sm transition-all animate-in fade-in duration-200">
-        <div className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-white/95 dark:bg-[#161B26]/95 border border-slate-200/80 dark:border-[#2A3550] shadow-xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-200">
+        <div className="flex flex-col items-center justify-center gap-4 p-8 rounded-[24px] bg-white/95 dark:bg-[#161B26]/95 border border-slate-200/90 dark:border-[#2A3550] shadow-2xl max-w-xs w-full text-center">
           {spinnerElement}
           {label && (
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 tracking-wide">
+            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide">
               {label}
             </span>
           )}
@@ -137,9 +137,9 @@ export function Spinner({
 
   if (label) {
     return (
-      <div className="inline-flex items-center gap-2 animate-in fade-in duration-200">
+      <div className="inline-flex items-center justify-center gap-2 animate-in fade-in duration-200">
         {spinnerElement}
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
           {label}
         </span>
       </div>
