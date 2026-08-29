@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Reply {
   id: string
@@ -431,10 +432,19 @@ export function DiscussionsHub() {
                           type="button"
                           onClick={() => handleSendReply(thread.id)}
                           disabled={isReplyingMap[thread.id]}
-                          className="h-10 px-4 bg-[#0D824B] hover:bg-[#0B6B3E] text-white rounded-xl text-xs font-black shadow-xs transition cursor-pointer flex items-center gap-1 shrink-0"
+                          className="h-10 px-4 bg-[#0D824B] hover:bg-[#0B6B3E] text-white rounded-xl text-xs font-black shadow-xs transition cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-60"
                         >
-                          <Send className="h-3.5 w-3.5" />
-                          <span>Kirim</span>
+                          {isReplyingMap[thread.id] ? (
+                            <>
+                              <Spinner size="xs" variant="white" />
+                              <span>Mengirim...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-3.5 w-3.5" />
+                              <span>Kirim</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </motion.div>
@@ -538,10 +548,11 @@ export function DiscussionsHub() {
                 type="submit"
                 variant="orange"
                 size="md"
-                disabled={isSubmitting}
+                isLoading={isSubmitting}
+                loadingText="Mengirim Pertanyaan..."
                 className="font-black text-xs shadow-sm cursor-pointer"
               >
-                {isSubmitting ? "Mengirim..." : "Kirim Pertanyaan"}
+                Kirim Pertanyaan
               </Button>
             </div>
           </form>

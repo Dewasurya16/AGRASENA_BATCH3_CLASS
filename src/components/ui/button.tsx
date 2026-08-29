@@ -1,12 +1,13 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Loader2 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "orange" | "secondary" | "outline" | "ghost" | "danger" | "glass"
   size?: "sm" | "md" | "lg"
   isLoading?: boolean
+  loadingText?: string
   icon?: React.ReactNode
   trailingIcon?: React.ReactNode
 }
@@ -18,6 +19,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       isLoading = false,
+      loadingText,
       icon,
       trailingIcon,
       children,
@@ -31,7 +33,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "group relative inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+          "group relative inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
           // Sizing
           size === "sm" && "h-8.5 rounded-xl px-3.5 text-xs gap-1.5",
           size === "md" && "h-10.5 rounded-2xl px-5 text-xs sm:text-sm gap-2",
@@ -57,11 +59,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-current" />
+          <Spinner
+            size={size === "sm" ? "xs" : "sm"}
+            variant="current"
+            className="text-current"
+          />
         ) : (
           icon && <span className="shrink-0">{icon}</span>
         )}
-        {children && <span>{children}</span>}
+        
+        {isLoading && loadingText ? (
+          <span>{loadingText}</span>
+        ) : (
+          children && <span>{children}</span>
+        )}
+        
         {!isLoading && trailingIcon && <span className="shrink-0">{trailingIcon}</span>}
       </button>
     )

@@ -21,12 +21,14 @@ import {
   AlertCircle
 } from "lucide-react"
 import { QUIZ_QUESTIONS, QuizQuestion } from "@/data/quiz-questions"
+import { Spinner } from "@/components/ui/spinner"
 
 export function QuizPlayer() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("Semua")
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [userAnswers, setUserAnswers] = React.useState<Record<number, number>>({})
   const [isSubmitted, setIsSubmitted] = React.useState(false)
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = React.useState(false)
   const [timerSeconds, setTimerSeconds] = React.useState(2520) // default 42 minutes for 42 questions
   const [reviewFilter, setReviewFilter] = React.useState<"all" | "wrong" | "correct">("all")
 
@@ -281,11 +283,27 @@ export function QuizPlayer() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setIsSubmitted(true)}
-                  className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 px-5 py-2 text-xs font-black text-white shadow-2xs cursor-pointer transition"
+                  disabled={isSubmittingQuiz}
+                  onClick={() => {
+                    setIsSubmittingQuiz(true)
+                    setTimeout(() => {
+                      setIsSubmittingQuiz(false)
+                      setIsSubmitted(true)
+                    }, 500)
+                  }}
+                  className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 px-5 py-2 text-xs font-black text-white shadow-2xs cursor-pointer transition disabled:opacity-60"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Kirim & Selesaikan Kuis</span>
+                  {isSubmittingQuiz ? (
+                    <>
+                      <Spinner size="xs" variant="white" />
+                      <span>Menghitung Nilai...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Kirim & Selesaikan Kuis</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>

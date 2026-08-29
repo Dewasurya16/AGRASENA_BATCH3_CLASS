@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { signup } from '@/app/auth/actions'
-import { UserPlus, Lock, Mail, User, AlertCircle, CheckCircle2, Loader2, ArrowLeft, GraduationCap } from 'lucide-react'
+import { UserPlus, Lock, Mail, User, AlertCircle, CheckCircle2, ArrowLeft, GraduationCap } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
@@ -21,21 +22,26 @@ export default function RegisterPage() {
 
     if (res?.error) {
       setError(res.error)
+      setLoading(false)
     } else if (res?.success) {
       setSuccess(res.success)
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
-    <div className="flex min-h-[85vh] items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-[#0a0d14] relative overflow-hidden">
+      {/* Background Decorative Glow */}
+      <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Back link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition mb-6"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition mb-6"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-4 w-4" />
           <span>Kembali ke Beranda</span>
         </Link>
 
@@ -47,7 +53,7 @@ export default function RegisterPage() {
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-white">Buat Akun Baru</h2>
             <p className="mt-1.5 text-xs text-slate-400">
-              Daftarkan diri Anda untuk mulai menggunakan platform kelas
+              Daftar untuk mengakses seluruh fitur dan materi kelas
             </p>
           </div>
 
@@ -59,8 +65,8 @@ export default function RegisterPage() {
           )}
 
           {success && (
-            <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-300">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-300">
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
               <span>{success}</span>
             </div>
           )}
@@ -73,10 +79,10 @@ export default function RegisterPage() {
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
-                  name="fullName"
+                  name="full_name"
                   type="text"
                   required
-                  placeholder="Ahmad Fauzi"
+                  placeholder="Contoh: Budi Pratama"
                   className="glass-input w-full rounded-xl py-2.5 pl-10 pr-4 text-sm text-slate-100 placeholder-slate-500"
                 />
               </div>
@@ -99,9 +105,11 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Kata Sandi
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-slate-300">
+                  Kata Sandi
+                </label>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
@@ -118,11 +126,11 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 hover:shadow-indigo-500/40 disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 hover:shadow-indigo-500/40 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Spinner size="xs" variant="white" />
                   <span>Mendaftarkan...</span>
                 </>
               ) : (

@@ -17,6 +17,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { getCurrentDiklatDay, RAW_DAYS_DATA } from '@/lib/roadmap-utils'
+import { Spinner } from '@/components/ui/spinner'
 
 interface Message {
   id: string
@@ -823,11 +824,9 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                   <div className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-slate-900 dark:bg-indigo-600 text-white">
                     <Bot className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex items-center gap-1 bg-white dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] px-3 py-1.5 rounded-[8px] text-[11px]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.2s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:0.4s]" />
-                    <span className="ml-1">AI sedang berpikir & menyusun jawaban...</span>
+                  <div className="flex items-center gap-2 bg-white dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] px-3 py-1.5 rounded-[8px] text-[11px]">
+                    <Spinner size="xs" variant="emerald" />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">AI sedang berpikir & menyusun jawaban...</span>
                   </div>
                 </div>
               )}
@@ -856,7 +855,7 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                   disabled={!input.trim() || isTyping}
                   className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white disabled:opacity-40 transition shadow-2xs cursor-pointer shrink-0"
                 >
-                  <Send className="h-3.5 w-3.5" />
+                  {isTyping ? <Spinner size="xs" variant="white" /> : <Send className="h-3.5 w-3.5" />}
                 </button>
               </form>
             </div>

@@ -19,6 +19,7 @@ import {
   Printer
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 
 const PRESET_TOPICS = [
   {
@@ -488,11 +489,12 @@ export function PaperGeneratorHub() {
               type="submit"
               variant="orange"
               size="lg"
-              disabled={isGenerating}
+              isLoading={isGenerating}
+              loadingText="Menyusun Draf Makalah 5 Bab..."
               className="w-full font-black text-xs uppercase tracking-wider shadow-md cursor-pointer justify-center"
-              icon={isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              icon={<Sparkles className="h-4 w-4" />}
             >
-              {isGenerating ? "Menyusun Draf Makalah 5 Bab..." : "✨ Susun Proposal Makalah AI"}
+              ✨ Susun Proposal Makalah AI
             </Button>
           </form>
         </div>
@@ -569,13 +571,24 @@ export function PaperGeneratorHub() {
             {/* Output Body */}
             <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px] bg-white dark:bg-[#181D28]">
               {isGenerating ? (
-                <div className="flex flex-col items-center justify-center h-full min-h-[350px] text-center space-y-4">
-                  <Loader2 className="h-10 w-10 text-[#EA580C] animate-spin" />
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-black text-[#131E29] dark:text-white">Sedang Merancang Draf Makalah Lengkap...</h4>
-                    <p className="text-xs text-slate-500 max-w-sm">
-                      AI sedang menyusun Latar Belakang, Dasar Hukum SPBE, Arsitektur Sistem, dan Rencana Aksi 6 Bulan untuk {authorSatker}.
+                <div className="flex flex-col items-center justify-center h-full min-h-[380px] text-center space-y-5 p-6">
+                  <div className="relative flex items-center justify-center">
+                    <Spinner size="2xl" variant="amber" thickness="thin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-amber-500 animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-2 max-w-md">
+                    <h4 className="text-sm sm:text-base font-black text-[#131E29] dark:text-white">
+                      Sedang Merancang Draf Makalah 5 Bab Lengkap...
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                      AI sedang menyusun Latar Belakang, Dasar Hukum SPBE, Arsitektur Sistem, dan Rencana Aksi 6 Bulan untuk <strong className="text-slate-700 dark:text-slate-300">{authorSatker}</strong>.
                     </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800/60">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
+                    <span>Tahap Kompilasi Dokumen Word Standar Pusdiklat</span>
                   </div>
                 </div>
               ) : generatedPaper ? (

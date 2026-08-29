@@ -4,7 +4,8 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { login } from '@/app/auth/actions'
-import { LogIn, Lock, Mail, AlertCircle, Loader2, ArrowLeft, GraduationCap } from 'lucide-react'
+import { LogIn, Lock, Mail, AlertCircle, ArrowLeft, GraduationCap } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -84,11 +85,11 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 hover:shadow-indigo-500/40 disabled:opacity-50"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 hover:shadow-indigo-500/40 disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spinner size="xs" variant="white" />
               <span>Memproses...</span>
             </>
           ) : (
@@ -125,7 +126,7 @@ export default function LoginPage() {
 
         <Suspense fallback={
           <div className="glass-panel rounded-3xl p-8 text-center text-slate-400 flex items-center justify-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+            <Spinner size="sm" variant="indigo" />
             <span>Memuat formulir masuk...</span>
           </div>
         }>

@@ -25,6 +25,7 @@ import {
   BookMarked
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { Modal } from "@/components/ui/modal"
 
 export interface MaterialItem {
@@ -660,7 +661,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                 >
                   {isSummarizing ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Spinner size="xs" variant="white" />
                       <span>Menganalisis PDF...</span>
                     </>
                   ) : (
@@ -686,7 +687,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                         <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500/10 border border-orange-500/30 text-[#FF7643]">
                           <FileText className="h-6 w-6 animate-pulse" />
                           <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF7643] text-white shadow">
-                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            <Spinner size="xs" variant="white" />
                           </div>
                         </div>
 

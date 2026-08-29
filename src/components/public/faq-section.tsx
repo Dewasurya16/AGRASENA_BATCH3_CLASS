@@ -32,6 +32,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Modal } from "@/components/ui/modal"
+import { Spinner } from "@/components/ui/spinner"
 
 interface FAQItem {
   id: string
@@ -644,7 +645,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                     >
                       {isSubmittingReport ? (
                         <>
-                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <Spinner size="xs" variant="white" />
                           <span>Mengirim...</span>
                         </>
                       ) : (

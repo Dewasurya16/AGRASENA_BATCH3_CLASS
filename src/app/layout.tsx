@@ -7,6 +7,8 @@ import { Analytics } from '@vercel/analytics/next'
 import { VisitorTracker } from '@/components/public/visitor-tracker'
 import { PWARegister } from '@/components/pwa-register'
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt'
+import { NavigationProgress } from '@/components/ui/navigation-progress'
+import { Suspense } from 'react'
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -109,6 +111,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#F4F6FA] dark:bg-[#14181F] text-[#131E29] dark:text-[#D8E0EC] antialiased selection:bg-[#0D3830]/15 selection:text-[#0D3830] transition-colors duration-250">
         <ThemeProvider>
           <TimezoneProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
             <div className="relative flex min-h-screen flex-col">
               {children}
             </div>

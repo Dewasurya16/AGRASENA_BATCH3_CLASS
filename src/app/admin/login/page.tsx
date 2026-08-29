@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { GraduationCap, Lock, Mail, ArrowRight, ArrowLeft, Loader2, ShieldCheck } from "lucide-react"
+import { GraduationCap, Lock, Mail, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react"
 import { adminLogin } from "../actions"
+import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 
 export default function AdminLoginPage() {
@@ -123,7 +124,7 @@ export default function AdminLoginPage() {
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
+                  <Spinner size="xs" variant="amber" />
                   <span>Memverifikasi Akun...</span>
                 </>
               ) : (
