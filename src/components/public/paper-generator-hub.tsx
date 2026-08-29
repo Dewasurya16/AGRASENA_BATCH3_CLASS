@@ -571,24 +571,18 @@ export function PaperGeneratorHub() {
             {/* Output Body */}
             <div className="flex-1 p-5 sm:p-6 overflow-y-auto max-h-[700px] bg-white dark:bg-[#181D28]">
               {isGenerating ? (
-                <div className="flex flex-col items-center justify-center h-full min-h-[380px] text-center space-y-5 p-6">
-                  <div className="relative flex items-center justify-center">
-                    <Spinner size="2xl" variant="amber" thickness="thin" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-amber-500 animate-pulse" />
-                    </div>
-                  </div>
-                  <div className="space-y-2 max-w-md">
+                <div className="flex flex-col items-center justify-center h-full min-h-[380px] text-center space-y-4 p-6">
+                  <Spinner size="xl" variant="amber" delayMs={0} />
+                  <div className="space-y-1.5 max-w-md">
                     <h4 className="text-sm sm:text-base font-black text-[#131E29] dark:text-white">
-                      Sedang Merancang Draf Makalah 5 Bab Lengkap...
+                      Sedang Menyusun Draf Makalah 5 Bab Lengkap...
                     </h4>
                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      AI sedang menyusun Latar Belakang, Dasar Hukum SPBE, Arsitektur Sistem, dan Rencana Aksi 6 Bulan untuk <strong className="text-slate-700 dark:text-slate-300">{authorSatker}</strong>.
+                      AI sedang merumuskan Latar Belakang, Dasar Hukum SPBE, Arsitektur Sistem, dan Rencana Aksi untuk <strong className="text-slate-700 dark:text-slate-300">{authorSatker}</strong>.
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-800/60">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
-                    <span>Tahap Kompilasi Dokumen Word Standar Pusdiklat</span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800/40">
+                    <span>Standar Dokumen Naskah Dinas Pusdiklat</span>
                   </div>
                 </div>
               ) : generatedPaper ? (

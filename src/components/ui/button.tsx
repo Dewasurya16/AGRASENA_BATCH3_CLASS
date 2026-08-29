@@ -62,6 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           <Spinner
             size={size === "sm" ? "xs" : "sm"}
             variant="current"
+            delayMs={150}
             className="text-current"
           />
         ) : (
