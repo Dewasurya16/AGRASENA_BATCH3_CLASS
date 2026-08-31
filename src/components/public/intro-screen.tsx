@@ -10,10 +10,7 @@ import {
   User,
   Building2,
   CreditCard,
-  ShieldCheck,
-  CheckCircle2,
-  Edit3,
-  Bot
+  Edit3
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 
