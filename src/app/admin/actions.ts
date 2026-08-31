@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { generateAdminSessionToken, checkRateLimit, sanitizeInput } from '@/lib/security'
+import { generateAdminSessionToken, generateSuperAdminSessionToken, checkRateLimit, sanitizeInput } from '@/lib/security'
 
 const RUANG_DIKLAT_URL =
   'https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat'
@@ -81,9 +81,26 @@ export async function adminSignIn(formData: FormData) {
     'prakom625',
   ]
 
+  // Super Admin credentials (akses penuh termasuk halaman deteksi IP)
+  const superAdminEmails = [
+    (process.env.SUPER_ADMIN_EMAIL || 'superadmin@kejaksaan.go.id').toLowerCase(),
+    'superadmin@prakom.id',
+    'superadmin@prakom625.id',
+  ]
+
+  const superAdminPasswords = [
+    process.env.SUPER_ADMIN_PASSWORD || 'superadmin625',
+    'superadmin625',
+  ]
+
+  const isSuperAdmin =
+    superAdminEmails.includes(normalizedEmail) &&
+    superAdminPasswords.includes(password)
+
   if (
-    allowedAdminEmails.includes(normalizedEmail) &&
-    allowedAdminPasswords.includes(password)
+    (allowedAdminEmails.includes(normalizedEmail) &&
+    allowedAdminPasswords.includes(password)) ||
+    isSuperAdmin
   ) {
     const sessionToken = generateAdminSessionToken()
     cookieStore.set('prakom_admin_session', sessionToken, {
@@ -93,6 +110,21 @@ export async function adminSignIn(formData: FormData) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     })
+
+    if (isSuperAdmin) {
+      const superToken = generateSuperAdminSessionToken()
+      cookieStore.set('prakom_super_admin', superToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+      })
+    } else {
+      // Pastikan cookie super admin dihapus jika login sebagai admin biasa
+      cookieStore.delete('prakom_super_admin')
+    }
+
     revalidatePath('/admin', 'layout')
     return { success: true }
   }
@@ -120,6 +152,8 @@ export async function adminSignIn(formData: FormData) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     })
+    // Login via Supabase dianggap admin biasa, hapus cookie super admin
+    cookieStore.delete('prakom_super_admin')
 
     revalidatePath('/admin', 'layout')
     return { success: true }
@@ -133,6 +167,7 @@ export const adminLogin = adminSignIn
 export async function adminSignOut() {
   const cookieStore = await cookies()
   cookieStore.delete('prakom_admin_session')
+  cookieStore.delete('prakom_super_admin')
 
   if (isSupabaseConfigured()) {
     try {

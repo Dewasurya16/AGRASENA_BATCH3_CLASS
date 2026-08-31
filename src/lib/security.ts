@@ -111,6 +111,16 @@ export function generateAdminSessionToken(): string {
 }
 
 /**
+ * Generate a super admin session token (separate from regular admin token)
+ */
+export function generateSuperAdminSessionToken(): string {
+  const timestamp = Date.now().toString()
+  const payload = `prakom_superadmin_${timestamp}`
+  const signature = computeSignature(payload, SECRET_KEY)
+  return `${timestamp}.${signature}`
+}
+
+/**
  * Verify if an admin token signature is valid and not expired (7 days max)
  */
 export function verifyAdminSessionToken(token: string | undefined | null): boolean {
@@ -129,6 +139,29 @@ export function verifyAdminSessionToken(token: string | undefined | null): boole
   }
 
   const payload = `prakom_admin_${timestampStr}`
+  const expectedSignature = computeSignature(payload, SECRET_KEY)
+
+  return providedSignature === expectedSignature
+}
+
+/**
+ * Verify if a super admin token signature is valid and not expired (7 days max)
+ */
+export function verifySuperAdminSessionToken(token: string | undefined | null): boolean {
+  if (!token || typeof token !== 'string') return false
+  const parts = token.split('.')
+  if (parts.length !== 2) return false
+
+  const [timestampStr, providedSignature] = parts
+  const timestamp = parseInt(timestampStr, 10)
+  if (isNaN(timestamp)) return false
+
+  const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+  if (Date.now() - timestamp > MAX_AGE_MS || timestamp > Date.now() + 60000) {
+    return false
+  }
+
+  const payload = `prakom_superadmin_${timestampStr}`
   const expectedSignature = computeSignature(payload, SECRET_KEY)
 
   return providedSignature === expectedSignature

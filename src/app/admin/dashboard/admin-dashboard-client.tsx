@@ -113,6 +113,7 @@ interface AdminDashboardClientProps {
   initialVisitorLogs?: VisitorLog[]
   totalVisitorCount?: number
   initialReports?: any[]
+  isSuperAdmin?: boolean
 }
 
 const ITEMS_PER_PAGE = 5
@@ -202,6 +203,7 @@ export function AdminDashboardClient({
   initialVisitorLogs = [],
   totalVisitorCount,
   initialReports = [],
+  isSuperAdmin = false,
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
@@ -1715,17 +1717,17 @@ export function AdminDashboardClient({
     )
   }
 
-  // Navigation Items list
+  // Navigation Items list - tab visitors hanya untuk Super Admin
   const navItems = [
     { id: "overview", label: "Ringkasan", icon: BarChart3, count: null, color: "text-blue-600" },
-    {
+    ...(isSuperAdmin ? [{
       id: "visitors",
       label: "Statistik Pengunjung & IP",
       icon: Users,
       count: totalVisitors,
       color: "text-emerald-600",
       highlight: true,
-    },
+    }] : []),
     {
       id: "reports",
       label: "Laporan & Saran Peserta",
@@ -1870,12 +1872,16 @@ export function AdminDashboardClient({
         <div className="p-3.5 border-t border-slate-100 dark:border-[#2A3550] bg-slate-50/50 dark:bg-[#161B26] space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-[8px] bg-slate-900 dark:bg-indigo-600 text-white flex items-center justify-center font-black text-xs">
-                AD
+              <div className={`h-8 w-8 rounded-[8px] ${isSuperAdmin ? 'bg-amber-500' : 'bg-slate-900 dark:bg-indigo-600'} text-white flex items-center justify-center font-black text-xs`}>
+                {isSuperAdmin ? '★' : 'AD'}
               </div>
               <div className="text-left">
-                <div className="text-xs font-black text-slate-900 dark:text-slate-100">Admin Diklat</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">admin@kejaksaan.go.id</div>
+                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  {isSuperAdmin ? 'Super Admin' : 'Admin Diklat'}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                  {isSuperAdmin ? 'Akses Penuh & Deteksi IP' : 'admin@kejaksaan.go.id'}
+                </div>
               </div>
             </div>
             <form action={adminSignOut}>
@@ -1888,6 +1894,12 @@ export function AdminDashboardClient({
               </button>
             </form>
           </div>
+          {isSuperAdmin && (
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2.5 py-1.5">
+              <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wide">Super Admin — Akses Penuh</span>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -1984,22 +1996,32 @@ export function AdminDashboardClient({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
                 {/* 1. Visitors KPI (Highlight Card) */}
                 <div
-                  onClick={() => setActiveTab("visitors")}
-                  className="group rounded-[12px] bg-gradient-to-br from-emerald-600 to-teal-800 p-4 text-white space-y-2.5 shadow-sm relative overflow-hidden cursor-pointer hover:shadow-md transition-all hover:scale-[1.01]"
+                  onClick={() => isSuperAdmin && setActiveTab("visitors")}
+                  className={`group rounded-[12px] bg-gradient-to-br from-emerald-600 to-teal-800 p-4 text-white space-y-2.5 shadow-sm relative overflow-hidden transition-all ${
+                    isSuperAdmin
+                      ? 'cursor-pointer hover:shadow-md hover:scale-[1.01]'
+                      : 'cursor-default opacity-80'
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-emerald-100">Pengunjung</span>
-                    <Users className="h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                    {isSuperAdmin ? (
+                      <Users className="h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                    ) : (
+                      <Shield className="h-4 w-4 text-emerald-200" />
+                    )}
                   </div>
                   <div>
                     <div className="text-2xl sm:text-3xl font-black">{totalVisitors.toLocaleString('id-ID')}</div>
                     <div className="text-[11px] text-emerald-100 font-semibold mt-0.5 truncate">
-                      {uniqueIps} IP Unik • {todayVisitors} Hari Ini
+                      {isSuperAdmin
+                        ? `${uniqueIps} IP Unik • ${todayVisitors} Hari Ini`
+                        : 'Hanya Super Admin yang dapat melihat detail'}
                     </div>
                   </div>
                   <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
-                    <span>Statistik & IP</span>
-                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                    <span>{isSuperAdmin ? 'Statistik & IP' : 'Akses Terbatas'}</span>
+                    {isSuperAdmin && <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />}
                   </div>
                 </div>
 
@@ -2259,13 +2281,15 @@ export function AdminDashboardClient({
                         Distribusi Media Akses Pengunjung
                       </h3>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("visitors")}
-                      className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>Lihat Rincian IP</span>
-                      <ArrowRight className="h-3 w-3" />
-                    </button>
+                    {isSuperAdmin && (
+                      <button
+                        onClick={() => setActiveTab("visitors")}
+                        className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Lihat Rincian IP</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-3 pt-1">
@@ -2365,7 +2389,7 @@ export function AdminDashboardClient({
           )}          {/* ========================================================================= */}
           {/* 2. VISITOR ANALYTICS TAB (5 PER HALAMAN) */}
           {/* ========================================================================= */}
-          {activeTab === "visitors" && (
+          {activeTab === "visitors" && isSuperAdmin && (
             <div className="space-y-5">
               {/* 4 Visitor Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">

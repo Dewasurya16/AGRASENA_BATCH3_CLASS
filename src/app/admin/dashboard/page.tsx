@@ -40,6 +40,13 @@ export default async function AdminDashboardPage() {
     }
   }
 
+  // Periksa apakah yang login adalah Super Admin berdasarkan cookie terverifikasi
+  const { cookies } = await import("next/headers")
+  const { verifySuperAdminSessionToken } = await import("@/lib/security")
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get("prakom_super_admin")?.value
+  const isSuperAdmin = verifySuperAdminSessionToken(superAdminCookie)
+
   return (
     <AdminDashboardClient
       initialMaterials={materials}
@@ -49,7 +56,7 @@ export default async function AdminDashboardPage() {
       initialVisitorLogs={visitorLogs}
       totalVisitorCount={totalVisitorCount}
       initialReports={reports}
+      isSuperAdmin={isSuperAdmin}
     />
   )
 }
-
