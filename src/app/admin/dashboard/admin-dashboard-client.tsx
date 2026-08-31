@@ -111,6 +111,7 @@ interface AdminDashboardClientProps {
   initialTasks: any[]
   initialAnnouncements: any[]
   initialVisitorLogs?: VisitorLog[]
+  totalVisitorCount?: number
   initialReports?: any[]
 }
 
@@ -199,6 +200,7 @@ export function AdminDashboardClient({
   initialTasks,
   initialAnnouncements,
   initialVisitorLogs = [],
+  totalVisitorCount,
   initialReports = [],
 }: AdminDashboardClientProps) {
   const router = useRouter()
@@ -920,7 +922,12 @@ export function AdminDashboardClient({
   }, [taskFilter])
 
   // --- STATS & METRICS ---
-  const totalVisitors = initialVisitorLogs.length
+  // totalVisitorCount = jumlah ASLI seluruh data di DB (dari exact count Supabase)
+  // initialVisitorLogs.length = jumlah yg dimuat di client (maks 1.000 terbaru)
+  const totalVisitors = totalVisitorCount ?? initialVisitorLogs.length
+  const loadedCount = initialVisitorLogs.length
+  const hasMoreData = totalVisitors > loadedCount
+
   const uniqueIps = React.useMemo(() => {
     return new Set(initialVisitorLogs.map((v) => v.ip)).size
   }, [initialVisitorLogs])
@@ -1985,9 +1992,9 @@ export function AdminDashboardClient({
                     <Users className="h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black">{totalVisitors}</div>
+                    <div className="text-2xl sm:text-3xl font-black">{totalVisitors.toLocaleString('id-ID')}</div>
                     <div className="text-[11px] text-emerald-100 font-semibold mt-0.5 truncate">
-                      {uniqueIps} IP • {todayVisitors} Hari Ini
+                      {uniqueIps} IP Unik • {todayVisitors} Hari Ini
                     </div>
                   </div>
                   <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
@@ -2367,8 +2374,10 @@ export function AdminDashboardClient({
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Total Kunjungan</span>
                     <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{totalVisitors}</div>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">Terekam di Supabase</p>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{totalVisitors.toLocaleString('id-ID')}</div>
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {hasMoreData ? `${loadedCount.toLocaleString('id-ID')} ditampilkan` : 'Seluruh data termuat'}
+                  </p>
                 </div>
 
                 <div className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-4 space-y-1.5 shadow-xs">
@@ -2411,7 +2420,10 @@ export function AdminDashboardClient({
                       Riwayat Pengunjung & IP Live
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Menampilkan IP pengunjung, perangkat, browser, OS, dan path yang diakses (5 per halaman)
+                      {hasMoreData
+                        ? `Menampilkan ${loadedCount.toLocaleString('id-ID')} dari ${totalVisitors.toLocaleString('id-ID')} total kunjungan terbaru (5 per halaman)`
+                        : `Menampilkan ${loadedCount.toLocaleString('id-ID')} kunjungan — seluruh data termuat (5 per halaman)`
+                      }
                     </p>
                   </div>
 
