@@ -4741,25 +4741,13 @@ export function AdminDashboardClient({
               type="checkbox"
               id="is_urgent"
               name="is_urgent"
-              disabled={!isSuperAdmin}
-              className={`h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 ${
-                !isSuperAdmin ? 'opacity-40 cursor-not-allowed' : ''
-              }`}
+              className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 cursor-pointer"
             />
             <label
               htmlFor="is_urgent"
-              className={`text-xs font-bold ${
-                isSuperAdmin
-                  ? 'text-rose-600 dark:text-rose-400 cursor-pointer'
-                  : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
-              }`}
+              className="text-xs font-bold text-rose-600 dark:text-rose-400 cursor-pointer"
             >
               Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
-              {!isSuperAdmin && (
-                <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                  (Khusus Super Admin)
-                </span>
-              )}
             </label>
           </div>
 
@@ -5096,26 +5084,14 @@ export function AdminDashboardClient({
                 type="checkbox"
                 id="is_urgent_edit"
                 name="is_urgent"
-                disabled={!isSuperAdmin}
                 defaultChecked={editingAnnouncement.is_urgent}
-                className={`h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 ${
-                  !isSuperAdmin ? 'opacity-40 cursor-not-allowed' : ''
-                }`}
+                className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 cursor-pointer"
               />
               <label
                 htmlFor="is_urgent_edit"
-                className={`text-xs font-bold ${
-                  isSuperAdmin
-                    ? 'text-rose-600 dark:text-rose-400 cursor-pointer'
-                    : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                }`}
+                className="text-xs font-bold text-rose-600 dark:text-rose-400 cursor-pointer"
               >
                 Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
-                {!isSuperAdmin && (
-                  <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                    (Khusus Super Admin)
-                  </span>
-                )}
               </label>
             </div>
 

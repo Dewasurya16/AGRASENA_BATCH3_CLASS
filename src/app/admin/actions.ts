@@ -508,19 +508,12 @@ export async function deleteTask(id: string) {
 export async function createAnnouncement(formData: FormData) {
   const title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
+  const is_urgent = formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true'
   const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
 
   if (!title || !content) {
     return { error: 'Judul dan isi pengumuman wajib diisi.' }
   }
-
-  // Hanya Super Admin yang diizinkan menyetel status Mendesak / Urgent
-  const { cookies } = await import('next/headers')
-  const { verifySuperAdminSessionToken } = await import('@/lib/security')
-  const cookieStore = await cookies()
-  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
-  const isSuperAdmin = verifySuperAdminSessionToken(superAdminCookie)
-  const is_urgent = isSuperAdmin && (formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true')
 
   const supabase = await createClient()
   const { error } = await supabase.from('announcements').insert({
@@ -545,19 +538,12 @@ export async function updateAnnouncement(formData: FormData) {
   const id = formData.get('id') as string
   const title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
+  const is_urgent = formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true'
   const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
 
   if (!id || !title || !content) {
     return { error: 'ID, judul, dan isi pengumuman wajib diisi.' }
   }
-
-  // Hanya Super Admin yang diizinkan mengubah status Mendesak / Urgent
-  const { cookies } = await import('next/headers')
-  const { verifySuperAdminSessionToken } = await import('@/lib/security')
-  const cookieStore = await cookies()
-  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
-  const isSuperAdmin = verifySuperAdminSessionToken(superAdminCookie)
-  const is_urgent = isSuperAdmin && (formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true')
 
   const supabase = await createClient()
   const { error } = await supabase
