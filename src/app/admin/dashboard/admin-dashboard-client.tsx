@@ -87,6 +87,7 @@ import {
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
 
 interface VisitorLog {
   id: string
@@ -216,6 +217,19 @@ export function AdminDashboardClient({
   const [isLoading, setIsLoading] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Per-item Action Loading Map (for visual feedback on delete, status change, etc.)
+  const [actionLoadingMap, setActionLoadingMap] = React.useState<Record<string, boolean>>({})
+
+  // Helper: Cek apakah tugas sudah otomatis selesai (ditandai selesai atau batas waktu deadline telah terlewati)
+  const isTaskEffectivelyCompleted = React.useCallback((task: { status?: string; due_date?: string }) => {
+    if (task.status === "completed") return true
+    if (task.due_date) {
+      const deadlineMs = getTaskDeadlineTimestamp(task.due_date)
+      if (deadlineMs > 0 && Date.now() > deadlineMs) return true
+    }
+    return false
+  }, [])
 
   // Audit Log State for Super Admin
   const [auditSearch, setAuditSearch] = React.useState("")
@@ -968,7 +982,9 @@ export function AdminDashboardClient({
     }
   }, [initialVisitorLogs])
 
-  const completedTasksCount = initialTasks.filter((t) => t.status === "completed").length
+  const completedTasksCount = React.useMemo(() => {
+    return initialTasks.filter((t) => isTaskEffectivelyCompleted(t)).length
+  }, [initialTasks, isTaskEffectivelyCompleted])
   const totalMaterialSizeMB = initialMaterials.reduce((acc, m) => acc + (m.file_size || 0), 0) / (1024 * 1024)
 
   // --- FILTERED & PAGINATED DATA LISTS (5 PER PAGE) ---
@@ -1043,11 +1059,12 @@ export function AdminDashboardClient({
 
   const filteredTasks = React.useMemo(() => {
     return initialTasks.filter((t) => {
-      if (taskFilter === "completed") return t.status === "completed"
-      if (taskFilter === "pending") return t.status !== "completed"
+      const isCompleted = isTaskEffectivelyCompleted(t)
+      if (taskFilter === "completed") return isCompleted
+      if (taskFilter === "pending") return !isCompleted
       return true
     })
-  }, [initialTasks, taskFilter])
+  }, [initialTasks, taskFilter, isTaskEffectivelyCompleted])
 
   const totalTaskPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE) || 1
   const paginatedTasks = React.useMemo(() => {
@@ -1311,6 +1328,7 @@ export function AdminDashboardClient({
 
   const handleDeleteVisitor = async (id: string) => {
     if (!confirm("Hapus baris riwayat pengunjung ini?")) return
+    setActionLoadingMap((prev) => ({ ...prev, [`vis-delete-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await deleteVisitorLog(id)
@@ -1324,6 +1342,7 @@ export function AdminDashboardClient({
       showFeedback("error", "Gagal menghapus log pengunjung.")
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`vis-delete-${id}`]: false }))
     }
   }
 
@@ -1585,6 +1604,7 @@ export function AdminDashboardClient({
 
   const handleDeleteMaterial = async (id: string, fileName?: string) => {
     if (!confirm("Yakin ingin menghapus materi ini dari database Supabase?")) return
+    setActionLoadingMap((prev) => ({ ...prev, [`mat-delete-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await deleteMaterial(id, fileName)
@@ -1599,6 +1619,7 @@ export function AdminDashboardClient({
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`mat-delete-${id}`]: false }))
     }
   }
 
@@ -1649,6 +1670,7 @@ export function AdminDashboardClient({
 
   const handleDeleteSchedule = async (id: string) => {
     if (!confirm("Yakin ingin menghapus sesi jadwal ini?")) return
+    setActionLoadingMap((prev) => ({ ...prev, [`sch-delete-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await deleteSchedule(id)
@@ -1663,6 +1685,7 @@ export function AdminDashboardClient({
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`sch-delete-${id}`]: false }))
     }
   }
 
@@ -1713,6 +1736,7 @@ export function AdminDashboardClient({
 
   const handleUpdateTaskStatus = async (id: string, currentStatus: string) => {
     const nextStatus: "todo" | "completed" = currentStatus === "completed" ? "todo" : "completed"
+    setActionLoadingMap((prev) => ({ ...prev, [`task-status-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await updateTaskStatus(id, nextStatus)
@@ -1726,11 +1750,13 @@ export function AdminDashboardClient({
       showFeedback("error", "Gagal memperbarui status tugas.")
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`task-status-${id}`]: false }))
     }
   }
 
   const handleDeleteTask = async (id: string) => {
     if (!confirm("Yakin ingin menghapus tugas ini?")) return
+    setActionLoadingMap((prev) => ({ ...prev, [`task-delete-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await deleteTask(id)
@@ -1745,6 +1771,7 @@ export function AdminDashboardClient({
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`task-delete-${id}`]: false }))
     }
   }
 
@@ -1795,6 +1822,7 @@ export function AdminDashboardClient({
 
   const handleDeleteAnnouncement = async (id: string) => {
     if (!confirm("Yakin ingin menghapus pengumuman ini?")) return
+    setActionLoadingMap((prev) => ({ ...prev, [`ann-delete-${id}`]: true }))
     setIsLoading(true)
     try {
       const res = await deleteAnnouncement(id)
@@ -1809,6 +1837,7 @@ export function AdminDashboardClient({
       showFeedback("error", errorMsg)
     } finally {
       setIsLoading(false)
+      setActionLoadingMap((prev) => ({ ...prev, [`ann-delete-${id}`]: false }))
     }
   }
 
@@ -2820,10 +2849,15 @@ export function AdminDashboardClient({
                                   {log.id && (
                                     <button
                                       onClick={() => handleDeleteVisitor(log.id)}
+                                      disabled={actionLoadingMap[`vis-delete-${log.id}`]}
                                       title="Hapus baris log ini"
-                                      className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition cursor-pointer"
+                                      className="p-1 text-rose-500 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition cursor-pointer disabled:opacity-50"
                                     >
-                                      <Trash2 className="h-3.5 w-3.5" />
+                                      {actionLoadingMap[`vis-delete-${log.id}`] ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      )}
                                     </button>
                                   )}
                                 </td>
@@ -3510,9 +3544,14 @@ export function AdminDashboardClient({
                             </button>
                             <button
                               onClick={() => handleDeleteMaterial(m.id, m.file_name)}
-                              className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                              disabled={actionLoadingMap[`mat-delete-${m.id}`]}
+                              className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              {actionLoadingMap[`mat-delete-${m.id}`] ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
                               <span>Hapus</span>
                             </button>
                           </div>
@@ -3620,9 +3659,14 @@ export function AdminDashboardClient({
                             </button>
                             <button
                               onClick={() => handleDeleteSchedule(s.id)}
-                              className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                              disabled={actionLoadingMap[`sch-delete-${s.id}`]}
+                              className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              {actionLoadingMap[`sch-delete-${s.id}`] ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
                               <span>Hapus</span>
                             </button>
                           </div>
@@ -3704,63 +3748,80 @@ export function AdminDashboardClient({
                 <div className="space-y-4">
                   {/* Responsive Grid View */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {paginatedTasks.map((t) => (
-                      <div
-                        key={t.id}
-                        className="flex flex-col justify-between rounded-[12px] bg-slate-50/80 dark:bg-[#161B26] p-4 border border-slate-200/90 dark:border-[#2A3550] gap-3 hover:bg-white dark:hover:bg-[#1A2234] hover:shadow-xs transition"
-                      >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
-                                t.status === "completed"
-                                  ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
-                                  : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                              }`}
-                            >
-                              {t.status === "completed" ? "Selesai" : "Pending"}
-                            </span>
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                              Deadline: {new Date(t.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })}
-                            </span>
-                          </div>
-                          <h5 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">{t.title}</h5>
-                          <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                            <span className="text-[10px] font-bold bg-slate-200 dark:bg-[#253045] text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded">Tahap</span>
-                            <span>{t.subject_name}</span>
-                          </div>
-                          {t.description && (
-                            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
-                          )}
-                        </div>
+                    {paginatedTasks.map((t) => {
+                      const isCompleted = isTaskEffectivelyCompleted(t)
+                      const isAutoCompleted = isCompleted && t.status !== "completed"
+                      const isStatusLoading = Boolean(actionLoadingMap[`task-status-${t.id}`])
+                      const isDeleteLoading = Boolean(actionLoadingMap[`task-delete-${t.id}`])
 
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-[#2A3550]">
-                          <button
-                            onClick={() => handleUpdateTaskStatus(t.id, t.status)}
-                            className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            <span>{t.status === "completed" ? "Ubah ke Pending" : "Tandai Selesai"}</span>
-                          </button>
-                          <div className="flex items-center gap-2.5">
+                      return (
+                        <div
+                          key={t.id}
+                          className="flex flex-col justify-between rounded-[12px] bg-slate-50/80 dark:bg-[#161B26] p-4 border border-slate-200/90 dark:border-[#2A3550] gap-3 hover:bg-white dark:hover:bg-[#1A2234] hover:shadow-xs transition"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                                  isCompleted
+                                    ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
+                                    : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                                }`}
+                              >
+                                {isCompleted ? (isAutoCompleted ? "Selesai (Deadline Lewat)" : "Selesai") : "Pending"}
+                              </span>
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                Deadline: {new Date(t.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })}
+                              </span>
+                            </div>
+                            <h5 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">{t.title}</h5>
+                            <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                              <span className="text-[10px] font-bold bg-slate-200 dark:bg-[#253045] text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded">Tahap</span>
+                              <span>{t.subject_name}</span>
+                            </div>
+                            {t.description && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">{t.description}</p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-[#2A3550]">
                             <button
-                              onClick={() => setEditingTask(t)}
-                              className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                              onClick={() => handleUpdateTaskStatus(t.id, isCompleted ? "completed" : "todo")}
+                              disabled={isStatusLoading}
+                              className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer disabled:opacity-50"
                             >
-                              <Pencil className="h-3.5 w-3.5" />
-                              <span>Edit</span>
+                              {isStatusLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Check className="h-3.5 w-3.5" />
+                              )}
+                              <span>{isCompleted ? "Ubah ke Pending" : "Tandai Selesai"}</span>
                             </button>
-                            <button
-                              onClick={() => handleDeleteTask(t.id)}
-                              className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              <span>Hapus</span>
-                            </button>
+                            <div className="flex items-center gap-2.5">
+                              <button
+                                onClick={() => setEditingTask(t)}
+                                className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTask(t.id)}
+                                disabled={isDeleteLoading}
+                                className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
+                              >
+                                {isDeleteLoading ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                                <span>Hapus</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* Pagination Controls */}
@@ -3849,9 +3910,14 @@ export function AdminDashboardClient({
                           </button>
                           <button
                             onClick={() => handleDeleteAnnouncement(a.id)}
-                            className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                            disabled={actionLoadingMap[`ann-delete-${a.id}`]}
+                            className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            {actionLoadingMap[`ann-delete-${a.id}`] ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
                             <span>Hapus</span>
                           </button>
                         </div>
@@ -4047,7 +4113,7 @@ export function AdminDashboardClient({
           {activeTab === "templates" && (
             <div className="space-y-5">
               {/* Top Banner & Action */}
-              <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-5 shadow-sm">
+              <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -4063,11 +4129,149 @@ export function AdminDashboardClient({
                       Pusat Template Dokumen Resmi (BPS & Kejaksaan RI)
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 max-w-2xl leading-relaxed">
-                      Kelola formulir DUPAK/SPMK, SPT, SOP Keamanan Server, dan Berita Acara TIK dalam format Word (.doc).
+                      Kelola formulir DUPAK/SPMK, SPT, SOP Keamanan Server, dan Berita Acara TIK dalam format Word (.doc) dan Excel.
                     </p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsTemplateModalOpen(true)}
+                    className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-4 py-2.5 text-xs font-black text-white transition shadow-2xs cursor-pointer shrink-0 self-start md:self-auto"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Tambah Template Dokumen</span>
+                  </button>
+                </div>
+
+                {/* Filter and Search */}
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between pt-3 border-t border-slate-100 dark:border-[#2A3550]">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={templateSearch}
+                      onChange={(e) => setTemplateSearch(e.target.value)}
+                      placeholder="Cari template, judul, dasar hukum, atau tag..."
+                      className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
+                    {["Semua", "Administrasi & SPT", "DUPAK & SKP BPS", "SOP & Keamanan", "Seminar Akhir"].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setTemplateCategoryFilter(cat)}
+                        className={`px-3 py-1.5 rounded-[8px] font-bold text-xs shrink-0 transition cursor-pointer ${
+                          templateCategoryFilter === cat
+                            ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs font-black"
+                            : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
+
+              {/* Template Cards Grid */}
+              {filteredAdminTemplates.length === 0 ? (
+                <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-dashed border-slate-200 dark:border-[#2A3550] p-12 text-center space-y-3">
+                  <Layers className="h-9 w-9 text-slate-300 dark:text-slate-600 mx-auto" />
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Template Tidak Ditemukan</h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Tidak ada template dokumen yang sesuai dengan kata kunci pencarian atau kategori ini.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredAdminTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 flex flex-col justify-between space-y-4 hover:shadow-xs hover:border-slate-300 dark:hover:border-[#3B4A6B] transition"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50 px-2.5 py-0.5 text-[10px] font-bold truncate">
+                            {template.category}
+                          </span>
+                          <span className="rounded-full bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-300 px-2 py-0.5 text-[10px] font-mono font-bold shrink-0">
+                            {template.format}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 leading-snug">
+                            {template.title}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+                            ⚖️ {template.legalReference}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                          {template.description}
+                        </p>
+
+                        {/* Tag Chips */}
+                        {template.tags && template.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {template.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center rounded-md bg-slate-50 dark:bg-[#161B26] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-[#2A3550]"
+                              >
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Action Buttons */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewingTemplate(template)}
+                            className="inline-flex items-center gap-1 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] px-2.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>Pratinjau</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadTemplateDoc(template)}
+                            className="inline-flex items-center gap-1 rounded-[8px] bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-950/80 px-2.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 transition cursor-pointer"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span>Unduh</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setEditingTemplate(template)}
+                            title="Edit template ini"
+                            className="p-1.5 rounded-[6px] text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition cursor-pointer"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTemplate(template.id, template.title)}
+                            title="Hapus template"
+                            className="p-1.5 rounded-[6px] text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
