@@ -16,10 +16,19 @@ export interface UrgentAnnouncementProps {
   }>
 }
 
+const DEFAULT_URGENT_ANNOUNCEMENT = {
+  id: "ann-update-v24",
+  title: "🚀 Pembaruan Sistem: Akses Zoom Angkatan 1–6, PWA Mobile, Ekspor Proposal Word, & Kalkulator DUPAK Telah Aktif!",
+  content: "Rekan-rekan peserta Diklat Prakom Batch 3, web portal kelas telah diperbarui ke versi terbaru:\n• 🎥 Akses Zoom Meeting Angkatan 1 s.d. 6 (Passcode: Biropeg-24) tersedia di menu Jadwal / Roadmap.\n• 📱 Bisa Diinstal di HP/Laptop (PWA) via opsi 'Tambahkan ke Layar Utama' browser.\n• 📄 Ekspor AI Makalah kini langsung terunduh dalam format Word (.docx) 5 Bab standar dinas.\n• 📊 Modul Katalog Butir DUPAK & Estimator Angka Kredit (PermenPAN-RB 32/2020 & Perka BPS 2/2021).\n• ⚡ Tekan Ctrl + K untuk Command Palette pencarian instan seluruh materi & jadwal.",
+  is_urgent: true,
+  author: "Pengurus Diklat & Tim Agrasena 625",
+  created_at: new Date().toISOString()
+}
+
 export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
   const [isDismissed, setIsDismissed] = React.useState(false)
 
-  const item = announcements?.find((a) => a.is_urgent) ?? null
+  const item = announcements?.find((a) => a.is_urgent) ?? DEFAULT_URGENT_ANNOUNCEMENT
 
   if (isDismissed || !item) return null
 
