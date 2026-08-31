@@ -508,12 +508,19 @@ export async function deleteTask(id: string) {
 export async function createAnnouncement(formData: FormData) {
   const title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
-  const is_urgent = formData.get('is_urgent') === 'on'
   const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
 
   if (!title || !content) {
     return { error: 'Judul dan isi pengumuman wajib diisi.' }
   }
+
+  // Hanya Super Admin yang diizinkan menyetel status Mendesak / Urgent
+  const { cookies } = await import('next/headers')
+  const { verifySuperAdminSessionToken } = await import('@/lib/security')
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
+  const isSuperAdmin = verifySuperAdminSessionToken(superAdminCookie)
+  const is_urgent = isSuperAdmin && (formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true')
 
   const supabase = await createClient()
   const { error } = await supabase.from('announcements').insert({
@@ -538,12 +545,19 @@ export async function updateAnnouncement(formData: FormData) {
   const id = formData.get('id') as string
   const title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
-  const is_urgent = formData.get('is_urgent') === 'on'
   const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
 
   if (!id || !title || !content) {
     return { error: 'ID, judul, dan isi pengumuman wajib diisi.' }
   }
+
+  // Hanya Super Admin yang diizinkan mengubah status Mendesak / Urgent
+  const { cookies } = await import('next/headers')
+  const { verifySuperAdminSessionToken } = await import('@/lib/security')
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
+  const isSuperAdmin = verifySuperAdminSessionToken(superAdminCookie)
+  const is_urgent = isSuperAdmin && (formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true')
 
   const supabase = await createClient()
   const { error } = await supabase
@@ -582,6 +596,14 @@ export async function deleteVisitorLog(id: string) {
     return { error: 'Konfigurasi database belum tersedia.' }
   }
 
+  const { cookies } = await import('next/headers')
+  const { verifySuperAdminSessionToken } = await import('@/lib/security')
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
+  if (!verifySuperAdminSessionToken(superAdminCookie)) {
+    return { error: 'Akses ditolak: Operasi ini hanya diizinkan untuk Super Admin.' }
+  }
+
   const supabase = await createClient()
   const { error } = await supabase.from('visitor_logs').delete().eq('id', id)
   if (error) return { error: error.message }
@@ -592,6 +614,14 @@ export async function deleteVisitorLog(id: string) {
 export async function clearAllVisitorLogs() {
   if (!isSupabaseConfigured()) {
     return { error: 'Konfigurasi database belum tersedia.' }
+  }
+
+  const { cookies } = await import('next/headers')
+  const { verifySuperAdminSessionToken } = await import('@/lib/security')
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
+  if (!verifySuperAdminSessionToken(superAdminCookie)) {
+    return { error: 'Akses ditolak: Operasi ini hanya diizinkan untuk Super Admin.' }
   }
 
   const supabase = await createClient()

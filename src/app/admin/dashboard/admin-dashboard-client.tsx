@@ -81,6 +81,9 @@ import {
   Award,
   Zap,
   User,
+  History,
+  Lock,
+  ShieldCheck,
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
@@ -207,12 +210,17 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
+    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
+
+  // Audit Log State for Super Admin
+  const [auditSearch, setAuditSearch] = React.useState("")
+  const [auditCategoryFilter, setAuditCategoryFilter] = React.useState<string>("all")
+  const [auditPage, setAuditPage] = React.useState(1)
 
   // Discussions State for Admin
   const [adminDiscussions, setAdminDiscussions] = React.useState<any[]>([])
@@ -1092,6 +1100,142 @@ export function AdminDashboardClient({
     return filteredReports.slice(start, start + ITEMS_PER_PAGE)
   }, [filteredReports, reportPage])
 
+  // --- AUDIT LOG AGGREGATION (POINT 6) ---
+  const adminAuditLogs = React.useMemo(() => {
+    const logs: Array<{
+      id: string
+      category: "Materi" | "Jadwal" | "Tugas" | "Pengumuman" | "Laporan" | "Sistem"
+      action: string
+      title: string
+      actor: string
+      timestamp: string
+      details?: string
+      badgeColor: string
+    }> = []
+
+    // 1. Announcements logs
+    initialAnnouncements.forEach((a) => {
+      logs.push({
+        id: `ann-${a.id}`,
+        category: "Pengumuman",
+        action: a.is_urgent ? "Pengumuman Mendesak" : "Pengumuman Baru",
+        title: a.title || "Tanpa Judul",
+        actor: a.author || "Pengurus Diklat",
+        timestamp: a.created_at || new Date().toISOString(),
+        details: a.is_urgent ? "Prioritas Tinggi (Banner Aktif)" : "Pengumuman Reguler",
+        badgeColor: a.is_urgent ? "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200" : "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200"
+      })
+    })
+
+    // 2. Materials logs
+    initialMaterials.forEach((m) => {
+      logs.push({
+        id: `mat-${m.id}`,
+        category: "Materi",
+        action: "Upload Modul PDF",
+        title: m.title || "Modul Pelatihan",
+        actor: "Admin Pengurus",
+        timestamp: m.created_at || new Date().toISOString(),
+        details: `${m.subject_name || 'Umum'} • ${(Number(m.file_size || 0) / (1024 * 1024)).toFixed(2)} MB`,
+        badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200"
+      })
+    })
+
+    // 3. Tasks logs
+    initialTasks.forEach((t) => {
+      logs.push({
+        id: `tsk-${t.id}`,
+        category: "Tugas",
+        action: "Rilis Tugas / Ujian",
+        title: t.title || "Penugasan",
+        actor: "Tim Akademik",
+        timestamp: t.created_at || t.due_date || new Date().toISOString(),
+        details: `Tenggat: ${t.due_date ? new Date(t.due_date).toLocaleDateString('id-ID') : '-'} • Status: ${t.status || 'todo'}`,
+        badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200"
+      })
+    })
+
+    // 4. Schedules logs
+    initialSchedules.forEach((s) => {
+      logs.push({
+        id: `sch-${s.id}`,
+        category: "Jadwal",
+        action: "Penetapan Jadwal Sesi",
+        title: s.subject_name || "Sesi Perkuliahan",
+        actor: "Koordinator Kelas",
+        timestamp: s.created_at || new Date().toISOString(),
+        details: `${s.day || 'Senin'} • ${s.start_time || '08:00'} - ${s.end_time || '10:00'} • Dosen: ${s.lecturer || '-'}`,
+        badgeColor: "bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200"
+      })
+    })
+
+    // 5. Reports logs
+    adminReports.forEach((r) => {
+      if (r.status === 'resolved' || r.status === 'in_progress') {
+        logs.push({
+          id: `rep-${r.id}`,
+          category: "Laporan",
+          action: r.status === 'resolved' ? "Penyelesaian Aspirasi" : "Disposisi Laporan",
+          title: `Tiket #${(r.id || '').slice(0, 8)} - ${r.category || 'Kendala'}`,
+          actor: "Admin Helpdesk",
+          timestamp: r.updated_at || r.created_at || new Date().toISOString(),
+          details: `Pelapor: ${r.name || 'Peserta'} (${r.satker || '-'}) • ${r.admin_notes ? `Catatan: ${r.admin_notes}` : 'Status diubah'}`,
+          badgeColor: r.status === 'resolved' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200" : "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200"
+        })
+      }
+    })
+
+    // Sort by timestamp descending
+    return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  }, [initialAnnouncements, initialMaterials, initialTasks, initialSchedules, adminReports])
+
+  const filteredAuditLogs = React.useMemo(() => {
+    return adminAuditLogs.filter((log) => {
+      const q = auditSearch.toLowerCase().trim()
+      const matchesSearch =
+        q === "" ||
+        log.title.toLowerCase().includes(q) ||
+        log.action.toLowerCase().includes(q) ||
+        log.actor.toLowerCase().includes(q) ||
+        (log.details || "").toLowerCase().includes(q)
+
+      const matchesCat = auditCategoryFilter === "all" || log.category.toLowerCase() === auditCategoryFilter.toLowerCase()
+      return matchesSearch && matchesCat
+    })
+  }, [adminAuditLogs, auditSearch, auditCategoryFilter])
+
+  const totalAuditPages = Math.ceil(filteredAuditLogs.length / ITEMS_PER_PAGE) || 1
+  const paginatedAuditLogs = React.useMemo(() => {
+    const start = (auditPage - 1) * ITEMS_PER_PAGE
+    return filteredAuditLogs.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredAuditLogs, auditPage])
+
+  const handleExportAuditLogsCSV = () => {
+    if (adminAuditLogs.length === 0) {
+      showFeedback("error", "Belum ada riwayat aktivitas untuk diekspor.")
+      return
+    }
+    const headers = ["ID Event", "Waktu (WIB)", "Kategori", "Aksi / Perubahan", "Nama Item / Objek", "Pelaksana / Aktor", "Detail Tambahan"]
+    const rows = adminAuditLogs.map((log) => [
+      `"${log.id}"`,
+      `"${formatWibDate(log.timestamp)}"`,
+      `"${log.category}"`,
+      `"${log.action.replace(/"/g, '""')}"`,
+      `"${log.title.replace(/"/g, '""')}"`,
+      `"${log.actor.replace(/"/g, '""')}"`,
+      `"${(log.details || '').replace(/"/g, '""')}"`
+    ])
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `audit-log-aktivitas-prakom-batch3-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    showFeedback("success", "Audit log riwayat aktivitas berhasil diekspor ke CSV!")
+  }
+
   // --- ACTIONS ---
   const handleCopyIp = (ip: string) => {
     navigator.clipboard.writeText(ip)
@@ -1202,6 +1346,10 @@ export function AdminDashboardClient({
   }
 
   const handleExportJSON = () => {
+    if (!isSuperAdmin) {
+      showFeedback("error", "Akses ditolak: Hanya Super Admin yang berwenang mengunduh berkas backup database.")
+      return
+    }
     const backupData = {
       materials: initialMaterials,
       schedules: initialSchedules,
@@ -1717,17 +1865,27 @@ export function AdminDashboardClient({
     )
   }
 
-  // Navigation Items list - tab visitors hanya untuk Super Admin
+  // Navigation Items list - tab visitors & audit_log hanya untuk Super Admin
   const navItems = [
     { id: "overview", label: "Ringkasan", icon: BarChart3, count: null, color: "text-blue-600" },
-    ...(isSuperAdmin ? [{
-      id: "visitors",
-      label: "Statistik Pengunjung & IP",
-      icon: Users,
-      count: totalVisitors,
-      color: "text-emerald-600",
-      highlight: true,
-    }] : []),
+    ...(isSuperAdmin ? [
+      {
+        id: "visitors",
+        label: "Statistik Pengunjung & IP",
+        icon: Users,
+        count: totalVisitors,
+        color: "text-emerald-600",
+        highlight: true,
+      },
+      {
+        id: "audit_log",
+        label: "Riwayat Aktivitas Admin",
+        icon: History,
+        count: adminAuditLogs.length,
+        color: "text-amber-600",
+        highlight: false,
+      }
+    ] : []),
     {
       id: "reports",
       label: "Laporan & Saran Peserta",
@@ -1848,23 +2006,42 @@ export function AdminDashboardClient({
 
           {/* Quick System Tools */}
           <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-[#2A3550]">
-            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1">
-              Pintasan Cepat
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1 flex items-center justify-between">
+              <span>Pintasan Cepat</span>
+              {isSuperAdmin && (
+                <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.5 rounded font-mono">
+                  SUPER
+                </span>
+              )}
             </div>
-            <button
-              onClick={() => setIsWAModalOpen(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
-            >
-              <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Broadcast WhatsApp</span>
-            </button>
-            <button
-              onClick={handleExportJSON}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253045] transition cursor-pointer"
-            >
-              <FileSpreadsheet className="h-4 w-4 text-amber-500" />
-              <span>Backup Data (JSON)</span>
-            </button>
+            {isSuperAdmin ? (
+              <>
+                <button
+                  onClick={() => setIsWAModalOpen(true)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
+                >
+                  <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Broadcast WhatsApp</span>
+                </button>
+                <button
+                  onClick={handleExportJSON}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253045] transition cursor-pointer"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-amber-500" />
+                  <span>Backup Data (JSON)</span>
+                </button>
+              </>
+            ) : (
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                  <Lock className="h-3.5 w-3.5 text-amber-500" />
+                  <span>Pintasan Khusus Super Admin</span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Broadcast WA & Backup Data hanya tersedia untuk akun Super Admin.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1921,6 +2098,7 @@ export function AdminDashboardClient({
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
                   {activeTab === "overview" && "Ringkasan Operasional"}
                   {activeTab === "visitors" && "Statistik & Riwayat Pengunjung"}
+                  {activeTab === "audit_log" && "Riwayat Aktivitas & Audit Perubahan"}
                   {activeTab === "reports" && "Laporan Kendala & Kotak Saran"}
                   {activeTab === "materials" && "Pustaka Modul PDF (120 JP)"}
                   {activeTab === "schedules" && "Jadwal Perkuliahan 35 Hari"}
@@ -2677,6 +2855,178 @@ export function AdminDashboardClient({
                       totalPages={totalVisitorPages}
                       totalItems={filteredVisitorLogs.length}
                       onPageChange={setVisitorPage}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 2.0 AUDIT LOG & RIWAYAT AKTIVITAS TAB (KHUSUS SUPER ADMIN) */}
+          {/* ========================================================================= */}
+          {activeTab === "audit_log" && isSuperAdmin && (
+            <div className="space-y-5">
+              {/* 4 Audit Stats Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                <div className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-4 space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Total Aktivitas</span>
+                    <History className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{adminAuditLogs.length}</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Peristiwa sistem terekam</p>
+                </div>
+
+                <div className="rounded-[12px] bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/50 p-4 space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400">Arsip Modul PDF</span>
+                    <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-indigo-800 dark:text-indigo-300">{initialMaterials.length}</div>
+                  <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">Modul 120 JP diunggah</p>
+                </div>
+
+                <div className="rounded-[12px] bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/50 p-4 space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-sky-700 dark:text-sky-400">Jadwal & Tugas</span>
+                    <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-sky-800 dark:text-sky-300">{initialSchedules.length + initialTasks.length}</div>
+                  <p className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold">Total agenda & tugas rilis</p>
+                </div>
+
+                <div className="rounded-[12px] bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/50 p-4 space-y-1.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-rose-700 dark:text-rose-400">Pengumuman Terbit</span>
+                    <Sparkles className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-rose-800 dark:text-rose-300">{initialAnnouncements.length}</div>
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">
+                    {initialAnnouncements.filter((a) => a.is_urgent).length} bertanda mendesak
+                  </p>
+                </div>
+              </div>
+
+              {/* Audit Log Table Container */}
+              <div className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-4 sm:p-5 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#2A3550]">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-amber-500" />
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                        Riwayat Aktivitas Admin & Jejak Audit (Audit Trail)
+                      </h3>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Catatan kronologis penerbitan pengumuman, upload modul, penjadwalan, dan tindak lanjut laporan
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleExportAuditLogsCSV}
+                      className="flex items-center gap-1.5 rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] hover:bg-slate-50 dark:hover:bg-[#253045] px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer shadow-2xs"
+                    >
+                      <Download className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Ekspor CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={auditSearch}
+                      onChange={(e) => {
+                        setAuditSearch(e.target.value)
+                        setAuditPage(1)
+                      }}
+                      placeholder="Cari aktivitas, nama item, atau pelaksana..."
+                      className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
+                    />
+                  </div>
+
+                  {/* Category Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
+                    {["all", "Pengumuman", "Materi", "Jadwal", "Tugas", "Laporan"].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => {
+                          setAuditCategoryFilter(cat)
+                          setAuditPage(1)
+                        }}
+                        className={`px-3 py-1.5 rounded-[8px] font-bold text-xs shrink-0 transition cursor-pointer ${
+                          auditCategoryFilter === cat
+                            ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs font-black"
+                            : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
+                        }`}
+                      >
+                        {cat === "all" ? "Semua" : cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Table View */}
+                {filteredAuditLogs.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 space-y-2">
+                    <History className="h-8 w-8 mx-auto opacity-40 text-slate-400" />
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Tidak Ada Aktivitas yang Cocok</h4>
+                    <p className="text-xs text-slate-500">Coba ubah kata kunci pencarian atau kategori filter.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto rounded-[8px] border border-slate-200/80 dark:border-[#2A3550]">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50/80 dark:bg-[#161B26] border-b border-slate-200/80 dark:border-[#2A3550] text-slate-600 dark:text-slate-400 font-bold">
+                            <th className="py-2.5 px-3.5">Waktu (WIB)</th>
+                            <th className="py-2.5 px-3.5">Kategori</th>
+                            <th className="py-2.5 px-3.5">Aksi / Peristiwa</th>
+                            <th className="py-2.5 px-3.5">Nama Objek / Judul</th>
+                            <th className="py-2.5 px-3.5">Pelaksana</th>
+                            <th className="py-2.5 px-3.5">Keterangan</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-[#2A3550]">
+                          {paginatedAuditLogs.map((log) => (
+                            <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-[#202738] transition">
+                              <td className="py-3 px-3.5 whitespace-nowrap text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                                {formatWibDate(log.timestamp)}
+                              </td>
+                              <td className="py-3 px-3.5 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${log.badgeColor}`}>
+                                  {log.category}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3.5 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                                {log.action}
+                              </td>
+                              <td className="py-3 px-3.5 font-medium text-slate-800 dark:text-slate-200 max-w-[220px] truncate" title={log.title}>
+                                {log.title}
+                              </td>
+                              <td className="py-3 px-3.5 text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">{log.actor}</span>
+                              </td>
+                              <td className="py-3 px-3.5 text-[11px] text-slate-500 dark:text-slate-400 max-w-[200px] truncate" title={log.details || ""}>
+                                {log.details || "-"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <PaginationControls
+                      currentPage={auditPage}
+                      totalPages={totalAuditPages}
+                      totalItems={filteredAuditLogs.length}
+                      onPageChange={setAuditPage}
                     />
                   </div>
                 )}
@@ -3905,90 +4255,109 @@ export function AdminDashboardClient({
                   </div>
                 </div>
 
-                {/* Live Diagnostic & Latency Tester Widget */}
+                {/* Live Diagnostic & Latency Tester Widget (Point 3: Khusus Super Admin) */}
                 <div className="pt-3 border-t border-slate-200/80 dark:border-[#2A3550] space-y-2.5">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                       <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <span>Uji Koneksi & Latensi AI Engine (Live Health Check)</span>
                     </h4>
-                    <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                      Endpoint: <code className="font-mono text-[10px] bg-slate-100 dark:bg-[#253045] px-1 py-0.5 rounded">/api/ai/chat</code>
-                    </span>
+                    {isSuperAdmin ? (
+                      <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                        Endpoint: <code className="font-mono text-[10px] bg-slate-100 dark:bg-[#253045] px-1 py-0.5 rounded">/api/ai/chat</code>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                        <Lock className="h-3 w-3" />
+                        <span>Khusus Super Admin</span>
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <input
-                      type="text"
-                      value={aiTestPrompt}
-                      onChange={(e) => setAiTestPrompt(e.target.value)}
-                      placeholder="Masukkan prompt uji atau biarkan default..."
-                      className="h-9 flex-1 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] px-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
-                    />
-                    <button
-                      onClick={handleTestAiConnection}
-                      disabled={isTestingAi}
-                      className="w-full sm:w-auto px-4 py-2 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white text-xs font-black transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
-                    >
-                      {isTestingAi ? (
-                        <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
-                          <span>Menguji...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="h-3.5 w-3.5 text-amber-400" />
-                          <span>Tes Latensi</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {aiTestResult && (
-                    <div
-                      className={`p-3.5 rounded-[10px] border transition-all space-y-2 text-xs ${
-                        aiTestResult.success
-                          ? "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200"
-                          : "bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 border-emerald-200/50 dark:border-emerald-800/40">
-                        <div className="flex items-center gap-2 font-bold">
-                          {aiTestResult.success ? (
+                  {isSuperAdmin ? (
+                    <>
+                      <div className="flex flex-col sm:flex-row items-center gap-2">
+                        <input
+                          type="text"
+                          value={aiTestPrompt}
+                          onChange={(e) => setAiTestPrompt(e.target.value)}
+                          placeholder="Masukkan prompt uji atau biarkan default..."
+                          className="h-9 flex-1 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] px-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
+                        />
+                        <button
+                          onClick={handleTestAiConnection}
+                          disabled={isTestingAi}
+                          className="w-full sm:w-auto px-4 py-2 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white text-xs font-black transition cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+                        >
+                          {isTestingAi ? (
                             <>
-                              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                              <span>Status: KONEKSI AI AKTIF</span>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                              <span>Menguji...</span>
                             </>
                           ) : (
                             <>
-                              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                              <span>Status: GAGAL MERESPON</span>
+                              <Zap className="h-3.5 w-3.5 text-amber-400" />
+                              <span>Tes Latensi</span>
                             </>
                           )}
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px]">
-                          <span className="bg-white/80 dark:bg-[#1B2130] px-2 py-0.5 rounded font-mono font-bold border border-slate-200 dark:border-[#2A3550]">
-                            ⏱️ {aiTestResult.latencyMs ? (aiTestResult.latencyMs / 1000).toFixed(2) : "0"}s ({aiTestResult.latencyMs} ms)
-                          </span>
-                          {aiTestResult.model && (
-                            <span className="bg-white/80 dark:bg-[#1B2130] px-2 py-0.5 rounded font-mono font-bold border border-slate-200 dark:border-[#2A3550]">
-                              🤖 {aiTestResult.model}
-                            </span>
-                          )}
-                        </div>
+                        </button>
                       </div>
 
-                      {aiTestResult.text && (
-                        <div className="p-2.5 bg-white/90 dark:bg-[#141824] rounded-[8px] border border-emerald-200 dark:border-emerald-800/60 text-slate-800 dark:text-slate-200 font-medium whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto">
-                          {aiTestResult.text}
+                      {aiTestResult && (
+                        <div
+                          className={`p-3.5 rounded-[10px] border transition-all space-y-2 text-xs ${
+                            aiTestResult.success
+                              ? "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200"
+                              : "bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200"
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-1.5 border-emerald-200/50 dark:border-emerald-800/40">
+                            <div className="flex items-center gap-2 font-bold">
+                              {aiTestResult.success ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                  <span>Status: KONEKSI AI AKTIF</span>
+                                </>
+                              ) : (
+                                <>
+                                  <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                                  <span>Status: GAGAL MERESPON</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="bg-white/80 dark:bg-[#1B2130] px-2 py-0.5 rounded font-mono font-bold border border-slate-200 dark:border-[#2A3550]">
+                                ⏱️ {aiTestResult.latencyMs ? (aiTestResult.latencyMs / 1000).toFixed(2) : "0"}s ({aiTestResult.latencyMs} ms)
+                              </span>
+                              {aiTestResult.model && (
+                                <span className="bg-white/80 dark:bg-[#1B2130] px-2 py-0.5 rounded font-mono font-bold border border-slate-200 dark:border-[#2A3550]">
+                                  🤖 {aiTestResult.model}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {aiTestResult.text && (
+                            <div className="p-2.5 bg-white/90 dark:bg-[#141824] rounded-[8px] border border-emerald-200 dark:border-emerald-800/60 text-slate-800 dark:text-slate-200 font-medium whitespace-pre-wrap leading-relaxed max-h-36 overflow-y-auto">
+                              {aiTestResult.text}
+                            </div>
+                          )}
+
+                          {aiTestResult.error && (
+                            <p className="text-rose-700 dark:text-rose-400 font-bold">
+                              Error: {aiTestResult.error}
+                            </p>
+                          )}
                         </div>
                       )}
-
-                      {aiTestResult.error && (
-                        <p className="text-rose-700 dark:text-rose-400 font-bold">
-                          Error: {aiTestResult.error}
-                        </p>
-                      )}
+                    </>
+                  ) : (
+                    <div className="p-3.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400">
+                      <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                      <div>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">Diagnostik Teknis AI Terkunci: </span>
+                        Pengujian latensi dan konfigurasi backend AI hanya dapat dijalankan oleh akun Super Admin.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -4372,10 +4741,25 @@ export function AdminDashboardClient({
               type="checkbox"
               id="is_urgent"
               name="is_urgent"
-              className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0"
+              disabled={!isSuperAdmin}
+              className={`h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 ${
+                !isSuperAdmin ? 'opacity-40 cursor-not-allowed' : ''
+              }`}
             />
-            <label htmlFor="is_urgent" className="text-xs font-bold text-rose-600 dark:text-rose-400">
+            <label
+              htmlFor="is_urgent"
+              className={`text-xs font-bold ${
+                isSuperAdmin
+                  ? 'text-rose-600 dark:text-rose-400 cursor-pointer'
+                  : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+              }`}
+            >
               Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
+              {!isSuperAdmin && (
+                <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                  (Khusus Super Admin)
+                </span>
+              )}
             </label>
           </div>
 
@@ -4712,11 +5096,26 @@ export function AdminDashboardClient({
                 type="checkbox"
                 id="is_urgent_edit"
                 name="is_urgent"
+                disabled={!isSuperAdmin}
                 defaultChecked={editingAnnouncement.is_urgent}
-                className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0"
+                className={`h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-0 ${
+                  !isSuperAdmin ? 'opacity-40 cursor-not-allowed' : ''
+                }`}
               />
-              <label htmlFor="is_urgent_edit" className="text-xs font-bold text-rose-600 dark:text-rose-400">
+              <label
+                htmlFor="is_urgent_edit"
+                className={`text-xs font-bold ${
+                  isSuperAdmin
+                    ? 'text-rose-600 dark:text-rose-400 cursor-pointer'
+                    : 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                }`}
+              >
                 Tandai sebagai Pengumuman Mendesak (Tampil di Banner Atas Beranda)
+                {!isSuperAdmin && (
+                  <span className="ml-1.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                    (Khusus Super Admin)
+                  </span>
+                )}
               </label>
             </div>
 
