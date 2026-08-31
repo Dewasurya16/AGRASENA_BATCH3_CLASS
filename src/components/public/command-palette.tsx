@@ -21,7 +21,8 @@ import {
   ExternalLink,
   Shield,
   Laptop,
-  Building2
+  Building2,
+  Calculator
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -232,6 +233,15 @@ const SEARCH_DATABASE: SearchItem[] = [
     href: '/snippets',
     icon: Code2,
     keywords: ['backup', 'postgres', 'pg_dump', 'cron', 'crontab', 'bash', 'script'],
+  },
+  {
+    id: 'tool-dupak-calculator',
+    title: 'Katalog Butir DUPAK & Estimator Angka Kredit (AK)',
+    subtitle: 'Pencarian butir kegiatan Prakom, bukti fisik sah, dan simulasi keranjang AK',
+    category: 'Alat & Template',
+    href: '/templates?tab=dupak',
+    icon: Calculator,
+    keywords: ['dupak', 'angka kredit', 'ak', 'butir', 'kegiatan', 'kalkulator', 'skp', 'bps', 'perka', 'permenpan'],
   },
   {
     id: 'tool-lms',

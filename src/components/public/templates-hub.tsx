@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Modal } from "@/components/ui/modal"
+import { DupakExplorer } from "@/components/public/dupak-explorer"
 
 export interface DocumentTemplate {
   id: string
@@ -444,6 +445,7 @@ NIP. ........................................  NIP. ............................
 ]
 
 export function TemplatesHub() {
+  const [activeTab, setActiveTab] = React.useState<'templates' | 'dupak'>('templates')
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState<string>("Semua")
   const [previewTemplate, setPreviewTemplate] = React.useState<DocumentTemplate | null>(null)
@@ -453,6 +455,15 @@ export function TemplatesHub() {
   const categories = ["Semua", "Administrasi & SPT", "DUPAK & SKP BPS", "SOP & Keamanan", "Seminar Akhir"]
 
   React.useEffect(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.get('tab') === 'dupak') {
+        setActiveTab('dupak')
+      }
+    } catch {
+      // Ignore
+    }
+
     try {
       const stored = localStorage.getItem("custom_prakom_templates")
       if (stored) {
@@ -570,48 +581,81 @@ export function TemplatesHub() {
         </p>
       </motion.div>
 
-      {/* Compliance Highlights Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]">
-            <Award className="h-5 w-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-[#000000] dark:text-white">Perka BPS No. 2 Tahun 2021</h4>
-            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Petunjuk Teknis Penilaian Angka Kredit & Butir Kegiatan Pranata Komputer.</p>
-          </div>
-        </div>
+      {/* Segmented Top Tabs: Template Dokumen vs Katalog Butir DUPAK */}
+      <div className="flex flex-wrap items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] p-1 border border-[#e6e6e6] dark:border-white/10 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveTab('templates')}
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'templates'
+              ? 'bg-[#007aff] text-white shadow-xs'
+              : 'text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white'
+          }`}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>Format Template Dokumen ({allTemplates.length})</span>
+        </button>
 
-        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]">
-            <Building2 className="h-5 w-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-[#000000] dark:text-white">Tata Naskah Kejaksaan RI</h4>
-            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Format standar Kop Surat, Nomor Surat Perintah (Sprint/SPT), dan Nota Dinas.</p>
-          </div>
-        </div>
-
-        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe]">
-            <Shield className="h-5 w-5" strokeWidth={2} />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-[#000000] dark:text-white">PermenPAN-RB No. 1/2023</h4>
-            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Konversi Predikat Kinerja Periodik ke Angka Kredit Integrasi tanpa DUPAK manual.</p>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('dupak')}
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'dupak'
+              ? 'bg-[#007aff] text-white shadow-xs'
+              : 'text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Katalog Butir DUPAK & Kalkulator AK</span>
+        </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="rounded-[12px] bg-white dark:bg-[#151c28] p-3 sm:p-4 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3">
-        <div className="flex flex-col sm:flex-row items-center gap-2.5">
-          <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" strokeWidth={2} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+      {activeTab === 'dupak' ? (
+        <DupakExplorer />
+      ) : (
+        <>
+          {/* Compliance Highlights Card */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]">
+                <Award className="h-5 w-5" strokeWidth={2} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#000000] dark:text-white">Perka BPS No. 2 Tahun 2021</h4>
+                <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Petunjuk Teknis Penilaian Angka Kredit & Butir Kegiatan Pranata Komputer.</p>
+              </div>
+            </div>
+
+            <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]">
+                <Building2 className="h-5 w-5" strokeWidth={2} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#000000] dark:text-white">Tata Naskah Kejaksaan RI</h4>
+                <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Format standar Kop Surat, Nomor Surat Perintah (Sprint/SPT), dan Nota Dinas.</p>
+              </div>
+            </div>
+
+            <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe]">
+                <Shield className="h-5 w-5" strokeWidth={2} />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#000000] dark:text-white">PermenPAN-RB No. 1/2023</h4>
+                <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Konversi Predikat Kinerja Periodik ke Angka Kredit Integrasi tanpa DUPAK manual.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter and Search Bar */}
+          <div className="rounded-[12px] bg-white dark:bg-[#151c28] p-3 sm:p-4 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2.5">
+              <div className="relative w-full sm:w-80">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" strokeWidth={2} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari template SPT, DUPAK BPS, SOP..."
               className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] pl-9 pr-4 text-xs font-normal text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#007aff] focus:outline-none"
             />
@@ -686,6 +730,8 @@ export function TemplatesHub() {
           </motion.div>
         ))}
       </div>
+    </>
+  )}
 
       {/* Preview Modal */}
       {previewTemplate && (
