@@ -389,49 +389,52 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* 1. Header Hero Card */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-orange-100 dark:bg-amber-950/80 px-3 py-0.5 text-xs font-black uppercase text-orange-700 dark:text-amber-300 border border-orange-200 dark:border-amber-800">
-                <HelpCircle className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-3 py-0.5 text-xs font-semibold">
+                <HelpCircle className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
                 <span>Pusat Bantuan & Tanya Jawab</span>
               </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Respon Cepat Pengurus
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
               Pusat Bantuan, FAQ & <br className="hidden sm:block" />
-              <span className="text-orange-600 dark:text-amber-400">Kontak Admin Kelas</span>
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Kontak Admin Kelas.</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
               Temukan panduan lengkap seputar perkuliahan 120 JP, pengumpulan tugas harian, portal LMS Kejaksaan, simulasi kuis MOOC, serta sampaikan kendala teknis, masukan, dan saran langsung ke Tim Admin Kelas Diklat Prakom Batch 3.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 self-start sm:self-center">
+          {/* Action CTA: Form Toggle & Hubungi WA */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 self-start sm:self-center">
             <button
+              type="button"
               onClick={() => setFormOpen(!formOpen)}
-              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-2xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] px-4.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all cursor-pointer"
             >
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-3.5 w-3.5" strokeWidth={2} />
               <span>{formOpen ? "Tutup Formulir" : "Tulis Laporan / Saran"}</span>
             </button>
             <button
+              type="button"
               onClick={handleTriggerWANotice}
-              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-emerald-700 hover:bg-emerald-600 px-4 py-2 text-xs font-black text-white shadow-2xs transition-all cursor-pointer"
+              className="flex items-center justify-center gap-2 rounded-full bg-[#34c759] hover:bg-[#2db84d] active:scale-[0.98] px-4.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all cursor-pointer"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-4 w-4" strokeWidth={2} />
               <span>Hubungi WA</span>
             </button>
           </div>
@@ -443,17 +446,17 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 0.05 }}
-        className="relative overflow-hidden rounded-[12px] bg-amber-50/70 dark:bg-[#1B2130] p-4 sm:p-6 border border-amber-200/80 dark:border-[#2A3550] shadow-2xs space-y-4"
+        className="relative overflow-hidden rounded-[20px] bg-amber-50/70 dark:bg-[#1B2130] p-5 sm:p-6 border border-amber-200/80 dark:border-[#2A3550] shadow-xs space-y-4"
       >
         <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-orange-600 text-white shadow-2xs">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-tr from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25">
               <AlertTriangle className="h-5 w-5" />
             </div>
 
-            <div className="space-y-1 max-w-3xl">
+            <div className="space-y-1.5 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-orange-600 text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                <span className="rounded-full bg-orange-600 text-white px-3 py-0.5 text-[10px] font-bold shadow-2xs">
                   Pemberitahuan Penting
                 </span>
                 <span className="text-xs font-bold text-slate-900 dark:text-slate-100">

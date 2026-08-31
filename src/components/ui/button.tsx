@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner"
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "orange" | "secondary" | "outline" | "ghost" | "danger" | "glass"
+  variant?: "primary" | "accent" | "soft" | "orange" | "secondary" | "outline" | "ghost" | "danger" | "glass" | "gradient" | "emerald" | "indigo" | "amber" | "rose" | "purple"
   size?: "sm" | "md" | "lg"
   isLoading?: boolean
   loadingText?: string
@@ -33,27 +33,43 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "group relative inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60",
-          // Sizing
-          size === "sm" && "h-8.5 rounded-xl px-3.5 text-xs gap-1.5",
-          size === "md" && "h-10.5 rounded-2xl px-5 text-xs sm:text-sm gap-2",
-          size === "lg" && "h-12 rounded-2xl px-6 text-sm sm:text-base gap-2.5",
+          "group relative inline-flex items-center justify-center font-semibold transition-all duration-200 cursor-pointer select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+          // Sizing: Stadium Pill with standard padding
+          size === "sm" && "h-8.5 rounded-full px-4 text-xs gap-1.5",
+          size === "md" && "h-10 rounded-full px-5 text-sm gap-2",
+          size === "lg" && "h-12 rounded-full px-6 text-sm sm:text-base gap-2.5",
           
-          // Variants
+          // Notion Design System Variants
           variant === "primary" &&
-            "bg-[#0D3830] dark:bg-emerald-600 text-white shadow-md shadow-[#0D3830]/15 dark:shadow-emerald-900/30 hover:bg-[#082822] dark:hover:bg-emerald-700 hover:shadow-lg hover:shadow-[#0D3830]/20",
-          variant === "orange" &&
-            "bg-[#FF7643] text-white shadow-md shadow-[#FF7643]/20 hover:bg-[#F06530] hover:shadow-lg hover:shadow-[#FF7643]/30",
-          variant === "secondary" &&
-            "bg-[#EDF2F7] dark:bg-slate-800 text-[#131E29] dark:text-white hover:bg-[#E2E8F0] dark:hover:bg-slate-700 hover:text-[#0D3830] dark:hover:text-emerald-400",
+            "bg-[#0075de] text-white hover:bg-[#005bab] dark:bg-[#3390ec] dark:text-white dark:hover:bg-[#2678c8] shadow-xs",
+          variant === "accent" &&
+            "bg-[#0075de] text-white hover:bg-[#005bab] shadow-xs",
+          variant === "soft" &&
+            "bg-[#f6f5f4] text-[#31302e] hover:bg-[#e6e6e6] dark:bg-[#252525] dark:text-[#e0e0e0] dark:hover:bg-[#2c2c2c]",
           variant === "outline" &&
-            "border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#131E29] dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600",
+            "bg-white text-[#31302e] border border-[#e6e6e6] hover:bg-[#f6f5f4] dark:bg-[#222222] dark:text-[#e0e0e0] dark:border-[#333333] dark:hover:bg-[#292929]",
+          variant === "secondary" &&
+            "bg-white text-[#31302e] border border-[#e6e6e6] hover:bg-[#f6f5f4] dark:bg-[#222222] dark:text-[#e0e0e0] dark:border-[#333333] dark:hover:bg-[#292929] shadow-2xs",
           variant === "ghost" &&
-            "bg-transparent text-[#6B7C93] dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-slate-800 hover:text-[#131E29] dark:hover:text-white",
+            "bg-transparent text-[#615d59] hover:text-[#000000] hover:bg-[#f6f5f4] dark:text-[#9e9e9e] dark:hover:text-white dark:hover:bg-[#252525]",
+          variant === "gradient" &&
+            "bg-gradient-to-r from-[#0075de] via-indigo-600 to-[#dd5b00] text-white hover:brightness-110 shadow-xs",
+          variant === "orange" &&
+            "bg-[#dd5b00] text-white hover:bg-[#c24f00]",
+          variant === "indigo" &&
+            "bg-[#213183] text-white hover:bg-[#1a2668]",
+          variant === "emerald" &&
+            "bg-[#1aae39] text-white hover:bg-[#158f2e]",
+          variant === "amber" &&
+            "bg-[#dd5b00] text-white hover:bg-[#c24f00]",
+          variant === "rose" &&
+            "bg-[#ff64c8] text-white hover:bg-[#e650b2]",
+          variant === "purple" &&
+            "bg-[#793400] text-white hover:bg-[#602900]",
           variant === "danger" &&
-            "bg-[#FFEAE9] dark:bg-rose-950/80 text-[#E11D48] dark:text-rose-300 hover:bg-[#FCDAD7] dark:hover:bg-rose-900 border border-[#FFCDCA] dark:border-rose-800",
+            "bg-red-600 text-white hover:bg-red-700",
           variant === "glass" &&
-            "bg-white/80 dark:bg-slate-800/80 text-[#131E29] dark:text-white border border-white/60 dark:border-slate-700 shadow-sm backdrop-blur-md hover:bg-white dark:hover:bg-slate-800",
+            "bg-white/90 dark:bg-[#222222]/90 text-[#31302e] dark:text-[#e0e0e0] border border-[#e6e6e6] dark:border-[#333333] backdrop-blur-md hover:bg-white dark:hover:bg-[#252525]",
           className
         )}
         {...props}

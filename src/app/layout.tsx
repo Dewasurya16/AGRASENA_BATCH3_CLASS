@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     template: '%s | Diklat Prakom Batch 3 Kejaksaan RI',
   },
   description:
-    'Portal resmi backup materi perkuliahan 120 JP, jadwal roadmap 35 hari, generator draf proposal inovasi 5 Bab, template DUPAK/SPMK BPS, forum diskusi, dan bank soal ujian Diklat Fungsional Pranata Komputer Kejaksaan RI Tahun 2026.',
+    'Portal Kelas backup materi perkuliahan 120 JP, jadwal roadmap 35 hari, generator draf proposal inovasi 5 Bab, template DUPAK/SPMK BPS, forum diskusi, dan bank soal ujian Diklat Fungsional Pranata Komputer Kejaksaan RI Tahun 2026.',
   keywords: [
     'Diklat Pranata Komputer',
     'Prakom Kejaksaan RI',

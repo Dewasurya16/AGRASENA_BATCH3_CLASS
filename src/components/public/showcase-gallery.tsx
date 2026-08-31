@@ -46,52 +46,64 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
   const list = showcases && showcases.length > 0 ? showcases : DEFAULT_SHOWCASES
 
   return (
-    <section id="showcase" className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h3 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-            Galeri Showcase & Karya Terbaik
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Kumpulan hasil tugas besar, aplikasi, dan karya proyek terbaik dari peserta
-          </p>
-        </div>
+    <section id="showcase" className="space-y-6">
+      {/* Header Banner */}
+      <div className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-3 py-0.5 text-xs font-semibold">
+                <Trophy className="h-3.5 w-3.5 text-[#ff9500]" strokeWidth={2} />
+                <span>Featured Projects & Inovasi</span>
+              </span>
+              <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
+                Prakom Batch 3
+              </span>
+            </div>
 
-        <span className="text-xs font-bold text-orange-600 dark:text-amber-300 bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 self-start sm:self-auto border border-orange-200 dark:border-amber-800">
-          <Trophy className="h-3.5 w-3.5" />
-          Featured Projects
-        </span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+              Galeri Showcase & <br className="hidden sm:block" />
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Karya Inovasi Terbaik.</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+              Kumpulan hasil tugas besar, prototipe aplikasi, dan karya proyek teknologi informasi terbaik dari peserta Diklat Fungsional Prakom Kejaksaan RI.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {list.map((item, idx) => (
           <div
             key={item.id}
-            className="flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs"
+            className="flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 border border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/60 transition-all space-y-4"
           >
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-[4px] border border-amber-200 dark:border-amber-800">
-                  <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#d97706] dark:text-[#fbbf24] bg-[#ff9500]/15 px-2.5 py-0.5 rounded-full border border-[#ff9500]/30">
+                  <Star className="h-3 w-3 fill-[#ff9500] text-[#ff9500]" strokeWidth={2} />
                   Top #{idx + 1}
                 </span>
-                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-2.5 py-0.5 text-[10px] font-semibold border border-[#34c759]/30">
                   {item.subject_name}
                 </span>
               </div>
 
-              <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 line-clamp-1">
+              <h3 className="text-base font-bold text-[#000000] dark:text-white line-clamp-2">
                 {item.title}
-              </h4>
+              </h3>
 
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                {item.description}
-              </p>
+              {item.description && (
+                <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed line-clamp-3">
+                  {item.description}
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2.5 border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3">
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <Users className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div className="space-y-3 pt-3 border-t border-[#e6e6e6] dark:border-white/10">
+              <div className="flex items-center gap-1.5 text-xs text-[#615d59] dark:text-[#94a3b8]">
+                <Users className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 <span className="truncate">{item.student_names}</span>
               </div>
 
@@ -100,11 +112,10 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
                   href={item.project_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] py-2 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
                 >
-                  <Button variant="secondary" size="sm" className="w-full justify-center rounded-[8px] text-xs font-bold" trailingIcon={<ExternalLink className="h-3 w-3" />}>
-                    Lihat Proyek
-                  </Button>
+                  <span>Lihat Proyek</span>
+                  <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
                 </a>
               )}
             </div>

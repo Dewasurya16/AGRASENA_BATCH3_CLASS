@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { ModernNavbar } from "@/components/public/modern-navbar"
 import { AIAssistantWidget } from "@/components/public/ai-assistant-widget"
+import { CommandPalette } from "@/components/public/command-palette"
 import { AnimatedBackground } from "@/components/ui/animated-background"
 import { Shield, BookOpen, ExternalLink, Heart, Sparkles } from "lucide-react"
 import Link from "next/link"
@@ -92,6 +93,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
       {/* 5. Floating AI Assistant Widget */}
       <AIAssistantWidget />
+
+      {/* 6. Universal Command Palette (Ctrl+K) */}
+      <CommandPalette />
     </div>
   )
 }

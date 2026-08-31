@@ -4,49 +4,100 @@
 
 @layer base {
   :root {
-    --bg-main: #F4F6FA;
-    --card-bg: #FFFFFF;
-    --text-primary: #131E29;
-    --text-secondary: #6B7C93;
-    --text-muted: #9AA8BA;
-    
-    --brand-forest: #0D3830;
-    --brand-forest-hover: #082822;
-    --brand-orange: #FF7643;
-    --brand-orange-hover: #F06530;
-    
-    --pastel-yellow: #FFF4D6;
-    --pastel-yellow-text: #B47D00;
-    --pastel-mint: #E6F7ED;
-    --pastel-mint-text: #0D824B;
-    --pastel-blue: #E8F2FE;
-    --pastel-blue-text: #2563EB;
-    --pastel-coral: #FFEAE9;
-    --pastel-coral-text: #E11D48;
-    --pastel-purple: #F3E8FF;
-    --pastel-purple-text: #7E22CE;
+    /* Figma Design System Core Tokens */
+    --figma-primary: #000000;
+    --figma-on-primary: #ffffff;
+    --figma-ink: #000000;
+    --figma-canvas: #ffffff;
+    --figma-inverse-canvas: #000000;
+    --figma-inverse-ink: #ffffff;
+    --figma-on-inverse-soft: rgba(255, 255, 255, 0.16);
+    --figma-hairline: #e6e6e6;
+    --figma-hairline-soft: #f1f1f1;
+    --figma-surface-soft: #f7f7f5;
 
-    /* Dark mode overrides for dark theme via CSS vars */
-    --dark-bg: #10141C;
-    --dark-card: #171C27;
-    --dark-border: #232A38;
-    --dark-text: #E2E8F0;
-    --dark-muted: #7D8FA6;
+    /* Hand-cut Pastel Color Blocks */
+    --figma-block-lime: #dceeb1;
+    --figma-block-lime-ink: #2c3e07;
+    --figma-block-lilac: #c5b0f4;
+    --figma-block-lilac-ink: #2b1856;
+    --figma-block-cream: #f4ecd6;
+    --figma-block-cream-ink: #483912;
+    --figma-block-pink: #efd4d4;
+    --figma-block-pink-ink: #541c1c;
+    --figma-block-mint: #c8e6cd;
+    --figma-block-mint-ink: #114220;
+    --figma-block-coral: #f3c9b6;
+    --figma-block-coral-ink: #5c2410;
+    --figma-block-navy: #1f1d3d;
+    --figma-block-navy-ink: #ffffff;
+    --figma-accent-magenta: #ff3d8b;
+    /* Notion Design System Core Tokens (DESIGN-notion.md) */
+    --notion-primary: #0075de;
+    --notion-primary-active: #005bab;
+    --notion-secondary: #213183;
+    --notion-on-primary: #ffffff;
+    --notion-canvas: #ffffff;
+    --notion-canvas-soft: #f6f5f4;
+    --notion-surface: #ffffff;
+    --notion-ink: #000000;
+    --notion-ink-secondary: #31302e;
+    --notion-ink-muted: #615d59;
+    --notion-ink-faint: #a39e98;
+    --notion-hairline: #e6e6e6;
+    --notion-hairline-soft: #f0f0f0;
+
+    /* Notion Playful Multi-Color Sticker & Callout Palette */
+    --notion-accent-sky: #62aef0;
+    --notion-accent-purple: #d6b6f6;
+    --notion-accent-purple-deep: #391c57;
+    --notion-accent-pink: #ff64c8;
+    --notion-accent-orange: #dd5b00;
+    --notion-accent-orange-deep: #793400;
+    --notion-accent-teal: #2a9d99;
+    --notion-accent-green: #1aae39;
+    --notion-accent-brown: #523410;
+
+    /* Global canvas and theme mapping */
+    --bg-main: #f6f5f4;
+    --card-bg: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #31302e;
+    --text-muted: #615d59;
   }
 
   .dark,
   [data-theme="dark"] {
-    /* 
-      Dark palette yang nyaman di mata:
-      - Background: charcoal abu-biru hangat, bukan pure black
-      - Text: off-white sedikit biru-dingin, bukan pure white
-      - Secondary: mid-tone abu, cukup kontras tapi tidak keras
-    */
-    --bg-main: #14181F;         /* charcoal hangat, bukan pitch black */
-    --card-bg: #1B2130;         /* card sedikit lebih terang dari bg */
-    --text-primary: #D8E0EC;    /* off-white lembut, tidak menyilaukan */
-    --text-secondary: #8A9BB8;  /* abu-biru mid-tone */
-    --text-muted: #556070;      /* muted tone lebih gelap */
+    --notion-primary: #0075de;
+    --notion-primary-active: #005bab;
+    --notion-secondary: #243575;
+    --notion-on-primary: #ffffff;
+    --notion-canvas: #0c1017;
+    --notion-canvas-soft: #121824;
+    --notion-surface: #151c28;
+    --notion-ink: #f1f5f9;
+    --notion-ink-secondary: #cbd5e1;
+    --notion-ink-muted: #94a3b8;
+    --notion-ink-faint: #64748b;
+    --notion-hairline: #222d3f;
+    --notion-hairline-soft: #1a2332;
+
+    /* Luminous Soft Pastel Sticker & Callout Palette in Dark Mode */
+    --notion-accent-sky: #70b8ff;
+    --notion-accent-purple: #cbb2fe;
+    --notion-accent-purple-deep: #a855f7;
+    --notion-accent-pink: #f472b6;
+    --notion-accent-orange: #fb923c;
+    --notion-accent-orange-deep: #f59e0b;
+    --notion-accent-teal: #2dd4bf;
+    --notion-accent-green: #4ade80;
+    --notion-accent-brown: #fbbf24;
+
+    --bg-main: #0c1017;
+    --card-bg: #151c28;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
     color-scheme: dark;
   }
   
@@ -96,39 +147,41 @@
   }
 }
 
-/* Dark body — override memastikan tidak ada konflik dengan var() */
+/* Dark body — smooth rich midnight canvas */
 .dark body,
 [data-theme="dark"] body {
-  background-color: #14181F;
-  color: #D8E0EC;
+  background-color: #0c1017;
+  color: #cbd5e1;
 }
 
-/* ── Pastel backgrounds in dark mode ── 
-   Pastel terang seperti #E6F7ED (mint), #E8F2FE (blue), #FFF4D6 (yellow)
-   diubah menjadi versi dark yang lembut via filter/overlay
-   tanpa harus edit tiap komponen satu per satu */
-.dark [class*="bg-[#E6F7ED]"],
-.dark [class*="dark:bg-emerald-950"],
-.dark [class*="dark:bg-sky-950"],
-.dark [class*="dark:bg-rose-950"],
-.dark [class*="dark:bg-amber-950"],
-.dark [class*="dark:bg-indigo-950"],
-.dark [class*="dark:bg-purple-950"] {
-  opacity: 0.85;
+/* Figma Design System Utility Classes */
+.figma-pill {
+  border-radius: 9999px;
 }
 
-/* ── Page section wrappers ── 
-   Semua elemen yang punya dark:bg-[hardcode] gelap
-   tapi belum diubah akan terbantu dari utility override di bawah */
+.figma-mono-eyebrow {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.54px;
+}
+
+.figma-card {
+  background-color: var(--figma-canvas);
+  border: 1px solid var(--figma-hairline);
+  border-radius: 24px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 /* Custom Soft Shadows */
 .soft-card-shadow {
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .dark .soft-card-shadow,
 [data-theme="dark"] .soft-card-shadow {
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25), 0 3px 8px -2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .soft-card-hover {
@@ -137,7 +190,7 @@
 
 .soft-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 6px 16px -2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 6px 16px -2px rgba(0, 0, 0, 0.02);
 }
 
 /* Custom Circular Progress animation */
@@ -169,76 +222,84 @@ html {
 }
 
 /* ============================================================
-   DARK MODE GLOBAL SOFTENING
-   Override semua kelas Tailwind dark:* yang terlalu keras
-   agar tidak ada halaman yang menyiksa mata.
-   Urutan: bg → border → text → shadow
+   DARK MODE ENRICHMENT & SOFTENING
+   Menghilangkan kesan kaku dengan kedalaman visual:
+   - Elevated slate-navy cards dengan top-bevel light highlight
+   - Soft translucent borders yang menyatu halus
+   - Callout & badges dengan luminous glass tinting
+   - Kontras teks yang nyaman di mata
    ============================================================ */
 
-/* --- Backgrounds --- */
-/* slate-900 / [#0A0F1A] → softer charcoal */
-.dark .dark\:bg-slate-900,
+/* --- Card & Surface Smoothing in Dark Mode --- */
+.dark [class*="dark:bg-[#222222]"],
+.dark [class*="dark:bg-[#252525]"],
+.dark [class*="dark:bg-[#161B26]"],
+.dark [class*="dark:bg-[#14181F]"],
 .dark [class*="dark:bg-slate-900"] {
-  --tw-bg-opacity: 1;
-  background-color: rgb(24 30 43 / var(--tw-bg-opacity)) !important;  /* #181E2B */
-}
-.dark .dark\:bg-slate-900\/60,
-.dark .dark\:bg-slate-900\/50 {
-  background-color: rgb(24 30 43 / 0.55) !important;
-}
-/* slate-800 → softer */
-.dark .dark\:bg-slate-800 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(30 37 52 / var(--tw-bg-opacity)) !important;  /* #1E2534 */
-}
-.dark .dark\:bg-slate-800\/60,
-.dark .dark\:bg-slate-800\/80 {
-  background-color: rgb(30 37 52 / 0.6) !important;
+  background-color: #141b27 !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* --- Borders --- */
-.dark .dark\:border-slate-800 {
-  border-color: rgb(38 48 66 / 1) !important;  /* lebih subtle */
-}
-.dark .dark\:border-slate-700 {
-  border-color: rgb(48 60 82 / 1) !important;
+/* Sub-panels & inputs */
+.dark [class*="dark:bg-[#1B2130]"],
+.dark [class*="dark:bg-[#181E2B]"] {
+  background-color: #101520 !important;
 }
 
-/* --- Text --- */
-/* Teks "slate-100" (hampir putih) → lebih lembut */
+/* --- Soft Translucent Borders in Dark Mode --- */
+.dark [class*="dark:border-[#333333]"],
+.dark [class*="dark:border-[#2A3550]"],
+.dark [class*="dark:border-slate-800"],
+.dark [class*="dark:border-slate-700"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Interactive Card Hover Lift in Dark Mode --- */
+.dark .hover\:border-\[\#0075de\]\/60:hover,
+.dark .hover\:border-slate-300:hover,
+.dark .hover\:border-slate-700:hover {
+  border-color: rgba(0, 117, 222, 0.5) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 8px 30px -4px rgba(0, 117, 222, 0.15) !important;
+}
+
+/* --- Text Contrast Smoothing --- */
+.dark .dark\:text-white,
+.dark [class*="dark:text-white"] {
+  color: #f1f5f9 !important; /* Soft crisp white */
+}
 .dark .dark\:text-slate-100 {
-  color: rgb(216 224 236 / 1) !important;  /* #D8E0EC */
+  color: #e2e8f0 !important;
 }
-/* Teks "white" di dark mode → jangan full white */
-.dark .dark\:text-white {
-  color: rgb(225 232 242 / 1) !important;  /* #E1E8F2 */
-}
-/* Teks "slate-200" */
 .dark .dark\:text-slate-200 {
-  color: rgb(195 208 225 / 1) !important;  /* #C3D0E1 */
+  color: #cbd5e1 !important;
+}
+.dark .dark\:text-slate-300 {
+  color: #94a3b8 !important;
+}
+.dark .dark\:text-slate-400 {
+  color: #64748b !important;
 }
 
-/* --- Modal & card hardcoded darks --- */
-/* #12161F dan sejenisnya sudah dihandle di atas */
-
-/* --- Scrollbar styling di dark mode agar tidak kontras --- */
+/* --- Scrollbar styling in dark mode --- */
 .dark ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #1B2130;
+  background: #0c1017;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #2D3A52;
+  background: #1e283a;
   border-radius: 3px;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #3D4E6A;
+  background: #2b3952;
 }
 
-/* --- Backdrop/overlay di dark mode --- */
+/* --- Backdrop/overlay in dark mode --- */
 .dark .dark\:bg-black\/80 {
-  background-color: rgb(10 15 25 / 0.72) !important;
+  background-color: rgba(12, 16, 23, 0.8) !important;
+  backdrop-filter: blur(8px);
 }
+
 

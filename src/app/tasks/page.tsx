@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server"
 import { PublicShell } from "@/components/public/public-shell"
 import { HeroCountdown } from "@/components/public/hero-countdown"
 import { TaskBoard } from "@/components/public/task-board"
-
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"

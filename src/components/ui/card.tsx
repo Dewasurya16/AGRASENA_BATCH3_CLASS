@@ -9,10 +9,10 @@ export function Card({ className, variant = "default", children, ...props }: Car
   return (
     <div
       className={cn(
-        "relative rounded-[28px] bg-white dark:bg-[#161B26] border border-slate-100/90 dark:border-slate-800 transition-all duration-300",
+        "relative rounded-[24px] bg-white dark:bg-[#161b26] border border-[#e6e6e6] dark:border-[#262c3d] transition-all duration-200",
         variant === "default" && "soft-card-shadow p-5 sm:p-6",
-        variant === "flat" && "bg-[#F8FAFC] dark:bg-[#12161F] border-slate-200/60 dark:border-slate-800 p-5",
-        variant === "elevated" && "shadow-xl shadow-slate-200/50 dark:shadow-black/60 p-6",
+        variant === "flat" && "bg-[#f7f7f5] dark:bg-[#181d28] border-[#e6e6e6] dark:border-[#262c3d] p-5",
+        variant === "elevated" && "shadow-md shadow-black/5 dark:shadow-black/40 p-6",
         className
       )}
       {...props}

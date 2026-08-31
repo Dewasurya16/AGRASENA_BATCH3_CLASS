@@ -113,29 +113,31 @@ export function QuizPlayer() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       
-      {/* Top Header Banner */}
+      {/* 1. Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                Simulasi Ujian MOOC & Post-Test
+              <span className="flex items-center gap-1.5 rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-3 py-0.5 text-xs font-semibold">
+                <Sparkles className="h-3.5 w-3.5 text-[#ff9500]" strokeWidth={2} />
+                <span>Simulasi MOOC & Bank Soal</span>
               </span>
-              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
+              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
                 {QUIZ_QUESTIONS.length} Soal Lengkap 9 Modul
               </span>
             </div>
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-              Latihan Soal Uji Kompetensi Prakom
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+              Latihan Soal Uji Kompetensi <br className="hidden sm:block" />
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Pranata Komputer Keahlian.</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed max-w-3xl">
               Simulasi komprehensif 120 JP berbasis modul resmi Pusdiklat Kejaksaan RI: SPBE, ITIL 4, ISO 31000, DAMA DMBOK, dan Studi Kelayakan TELOS.
             </p>
           </div>
@@ -143,15 +145,15 @@ export function QuizPlayer() {
           {/* Live Timer Pill */}
           {!isSubmitted && (
             <div className="flex items-center gap-2 shrink-0">
-              <div className={`flex items-center gap-2 rounded-[8px] px-4 py-2 border shadow-2xs ${
+              <div className={`flex items-center gap-2 rounded-full px-4 py-2 border shadow-2xs ${
                 timerSeconds <= 180
-                  ? "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300 animate-pulse"
-                  : "bg-slate-900 dark:bg-[#161B26] border-slate-800 dark:border-[#2A3550] text-white"
+                  ? "bg-[#ff3b30]/10 border-[#ff3b30]/40 text-[#ff3b30] dark:text-[#f87171] animate-pulse"
+                  : "bg-[#f6f5f4] dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 text-[#000000] dark:text-white"
               }`}>
-                <Timer className="h-4 w-4 text-amber-400" />
+                <Timer className="h-4 w-4 text-[#ff9500]" strokeWidth={2} />
                 <div className="text-left">
-                  <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">Sisa Waktu</span>
-                  <span className="font-mono text-xs sm:text-sm font-black text-amber-300">{formatTimer(timerSeconds)}</span>
+                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-[#615d59] dark:text-[#94a3b8]">Sisa Waktu</span>
+                  <span className="font-mono text-xs sm:text-sm font-bold text-[#007aff] dark:text-[#60a5fa]">{formatTimer(timerSeconds)}</span>
                 </div>
               </div>
             </div>
@@ -159,7 +161,7 @@ export function QuizPlayer() {
         </div>
 
         {/* Category Filter Grid & Wrapping Pills */}
-        <div className="pt-2.5 border-t border-slate-100 dark:border-[#2A3550]">
+        <div className="pt-3.5 border-t border-[#e6e6e6] dark:border-white/10">
           <div className="flex flex-wrap items-center gap-1.5">
             {categories.map((cat) => {
               const count = cat === "Semua" ? QUIZ_QUESTIONS.length : QUIZ_QUESTIONS.filter((q) => q.category === cat).length
@@ -171,15 +173,15 @@ export function QuizPlayer() {
                     setSelectedCategory(cat)
                     setCurrentIndex(0)
                   }}
-                  className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                     isActive
-                      ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-                      : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045] border border-slate-200/70 dark:border-[#2A3550]"
+                      ? "bg-[#007aff] text-white shadow-2xs"
+                      : "bg-[#f6f5f4] dark:bg-[#141b27] text-[#615d59] dark:text-[#94a3b8] hover:bg-[#e6e6e6] dark:hover:bg-[#1f283a] hover:text-[#000000] dark:hover:text-white"
                   }`}
                 >
                   <span>{cat}</span>
                   <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                    isActive ? "bg-white/20 text-white" : "bg-[#e6e6e6] dark:border-white/10 dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
                   }`}>
                     {count}
                   </span>
@@ -195,23 +197,23 @@ export function QuizPlayer() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
           {/* Question Card (8 Cols) */}
-          <div className="lg:col-span-8 rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-6 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-4">
+          <div className="lg:col-span-8 rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-4">
             
             {/* Top Question Progress & Category */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-[10px] font-semibold">
                   {currentQ.category}
                 </span>
-                <span className="font-mono text-xs font-black text-slate-500 dark:text-slate-400">
-                  Soal <strong className="text-slate-900 dark:text-slate-100">{currentIndex + 1}</strong> dari {filteredQuestions.length}
+                <span className="font-mono text-xs font-medium text-[#615d59] dark:text-[#94a3b8]">
+                  Soal <strong className="text-[#000000] dark:text-white font-bold">{currentIndex + 1}</strong> dari {filteredQuestions.length}
                 </span>
               </div>
 
               {/* Smooth Progress Bar */}
-              <div className="h-1.5 w-full bg-slate-100 dark:bg-[#161B26] rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-[#f6f5f4] dark:bg-[#101520] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-300 rounded-full"
+                  className="h-full bg-[#007aff] transition-all duration-300 rounded-full"
                   style={{ width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%` }}
                 />
               </div>
@@ -219,7 +221,7 @@ export function QuizPlayer() {
 
             {/* Question Text */}
             <div className="pt-1">
-              <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 leading-relaxed">
+              <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white leading-relaxed">
                 {currentQ.question}
               </h3>
             </div>
@@ -233,26 +235,26 @@ export function QuizPlayer() {
                     key={idx}
                     type="button"
                     onClick={() => handleSelectOption(idx)}
-                    className={`flex items-start gap-3 w-full text-left rounded-[8px] p-3 sm:p-3.5 border transition-all cursor-pointer group ${
+                    className={`flex items-start gap-3 w-full text-left rounded-[10px] p-3 sm:p-3.5 border transition-all cursor-pointer group ${
                       isSelected
-                        ? "bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-500 dark:border-emerald-500 text-slate-900 dark:text-slate-100 shadow-2xs"
-                        : "bg-slate-50 dark:bg-[#161B26] border-slate-200/80 dark:border-[#2A3550] text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-[#202838]"
+                        ? "bg-[#007aff]/10 dark:bg-[#007aff]/20 border-[#007aff] text-[#000000] dark:text-white shadow-2xs"
+                        : "bg-[#f6f5f4] dark:bg-[#101520] border-[#e6e6e6] dark:border-white/10 text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#eae9e7] dark:hover:bg-[#182030]"
                     }`}
                   >
                     <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] font-mono text-xs font-black transition-all ${
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold transition-all ${
                         isSelected
-                          ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-                          : "bg-white dark:bg-[#1B2130] border border-slate-200 dark:border-[#2A3550] text-slate-700 dark:text-slate-300 group-hover:border-slate-400"
+                          ? "bg-[#007aff] text-white shadow-2xs"
+                          : "bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 text-[#615d59] dark:text-[#94a3b8] group-hover:border-[#007aff]"
                       }`}
                     >
                       {String.fromCharCode(65 + idx)}
                     </div>
-                    <span className="text-xs font-semibold leading-relaxed pt-0.5 flex-1">
+                    <span className="text-xs font-medium leading-relaxed pt-0.5 flex-1">
                       {opt}
                     </span>
                     {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 text-[#007aff] dark:text-[#60a5fa] shrink-0 mt-0.5" strokeWidth={2} />
                     )}
                   </button>
                 )
@@ -260,14 +262,14 @@ export function QuizPlayer() {
             </div>
 
             {/* Navigation Action Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-[#2A3550]">
+            <div className="flex items-center justify-between pt-4 border-t border-[#e6e6e6] dark:border-white/10">
               <button
                 type="button"
                 disabled={currentIndex === 0}
                 onClick={() => setCurrentIndex((prev) => prev - 1)}
-                className="flex items-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#161B26] px-4 py-2 text-xs font-bold text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-[#253045] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition border border-slate-200/70 dark:border-[#2A3550]"
+                className="flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#141b27] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white hover:bg-[#e6e6e6] dark:hover:bg-[#1f283a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition border border-[#e6e6e6] dark:border-white/10"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
+                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
                 <span>Sebelumnya</span>
               </button>
 
@@ -275,10 +277,10 @@ export function QuizPlayer() {
                 <button
                   type="button"
                   onClick={() => setCurrentIndex((prev) => prev + 1)}
-                  className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 dark:hover:bg-indigo-500 cursor-pointer shadow-2xs transition"
+                  className="flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] px-4.5 py-2 text-xs font-semibold text-white cursor-pointer shadow-xs active:scale-[0.98] transition"
                 >
                   <span>Berikutnya</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
               ) : (
                 <button
@@ -291,17 +293,17 @@ export function QuizPlayer() {
                       setIsSubmitted(true)
                     }, 500)
                   }}
-                  className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 px-5 py-2 text-xs font-black text-white shadow-2xs cursor-pointer transition disabled:opacity-60"
+                  className="flex items-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] px-5 py-2 text-xs font-semibold text-white shadow-xs cursor-pointer active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {isSubmittingQuiz ? (
                     <>
                       <Spinner size="xs" variant="white" />
-                      <span>Menghitung Nilai...</span>
+                      <span>Memproses Skor...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      <span>Kirim & Selesaikan Kuis</span>
+                      <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                      <span>Selesaikan & Kumpulkan Kuis</span>
                     </>
                   )}
                 </button>

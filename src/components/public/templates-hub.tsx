@@ -534,7 +534,6 @@ export function TemplatesHub() {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-
   const handleCopyContent = () => {
     if (!previewTemplate || !previewTemplate.contentDoc) return
     navigator.clipboard.writeText(previewTemplate.contentDoc)
@@ -543,72 +542,78 @@ export function TemplatesHub() {
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       {/* Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <Layers className="h-3.5 w-3.5" />
+          <span className="flex items-center gap-1.5 rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-3 py-0.5 text-xs font-semibold">
+            <Layers className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
             <span>Format Resmi BPS & Kejaksaan RI</span>
           </span>
-          <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
+          <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-xs font-semibold">
             Standar Perka BPS No. 2/2021 & PermenPAN-RB 1/2023
           </span>
         </div>
 
-        <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
           Pusat Download Template Dokumen TIK, <br className="hidden sm:block" />
-          <span className="text-emerald-700 dark:text-emerald-400">DUPAK / SKP BPS & Administrasi Satker</span>
+          <span className="text-[#007aff] dark:text-[#60a5fa]">DUPAK / SKP BPS & Administrasi Satker.</span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
+        <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed max-w-3xl">
           Koleksi formulir dan naskah dinas resmi yang telah disesuaikan 100% dengan regulasi <strong>Badan Pusat Statistik (BPS)</strong> selaku Instansi Pembina Jabatan Fungsional Pranata Komputer dan <strong>Tata Naskah Dinas Kejaksaan RI</strong>.
         </p>
       </motion.div>
 
       {/* Compliance Highlights Card */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
-          <Award className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]">
+            <Award className="h-5 w-5" strokeWidth={2} />
+          </div>
           <div>
-            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Perka BPS No. 2 Tahun 2021</h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Sesuai Lampiran I-IV Juknis Penilaian Angka Kredit Prakom (SPMK 5 Sub-Unsur & Logbook).</p>
+            <h4 className="text-xs font-bold text-[#000000] dark:text-white">Perka BPS No. 2 Tahun 2021</h4>
+            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Petunjuk Teknis Penilaian Angka Kredit & Butir Kegiatan Pranata Komputer.</p>
           </div>
         </div>
 
-        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
-          <Building2 className="h-4 w-4 text-orange-600 dark:text-amber-400 shrink-0 mt-0.5" />
+        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]">
+            <Building2 className="h-5 w-5" strokeWidth={2} />
+          </div>
           <div>
-            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Tata Naskah Dinas Kejaksaan</h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Format baku kop surat, penomoran PRINT & BA, dan pejabat pengesahan Kejati/Kejari.</p>
+            <h4 className="text-xs font-bold text-[#000000] dark:text-white">Tata Naskah Kejaksaan RI</h4>
+            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Format standar Kop Surat, Nomor Surat Perintah (Sprint/SPT), dan Nota Dinas.</p>
           </div>
         </div>
 
-        <div className="rounded-[10px] bg-white dark:bg-[#1B2130] p-3.5 border border-slate-200/80 dark:border-[#2A3550] flex items-start gap-2.5 shadow-2xs">
-          <BookOpen className="h-4 w-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 border border-[#e6e6e6] dark:border-white/10 flex items-start gap-3 shadow-2xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe]">
+            <Shield className="h-5 w-5" strokeWidth={2} />
+          </div>
           <div>
-            <h4 className="text-xs font-black text-slate-900 dark:text-slate-100">Standar Pusdiklat Badiklat</h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Format naskah proposal seminar rencana aksi inovasi siap diuji di hadapan Widyaiswara.</p>
+            <h4 className="text-xs font-bold text-[#000000] dark:text-white">PermenPAN-RB No. 1/2023</h4>
+            <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">Konversi Predikat Kinerja Periodik ke Angka Kredit Integrasi tanpa DUPAK manual.</p>
           </div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#151c28] p-3 sm:p-4 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" strokeWidth={2} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari template SPT, DUPAK BPS, SOP..."
-              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+              className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] pl-9 pr-4 text-xs font-normal text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#007aff] focus:outline-none"
             />
           </div>
 
@@ -618,10 +623,10 @@ export function TemplatesHub() {
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer ${
                   selectedCategory === cat
-                    ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-                    : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045]"
+                    ? "bg-[#007aff] text-white shadow-2xs"
+                    : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white"
                 }`}
               >
                 {cat}
@@ -632,57 +637,50 @@ export function TemplatesHub() {
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTemplates.map((template) => (
           <motion.div
             key={template.id}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className="flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] hover:border-slate-400 dark:hover:border-slate-500 shadow-2xs transition-all duration-200"
+            className="flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs transition-all duration-200"
           >
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-3 py-0.5 text-[10px] font-semibold border border-[#34c759]/30">
                   {template.category}
                 </span>
-                <span className="font-mono text-[10px] font-bold text-orange-600 dark:text-amber-400 bg-orange-50 dark:bg-[#161B26] px-2 py-0.5 rounded-[6px] border border-orange-200 dark:border-[#2A3550]">
+                <span className="font-mono text-[10px] font-semibold text-[#d97706] dark:text-[#fbbf24] bg-[#ff9500]/15 px-2.5 py-0.5 rounded-full border border-[#ff9500]/30">
                   {template.format}
                 </span>
               </div>
 
-              <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
+              <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors line-clamp-2">
                 {template.title}
-              </h3>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+              </h4>
+              <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
                 {template.description}
               </p>
-
-              <div className="pt-0.5">
-                <span className="text-[10px] text-slate-400 font-mono block truncate">
-                  ⚖️ Dasar: {template.legalReference}
-                </span>
-              </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3 gap-2">
+            <div className="flex items-center justify-between border-t border-[#e6e6e6] dark:border-white/10 pt-3 mt-3 gap-2">
               <button
                 type="button"
                 onClick={() => setPreviewTemplate(template)}
-                className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                className="flex items-center gap-1 text-xs font-semibold text-[#007aff] dark:text-[#60a5fa] hover:underline cursor-pointer"
               >
-                <Eye className="h-3.5 w-3.5" />
+                <Eye className="h-3.5 w-3.5" strokeWidth={2} />
                 <span>{template.file_url?.endsWith(".pdf") ? "Pratinjau PDF" : "Lihat Format"}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleDownload(template)}
-                className="flex items-center gap-1 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white px-3 py-1.5 rounded-[6px] text-xs font-black shadow-2xs transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs transition cursor-pointer"
               >
-                <Download className="h-3 w-3" />
-                <span>Unduh {template.format.split(" ")[0]}</span>
+                <Download className="h-3.5 w-3.5" strokeWidth={2} />
+                <span>Unduh</span>
               </button>
             </div>
           </motion.div>

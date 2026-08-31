@@ -218,59 +218,58 @@ export function DiscussionsHub() {
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       {/* Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                <MessageSquare className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#30b0c7]/15 text-[#008299] dark:text-[#5ce1e6] border border-[#30b0c7]/30 px-3 py-0.5 text-xs font-semibold">
+                <MessageSquare className="h-3.5 w-3.5 text-[#30b0c7]" strokeWidth={2} />
                 <span>Forum Kolaborasi Peserta</span>
               </span>
-              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
+              <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Akses Instan Tanpa Login
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
               Papan Diskusi & Tanya Jawab <br className="hidden sm:block" />
-              <span className="text-emerald-700 dark:text-emerald-400">Komunitas Prakom Batch 3</span>
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Komunitas Prakom Batch 3.</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
               Ruang bertukar solusi teknis, tips pengerjaan tugas harian LMS, konfigurasi server, dan persiapan naskah seminar antar-rekan Pranata Komputer Kejaksaan se-Indonesia.
             </p>
           </div>
 
-          <Button
-            variant="orange"
-            size="sm"
+          <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
-            className="font-black text-xs uppercase tracking-wider shadow-2xs shrink-0 cursor-pointer self-start sm:self-center rounded-[8px]"
-            icon={<Plus className="h-4 w-4" />}
+            className="inline-flex items-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white font-semibold text-xs transition shadow-xs shrink-0 cursor-pointer self-start sm:self-center px-4.5 py-2"
           >
-            Tulis Pertanyaan
-          </Button>
+            <Plus className="h-4 w-4" strokeWidth={2} />
+            <span>Tulis Pertanyaan</span>
+          </button>
         </div>
       </motion.div>
 
       {/* Filter and Search Controls */}
-      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#151c28] p-3 sm:p-4 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row items-center gap-2.5">
           <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" strokeWidth={2} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari topik diskusi / satker..."
-              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+              className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] pl-9 pr-3 text-xs font-normal text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#007aff] focus:outline-none"
             />
           </div>
 
@@ -280,10 +279,10 @@ export function DiscussionsHub() {
                 key={t}
                 type="button"
                 onClick={() => setSelectedTag(t)}
-                className={`rounded-[6px] px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer ${
                   selectedTag === t
-                    ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-                    : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045]"
+                    ? "bg-[#007aff] text-white shadow-2xs"
+                    : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white"
                 }`}
               >
                 {t}

@@ -149,13 +149,13 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
     [liveSchedules]
   )
 
-  // Stage definitions for clean segmented views
+  // Stage definitions for clean segmented views with Apple dynamic colors
   const stageCategories = [
-    { id: 0, name: "Semua Tahap", range: "Hari 1 - 35", color: "bg-[#18181B] text-white" },
-    { id: 1, name: "Tahap 1 • MOOC", range: "Hari 1 - 5 (24 - 28 Agu)", color: "bg-[#D7F3FE] text-[#0369A1]" },
-    { id: 2, name: "Tahap 2 • TMO", range: "Hari 6 - 15 (31 Agu - 11 Sep)", color: "bg-[#E6F7ED] text-[#0D824B]" },
-    { id: 3, name: "Tahap 3 • Lab Prakom", range: "Hari 16 - 30 (14 Sep - 2 Okt)", color: "bg-[#FFE3EB] text-[#E11D48]" },
-    { id: 4, name: "Tahap 4 • Seminar", range: "Hari 31 - 35 (5 - 9 Okt)", color: "bg-[#FFF2D1] text-[#B47D00]" },
+    { id: 0, name: "Semua Tahap", range: "Hari 1 - 35", color: "bg-[#007aff] text-white" },
+    { id: 1, name: "Tahap 1 • MOOC", range: "Hari 1 - 5 (24 - 28 Agu)", color: "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]" },
+    { id: 2, name: "Tahap 2 • TMO", range: "Hari 6 - 15 (31 Agu - 11 Sep)", color: "bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe]" },
+    { id: 3, name: "Tahap 3 • Lab Prakom", range: "Hari 16 - 30 (14 Sep - 2 Okt)", color: "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]" },
+    { id: 4, name: "Tahap 4 • Seminar", range: "Hari 31 - 35 (5 - 9 Okt)", color: "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24]" },
   ]
 
   const filteredDays = days.filter((item) => {
@@ -173,63 +173,71 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
   return (
     <div className="space-y-8">
       
-      {/* 1. Header Hero Card with Progress Meter */}
+      {/* 1. Header Banner & Filters */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="relative overflow-hidden rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-5 transition-colors duration-200"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1.5 max-w-xl">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-ping" />
-              <span className="text-xs font-black uppercase tracking-wider text-orange-600 dark:text-amber-400">
-                Roadmap 35 Hari Diklat Fungsional
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-3 py-0.5 text-xs font-semibold">
+                <Calendar className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
+                <span>Roadmap 35 Hari Kerja</span>
+              </span>
+              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
+                120 JP Full Kurikulum
               </span>
             </div>
-            <h2 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-              Jadwal 35 Hari Pelatihan
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Struktur lengkap 35 hari perkuliahan Pranata Komputer Kejaksaan RI. Isi kegiatan dan modul disinkronkan langsung dari data manual pengurus di Supabase.
+
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+              Jadwal & Roadmap Sesi <br className="hidden sm:block" />
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Pelatihan Fungsional Prakom</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+              Panduan lengkap hari perkuliahan, sesi Tatap Muka Online (TMO), praktikum laboratorium satker, hingga seminar akhir klasikal.
             </p>
           </div>
 
-          {/* Quick Stats Pill */}
-          <div className="flex items-center gap-3 bg-slate-50 dark:bg-[#161B26] p-3 rounded-[10px] border border-slate-200/80 dark:border-[#2A3550] self-start lg:self-auto">
+          {/* Quick Summary Pill Box */}
+          <div className="flex items-center gap-3 bg-[#f6f5f4] dark:bg-[#141b27] p-3 rounded-[12px] border border-[#e6e6e6] dark:border-white/10 self-start lg:self-auto shadow-2xs">
             <div className="text-center px-3">
-              <div className="text-xl font-black text-slate-900 dark:text-slate-100">{summary.completedDays}</div>
-              <div className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Selesai</div>
+              <div className="text-xl font-bold text-[#000000] dark:text-white">{summary.completedDays}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#34c759] dark:text-[#4ade80]">Selesai</div>
             </div>
-            <div className="h-7 w-px bg-slate-200 dark:bg-[#2A3550]" />
+            <div className="h-7 w-px bg-[#e6e6e6] dark:border-white/10" />
             <div className="text-center px-3">
-              <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">Hari {summary.currentDayNumber}</div>
-              <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">
+              <div className="text-xl font-bold text-[#007aff] dark:text-[#60a5fa]">Hari {summary.currentDayNumber}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#007aff] dark:text-[#60a5fa]">
                 {summary.isTodayActive ? "Hari Ini" : "Sesi Berikutnya"}
               </div>
             </div>
-            <div className="h-7 w-px bg-slate-200 dark:bg-[#2A3550]" />
+            <div className="h-7 w-px bg-[#e6e6e6] dark:border-white/10" />
             <div className="text-center px-3">
-              <div className="text-xl font-black text-slate-900 dark:text-slate-100">{summary.totalDays - summary.completedDays}</div>
-              <div className="text-[10px] font-bold uppercase text-slate-400">Tersisa</div>
+              <div className="text-xl font-bold text-[#000000] dark:text-white">{summary.totalDays - summary.completedDays}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#615d59] dark:text-[#94a3b8]">Tersisa</div>
             </div>
           </div>
         </div>
 
         {/* Filter Stage Tabs & Search & Timezone Switcher */}
-        <div className="pt-3.5 border-t border-slate-100 dark:border-[#2A3550] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+        <div className="pt-3.5 border-t border-[#e6e6e6] dark:border-[#333333] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
             {stageCategories.map((tab) => {
               const isSelected = selectedStage === tab.id
+              let activeColor = "bg-[#0075de] text-white"
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => setSelectedStage(tab.id)}
-                  className={`rounded-[8px] px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#253045] hover:text-slate-900 dark:hover:text-white"
+                      ? `${activeColor} shadow-2xs`
+                      : "bg-[#f6f5f4] dark:bg-[#252525] text-[#615d59] dark:text-[#a39e98] hover:bg-[#e6e6e6] dark:hover:bg-[#2c2c2c] hover:text-[#000000] dark:hover:text-white"
                   }`}
                 >
                   {tab.name}
@@ -240,16 +248,16 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
 
           <div className="flex items-center gap-2 w-full md:w-auto">
             {/* Timezone Switcher Pill */}
-            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-[#161B26] rounded-lg p-0.5 border border-slate-200/90 dark:border-[#2A3550] text-[10px] font-bold shrink-0">
+            <div className="flex items-center gap-0.5 bg-[#f6f5f4] dark:bg-[#252525] rounded-full p-1 border border-[#e6e6e6] dark:border-[#333333] text-[10px] font-semibold shrink-0">
               {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
                 <button
                   key={tz}
                   type="button"
                   onClick={() => setTimezone(tz)}
-                  className={`px-2 py-1 rounded-[6px] transition-all cursor-pointer ${
+                  className={`px-2.5 py-0.5 rounded-full transition-all cursor-pointer ${
                     timezone === tz
-                      ? 'bg-slate-900 dark:bg-indigo-600 text-white font-black shadow-xs'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-[#0075de] text-white font-semibold shadow-2xs'
+                      : 'text-[#615d59] dark:text-[#a39e98] hover:text-[#000000] dark:hover:text-white'
                   }`}
                   title={`Tampilkan jam perkuliahan dalam zona ${tz}`}
                 >
@@ -259,13 +267,13 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
             </div>
 
             <div className="relative flex-1 md:w-60">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari hari / tanggal / sesi..."
-                className="h-9 w-full rounded-[8px] border border-slate-200/90 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-bold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+                className="h-8.5 w-full rounded-full border border-[#e6e6e6] dark:border-[#333333] bg-white dark:bg-[#252525] pl-9 pr-3 text-xs font-normal text-[#000000] dark:text-white placeholder-[#a39e98] focus:border-[#0075de] focus:outline-none"
               />
             </div>
           </div>
@@ -275,10 +283,10 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
       {/* 2. Structured 35 Days Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">
+          <h3 className="text-base sm:text-lg font-bold text-[#000000] dark:text-white">
             Daftar 35 Hari Pelatihan ({filteredDays.length} Hari Ditampilkan)
           </h3>
-          <span className="text-xs font-bold text-slate-400">
+          <span className="text-xs font-semibold text-[#615d59] dark:text-[#94a3b8]">
             Klik kartu untuk rincian sesi & countdown
           </span>
         </div>
@@ -313,11 +321,11 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
               }
             }
 
-            let headerBg = "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-            if (item.stageNumber === 1) headerBg = "bg-sky-50 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300"
-            if (item.stageNumber === 2) headerBg = "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
-            if (item.stageNumber === 3) headerBg = "bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300"
-            if (item.stageNumber === 4) headerBg = "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300"
+            let headerBg = "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
+            if (item.stageNumber === 1) headerBg = "bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-b border-[#007aff]/20"
+            if (item.stageNumber === 2) headerBg = "bg-[#af52de]/10 dark:bg-[#af52de]/20 text-[#8a38b5] dark:text-[#d8b4fe] border-b border-[#af52de]/20"
+            if (item.stageNumber === 3) headerBg = "bg-[#ff2d55]/10 dark:bg-[#ff2d55]/20 text-[#e11d48] dark:text-[#fda4af] border-b border-[#ff2d55]/20"
+            if (item.stageNumber === 4) headerBg = "bg-[#ff9500]/10 dark:bg-[#ff9500]/20 text-[#d97706] dark:text-[#fbbf24] border-b border-[#ff9500]/20"
 
             return (
               <motion.div
@@ -328,41 +336,41 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                 whileHover={{ y: -2, transition: { duration: 0.15 } }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => setActiveModalDay(item)}
-                className={`group cursor-pointer rounded-[12px] bg-white dark:bg-[#1B2130] border overflow-hidden flex flex-col justify-between transition-all ${
+                className={`group cursor-pointer rounded-[14px] bg-white dark:bg-[#141b27] border overflow-hidden flex flex-col justify-between transition-all ${
                   isToday
-                    ? "border-orange-500/80 dark:border-amber-500 ring-2 ring-orange-500/20 shadow-xs"
+                    ? "border-[#ff9500] ring-2 ring-[#ff9500]/20 shadow-xs"
                     : isNextUpcoming
-                    ? "border-indigo-500/80 dark:border-indigo-500 ring-2 ring-indigo-500/20 shadow-xs"
+                    ? "border-[#007aff] ring-2 ring-[#007aff]/20 shadow-xs"
                     : isCompleted
-                    ? "border-slate-200/90 dark:border-[#2A3550] hover:border-emerald-500 dark:hover:border-emerald-500 shadow-2xs"
-                    : "border-slate-200/90 dark:border-[#2A3550] hover:border-slate-400 dark:hover:border-slate-500 shadow-2xs"
+                    ? "border-[#e6e6e6] dark:border-white/10 hover:border-[#34c759] shadow-2xs"
+                    : "border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 shadow-2xs"
                 }`}
               >
                 {/* Window Header */}
-                <div className={`flex items-center justify-between px-3 py-1.5 border-b border-slate-200/80 dark:border-[#2A3550] ${headerBg}`}>
-                  <div className="flex items-center gap-1.5 font-black text-[11px]">
+                <div className={`flex items-center justify-between px-3.5 py-2 border-b border-[#e6e6e6] dark:border-white/10 ${headerBg}`}>
+                  <div className="flex items-center gap-1.5 font-bold text-[11px]">
                     <span>Hari {item.dayNumber}</span>
                     <span>•</span>
-                    <span className="text-[10px] font-bold">{item.stageName}</span>
+                    <span className="text-[10px] font-semibold">{item.stageName}</span>
                   </div>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
+                  <span className="font-mono text-[10px] font-semibold opacity-70">_oX</span>
                 </div>
 
                 <div className="p-4 space-y-3">
                   {/* Top Day info + Date */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5">
-                      <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                      <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
                         Hari ke-{item.dayNumber}
                       </h4>
-                      <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                        <Calendar className="h-3 w-3 text-slate-400" />
+                      <p className="flex items-center gap-1.5 text-xs text-[#615d59] dark:text-[#94a3b8] font-normal">
+                        <Calendar className="h-3 w-3 text-[#615d59]" strokeWidth={2} />
                         <span>{item.dateStr}</span>
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end">
-                      <span className="font-mono text-[10px] font-black text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-[#161B26] px-2 py-0.5 rounded-[6px] border border-slate-200/70 dark:border-[#2A3550]">
+                      <span className="font-mono text-[10px] font-semibold text-[#000000] dark:text-white bg-[#f6f5f4] dark:bg-[#101520] px-2.5 py-0.5 rounded-full border border-[#e6e6e6] dark:border-white/10">
                         {item.sessions.length} Sesi
                       </span>
                     </div>
@@ -376,40 +384,40 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                         return (
                           <div
                             key={sIdx}
-                            className="rounded-[8px] bg-slate-50 dark:bg-[#161B26] p-2.5 border border-slate-200/70 dark:border-[#2A3550] text-xs space-y-1"
+                            className="rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] p-2.5 border border-[#e6e6e6] dark:border-white/10 text-xs space-y-1"
                           >
-                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-bold">
-                              <span className="text-sky-700 dark:text-sky-400 font-mono font-black">{convertTimeRange(ses.time)}</span>
+                            <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-semibold">
+                              <span className="text-[#007aff] dark:text-[#60a5fa] font-mono font-bold">{convertTimeRange(ses.time)}</span>
                               {sesCountdown && (
-                                <span className={`px-1.5 py-0.5 rounded-[4px] text-[9px] font-black tracking-tight ${sesCountdown.badgeClass}`}>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-tight ${sesCountdown.badgeClass}`}>
                                   {sesCountdown.label}
                                 </span>
                               )}
                             </div>
-                            <p className="font-bold text-slate-900 dark:text-slate-200 line-clamp-1">
+                            <p className="font-semibold text-[#000000] dark:text-white line-clamp-1">
                               {ses.title}
                             </p>
                           </div>
                         )
                       })
                     ) : (
-                      <div className="rounded-[8px] bg-slate-50 dark:bg-[#161B26] p-2.5 text-center border border-dashed border-slate-200 dark:border-[#2A3550] text-[11px] text-slate-400">
+                      <div className="rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] p-2.5 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 text-[11px] text-[#615d59]">
                         Belum ada kegiatan manual yang diisi
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Status Pill */}
-                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-[#2A3550] text-xs">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#e6e6e6] dark:border-white/10 text-xs">
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider tabular-nums ${
+                      className={`rounded-full px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider tabular-nums ${
                         isCompleted
-                          ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40"
+                          ? "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30"
                           : isToday
-                          ? "bg-orange-100 dark:bg-amber-950/80 text-orange-700 dark:text-amber-300 border border-orange-200 dark:border-amber-800/60 animate-pulse"
+                          ? "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 animate-pulse"
                           : isNextUpcoming
-                          ? "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/60 font-mono"
-                          : "bg-slate-100 dark:bg-[#161B26] text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-[#2A3550]"
+                          ? "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 font-mono"
+                          : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10"
                       }`}
                     >
                       {isCompleted
@@ -421,9 +429,9 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                         : "Mendatang"}
                     </span>
 
-                    <span className="text-[11px] font-bold text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 flex items-center gap-0.5 transition">
+                    <span className="text-[11px] font-semibold text-[#615d59] group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] flex items-center gap-0.5 transition">
                       <span>Detail</span>
-                      <ChevronRight className="h-3 w-3" />
+                      <ChevronRight className="h-3 w-3" strokeWidth={2} />
                     </span>
                   </div>
                 </div>
@@ -445,17 +453,17 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
           <div className="space-y-4">
             
             {/* Status Header */}
-            <div className="flex items-center justify-between p-3 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550]">
-              <span className="text-xs font-black text-slate-900 dark:text-slate-100">Status Perkuliahan:</span>
+            <div className="flex items-center justify-between p-3.5 rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] border border-[#e6e6e6] dark:border-white/10">
+              <span className="text-xs font-bold text-[#000000] dark:text-white">Status Perkuliahan:</span>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${
                   activeModalDay.status === "completed"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300"
+                    ? "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]"
                     : activeModalDay.isTodayExact
-                    ? "bg-orange-100 dark:bg-amber-950/80 text-orange-700 dark:text-amber-300 animate-pulse"
+                    ? "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] animate-pulse"
                     : activeModalDay.isNextUpcoming
-                    ? "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-mono"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                    ? "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] font-mono"
+                    : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
                 }`}
               >
                 {activeModalDay.status === "completed"
@@ -470,7 +478,7 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
 
             {/* Session Items from Supabase with Live Session Countdown */}
             <div className="space-y-2.5">
-              <h5 className="font-black text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              <h5 className="font-bold text-xs text-[#615d59] dark:text-[#94a3b8] uppercase tracking-wider">
                 Rincian Sesi & Kegiatan ({timezone}):
               </h5>
 
@@ -480,28 +488,28 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                   return (
                     <div
                       key={sIdx}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3.5 border border-slate-200/80 dark:border-[#2A3550] gap-3"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] p-3.5 border border-[#e6e6e6] dark:border-white/10 gap-3"
                     >
                       <div className="space-y-1.5">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-[10px] font-black text-sky-800 dark:text-sky-300 bg-sky-100 dark:bg-sky-950/80 px-2 py-0.5 rounded-[6px] border border-sky-200/60 dark:border-sky-800/40">
+                          <span className="font-mono text-[10px] font-bold text-[#007aff] dark:text-[#60a5fa] bg-[#007aff]/15 px-2.5 py-0.5 rounded-full border border-[#007aff]/30">
                             {convertTimeRange(ses.time)}
                           </span>
                           {sesCountdown && (
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-tight ${sesCountdown.badgeClass}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-tight ${sesCountdown.badgeClass}`}>
                               {sesCountdown.label}
                             </span>
                           )}
                         </div>
-                        <h6 className="font-black text-sm text-slate-900 dark:text-slate-100">{ses.title}</h6>
+                        <h6 className="font-bold text-sm text-[#000000] dark:text-white">{ses.title}</h6>
                         {ses.instructor && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Pengampu: <strong className="text-slate-700 dark:text-slate-200">{ses.instructor}</strong>
+                          <p className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                            Pengampu: <strong className="text-[#000000] dark:text-white font-semibold">{ses.instructor}</strong>
                           </p>
                         )}
                         {ses.room && (
-                          <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-slate-400" />
+                          <p className="text-[11px] text-[#615d59] flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-[#615d59]" strokeWidth={2} />
                             <span>{ses.room}</span>
                           </p>
                         )}
@@ -514,9 +522,9 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                             href={ses.zoomUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 text-xs font-black text-white shadow-xs transition"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
                           >
-                            <Video className="h-3.5 w-3.5" />
+                            <Video className="h-3.5 w-3.5" strokeWidth={2} />
                             <span>Zoom Kelas</span>
                           </a>
                         )}
@@ -532,10 +540,10 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                           })}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-[8px] bg-white dark:bg-[#1B2130] px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#2A3550] hover:bg-slate-50 dark:hover:bg-[#253045] transition shadow-2xs"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs"
                           title="Simpan ke Google Calendar"
                         >
-                          <Calendar className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+                          <Calendar className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
                           <span>Google Cal</span>
                         </a>
 
@@ -549,10 +557,10 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                             startTime: ses.time.split(' - ')[0] || '08:00',
                             endTime: ses.time.split(' - ')[1] || '16:00'
                           })}
-                          className="inline-flex items-center gap-1.5 rounded-[8px] bg-white dark:bg-[#1B2130] px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-[#2A3550] hover:bg-slate-50 dark:hover:bg-[#253045] transition shadow-2xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
                           title="Unduh file .ics (Apple / Outlook)"
                         >
-                          <Download className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <Download className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
                           <span>.ICS</span>
                         </button>
                       </div>
@@ -560,9 +568,9 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
                   )
                 })
               ) : (
-                <div className="p-5 text-center space-y-1.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-dashed border-slate-200 dark:border-[#2A3550]">
-                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">Belum ada kegiatan manual untuk Hari ke-{activeModalDay.dayNumber}</p>
-                  <p className="text-[11px] text-slate-400">
+                <div className="p-5 text-center space-y-1.5 rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] border border-dashed border-[#e6e6e6] dark:border-white/10">
+                  <p className="text-xs font-bold text-[#000000] dark:text-white">Belum ada kegiatan manual untuk Hari ke-{activeModalDay.dayNumber}</p>
+                  <p className="text-[11px] text-[#615d59]">
                     Tambahkan sesi jadwal untuk <strong>Hari {activeModalDay.dayNumber}</strong> melalui Dashboard Pengurus.
                   </p>
                 </div>

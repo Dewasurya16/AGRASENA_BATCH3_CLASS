@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Web Kelas - Diklat Prakom Batch 3 Kejaksaan RI',
     short_name: 'Prakom 625',
     description:
-      'Portal Resmi Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena — Backup Modul 120 JP, Jadwal 35 Hari, & AI Copilot.',
+      'Portal Kelas Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena — Backup Modul 120 JP, Jadwal 35 Hari, & AI Copilot.',
     id: '/?source=pwa',
     start_url: '/?source=pwa',
     scope: '/',

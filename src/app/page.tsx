@@ -6,6 +6,7 @@ import { TwinkleHero } from "@/components/public/twinkle-hero"
 import { AiCompanionCard } from "@/components/public/ai-companion-card"
 import { HomeTaskReminder } from "@/components/public/home-task-reminder"
 import { LiveSessionBanner } from "@/components/public/live-session-banner"
+import { LearningProgressWidget } from "@/components/public/learning-progress-widget"
 import { SupabaseStatus } from "@/components/supabase-status"
 import { getAutoRoadmapData } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
@@ -26,7 +27,9 @@ import {
   Smile,
   ChevronRight,
   HelpCircle,
-  Code2
+  Code2,
+  Laptop,
+  Building2
 } from "lucide-react"
 import Link from "next/link"
 
@@ -68,7 +71,7 @@ export default async function HomePage() {
       {/* 1. Layar Intro Interaktif (Tampil 1x Saat Kunjungan Awal Sesi, Hilang Setelah Masuk) */}
       <IntroScreen />
 
-      <div className="space-y-4 sm:space-y-5">
+      <div className="space-y-8 sm:space-y-12">
         
         {/* 2. Pengumuman Mendesak (Jika Ada) */}
         <UrgentAnnouncement announcements={announcements} />
@@ -81,7 +84,7 @@ export default async function HomePage() {
           todayTasks={tasks}
         />
 
-        {/* 4. Hero Banner Gaya eTwinkle (Playful Neo-Minimalist) */}
+        {/* 4. Hero Banner */}
         <TwinkleHero />
 
         {/* 5. AI Asisten Kelas (Sapaan Santai, Motivasi Harian & Peringatan Tugas) */}
@@ -90,173 +93,169 @@ export default async function HomePage() {
         {/* 6. Live Reminder Deadline Terdekat (Simpel & Ringkas) */}
         <HomeTaskReminder targetTask={closestTask} />
 
-        {/* 7. Roadmap 4 Tahap Summary (Progress Otomatis Berdasarkan Hari) */}
-        <section className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-6 lg:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-5 transition-colors duration-200">
+        {/* 6.5 Status Belajar & Kesiapan Diklat Peserta (Local Storage Private Progress) */}
+        <LearningProgressWidget />
+
+        {/* 7. Roadmap 4 Tahap Story Block */}
+        <section className="rounded-[16px] bg-white dark:bg-[#151c28] p-6 sm:p-8 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-6 transition-colors duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-slate-900 dark:bg-slate-800 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
-                  Roadmap 35 Hari
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] text-white px-3 py-0.5 text-[11px] font-semibold">
+                  <Calendar className="h-3.5 w-3.5" strokeWidth={2} />
+                  <span>Roadmap 35 Hari</span>
                 </span>
-                <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-3 py-0.5 text-[10px] font-black uppercase text-orange-700 dark:text-amber-300">
-                  Total 120 JP
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#ff9500]/15 text-[#d97706] dark:bg-[#ff9500]/25 dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-[11px] font-semibold">
+                  <span>Total 120 JP</span>
                 </span>
-                <span className="text-xs font-black text-emerald-700 dark:text-emerald-400">
-                  Progres: Hari {summary.currentDayNumber} / {summary.totalDays} ({summary.progressPercentage}%)
+                <span className="text-xs font-semibold text-[#16a34a] dark:text-[#4ade80] flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-[#34c759] animate-pulse" />
+                  Hari {summary.currentDayNumber} / {summary.totalDays} ({summary.progressPercentage}%)
                 </span>
               </div>
-              <h3 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-bold text-[#000000] dark:text-white tracking-tight">
                 Alur 4 Tahapan Perkuliahan Diklat
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8]">
                 Alur perkuliahan dari belajar mandiri MOOC, tatap muka online TMO, lab kerja di satker, hingga seminar!
               </p>
             </div>
 
             <Link href="/schedules">
-              <button className="flex items-center gap-2 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xs cursor-pointer shrink-0">
+              <button className="inline-flex items-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white active:scale-[0.98] px-4.5 py-2 text-xs sm:text-sm font-semibold transition shadow-xs cursor-pointer shrink-0">
                 <span>Buka Jadwal 35 Hari</span>
-                <ArrowRight className="h-3.5 w-3.5 text-amber-300 dark:text-white" />
+                <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </button>
             </Link>
           </div>
 
-          {/* 4 Stage Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
-            {(() => {
-              const currentDay = summary.currentDayNumber
-              const isTodayActive = summary.isTodayActive
-              return [
-                {
-                  num: 1,
-                  title: "Tahap 1 • MOOC",
-                  sub: "Pembelajaran Mandiri",
-                  days: "Hari 1 s.d. 5",
-                  dates: "24 Agu – 28 Agu 2026",
-                  status: currentDay > 5 ? "Selesai" : isTodayActive && currentDay >= 1 ? "Sedang Berjalan" : "Jadwal Mendatang",
-                  isCurrent: isTodayActive && currentDay >= 1 && currentDay <= 5,
-                  headerColor: isTodayActive && currentDay >= 1 && currentDay <= 5
-                    ? "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300"
-                    : currentDay > 5
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
-                    : "bg-sky-50 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300",
-                },
-                {
-                  num: 2,
-                  title: "Tahap 2 • TMO",
-                  sub: "Tatap Muka Online",
-                  days: "Hari 6 s.d. 15",
-                  dates: "31 Agu – 11 Sep 2026",
-                  status: currentDay > 15 ? "Selesai" : isTodayActive && currentDay >= 6 ? "Sedang Berjalan" : currentDay >= 6 ? "Mulai 31 Agu" : "Jadwal Mendatang",
-                  isCurrent: isTodayActive && currentDay >= 6 && currentDay <= 15,
-                  headerColor: isTodayActive && currentDay >= 6 && currentDay <= 15
-                    ? "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300"
-                    : currentDay > 15
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
-                    : "bg-indigo-50 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300",
-                },
-                {
-                  num: 3,
-                  title: "Tahap 3 • Lab Prakom",
-                  sub: "Laboratorium di Satker",
-                  days: "Hari 16 s.d. 30",
-                  dates: "14 Sep – 2 Okt 2026",
-                  status: currentDay > 30 ? "Selesai" : isTodayActive && currentDay >= 16 ? "Sedang Berjalan" : "Jadwal Mendatang",
-                  isCurrent: isTodayActive && currentDay >= 16 && currentDay <= 30,
-                  headerColor: isTodayActive && currentDay >= 16 && currentDay <= 30
-                    ? "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300"
-                    : currentDay > 30
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
-                    : "bg-rose-50 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300",
-                },
-                {
-                  num: 4,
-                  title: "Tahap 4 • Seminar",
-                  sub: "Seminar Klasikal",
-                  days: "Hari 31 s.d. 35",
-                  dates: "5 Okt – 9 Okt 2026",
-                  status: currentDay > 35 ? "Selesai" : isTodayActive && currentDay >= 31 ? "Sedang Berjalan" : "Jadwal Mendatang",
-                  isCurrent: isTodayActive && currentDay >= 31 && currentDay <= 35,
-                  headerColor: isTodayActive && currentDay >= 31 && currentDay <= 35
-                    ? "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300"
-                    : currentDay > 35
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
-                    : "bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300",
-                },
-              ]
-            })().map((stg) => (
-              <Link href="/schedules" key={stg.num} className="group block">
-                <div
-                  className={`h-full rounded-[12px] border overflow-hidden flex flex-col justify-between transition-all ${
-                    stg.isCurrent
-                      ? "bg-amber-50/40 dark:bg-[#161B26] border-orange-500/80 ring-2 ring-orange-500/20 shadow-xs"
-                      : "bg-white dark:bg-[#161B26] border-slate-200/90 dark:border-[#2A3550] shadow-2xs hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-xs"
-                  }`}
-                >
-                  {/* _oX Window Header */}
-                  <div className={`flex items-center justify-between px-3 py-1.5 border-b border-slate-200/80 dark:border-[#2A3550] ${stg.headerColor}`}>
-                    <span className="text-[10px] font-black">{stg.title}</span>
-                    <span className="font-mono text-[10px] font-black opacity-70">_oX</span>
-                  </div>
-
-                  <div className="p-3.5 space-y-2.5">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                        stg.isCurrent
-                          ? "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
-                          : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-300"
-                      }`}>
-                        {stg.status}
+          {/* 4 Stage Cards Grid with Apple SF Symbol Identity */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+            {[
+              {
+                num: 1,
+                title: "Tahap 1 • MOOC",
+                sub: "Pembelajaran Mandiri",
+                days: "Hari 1 s.d. 5",
+                dates: "24 Agu – 28 Agu 2026",
+                status: summary.currentDayNumber > 5 ? "Selesai" : summary.isTodayActive && summary.currentDayNumber >= 1 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                isCurrent: summary.isTodayActive && summary.currentDayNumber >= 1 && summary.currentDayNumber <= 5,
+                icon: <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />,
+              },
+              {
+                num: 2,
+                title: "Tahap 2 • TMO",
+                sub: "Tatap Muka Online",
+                days: "Hari 6 s.d. 15",
+                dates: "31 Agu – 11 Sep 2026",
+                status: summary.currentDayNumber > 15 ? "Selesai" : summary.isTodayActive && summary.currentDayNumber >= 6 ? "Sedang Berjalan" : summary.currentDayNumber >= 6 ? "Mulai 31 Agu" : "Jadwal Mendatang",
+                isCurrent: summary.isTodayActive && summary.currentDayNumber >= 6 && summary.currentDayNumber <= 15,
+                icon: <Laptop className="h-3.5 w-3.5" strokeWidth={2} />,
+              },
+              {
+                num: 3,
+                title: "Tahap 3 • Lab Prakom",
+                sub: "Laboratorium di Satker",
+                days: "Hari 16 s.d. 30",
+                dates: "14 Sep – 2 Okt 2026",
+                status: summary.currentDayNumber > 30 ? "Selesai" : summary.isTodayActive && summary.currentDayNumber >= 16 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                isCurrent: summary.isTodayActive && summary.currentDayNumber >= 16 && summary.currentDayNumber <= 30,
+                icon: <Building2 className="h-3.5 w-3.5" strokeWidth={2} />,
+              },
+              {
+                num: 4,
+                title: "Tahap 4 • Seminar",
+                sub: "Seminar Klasikal",
+                days: "Hari 31 s.d. 35",
+                dates: "5 Okt – 9 Okt 2026",
+                status: summary.currentDayNumber > 35 ? "Selesai" : summary.isTodayActive && summary.currentDayNumber >= 31 ? "Sedang Berjalan" : "Jadwal Mendatang",
+                isCurrent: summary.isTodayActive && summary.currentDayNumber >= 31 && summary.currentDayNumber <= 35,
+                icon: <Award className="h-3.5 w-3.5" strokeWidth={2} />,
+              },
+            ].map((stg) => {
+              return (
+                <Link href="/schedules" key={stg.num} className="group block">
+                  <div
+                    className={`h-full rounded-[12px] border overflow-hidden flex flex-col justify-between transition-all duration-200 ${
+                      stg.isCurrent
+                        ? "bg-white dark:bg-[#141b27] border-[#007aff] shadow-xs ring-1 ring-[#007aff]/30 -translate-y-0.5"
+                        : "bg-white dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/50 hover:-translate-y-0.5"
+                    }`}
+                  >
+                    {/* Stage Header Tab */}
+                    <div className="flex items-center justify-between px-3.5 py-2 bg-[#f6f5f4] dark:bg-[#1a2332] border-b border-[#e6e6e6] dark:border-white/10">
+                      <span className="text-xs font-semibold text-[#000000] dark:text-white flex items-center gap-1.5">
+                        <span className="text-[#007aff] dark:text-[#60a5fa]">{stg.icon}</span>
+                        {stg.title}
                       </span>
-                      <span className="font-mono text-xs font-black text-slate-800 dark:text-slate-200 shrink-0">{stg.days}</span>
+                      <span className="font-mono text-xs font-bold text-[#615d59] dark:text-[#94a3b8]">0{stg.num}</span>
                     </div>
 
-                    <div>
-                      <h4 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 group-hover:text-orange-600 dark:group-hover:text-amber-400 transition">
-                        {stg.sub}
-                      </h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        {stg.dates}
-                      </p>
-                    </div>
+                    <div className="p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-2xs shrink-0 ${
+                          stg.isCurrent
+                            ? "bg-[#007aff] text-white border-transparent"
+                            : "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                        }`}>
+                          {stg.status}
+                        </span>
+                        <span className="font-mono text-xs font-medium text-[#615d59] dark:text-[#94a3b8] shrink-0">{stg.days}</span>
+                      </div>
 
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-[#8C9BAE] dark:text-slate-400 group-hover:text-[#18181B] dark:group-hover:text-white transition">
-                      <span>Rincian Modul</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <div>
+                        <h4 className="font-bold text-sm text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                          {stg.sub}
+                        </h4>
+                        <p className="text-xs text-[#615d59] dark:text-[#94a3b8] mt-0.5">
+                          {stg.dates}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#e6e6e6] dark:border-white/10 flex items-center justify-between text-xs font-medium text-[#615d59] dark:text-[#94a3b8] group-hover:text-[#000000] dark:group-hover:text-white transition">
+                        <span>Rincian Modul</span>
+                        <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </section>
 
-        {/* 8. 6 Modul Navigasi Utama (_oX Browser Window Frames) */}
-        <section className="space-y-4">
+        {/* 8. 6 Modul Navigasi Utama (Apple SF Database Tiles) */}
+        <section className="space-y-5">
           <div>
-            <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-              Eksplor Modul & Bahan Ajar
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#007aff] dark:text-[#60a5fa]">
+              Eksplorasi Fitur
+            </span>
+            <h3 className="text-xl sm:text-2xl font-bold text-[#000000] dark:text-white tracking-tight mt-0.5">
+              Pusat Pembelajaran & Alat Kerja
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Pilih modul di bawah untuk mengakses jadwal, materi, kuis MOOC, snippet praktikum, dan tugas kelas
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8]">
+              Akses cepat seluruh materi 120 JP, jadwal live, bank kuis MOOC, snippet praktikum, dan generator AI makalah.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Card 1: Roadmap */}
             <Link href="/schedules" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-sky-50 dark:bg-sky-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-sky-800 dark:text-sky-300">Roadmap 35 Hari</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <Calendar className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    35 HARI
+                  </span>
                 </div>
-                <div className="p-4 space-y-2">
-                  <Calendar className="h-5 w-5 text-sky-600 dark:text-sky-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-sky-600 dark:group-hover:text-sky-300 transition">
-                    Jadwal & Agenda Sesi
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                    Jadwal & Roadmap Sesi
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Cek jadwal per hari, pembagian waktu, dan tautan sesi Zoom perkuliahan.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Cek rundown harian, pembagian jam JP, dan tautan sesi Zoom perkuliahan.
                   </p>
                 </div>
               </div>
@@ -264,18 +263,21 @@ export default async function HomePage() {
 
             {/* Card 2: Materi */}
             <Link href="/materials" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300">Modul 120 JP</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <FileText className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    120 JP PDF
+                  </span>
                 </div>
-                <div className="p-4 space-y-2">
-                  <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
                     Pustaka Modul PDF
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Download modul resmi & baca langsung via reader interaktif dengan catatan belajar.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Unduh modul resmi & baca langsung via reader interaktif dengan catatan belajar.
                   </p>
                 </div>
               </div>
@@ -283,18 +285,21 @@ export default async function HomePage() {
 
             {/* Card 3: Tugas */}
             <Link href="/tasks" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-rose-50 dark:bg-rose-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-rose-800 dark:text-rose-300">Tugas & Praktik</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <BookOpen className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    DEADLINE
+                  </span>
                 </div>
-                <div className="p-4 space-y-2">
-                  <BookOpen className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-rose-600 dark:group-hover:text-rose-300 transition">
-                    Tugas & Deadline
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                    Tugas & Lembar Kerja
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Pantau batas waktu tugas mandiri dan link kirim ke portal LMS Kejaksaan.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Pantau tugas individu, checklist lembar kerja, dan panduan upload portal LMS.
                   </p>
                 </div>
               </div>
@@ -302,18 +307,21 @@ export default async function HomePage() {
 
             {/* Card 4: Kuis MOOC */}
             <Link href="/quiz" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-amber-800 dark:text-amber-300">Latihan Ujian</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <Sparkles className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    SIMULASI
+                  </span>
                 </div>
-                <div className="p-4 space-y-2">
-                  <HelpCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
                     Simulasi Kuis MOOC
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Kuis interaktif pilihan ganda seputar SPBE, Database, Keamanan & Angka Kredit dengan skor instan.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Kuis interaktif pilihan ganda seputar SPBE, Database & Angka Kredit dengan skor instan.
                   </p>
                 </div>
               </div>
@@ -321,77 +329,83 @@ export default async function HomePage() {
 
             {/* Card 5: Snippets */}
             <Link href="/snippets" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-emerald-800 dark:text-emerald-300">Lab Prakom</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
-                </div>
-                <div className="p-4 space-y-2">
-                  <Code2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition">
-                    Code & Query Snippets
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Kumpulan template SQL query, backup automation Linux, dan konfigurasi server satker.
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Card 6: Pengumuman */}
-            <Link href="/announcements" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] group-hover:border-slate-400 dark:group-hover:border-slate-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col justify-between">
-                <div className="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-950/80 border-b border-slate-200/80 dark:border-[#2A3550]">
-                  <span className="text-[10px] font-black text-amber-800 dark:text-amber-300">Broadcast Info</span>
-                  <span className="font-mono text-[10px] font-black text-slate-500 dark:text-slate-400">_oX</span>
-                </div>
-                <div className="p-4 space-y-2">
-                  <BellRing className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  <h4 className="font-black text-sm text-slate-900 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-300 transition">
-                    Pengumuman Diklat
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                    Edaran penting panitia diklat, info link Zoom baru, dan berita kelas.
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Card 7: Pusat Bantuan & FAQ Admin */}
-            <Link href="/faq" className="group block sm:col-span-2 lg:col-span-3">
-              <div className="h-full rounded-[12px] bg-gradient-to-r from-amber-50/80 via-white to-emerald-50/50 dark:from-[#1E1712] dark:via-[#161B26] dark:to-[#1B2130] border border-amber-300/80 dark:border-amber-900/50 group-hover:border-orange-500 dark:group-hover:border-emerald-500 group-hover:shadow-xs transition-all overflow-hidden flex flex-col sm:flex-row items-center justify-between p-4 sm:p-4.5 gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-orange-600 text-white shadow-sm shadow-orange-600/20">
-                    <HelpCircle className="h-5 w-5" />
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <Code2 className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <div className="space-y-0.5">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    LAB PRAKOM
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                    Code & Query Vault
+                  </h4>
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Koleksi template SQL query, backup automation Linux, dan script konfigurasi server.
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 6: AI Makalah */}
+            <Link href="/paper-generator" className="group block">
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                    <GraduationCap className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    AI GENERATOR
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                    AI Makalah Inovasi
+                  </h4>
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Generator proposal 5 Bab otomatis untuk seminar laboratorium satker.
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 7: FAQ Sunset Section */}
+            <Link href="/faq" className="group block sm:col-span-2 lg:col-span-3">
+              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col sm:flex-row items-center justify-between p-5 gap-4 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa]">
+                    <HelpCircle className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-[9px] font-black uppercase text-orange-700 dark:text-amber-300">
-                        Pusat Bantuan & Pengaduan
+                      <span className="rounded-full bg-[#007aff] text-white px-2.5 py-0.5 text-[10px] font-semibold">
+                        Pusat Bantuan
                       </span>
-                      <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 hidden sm:inline">
-                        • Respon Cepat Admin
+                      <span className="text-xs font-semibold text-[#16a34a] dark:text-[#4ade80] hidden sm:inline">
+                        • Respon Cepat Admin Kelas
                       </span>
                     </div>
-                    <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-orange-600 dark:group-hover:text-amber-400 transition">
-                      Tanya Jawab (FAQ) & Kontak Admin Kelas
+                    <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                      Tanya Jawab (FAQ) & Formulir Aduan Kendala
                     </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                      Panduan lengkap jadwal, LMS, dan formulir aduan kendala teknis atau saran perbaikan kelas.
+                    <p className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                      Panduan lengkap kendala jadwal, sinkronisasi materi LMS, dan kontak langsung ke admin kelas.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs font-black text-orange-600 dark:text-amber-400 self-end sm:self-center shrink-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white px-4.5 py-2 text-xs font-semibold shrink-0 transition shadow-xs">
                   <span>Buka Pusat Bantuan</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </div>
               </div>
             </Link>
           </div>
         </section>
 
-        {/* 9. Supabase Status Footer */}
+        {/* 9. Supabase Status Indicator */}
         <div className="pt-2">
           <SupabaseStatus />
         </div>

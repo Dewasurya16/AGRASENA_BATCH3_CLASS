@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { MinimalistLoader } from "@/components/ui/minimalist-loader"
+import { exportToDocx } from "@/lib/export-docx"
 
 const PRESET_TOPICS = [
   {
@@ -168,11 +169,14 @@ export function PaperGeneratorHub() {
   const [authorNip, setAuthorNip] = React.useState("")
   const [authorSatker, setAuthorSatker] = React.useState("Kejaksaan Negeri Soppeng")
   const [authorRank, setAuthorRank] = React.useState("Pranata Komputer Ahli Pertama (Gol. III/a)")
+  const [mentorName, setMentorName] = React.useState("")
+  const [coachName, setCoachName] = React.useState("")
   const [topicTitle, setTopicTitle] = React.useState(PRESET_TOPICS[0].title)
   const [problemStatement, setProblemStatement] = React.useState(PRESET_TOPICS[0].problem)
   const [desiredOutcome, setDesiredOutcome] = React.useState("Tersusunnya sistem otomatisasi yang aman, efisien, dan siap diintegrasikan dengan aplikasi perkara Kejaksaan.")
   
   const [isGenerating, setIsGenerating] = React.useState(false)
+  const [isExportingDocx, setIsExportingDocx] = React.useState(false)
   const [generatedPaper, setGeneratedPaper] = React.useState<string | null>(null)
   const [copied, setCopied] = React.useState(false)
 
@@ -222,10 +226,10 @@ export function PaperGeneratorHub() {
       if (data.paper) {
         setGeneratedPaper(data.paper)
       } else {
-        alert(data.message || "Gagal menyusun proposal makalah.")
+        alert(data.error || "Gagal menyusun naskah. Silakan coba kembali.")
       }
-    } catch {
-      alert("Terjadi kendala koneksi ke server AI generator.")
+    } catch (err: any) {
+      alert("Terjadi kendala jaringan: " + err.message)
     } finally {
       setIsGenerating(false)
     }
@@ -238,7 +242,29 @@ export function PaperGeneratorHub() {
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // Clean Microsoft Word Document Exporter (Standar Naskah Dinas Pusdiklat: Margin 4cm Kiri, 3cm Atas/Bawah/Kanan)
+  // Native Microsoft Word (.docx) Exporter with OpenXML & 4-4-3-3 Standard Margins
+  const handleDownloadDocx = async () => {
+    if (!generatedPaper) return
+    try {
+      setIsExportingDocx(true)
+      await exportToDocx({
+        title: topicTitle || "Rancangan Proyek Inovasi TIK Satker",
+        authorName,
+        authorNip,
+        authorSatker,
+        mentorName,
+        coachName,
+        content: generatedPaper,
+      })
+    } catch (err) {
+      console.error("Gagal ekspor .docx:", err)
+      handleDownloadDoc()
+    } finally {
+      setIsExportingDocx(false)
+    }
+  }
+
+  // Fallback Microsoft Word HTML Document (.doc) Exporters/Bawah/Kanan)
   const handleDownloadDoc = () => {
     if (!generatedPaper) return
 
@@ -329,42 +355,42 @@ export function PaperGeneratorHub() {
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       {/* Header Banner */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <GraduationCap className="h-3.5 w-3.5" />
+          <span className="flex items-center gap-1.5 rounded-full bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe] border border-[#af52de]/30 px-3 py-0.5 text-xs font-semibold">
+            <GraduationCap className="h-3.5 w-3.5 text-[#af52de]" strokeWidth={2} />
             <span>Asisten Draf Seminar Diklat</span>
           </span>
-          <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
+          <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
             Standar Format Pusdiklat Kejaksaan RI
           </span>
         </div>
 
-        <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-          AI Generator Draf Proposal Makalah & <br className="hidden sm:block" />
-          <span className="text-emerald-700 dark:text-emerald-400">Rencana Aksi Inovasi Satker</span>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+          AI Generator Makalah & <br className="hidden sm:block" />
+          <span className="text-[#007aff] dark:text-[#60a5fa]">Proposal Proyek Perubahan Satker.</span>
         </h1>
 
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
-          Susun draf kerangka proposal inovasi teknologi informasi (5 Bab Lengkap: Pendahuluan, Regulasi SPBE, Arsitektur Sistem, Rencana Aksi 6 Bulan, dan Rekomendasi). Unduh langsung dalam format <strong>Microsoft Word (.doc)</strong> dengan standar naskah dinas resmi (Margin 4-3-3-4) untuk disempurnakan sesuai data satker Anda.
+        <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed max-w-3xl">
+          Bantu penyusunan naskah proposal inovasi TIK 5 bab lengkap (Latar Belakang, Identifikasi Masalah, Desain Solusi, Tahapan Implementasi, dan Rencana Evaluasi) siap diekspor ke format dokumen dinas Word.
         </p>
       </motion.div>
 
       {/* Preset Inspiration Topics */}
-      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
-        <div className="flex items-center gap-2 text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-          <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+      <div className="rounded-[14px] bg-white dark:bg-[#151c28] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3.5">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#000000] dark:text-white uppercase tracking-wider">
+          <Lightbulb className="h-4 w-4 text-[#ff9500]" strokeWidth={2} />
           <span>Pilih Topik Inspirasi Proyek Inovasi Satker:</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {PRESET_TOPICS.map((preset) => {
             const isSelected = topicTitle === preset.title
             return (
@@ -372,19 +398,19 @@ export function PaperGeneratorHub() {
                 key={preset.id}
                 type="button"
                 onClick={() => handleSelectPreset(preset)}
-                className={`flex flex-col text-left p-3 rounded-[8px] border transition-all cursor-pointer ${
+                className={`flex flex-col text-left p-3.5 rounded-[12px] border transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 dark:border-emerald-500 shadow-2xs"
-                    : "bg-slate-50 dark:bg-[#161B26] border-slate-200/80 dark:border-[#2A3550] hover:border-slate-300 dark:hover:border-slate-600"
+                    ? "bg-[#af52de]/15 border-[#af52de] shadow-xs"
+                    : "bg-[#f6f5f4] dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 hover:border-[#af52de]/50"
                 }`}
               >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-[4px] border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between gap-1 mb-1.5">
+                  <span className="text-[9px] font-bold uppercase text-[#8a38b5] dark:text-[#d8b4fe] bg-white dark:bg-[#101520] px-2.5 py-0.5 rounded-full border border-[#af52de]/30">
                     {preset.category}
                   </span>
-                  {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />}
+                  {isSelected && <Check className="h-4 w-4 text-[#af52de]" strokeWidth={2} />}
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug">
+                <h4 className="text-xs font-bold text-[#000000] dark:text-white line-clamp-2 leading-snug">
                   {preset.title}
                 </h4>
               </button>
@@ -397,15 +423,15 @@ export function PaperGeneratorHub() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Form Inputs */}
         <div className="lg:col-span-5 space-y-4">
-          <form onSubmit={handleGenerate} className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3.5">
-            <h3 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2 border-b border-slate-100 dark:border-[#2A3550] pb-2.5">
-              <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <form onSubmit={handleGenerate} className="rounded-[14px] bg-white dark:bg-[#151c28] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4">
+            <h3 className="text-xs sm:text-sm font-bold text-[#000000] dark:text-white flex items-center gap-2 border-b border-[#e6e6e6] dark:border-white/10 pb-3">
+              <Building2 className="h-4 w-4 text-[#af52de]" strokeWidth={2} />
               <span>Data Penyusun & Satuan Kerja</span>
             </h3>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                   Nama Lengkap Peserta:
                 </label>
                 <input
@@ -413,13 +439,13 @@ export function PaperGeneratorHub() {
                   value={authorName}
                   onChange={(e) => setAuthorName(e.target.value)}
                   placeholder="Contoh: Budi Santoso, S.Kom."
-                  className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+                  className="h-10 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-4 text-xs font-semibold text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                     NIP / NRP:
                   </label>
                   <input
@@ -427,11 +453,11 @@ export function PaperGeneratorHub() {
                     value={authorNip}
                     onChange={(e) => setAuthorNip(e.target.value)}
                     placeholder="1995xxxx xxxxx"
-                    className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+                    className="h-10 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-4 text-xs font-semibold text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                     Jenjang Jabatan:
                   </label>
                   <input
@@ -439,13 +465,13 @@ export function PaperGeneratorHub() {
                     value={authorRank}
                     onChange={(e) => setAuthorRank(e.target.value)}
                     placeholder="Ahli Pertama (III/a)"
-                    className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+                    className="h-10 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-4 text-xs font-semibold text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                   Asal Satuan Kerja (Kejati / Kejari / Cabjari):
                 </label>
                 <input
@@ -454,12 +480,12 @@ export function PaperGeneratorHub() {
                   onChange={(e) => setAuthorSatker(e.target.value)}
                   placeholder="Contoh: Kejaksaan Negeri Soppeng"
                   required
-                  className="h-10 w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] px-3 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none"
+                  className="h-10 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-4 text-xs font-semibold text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                   Judul Proyek Inovasi TI:
                 </label>
                 <textarea
@@ -468,12 +494,12 @@ export function PaperGeneratorHub() {
                   rows={2}
                   required
                   placeholder="Ketik judul inovasi atau pilih dari inspirasi di atas..."
-                  className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-2.5 text-xs font-bold text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none resize-none"
+                  className="w-full rounded-[12px] border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] p-3 text-xs font-semibold text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-semibold text-[#31302e] dark:text-[#cbd5e1] mb-1">
                   Isu / Masalah Nyata yang Dihadapi di Satker:
                 </label>
                 <textarea
@@ -481,62 +507,74 @@ export function PaperGeneratorHub() {
                   onChange={(e) => setProblemStatement(e.target.value)}
                   rows={2}
                   placeholder="Jelaskan kendala teknis atau masalah layanan di kantor..."
-                  className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-[#F8FAFC] dark:bg-[#181D28] p-2.5 text-xs font-medium text-[#18181B] dark:text-white focus:border-[#0D824B] focus:outline-none resize-none"
+                  className="w-full rounded-[12px] border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] p-3 text-xs font-medium text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#af52de] focus:outline-none resize-none"
                 />
               </div>
             </div>
 
-            <Button
+            <button
               type="submit"
-              variant="orange"
-              size="lg"
-              isLoading={isGenerating}
-              loadingText="Menyusun Draf Makalah 5 Bab..."
-              className="w-full font-black text-xs uppercase tracking-wider shadow-md cursor-pointer justify-center"
-              icon={<Sparkles className="h-4 w-4" />}
+              disabled={isGenerating}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#af52de] hover:bg-[#9a38c9] active:scale-[0.98] py-2.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer disabled:opacity-60"
             >
-              ✨ Susun Proposal Makalah AI
-            </Button>
+              {isGenerating ? (
+                <>
+                  <Spinner size="xs" variant="white" />
+                  <span>Menyusun Draf Makalah 5 Bab...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" strokeWidth={2} />
+                  <span>Susun Proposal Makalah AI</span>
+                </>
+              )}
+            </button>
           </form>
         </div>
 
         {/* Output Paper Preview */}
         <div className="lg:col-span-7">
-          <div className="rounded-[28px] bg-white dark:bg-[#12161F] border-2 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full min-h-[550px] overflow-hidden">
+          <div className="rounded-[14px] bg-white dark:bg-[#151c28] border border-[#e6e6e6] dark:border-white/10 shadow-xs flex flex-col h-full min-h-[550px] overflow-hidden">
             {/* Output Header Controls */}
-            <div className="flex flex-col gap-2.5 border-b border-slate-200 dark:border-slate-800 p-4 bg-[#FAFBFD] dark:bg-[#161B26] shrink-0">
+            <div className="flex flex-col gap-2.5 border-b border-[#e6e6e6] dark:border-white/10 p-4 bg-[#f6f5f4] dark:bg-[#141b27] shrink-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-[#0D824B] dark:text-emerald-400" />
-                  <span className="text-xs font-black text-[#131E29] dark:text-white">
+                  <BookOpen className="h-4 w-4 text-[#af52de]" strokeWidth={2} />
+                  <span className="text-xs font-bold text-[#000000] dark:text-white">
                     Draf Naskah Seminar Proyek Akhir (5 Bab Lengkap)
                   </span>
                   {generatedPaper && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
-                      <Check className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-2.5 py-0.5 rounded-full border border-[#34c759]/30">
+                      <Check className="h-3 w-3" strokeWidth={2} />
                       5 Bab Tuntas ({generatedPaper.length.toLocaleString("id-ID")} Karakter)
                     </span>
                   )}
                 </div>
 
                 {generatedPaper && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={handleCopy}
-                      className="flex items-center gap-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                      className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-[#1f283a] text-[#000000] dark:text-white px-3 py-1.5 text-xs font-semibold border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
                     >
-                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      {copied ? <Check className="h-3.5 w-3.5 text-[#16a34a]" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5" strokeWidth={2} />}
                       <span>{copied ? "Tersalin!" : "Salin"}</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={handleDownloadDoc}
-                      className="flex items-center gap-1.5 bg-[#0D824B] hover:bg-[#0B6B3E] text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer"
+                      onClick={handleDownloadDocx}
+                      disabled={isExportingDocx}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] disabled:opacity-50 text-white px-3.5 py-1.5 text-xs font-semibold shadow-xs transition cursor-pointer"
+                      title="Unduh format Office OpenXML .docx (Standar Margin 4-4-3-3)"
                     >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Unduh (.doc Word)</span>
+                      {isExportingDocx ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Download className="h-3.5 w-3.5" strokeWidth={2} />
+                      )}
+                      <span>{isExportingDocx ? "Mengekspor..." : "Unduh (.docx Word)"}</span>
                     </button>
                   </div>
                 )}
@@ -545,7 +583,7 @@ export function PaperGeneratorHub() {
               {/* Chapter Jump Pills when paper is generated */}
               {generatedPaper && (
                 <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none text-[11px]">
-                  <span className="text-[10px] font-bold text-slate-500 shrink-0">Navigasi Bab:</span>
+                  <span className="text-[10px] font-semibold text-[#615d59] dark:text-[#94a3b8] shrink-0">Navigasi Bab:</span>
                   {[
                     { id: "bab-1", label: "Bab I: Pendahuluan" },
                     { id: "bab-2", label: "Bab II: Regulasi & Teori" },
@@ -560,7 +598,7 @@ export function PaperGeneratorHub() {
                         const el = document.getElementById(ch.id)
                         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
                       }}
-                      className="shrink-0 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-[10.5px] border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                      className="shrink-0 px-3 py-1 rounded-full bg-white dark:bg-[#101520] hover:bg-[#af52de]/10 text-[#615d59] dark:text-[#cbd5e1] hover:text-[#af52de] font-semibold text-[11px] border border-[#e6e6e6] dark:border-white/10 transition cursor-pointer"
                     >
                       {ch.label}
                     </button>

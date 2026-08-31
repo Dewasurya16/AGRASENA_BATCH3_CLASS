@@ -443,38 +443,38 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       {/* 1. Header Card */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-7 border border-slate-200/90 dark:border-[#2A3550] shadow-xs space-y-4"
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-3 py-0.5 text-xs font-black uppercase text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                <FileText className="h-3.5 w-3.5" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-3 py-0.5 text-xs font-semibold">
+                <FileText className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
                 <span>Pustaka Bahan Ajar 120 JP</span>
               </span>
-              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-amber-300">
+              <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Akses Instan 24 Jam
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
               Pustaka Modul Bahan Ajar PDF & <br className="hidden sm:block" />
-              <span className="text-emerald-700 dark:text-emerald-400">AI Ringkasan Belajar</span>
+              <span className="text-[#007aff] dark:text-[#60a5fa]">AI Ringkasan Belajar.</span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
               Seluruh modul pelatihan fungsional 120 JP telah diarsipkan lengkap. Baca langsung di browser dengan PDF Reader responsif, buat rangkuman otomatis dengan asisten AI, dan simpan catatan belajar pribadi Anda.
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <span className="rounded-[8px] bg-slate-100 dark:bg-[#161B26] px-3.5 py-1.5 text-xs font-black text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-[#2A3550]">
+            <span className="rounded-full bg-[#f6f5f4] dark:bg-[#141b27] px-3.5 py-1.5 text-xs font-semibold text-[#31302e] dark:text-[#cbd5e1] border border-[#e6e6e6] dark:border-white/10 shadow-2xs">
               Total {items.length} Modul Resmi
             </span>
           </div>
@@ -482,16 +482,16 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
       </motion.div>
 
       {/* 2. Filter & Search Controls */}
-      <div className="rounded-[12px] bg-white dark:bg-[#1B2130] p-3 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3">
+      <div className="rounded-[12px] bg-white dark:bg-[#151c28] p-3 sm:p-4 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-3">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
           <div className="relative sm:col-span-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" strokeWidth={2} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari judul modul / mata kuliah..."
-              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] pl-9 pr-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+              className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] pl-9 pr-3 text-xs font-normal text-[#000000] dark:text-white placeholder-[#94a3b8] focus:border-[#007aff] focus:outline-none"
             />
           </div>
 
@@ -499,7 +499,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+              className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-3.5 text-xs font-medium text-[#31302e] dark:text-[#cbd5e1] focus:border-[#007aff] focus:outline-none cursor-pointer"
             >
               {subjects.map((sub) => (
                 <option key={sub} value={sub}>
@@ -513,7 +513,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             <select
               value={selectedWeek}
               onChange={(e) => setSelectedWeek(e.target.value)}
-              className="h-9 w-full rounded-[8px] border border-slate-200/80 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:border-slate-400 dark:focus:border-indigo-500 focus:outline-none"
+              className="h-9 w-full rounded-full border border-[#e6e6e6] dark:border-white/10 bg-[#f6f5f4] dark:bg-[#101520] px-3.5 text-xs font-medium text-[#31302e] dark:text-[#cbd5e1] focus:border-[#007aff] focus:outline-none cursor-pointer"
             >
               {weeks.map((wk) => (
                 <option key={wk} value={wk}>
@@ -527,18 +527,23 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
 
       {/* 3. Module Cards Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-10 text-center border border-dashed border-slate-200/90 dark:border-[#2A3550] space-y-2.5">
-          <FileText className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-500" />
-          <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">Tidak Ada Modul yang Sesuai</h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+        <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-10 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 space-y-2.5">
+          <FileText className="mx-auto h-10 w-10 text-[#615d59] dark:text-slate-500" strokeWidth={1.5} />
+          <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white">Tidak Ada Modul yang Sesuai</h4>
+          <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-sm mx-auto">
             Coba ubah kata kunci pencarian atau reset filter tahapan diklat dan minggu pertemuan.
           </p>
-          <Button variant="secondary" size="sm" className="rounded-[8px]" onClick={resetFilters} icon={<RotateCcw className="h-3.5 w-3.5" />}>
-            Reset Filter
-          </Button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#1f283a] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#28354d] transition cursor-pointer"
+            onClick={resetFilters}
+          >
+            <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+            <span>Reset Filter</span>
+          </button>
         </div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        <motion.div layout className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((item) => (
             <motion.div
               key={item.id}
@@ -546,60 +551,60 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ y: -2, transition: { duration: 0.15 } }}
-              className="group flex flex-col justify-between rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] hover:border-slate-400 dark:hover:border-slate-500 shadow-2xs transition-all duration-200"
+              className="group flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs transition-all duration-200"
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-3 py-0.5 text-[10px] font-semibold border border-[#34c759]/30">
                     Pertemuan {item.week_number}
                   </span>
-                  <span className="font-mono text-[11px] font-semibold text-slate-400">
+                  <span className="font-mono text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8]">
                     {formatFileSize(item.file_size)}
                   </span>
                 </div>
 
-                <h4 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors line-clamp-2">
+                <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors line-clamp-2">
                   {item.title}
                 </h4>
-                <p className="text-xs font-bold text-orange-600 dark:text-amber-400">{item.subject_name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                <p className="text-xs font-semibold text-[#007aff] dark:text-[#60a5fa]">{item.subject_name}</p>
+                <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
                   {item.description || "Modul kurikulum 120 JP Fungsional Pranata Komputer Keahlian."}
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 dark:border-[#2A3550] pt-3 mt-3 text-xs text-slate-500 dark:text-slate-400 gap-3">
-                <span className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 truncate max-w-[180px]">
-                  <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-[#e6e6e6] dark:border-white/10 pt-3.5 mt-4 text-xs text-[#615d59] dark:text-[#94a3b8] gap-3">
+                <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8] truncate max-w-[180px]">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]">
+                    <FileText className="h-3.5 w-3.5" strokeWidth={2} />
+                  </div>
                   {item.file_name}
                 </span>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-[8px] text-xs font-bold"
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] dark:bg-[#1f283a] px-3.5 py-1.5 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
                     onClick={() => {
                       setPreviewMaterial(item)
                       setReaderTab("pdf")
                     }}
-                    icon={<Eye className="h-3.5 w-3.5" />}
                   >
-                    Baca Modul
-                  </Button>
+                    <Eye className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
+                    <span>Baca Modul</span>
+                  </button>
                   <a
                     href={item.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     download={item.file_name}
                   >
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="rounded-[8px] text-xs font-bold"
-                      icon={<Download className="h-3.5 w-3.5" />}
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
                     >
-                      Unduh
-                    </Button>
+                      <Download className="h-3.5 w-3.5" strokeWidth={2} />
+                      <span>Unduh</span>
+                    </button>
                   </a>
                 </div>
               </div>

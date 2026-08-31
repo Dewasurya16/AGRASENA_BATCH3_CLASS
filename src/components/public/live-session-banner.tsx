@@ -519,10 +519,10 @@ export function LiveSessionBanner({
                 href={activeSession.zoom_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-[11px] font-black text-white transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-black text-white dark:bg-white dark:text-black hover:opacity-85 active:scale-[0.98] px-5 py-2.5 text-xs font-medium transition-all cursor-pointer shadow-2xs"
               >
                 <Video className="h-3.5 w-3.5" />
-                Buka Ruang Kelas
+                <span>Buka Ruang Kelas</span>
                 <ExternalLink className="h-3 w-3 opacity-70" />
               </a>
             )}
@@ -531,10 +531,10 @@ export function LiveSessionBanner({
               href={RUANG_DIKLAT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] px-4 py-2 text-[11px] font-black text-slate-600 dark:text-[#C0CEDF] transition-all cursor-pointer border border-slate-200 dark:border-[#2A3550]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] px-5 py-2.5 text-xs font-semibold transition-all cursor-pointer"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              Buka Portal Diklat
+              <span>Buka Portal Diklat</span>
             </a>
           </div>
         </div>
@@ -542,63 +542,25 @@ export function LiveSessionBanner({
     )
   }
 
-  /* ─── VARIANT: 'home' — dark banner (default) ─── */
+  /* ─── VARIANT: 'home' — Notion Indigo / Deep Surface Banner (default) ─── */
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-      className={`relative overflow-hidden rounded-[14px] p-4 sm:p-5 text-white shadow-lg border transition-all ${
-        phase === 'in_class'
-          ? "bg-gradient-to-r from-[#171C35] via-[#1B2342] to-[#121625] shadow-indigo-950/30 border-indigo-500/25"
-          : phase === 'in_break'
-          ? "bg-gradient-to-r from-[#1A1F35] via-[#182638] to-[#121828] shadow-slate-950/30 border-amber-500/25"
-          : phase === 'task_time'
-          ? "bg-gradient-to-r from-[#1A1842] via-[#241944] to-[#101524] shadow-indigo-950/30 border-indigo-500/25"
-          : phase === 'prep_time'
-          ? "bg-gradient-to-r from-[#0F1626] via-[#182338] to-[#111624] shadow-black/30 border-sky-500/20"
-          : "bg-gradient-to-r from-[#161C32] via-[#1A223E] to-[#121626] shadow-indigo-950/30 border-indigo-500/25"
-      }`}
+      className="relative overflow-hidden rounded-[16px] p-5 sm:p-6 text-white bg-[#172033] dark:bg-[#121824] border border-white/10 dark:border-white/10 transition-all shadow-xs"
     >
-      {/* Decorative ambient subtle glows */}
-      <div
-        className={`absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl pointer-events-none ${
-          phase === 'in_class'
-            ? "bg-indigo-500/15"
-            : phase === 'in_break'
-            ? "bg-amber-500/15"
-            : phase === 'task_time'
-            ? "bg-indigo-500/15"
-            : phase === 'prep_time'
-            ? "bg-amber-500/10"
-            : "bg-indigo-500/15"
-        }`}
-      />
-      <div
-        className={`absolute -right-8 -bottom-8 h-40 w-40 rounded-full blur-3xl pointer-events-none ${
-          phase === 'in_class'
-            ? "bg-violet-500/15"
-            : phase === 'in_break'
-            ? "bg-emerald-500/15"
-            : phase === 'task_time'
-            ? "bg-purple-500/15"
-            : phase === 'prep_time'
-            ? "bg-emerald-500/15"
-            : "bg-violet-500/15"
-        }`}
-      />
-
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
         {/* Left Status & Contextual Info */}
         <div className="flex flex-col gap-2.5 max-w-3xl flex-1 min-w-0">
           
-          {/* Phase Badges Rail (Streamlined to 2-3 clean chips) */}
+          {/* Phase Badges Rail */}
           <div className="flex flex-wrap items-center gap-2">
             
             {/* 1. Sesi Pembelajaran Aktif */}
             {phase === 'in_class' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/90 text-white border border-rose-400/50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-500 text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
                 <span className="flex h-1.5 w-1.5 rounded-full bg-white animate-ping" />
                 Sesi Aktif
               </span>
@@ -606,31 +568,31 @@ export function LiveSessionBanner({
 
             {/* 2. Jeda Istirahat Antar Sesi */}
             {phase === 'in_break' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 border border-amber-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                <Coffee className="h-3 w-3 text-slate-950" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#dd5b00] text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
+                <Coffee className="h-3 w-3 text-white" />
                 Jeda Istirahat
               </span>
             )}
 
             {/* 3. Kelas Selesai -> Waktu Tugas Mandiri */}
             {phase === 'task_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-indigo-600/90 text-white border border-indigo-400/40 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                <CheckCircle2 className="h-3 w-3 text-emerald-300" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#0075de] text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
+                <Clock className="h-3 w-3 text-white" />
                 Waktu Tugas Mandiri
               </span>
             )}
 
-            {/* 4. Dini Hari -> Persiapan Kelas Pagi Ini */}
+            {/* 4. Sesi Malam / Persiapan Besok */}
             {phase === 'prep_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/90 text-slate-950 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
-                <Coffee className="h-3 w-3 text-slate-950" />
-                Persiapan Kelas Pagi Ini
+              <span className="flex items-center gap-1.5 rounded-full bg-white/20 text-white border border-white/20 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
+                <Clock className="h-3 w-3 text-white" />
+                Persiapan Besok
               </span>
             )}
 
             {/* 5. Weekend / Hari Libur -> SELAMAT BERLIBUR */}
             {phase === 'weekend' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-xs">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 Libur Akhir Pekan
               </span>
@@ -809,7 +771,7 @@ export function LiveSessionBanner({
 
         </div>
 
-        {/* Right Dynamic Actions by Phase (Compact, tactile buttons) */}
+        {/* Right Dynamic Actions by Phase (Mobbin stadium pills) */}
         <div className="flex flex-col sm:flex-row lg:flex-col items-stretch gap-2 shrink-0 w-full lg:w-48">
           
           {/* Action on Active Class (08:00 - 16:00) or Break */}
@@ -818,11 +780,11 @@ export function LiveSessionBanner({
               href={activeSession.zoom_url || activeSession.meeting_link || RUANG_DIKLAT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#141414] hover:bg-[#f3f3f3] active:scale-[0.98] px-5 py-2.5 text-xs font-semibold transition-all cursor-pointer"
             >
-              <Video className="h-3.5 w-3.5 text-white" />
+              <Video className="h-3.5 w-3.5" strokeWidth={2} />
               <span>Masuk Ruang Zoom</span>
-              <ExternalLink className="h-3 w-3 text-white/80" />
+              <ExternalLink className="h-3 w-3 opacity-70" strokeWidth={2} />
             </a>
           )}
 
@@ -830,15 +792,15 @@ export function LiveSessionBanner({
           {phase === 'task_time' && (
             <>
               <Link href="/tasks" className="w-full">
-                <button className="w-full flex items-center justify-center gap-2 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
-                  <Upload className="h-3.5 w-3.5 text-white" />
+                <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#141414] hover:bg-[#f3f3f3] active:scale-[0.98] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer">
+                  <Upload className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Kumpulkan Tugas</span>
-                  <ArrowRight className="h-3 w-3 text-indigo-200" />
+                  <ArrowRight className="h-3 w-3" strokeWidth={2} />
                 </button>
               </Link>
               <Link href="/materials" className="w-full">
-                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
+                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Bahan Ajar PDF</span>
                 </button>
               </Link>
@@ -849,15 +811,15 @@ export function LiveSessionBanner({
           {phase === 'prep_time' && (
             <>
               <Link href="/materials" className="w-full">
-                <button className="w-full flex items-center justify-center gap-2 rounded-[8px] bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-black text-white shadow-md shadow-emerald-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5 text-white" />
+                <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-white text-[#141414] hover:bg-[#f3f3f3] active:scale-[0.98] px-4 py-2.5 text-xs font-semibold transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Pelajari Modul</span>
-                  <ArrowRight className="h-3 w-3 text-emerald-200" />
+                  <ArrowRight className="h-3 w-3" strokeWidth={2} />
                 </button>
               </Link>
               <Link href="/schedules" className="w-full">
-                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <Calendar className="h-3.5 w-3.5 text-sky-300" />
+                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
+                  <Calendar className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Jadwal Sesi</span>
                 </button>
               </Link>
@@ -868,15 +830,15 @@ export function LiveSessionBanner({
           {phase === 'weekend' && (
             <>
               <Link href="/schedules" className="w-full">
-                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-indigo-600 hover:bg-indigo-500 px-3.5 py-2 text-xs font-black text-white shadow-md shadow-indigo-950/30 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer">
-                  <Calendar className="h-3.5 w-3.5 text-indigo-200" />
+                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white text-[#141414] hover:bg-[#f3f3f3] active:scale-[0.98] px-4 py-2 text-xs font-semibold transition-all cursor-pointer">
+                  <Calendar className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Jadwal {upcomingCurriculum.dayOfWeek}</span>
-                  <ArrowRight className="h-3 w-3 text-white" />
+                  <ArrowRight className="h-3 w-3" strokeWidth={2} />
                 </button>
               </Link>
               <Link href="/materials" className="w-full">
-                <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-white/10 hover:bg-white/15 border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5 text-indigo-300" />
+                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
+                  <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />
                   <span>Modul 120 JP</span>
                 </button>
               </Link>

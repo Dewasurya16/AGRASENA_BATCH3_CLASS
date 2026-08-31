@@ -1306,60 +1306,69 @@ export function CodeVault() {
         accept=".zip,application/zip,application/x-zip-compressed"
       />
 
-      {/* Top Header Title */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-[#E6F7ED] dark:bg-emerald-950/80 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#0D824B] dark:text-emerald-300">
-              Integrated Web IDE • 4 Pilar: Database • Frontend • Backend • Data Science
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-3xl font-black text-[#18181B] dark:text-white tracking-tight mt-2">
-            Prakom Code & SQL Web IDE
-          </h2>
-          <p className="text-xs sm:text-sm text-[#6B7C93] dark:text-slate-400">
-            Editor interaktif dengan sistem manajemen file terstruktur rapi berdasarkan 4 pilar kompetensi Pranata Komputer.
-          </p>
-        </div>
+      {/* Top Header Banner */}
+      <div className="rounded-[16px] bg-white dark:bg-[#222222] p-5 sm:p-7 border border-[#e6e6e6] dark:border-[#333333] shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#5856d6]/15 text-[#5856d6] dark:text-[#818cf8] border border-[#5856d6]/30 px-3 py-0.5 text-xs font-semibold">
+                <Code2 className="h-3.5 w-3.5 text-[#5856d6]" strokeWidth={2} />
+                <span>Code Vault & Practical Lab</span>
+              </span>
+              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
+                4 Pilar Kompetensi
+              </span>
+            </div>
 
-        {/* Action Button: Add Snippet */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-2 text-xs font-black text-white transition shadow-2xs cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>+ Tambah / Upload Codingan</span>
-          </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+              Prakom Code & SQL Web IDE <br className="hidden sm:block" />
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Integrated Multi-Language Workspace.</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+              Editor interaktif dengan sistem manajemen file terstruktur rapi berdasarkan 4 pilar kompetensi Pranata Komputer, dilengkapi simulasi eksekusi SQL & terminal bash.
+            </p>
+          </div>
+
+          {/* Action Button: Add Snippet */}
+          <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] px-4.5 py-2 text-xs sm:text-sm font-semibold text-white transition shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2} />
+              <span>+ Tambah / Upload Codingan</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Switcher: IDE vs Snippet Library */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-[#2A3550] pb-2">
+      {/* Main Switcher: IDE vs Snippet Library Stadium Pills */}
+      <div className="flex items-center gap-2 border-b border-[#e6e6e6] dark:border-white/10 pb-3">
         <button
           type="button"
           onClick={() => setActiveMainTab("ide")}
-          className={`flex items-center gap-2 rounded-[8px] px-4 py-1.5 text-xs font-black transition-all cursor-pointer ${
+          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
             activeMainTab === "ide"
-              ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-              : "bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#253045]"
+              ? "bg-[#007aff] text-white shadow-2xs"
+              : "bg-[#f6f5f4] dark:bg-[#141b27] text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white"
           }`}
         >
-          <TerminalIcon className="h-3.5 w-3.5 text-emerald-400" />
+          <TerminalIcon className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
           <span>⚡ Cloud Web IDE & Workspace</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveMainTab("library")}
-          className={`flex items-center gap-2 rounded-[8px] px-4 py-1.5 text-xs font-black transition-all cursor-pointer ${
+          className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
             activeMainTab === "library"
-              ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-              : "bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#253045]"
+              ? "bg-[#007aff] text-white shadow-2xs"
+              : "bg-[#f6f5f4] dark:bg-[#141b27] text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white"
           }`}
         >
-          <Code2 className="h-3.5 w-3.5 text-amber-400" />
+          <Code2 className="h-3.5 w-3.5 text-[#ff9500]" strokeWidth={2} />
           <span>📚 Pustaka Codingan ({allSnippets.length})</span>
         </button>
       </div>
@@ -1369,70 +1378,70 @@ export function CodeVault() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[14px] bg-[#12161F] border border-[#2A3550] shadow-xl overflow-hidden flex flex-col"
+          className="rounded-[14px] bg-[#101520] border border-[#e6e6e6] dark:border-white/10 shadow-xl overflow-hidden flex flex-col"
         >
           {/* 1. IDE TOP TITLEBAR & CONTROLS */}
-          <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#18181B] border-b border-slate-800 gap-3">
+          <div className="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#f6f5f4] dark:bg-[#141b27] border-b border-[#e6e6e6] dark:border-white/10 gap-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="h-3 w-3 rounded-full bg-rose-500/80 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-amber-500/80 inline-block" />
-                <span className="h-3 w-3 rounded-full bg-emerald-500/80 inline-block" />
+                <span className="h-3 w-3 rounded-full bg-[#ff5f56] inline-block" />
+                <span className="h-3 w-3 rounded-full bg-[#ffbd2e] inline-block" />
+                <span className="h-3 w-3 rounded-full bg-[#27c93f] inline-block" />
               </div>
-              <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300">
-                <span className="text-slate-500">workspace:</span>
-                <span className="text-emerald-400">prakom-625-diklat</span>
-                <span className="text-slate-600">/</span>
-                <span className="text-amber-400 font-normal">[{activeFile.category}]</span>
-                <span className="text-slate-600">/</span>
-                <span className="text-white">{activeFile.name}</span>
+              <div className="flex items-center gap-2 text-xs font-mono font-semibold text-[#615d59] dark:text-slate-300">
+                <span className="text-[#615d59] dark:text-slate-400">workspace:</span>
+                <span className="text-[#16a34a] dark:text-emerald-400 font-bold">prakom-625-diklat</span>
+                <span className="text-[#a39e98] dark:text-slate-600">/</span>
+                <span className="text-[#d97706] dark:text-amber-400 font-normal">[{activeFile.category}]</span>
+                <span className="text-[#a39e98] dark:text-slate-600">/</span>
+                <span className="text-[#000000] dark:text-white font-bold">{activeFile.name}</span>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => fileUploadInputRef.current?.click()}
-                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 transition cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] hover:bg-black/5 dark:hover:bg-[#28354d] border border-[#e6e6e6] dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white transition cursor-pointer shadow-2xs"
                 title="Upload file codingan (.py, .sql, .js, .html, .sh, dll)"
               >
-                <Upload className="h-3.5 w-3.5 text-emerald-400" />
+                <Upload className="h-3.5 w-3.5 text-[#16a34a] dark:text-emerald-400" strokeWidth={2} />
                 <span className="hidden sm:inline">Upload File</span>
               </button>
               <button
                 type="button"
                 onClick={() => zipUploadInputRef.current?.click()}
-                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 transition cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] hover:bg-black/5 dark:hover:bg-[#28354d] border border-[#e6e6e6] dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white transition cursor-pointer shadow-2xs"
                 title="Upload arsip ZIP proyek (akan langsung diekstrak)"
               >
-                <Archive className="h-3.5 w-3.5 text-amber-400" />
+                <Archive className="h-3.5 w-3.5 text-[#d97706] dark:text-amber-400" strokeWidth={2} />
                 <span className="hidden sm:inline">Upload ZIP</span>
               </button>
               <button
                 type="button"
                 onClick={handleDownloadActiveFile}
-                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 transition cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] hover:bg-black/5 dark:hover:bg-[#28354d] border border-[#e6e6e6] dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white transition cursor-pointer shadow-2xs"
                 title="Download file aktif"
               >
-                <Download className="h-3.5 w-3.5" />
+                <Download className="h-3.5 w-3.5 text-[#007aff] dark:text-[#60a5fa]" strokeWidth={2} />
                 <span className="hidden sm:inline">Download</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleCopyCode(activeFile.content, "ide-copy")}
-                className="flex items-center gap-1 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 transition cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] hover:bg-black/5 dark:hover:bg-[#28354d] border border-[#e6e6e6] dark:border-white/10 px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white transition cursor-pointer shadow-2xs"
               >
-                {copiedId === "ide-copy" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 text-[#FF7643]" />}
+                {copiedId === "ide-copy" ? <Check className="h-3.5 w-3.5 text-[#16a34a] dark:text-emerald-400" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5 text-[#007aff] dark:text-[#60a5fa]" strokeWidth={2} />}
                 <span className="hidden sm:inline">Salin</span>
               </button>
               <button
                 type="button"
                 onClick={handleRunActiveCode}
                 disabled={isRunning}
-                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 px-4 py-1.5 text-xs font-black text-white shadow-lg shadow-emerald-600/30 transition cursor-pointer"
+                className="flex items-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] disabled:opacity-50 px-4 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
               >
-                <Play className="h-3.5 w-3.5 fill-current" />
+                <Play className="h-3.5 w-3.5 fill-current" strokeWidth={2} />
                 <span>{isRunning ? "Running..." : "▶ Run (Ctrl+Enter)"}</span>
               </button>
             </div>

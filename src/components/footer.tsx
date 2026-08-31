@@ -1,78 +1,102 @@
 import Link from 'next/link'
-import { GraduationCap, Shield, Terminal } from 'lucide-react'
+import { GraduationCap, Shield, Sparkles } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-800/80 bg-[#06080e]/90 text-slate-400">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
-                <GraduationCap className="h-4 w-4" />
+    <footer className="mt-12 sm:mt-16 bg-[#f6f5f4] dark:bg-[#191919] text-[#31302e] dark:text-[#e0e0e0] border-t border-[#e6e6e6] dark:border-[#333333] transition-colors duration-200">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
+          
+          {/* Brand Col: 2 Cols */}
+          <div className="space-y-3.5 md:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-white dark:bg-[#252525] border border-[#e6e6e6] dark:border-[#333333] text-[#0075de]">
+                <GraduationCap className="h-5 w-5" />
               </div>
-              <span className="text-base font-bold text-white">Web Kelas</span>
+              <span className="text-lg font-bold tracking-tight text-[#000000] dark:text-white">
+                Prakom Batch 3
+              </span>
             </div>
-            <p className="max-w-md text-sm text-slate-400 leading-relaxed">
-              Fondasi arsitektur website modern berbasis Next.js 15 App Router dan Supabase SSR.
-              Siap dikembangkan untuk kebutuhan platform kelas, absensi, tugas, dan manajemen pembelajaran.
+            <p className="max-w-sm text-xs sm:text-sm text-[#615d59] dark:text-[#9e9e9e] font-normal leading-relaxed">
+              Pusat pembelajaran terpadu & repositori materi 120 JP Diklat Fungsional Pranata Komputer Keahlian. Pusdiklat Manajemen & Kepemimpinan Badan Diklat Kejaksaan RI.
             </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center rounded-full bg-[#0075de] px-2.5 py-0.5 text-xs font-semibold text-white">
+                120 JP Kurikulum
+              </span>
+              <span className="inline-flex items-center rounded-full bg-white dark:bg-[#252525] border border-[#e6e6e6] dark:border-[#333333] px-2.5 py-0.5 text-xs font-semibold text-[#615d59] dark:text-[#a39e98]">
+                35 Hari Roadmap
+              </span>
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Teknologi</h3>
-            <ul className="mt-4 space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-                Next.js 15 (App Router)
+          {/* Col 1: Kurikulum */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#000000] dark:text-white">
+              Kurikulum
+            </h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#615d59] dark:text-[#9e9e9e]">
+              <li>
+                <Link href="/schedules" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Roadmap 35 Hari</Link>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Supabase (@supabase/ssr)
+              <li>
+                <Link href="/materials" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Pustaka Modul PDF</Link>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                Tailwind CSS
+              <li>
+                <Link href="/tasks" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Lembar Tugas Harian</Link>
               </li>
-              <li className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                TypeScript
+              <li>
+                <Link href="/quiz" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Simulasi Kuis MOOC</Link>
               </li>
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Navigasi</h3>
-            <ul className="mt-4 space-y-2 text-sm">
+          {/* Col 2: Alat & Lab */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#000000] dark:text-white">
+              Alat & Generator
+            </h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#615d59] dark:text-[#9e9e9e]">
               <li>
-                <Link href="/" className="hover:text-white transition">Beranda</Link>
+                <Link href="/paper-generator" className="hover:text-[#000000] dark:hover:text-white transition font-normal">AI Makalah Inovasi</Link>
               </li>
               <li>
-                <Link href="/auth/login" className="hover:text-white transition">Masuk Akun</Link>
+                <Link href="/snippets" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Gudang Kode Prakom</Link>
               </li>
               <li>
-                <Link href="/auth/register" className="hover:text-white transition">Pendaftaran</Link>
+                <Link href="/templates" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Template DUPAK & SPT</Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-white transition">Dashboard</Link>
+                <Link href="/exam-prep" className="hover:text-[#000000] dark:hover:text-white transition font-normal">10 Checklist Ujian</Link>
               </li>
             </ul>
           </div>
+
+          {/* Col 3: Portal & Komunitas */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#000000] dark:text-white">
+              Komunitas
+            </h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-[#615d59] dark:text-[#9e9e9e]">
+              <li>
+                <Link href="/discussions" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Forum Diskusi Angkatan</Link>
+              </li>
+              <li>
+                <Link href="/showcase" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Laboratorium Satker</Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Pusat Bantuan FAQ</Link>
+              </li>
+              <li>
+                <a href="https://pengembangan.kejaksaan.go.id" target="_blank" rel="noopener noreferrer" className="hover:text-[#000000] dark:hover:text-white transition font-normal">
+                  Portal LMS Kejaksaan ↗
+                </a>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        <div className="mt-8 border-t border-slate-800/80 pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Diklat Fungsional Prakom Batch 3 Kejaksaan RI • Dibuat dengan senang hati oleh <span className="text-slate-300 font-semibold">Dewa Sinar Surya, S.Kom.</span></p>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-indigo-400" />
-              Auth & RLS Ready
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Terminal className="h-3.5 w-3.5 text-emerald-400" />
-              Server Actions Ready
-            </span>
-          </div>
-        </div>
       </div>
     </footer>
   )

@@ -62,40 +62,41 @@ export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem | null 
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="rounded-[14px] bg-gradient-to-r from-emerald-500/[0.06] via-teal-500/[0.04] to-indigo-500/[0.04] dark:from-emerald-950/30 dark:via-[#161F2E] dark:to-[#1B2130] p-3.5 sm:p-4 border border-emerald-500/20 dark:border-emerald-800/40 shadow-2xs transition-all"
+        className="rounded-[14px] bg-white dark:bg-[#141b27] p-4 sm:p-5 border border-[#e6e6e6] dark:border-white/10 shadow-xs transition-all"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Left Info */}
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="h-4 w-4" />
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#16a34a]/10 dark:bg-[#16a34a]/20 text-[#16a34a] dark:text-[#4ade80] border border-[#16a34a]/20 shadow-2xs">
+              <CheckCircle2 className="h-5 w-5" strokeWidth={2} />
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                  ✨ Bebas Tanggungan Tugas
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#16a34a]/10 dark:bg-[#16a34a]/20 text-[#16a34a] dark:text-[#4ade80] border border-[#16a34a]/20 px-2.5 py-0.5 text-[10px] font-semibold">
+                  <Sparkles className="h-3 w-3 text-[#16a34a] dark:text-[#4ade80]" strokeWidth={2} />
+                  <span>Bebas Tugas</span>
                 </span>
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold text-[#16a34a] dark:text-[#4ade80]">
                   Semua Tugas Selesai Dikumpulkan
                 </span>
               </div>
-              <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">
+              <h4 className="text-xs sm:text-sm font-bold text-[#000000] dark:text-white">
                 Tidak ada tanggungan tugas mendesak saat ini • Selamat beristirahat!
               </h4>
             </div>
           </div>
 
           {/* Right Status & CTA */}
-          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
-            <div className="flex items-center gap-1.5 rounded-[8px] bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1.5 border border-emerald-200/70 dark:border-emerald-800/40 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-              <Coffee className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-[#f6f5f4] dark:bg-[#101520] px-3 py-1.5 border border-[#e6e6e6] dark:border-white/10 text-xs font-medium text-[#31302e] dark:text-[#cbd5e1] shadow-2xs">
+              <Coffee className="h-3.5 w-3.5 text-[#16a34a] dark:text-[#4ade80]" strokeWidth={2} />
               <span>Waktu Santai</span>
             </div>
 
             <Link href="/tasks">
-              <button className="flex items-center gap-1 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-1.5 text-xs font-black text-white hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xs cursor-pointer">
+              <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
                 <span>Daftar Tugas</span>
-                <ArrowRight className="h-3 w-3 text-amber-300 dark:text-white" />
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
             </Link>
           </div>
@@ -109,52 +110,55 @@ export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem | null 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="rounded-[14px] bg-white dark:bg-[#1B2130] p-3.5 sm:p-4 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs hover:border-slate-300 dark:hover:border-[#374563] transition-all"
+      className="relative overflow-hidden rounded-[14px] bg-white dark:bg-[#141b27] p-4 sm:p-5 border border-[#e6e6e6] dark:border-white/10 shadow-xs transition-all"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Left Info */}
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-orange-100 dark:bg-amber-950/70 text-orange-600 dark:text-amber-400">
-            <Flame className="h-4 w-4 animate-pulse" />
+        <div className="flex items-start gap-3.5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#d97706]/10 dark:bg-[#d97706]/20 text-[#d97706] dark:text-[#fbbf24] border border-[#d97706]/20 shadow-2xs mt-0.5">
+            <Flame className="h-5 w-5 animate-pulse" strokeWidth={2} />
           </div>
-          <div className="space-y-0.5">
+
+          <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-orange-100 dark:bg-amber-950/80 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-orange-700 dark:text-amber-300">
-                Tenggat Tugas Terdekat
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#d97706]/10 dark:bg-[#d97706]/20 text-[#d97706] dark:text-[#fbbf24] border border-[#d97706]/20 px-2.5 py-0.5 text-[10px] font-semibold">
+                <Clock className="h-3 w-3 text-[#d97706] dark:text-[#fbbf24]" strokeWidth={2} />
+                <span>Tugas Aktif LMS</span>
               </span>
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8]">
                 {targetTask.subject_name}
               </span>
             </div>
-            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 line-clamp-1">
+
+            <h4 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white">
               {targetTask.title}
             </h4>
+
+            {targetTask.description && (
+              <p className="text-xs text-[#31302e] dark:text-[#cbd5e1] leading-relaxed max-w-xl line-clamp-1">
+                {targetTask.description}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Right Mini Countdown & CTA Button */}
-        <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
-          <div
-            className="flex items-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#161B26] px-2.5 py-1.5 border border-slate-200 dark:border-[#2A3550] text-[11px] font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums"
-            suppressHydrationWarning
-          >
-            <Clock className="h-3 w-3 text-orange-500 dark:text-amber-400" />
-            {mounted ? (
-              <div className="flex items-center gap-1">
-                {timeLeft.days > 0 && <span>{timeLeft.days}h</span>}
-                <span>{String(timeLeft.hours).padStart(2, "0")}j</span>
-                <span>{String(timeLeft.minutes).padStart(2, "0")}m</span>
-                <span className="text-orange-600 dark:text-amber-400">{String(timeLeft.seconds).padStart(2, "0")}d</span>
-              </div>
-            ) : (
-              <span>--:--:--</span>
-            )}
-          </div>
+        {/* Right: Live Countdown + Action Button */}
+        <div className="flex flex-wrap items-center gap-3 self-end md:self-center shrink-0">
+          {mounted && (
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-[#f6f5f4] dark:bg-[#101520] px-3 py-1.5 border border-[#e6e6e6] dark:border-white/10 text-xs font-mono font-bold text-[#d97706] dark:text-[#fbbf24] tabular-nums shadow-2xs">
+              <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+              <span>
+                {String(timeLeft.hours).padStart(2, "0")}:
+                {String(timeLeft.minutes).padStart(2, "0")}:
+                {String(timeLeft.seconds).padStart(2, "0")}
+              </span>
+            </div>
+          )}
 
           <Link href="/tasks">
-            <button className="flex items-center gap-1 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-1.5 text-xs font-black text-white hover:scale-[1.01] active:scale-[0.99] transition-all shadow-2xs cursor-pointer">
+            <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
               <span>Buka Tugas</span>
-              <ArrowRight className="h-3 w-3 text-amber-300 dark:text-white" />
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
           </Link>
         </div>
