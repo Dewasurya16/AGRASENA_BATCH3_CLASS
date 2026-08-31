@@ -26,6 +26,7 @@ import { generateGoogleCalendarUrl, downloadIcsFile } from "@/lib/calendar-utils
 import { DEFAULT_SCHEDULES_DATA } from "@/lib/default-schedules"
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
 import { useTimezone } from "@/components/timezone-provider"
+import { ZoomClassAccess } from "@/components/public/zoom-class-access"
 
 export interface ScheduleItem {
   id: string
@@ -280,7 +281,10 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
         </div>
       </motion.div>
 
-      {/* 2. Structured 35 Days Grid */}
+      {/* 2. Akses Ruang Zoom Meeting Semua Angkatan (1 s.d. 6) */}
+      <ZoomClassAccess />
+
+      {/* 3. Structured 35 Days Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-base sm:text-lg font-bold text-[#000000] dark:text-white">

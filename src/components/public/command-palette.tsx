@@ -22,7 +22,8 @@ import {
   Shield,
   Laptop,
   Building2,
-  Calculator
+  Calculator,
+  Video
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -252,6 +253,15 @@ const SEARCH_DATABASE: SearchItem[] = [
     isExternal: true,
     icon: ExternalLink,
     keywords: ['lms', 'portal', 'kejaksaan', 'pengembangan', 'upload', 'resmi'],
+  },
+  {
+    id: 'tool-zoom-classes',
+    title: 'Akses Zoom Meeting Angkatan 1 s.d. 6',
+    subtitle: 'Meeting ID & Passcode: Biropeg-24 untuk seluruh kelas Batch 3',
+    category: 'Alat & Template',
+    href: '/schedules',
+    icon: Video,
+    keywords: ['zoom', 'meeting', 'link', 'passcode', 'biropeg-24', 'angkatan', 'tmo', 'live', 'kuliah', 'tatap muka'],
   },
 ]
 
