@@ -1,11 +1,108 @@
 export interface QuizQuestion {
   id: number
-  category: "Overview & Administrasi Prakom" | "Audit TI & IT Enterprise" | "Manajemen Layanan ITIL 4" | "Manajemen Risiko ISO 31000" | "Pengolahan Data & DAMA DMBOK" | "Sistem Informasi & SDLC" | "LMS & Regulasi ASN"
+  category:
+    | "Overview & Administrasi Prakom"
+    | "Audit TI & IT Enterprise"
+    | "Manajemen Layanan ITIL 4"
+    | "Manajemen Risiko ISO 31000"
+    | "Pengolahan Data & DAMA DMBOK"
+    | "Sistem Informasi & SDLC"
+    | "LMS & Regulasi ASN"
   question: string
   options: string[]
   correctIndex: number
   explanation: string
 }
+
+export interface QuizPackage {
+  id: string
+  title: string
+  subtitle: string
+  badge: string
+  color: string
+  durationMinutes: number
+  questionCount: number
+  passingScore: number
+  categories: Array<QuizQuestion['category']>
+  description: string
+  iconName: string
+}
+
+export const QUIZ_PACKAGES: QuizPackage[] = [
+  {
+    id: "pack-1",
+    title: "Paket 1: Regulasi ASN & Profesi Pranata Komputer",
+    subtitle: "Modul 1, 2 & PermenPAN-RB No. 1/2023",
+    badge: "Paket Dasar",
+    color: "#007aff",
+    durationMinutes: 15,
+    questionCount: 10,
+    passingScore: 75,
+    categories: ["Overview & Administrasi Prakom", "LMS & Regulasi ASN"],
+    description: "Evaluasi pemahaman seputar jenjang jabatan fungsional Prakom, SKP Integrasi, aturan jam pelajaran (120 JP), dan etika profesi ASN Kejaksaan.",
+    iconName: "Shield"
+  },
+  {
+    id: "pack-2",
+    title: "Paket 2: SPBE Enterprise Architecture & Audit TI",
+    subtitle: "Modul 3, 4 & Kematangan SPBE",
+    badge: "Tata Kelola",
+    color: "#8b5cf6",
+    durationMinutes: 15,
+    questionCount: 10,
+    passingScore: 75,
+    categories: ["Audit TI & IT Enterprise"],
+    description: "Uji kompetensi arsitektur domain SPBE, sertifikat elektronik BSrE, 4 unsur laporan audit TI (Kondisi, Kriteria, Risiko, Rekomendasi), dan kontrol keamanan siber.",
+    iconName: "Award"
+  },
+  {
+    id: "pack-3",
+    title: "Paket 3: ITIL 4 Service Management & Risiko ISO 31000",
+    subtitle: "Modul 5, 6 & Standar Internasional",
+    badge: "Manajemen Layanan",
+    color: "#10b981",
+    durationMinutes: 15,
+    questionCount: 10,
+    passingScore: 75,
+    categories: ["Manajemen Layanan ITIL 4", "Manajemen Risiko ISO 31000"],
+    description: "Pendalaman 6 rantai nilai layanan (SVC), CMDB, manajemen insiden vs problem, risk register, serta mitigasi ancaman pada infrastruktur TI satker.",
+    iconName: "Flame"
+  },
+  {
+    id: "pack-4",
+    title: "Paket 4: Tata Kelola Data (DAMA DMBOK) & Rekayasa SDLC",
+    subtitle: "Modul 7, 8 & Pengembangan Aplikasi",
+    badge: "Data & Software",
+    color: "#f59e0b",
+    durationMinutes: 15,
+    questionCount: 10,
+    passingScore: 75,
+    categories: ["Pengolahan Data & DAMA DMBOK", "Sistem Informasi & SDLC"],
+    description: "Penguasaan 11 knowledge area DAMA DMBOK, normalisasi basis data perkara, data warehouse, serta metodologi pengembangan sistem SDLC dan analisis PIECES.",
+    iconName: "BookOpen"
+  },
+  {
+    id: "pack-5",
+    title: "Paket 5: Tryout Komprehensif Uji Kompetensi CAT",
+    subtitle: "Simulasi Ujian Akhir 120 JP (Campuran Semua Modul)",
+    badge: "Tryout Akbar",
+    color: "#ec4899",
+    durationMinutes: 30,
+    questionCount: 25,
+    passingScore: 75,
+    categories: [
+      "Overview & Administrasi Prakom",
+      "Audit TI & IT Enterprise",
+      "Manajemen Layanan ITIL 4",
+      "Manajemen Risiko ISO 31000",
+      "Pengolahan Data & DAMA DMBOK",
+      "Sistem Informasi & SDLC",
+      "LMS & Regulasi ASN"
+    ],
+    description: "Simulasi kelulusan riil mencakup seluruh spektrum materi diklat fungsional dengan pengacakan soal dan timer ketat berstandar CAT Pusdiklat & BPS.",
+    iconName: "Trophy"
+  }
+]
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
   // =========================================================================
@@ -89,12 +186,38 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     correctIndex: 1,
     explanation: "Berdasarkan PermenPAN-RB No. 1 Tahun 2023, Angka Kredit bagi Pejabat Fungsional diperoleh dari hasil konversi predikat kinerja tahunan (SKP) dengan koefisien: Sangat Baik (150%), Baik (100%), Cukup (75%), Kurang (50%), dan Sangat Kurang (25%)."
   },
+  {
+    id: 7,
+    category: "Overview & Administrasi Prakom",
+    question: "Seorang Pranata Komputer Ahli Pertama dengan predikat SKP 'Sangat Baik' memperoleh persentase konversi angka kredit tahunan sebesar...",
+    options: [
+      "100% dari koefisien tahunan (12.5 AK)",
+      "125% dari koefisien tahunan (15.625 AK)",
+      "150% dari koefisien tahunan (18.75 AK)",
+      "200% dari koefisien tahunan (25 AK)"
+    ],
+    correctIndex: 2,
+    explanation: "Koefisien tahunan Pranata Komputer Ahli Pertama adalah 12.5 AK. Dengan predikat SKP Sangat Baik (150%), angka kredit yang diperoleh adalah 150% x 12.5 = 18.75 AK per tahun."
+  },
+  {
+    id: 8,
+    category: "Overview & Administrasi Prakom",
+    question: "Dokumen yang wajib disiapkan oleh Pejabat Fungsional Prakom sebagai bukti bahwa butir kegiatan pemeliharaan TIK benar-benar telah dilaksanakan di satker adalah...",
+    options: [
+      "Kwitansi pembelian barang pribadi",
+      "Surat Pernyataan Melakukan Kegiatan (SPMK) disertai Laporan Pelaksanaan & Logbook TIK",
+      "Surat Izin Mengemudi dinas",
+      "Daftar hadir apel pagi saja"
+    ],
+    correctIndex: 1,
+    explanation: "Bukti fisik pelaksanaan tugas mencakup Surat Pernyataan Melakukan Kegiatan (SPMK) yang ditandatangani atasan langsung beserta laporan teknis/logbook kegiatan pemeliharaan TIK di satuan kerja."
+  },
 
   // =========================================================================
   // 2. AUDIT TEKNOLOGI INFORMASI & IT ENTERPRISE (MODUL 3 & 4)
   // =========================================================================
   {
-    id: 7,
+    id: 9,
     category: "Audit TI & IT Enterprise",
     question: "Dalam penyusunan laporan temuan audit TI, unsur yang menjelaskan tentang konsekuensi, potensi ancaman, atau kerugian aktual yang dapat memengaruhi pencapaian sasaran sistem disebut...",
     options: [
@@ -107,25 +230,25 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Struktur Laporan Temuan Audit TI terdiri dari: (1) Temuan/Kondisi (fakta aktual kelemahan kontrol), (2) Kriteria (standar pembanding/regulasi), (3) Risiko (dampak negatif/potensi kerugian yang ditimbulkan), dan (4) Rekomendasi (langkah perbaikan)."
   },
   {
-    id: 8,
+    id: 10,
     category: "Audit TI & IT Enterprise",
-    question: "Organisasi internasional manakah yang merilis dan mengelola kepemilikan kerangka kerja Information Technology Infrastructure Library (ITIL)?",
+    question: "Organisasi internasional manakah yang merilis dan mengelola kerangka kerja COBIT untuk tata kelola TI perusahaan dan audit sistem informasi?",
     options: [
       "ISACA (Information Systems Audit and Control Association)",
       "AXELOS Limited",
       "IEEE (Institute of Electrical and Electronics Engineers)",
-      "ISO (International Organization for Standardization)"
+      "The Open Group"
     ],
-    correctIndex: 1,
-    explanation: "ITIL (Information Technology Infrastructure Library) adalah seperangkat panduan best practices untuk IT Service Management (ITSM) yang dirilis dan dimiliki oleh AXELOS Limited."
+    correctIndex: 0,
+    explanation: "COBIT (Control Objectives for Information and Related Technologies) adalah framework tata kelola dan manajemen TI yang dikembangkan oleh ISACA."
   },
   {
-    id: 9,
+    id: 11,
     category: "Audit TI & IT Enterprise",
     question: "Instrumen teknologi informasi apakah yang digunakan untuk menjamin aspek kenirsangkalan (non-repudiation) dan keaslian pada arsitektur data SPBE Kejaksaan RI?",
     options: [
       "Koneksi kabel LAN Cat6 dan switch unmanaged",
-      "Enkripsi simetris, Sertifikat Elektronik, Tanda Tangan Elektronik (ETTD), Hash kriptografi, dan Public Key Infrastructure (PKI)",
+      "Enkripsi simetris, Sertifikat Elektronik BSrE, Tanda Tangan Elektronik (ETTD), Hash kriptografi, dan Public Key Infrastructure (PKI)",
       "Antivirus gratis dan firewall bawaan Windows",
       "Pencetakan fisik berkas perkara rangkap tiga"
     ],
@@ -133,7 +256,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Kenirsangkalan (Non-Repudiation) dan keaslian data dalam SPBE dijamin melalui kombinasi algoritma enkripsi, Sertifikat Elektronik Balai Sertifikasi Elektronik (BSrE BSSN), Tanda Tangan Elektronik Tersertifikasi (ETTD), fungsi Hash, dan infrastruktur kunci publik (PKI)."
   },
   {
-    id: 10,
+    id: 12,
     category: "Audit TI & IT Enterprise",
     question: "Mengapa Enterprise Architecture (EA) diposisikan sebagai cetak biru (blueprint) utama dalam transformasi digital instansi pemerintah?",
     options: [
@@ -146,7 +269,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Enterprise Architecture (EA) berfungsi sebagai cetak biru (blueprint) yang memetakan keterpaduan antara proses bisnis institusi penegak hukum, standardisasi data, arsitektur aplikasi, dan ketahanan infrastruktur SPBE."
   },
   {
-    id: 11,
+    id: 13,
     category: "Audit TI & IT Enterprise",
     question: "Tingkat Kematangan (Maturity Level) evaluasi SPBE instansi pemerintah dengan predikat Level 3 menunjukkan bahwa tata kelola berada pada tahap...",
     options: [
@@ -159,7 +282,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Tingkat Kematangan SPBE: Level 1 (Rintisan), Level 2 (Terkelola), Level 3 (Terdefinisi), Level 4 (Terpadu/Terintegrasi), dan Level 5 (Optimum)."
   },
   {
-    id: 12,
+    id: 14,
     category: "Audit TI & IT Enterprise",
     question: "Dalam pelaksanaan audit keamanan informasi TIK, aspek apa yang diuji untuk memastikan data tidak dapat diubah oleh pihak yang tidak berhak?",
     options: [
@@ -171,12 +294,38 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     correctIndex: 1,
     explanation: "Aspek Integrity (Keutuhan) menjamin bahwa data, informasi, dan sistem perangkat lunak tetap akurat, lengkap, dan tidak dapat dimodifikasi atau dirusak oleh pihak yang tidak memiliki hak otorisasi."
   },
+  {
+    id: 15,
+    category: "Audit TI & IT Enterprise",
+    question: "Framework arsitektur enterprise global yang membagi siklus pengembangan arsitektur ke dalam metode Architecture Development Method (ADM) adalah...",
+    options: [
+      "Zachman Framework",
+      "TOGAF (The Open Group Architecture Framework)",
+      "FEAF (Federal Enterprise Architecture)",
+      "DoDAF"
+    ],
+    correctIndex: 1,
+    explanation: "TOGAF menggunakan Architecture Development Method (ADM) sebagai siklus berulang untuk merencanakan, merancang, mengimplementasikan, dan mengelola arsitektur enterprise."
+  },
+  {
+    id: 16,
+    category: "Audit TI & IT Enterprise",
+    question: "Dalam audit sistem informasi berbasis ISO 27001, kontrol keamanan akses jaringan nirkabel (Wi-Fi) di satker mewajibkan implementasi...",
+    options: [
+      "Wi-Fi terbuka tanpa sandi agar mempermudah tamu",
+      "Segmentasi VLAN terpisah antara jaringan operasional pegawai dan akses publik/tamu, disertai enkripsi WPA2/WPA3 Enterprise",
+      "Menonaktifkan seluruh koneksi kabel LAN",
+      "Hanya membatasi kecepatan unduhan menjadi 1 Mbps"
+    ],
+    correctIndex: 1,
+    explanation: "Standar keamanan ISO 27001 mewajibkan isolasi dan segmentasi jaringan Wi-Fi tamu terpisah dari VLAN jaringan internal database perkara, dilengkapi enkripsi kuat WPA2/WPA3 Enterprise."
+  },
 
   // =========================================================================
   // 3. MANAJEMEN LAYANAN TEKNOLOGI INFORMASI (ITIL 4) (MODUL 5)
   // =========================================================================
   {
-    id: 13,
+    id: 17,
     category: "Manajemen Layanan ITIL 4",
     question: "Sebutkan 6 (enam) aktivitas utama dalam Rantai Nilai Layanan (Service Value Chain - SVC) pada kerangka kerja ITIL 4!",
     options: [
@@ -189,7 +338,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Model operasional Rantai Nilai Layanan (Service Value Chain) ITIL 4 memuat 6 aktivitas inti: Plan (Perencanaan), Improve (Peningkatan), Engage (Pelibatan), Design & Transition (Desain & Transisi), Obtain/Build (Pengadaan/Pembangunan), dan Deliver & Support (Penyampaian & Dukungan)."
   },
   {
-    id: 14,
+    id: 18,
     category: "Manajemen Layanan ITIL 4",
     question: "Apa fungsi fundamental dari Configuration Management Database (CMDB) dalam manajemen konfigurasi layanan TI?",
     options: [
@@ -199,317 +348,278 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       "Mencatat absensi kehadiran harian staf fungsional"
     ],
     correctIndex: 1,
-    explanation: "CMDB (Configuration Management Database) berfungsi menyimpan informasi rinci tentang seluruh Configuration Item (CI) seperti server, database, jaringan, dan aplikasi, serta memetakan hubungan ketergantungan antar-komponen untuk mempermudah analisis dampak insiden dan perubahan sistem."
+    explanation: "CMDB berfungsi sebagai repositori terpusat yang mencatat detail atribut dan memetakan relasi saling ketergantungan di antara seluruh Configuration Item (CI) seperti server, switch, aplikasi perkara, dan lisensi."
   },
   {
-    id: 15,
+    id: 19,
     category: "Manajemen Layanan ITIL 4",
-    question: "Manakah yang BUKAN merupakan salah satu dari 4 Dimensi Manajemen Layanan pada ITIL 4?",
+    question: "Dalam manajemen insiden ITIL 4, apa perbedaan mendasar antara Insiden (Incident) dan Masalah (Problem)?",
     options: [
-      "Organizations and People",
-      "Information and Technology",
-      "Hardware and Physical Device Purchases Only",
-      "Value Streams and Processes"
-    ],
-    correctIndex: 2,
-    explanation: "4 Dimensi Manajemen Layanan ITIL 4 adalah: (1) Organizations and People, (2) Information and Technology, (3) Partners and Suppliers, dan (4) Value Streams and Processes."
-  },
-  {
-    id: 16,
-    category: "Manajemen Layanan ITIL 4",
-    question: "Perbedaan mendasar antara 'Incident Management' dan 'Problem Management' pada operasional TI Kejaksaan adalah...",
-    options: [
-      "Incident mencari penyebab akar masalah permanen, Problem hanya me-restart server",
-      "Incident fokus memulihkan layanan secepat mungkin, Problem fokus menganalisis & menyelesaikan akar penyebab gangguan (root cause)",
-      "Incident hanya menangani perangkat keras, Problem hanya menangani software",
-      "Tidak ada perbedaan sama sekali"
-    ],
-    correctIndex: 1,
-    explanation: "Incident Management berfokus pada pemulihan operasi layanan normal secepat mungkin untuk meminimalkan dampak bisnis, sedangkan Problem Management berfokus pada investigasi akar penyebab (root cause analysis) guna mencegah insiden berulang."
-  },
-  {
-    id: 17,
-    category: "Manajemen Layanan ITIL 4",
-    question: "Dokumen kesepakatan formal yang mengatur standar ketersediaan (uptime) dan target waktu penyelesaian gangguan antara Tim TIK dengan pengguna layanan disebut...",
-    options: [
-      "Service Level Agreement (SLA)",
-      "Underpinning Contract (UC)",
-      "Operational Level Agreement (OLA)",
-      "Configuration Baseline (CB)"
+      "Insiden adalah gangguan operasional tidak terencana terhadap layanan, sedangkan Masalah adalah akar penyebab yang mendasari satu atau beberapa insiden",
+      "Insiden terjadi pada software, sedangkan Masalah hanya terjadi pada hardware",
+      "Insiden dilaporkan pimpinan, sedangkan Masalah dilaporkan operator",
+      "Keduanya memiliki definisi yang sama persis tanpa perbedaan"
     ],
     correctIndex: 0,
-    explanation: "SLA (Service Level Agreement) adalah komitmen terdokumentasi antara penyedia layanan TI internal dengan unit kerja pengguna yang memuat metrik ketersediaan layanan, waktu respons, dan resolusi."
+    explanation: "Incident Management berfokus pada pemulihan cepat operasional layanan normal sesegera mungkin, sedangkan Problem Management berfokus pada analisis akar penyebab (Root Cause Analysis - RCA) untuk mencegah insiden berulang."
   },
   {
-    id: 18,
+    id: 20,
     category: "Manajemen Layanan ITIL 4",
-    question: "Prinsip panduan ITIL 4 yang menekankan agar tidak selalu membangun sistem baru dari nol, melainkan memanfaatkan dan menyempurnakan aset yang sudah ada adalah...",
+    question: "Sebutkan 4 (empat) dimensi manajemen layanan yang saling melengkapi dalam ITIL 4!",
     options: [
-      "Focus on value",
-      "Start where you are",
-      "Think and work holistically",
-      "Keep it simple and practical"
+      "Hardware, Software, Network, Brainware",
+      "Organizations & People, Information & Technology, Partners & Suppliers, Value Streams & Processes",
+      "Plan, Do, Check, Act",
+      "Input, Process, Output, Outcome"
     ],
     correctIndex: 1,
-    explanation: "Prinsip 'Start where you are' mengajarkan organisasi untuk mengukur dan mengidentifikasi apa yang sudah berjalan dengan baik pada sistem eksisting sebelum memutuskan perubahan atau pembangunan ulang."
+    explanation: "4 Dimensi Layanan ITIL 4: (1) Organisasi & Sumber Daya Manusia, (2) Informasi & Teknologi, (3) Mitra & Pemasok, dan (4) Aliran Nilai & Proses."
+  },
+  {
+    id: 21,
+    category: "Manajemen Layanan ITIL 4",
+    question: "Kesepakatan tingkat layanan formal antara penyedia layanan TI internal dan unit kerja pengguna yang memuat metrik ketersediaan sistem disebut...",
+    options: [
+      "Memorandum of Understanding (MoU)",
+      "Service Level Agreement (SLA)",
+      "Operational Level Agreement (OLA)",
+      "Underpinning Contract (UC)"
+    ],
+    correctIndex: 1,
+    explanation: "Service Level Agreement (SLA) mendefinisikan target tingkat layanan, ketersediaan, waktu respon perbaikan, dan tanggung jawab antara penyedia layanan TI dengan pengguna akhir (end user)."
   },
 
   // =========================================================================
   // 4. MANAJEMEN RISIKO TEKNOLOGI INFORMASI (ISO 31000) (MODUL 6)
   // =========================================================================
   {
-    id: 19,
-    category: "Manajemen Risiko ISO 31000",
-    question: "Sebutkan 3 (tiga) sub-tahapan yang wajib dilaksanakan dalam proses Penilaian Risiko (Risk Assessment) menurut standar ISO 31000!",
-    options: [
-      "Perencanaan, Pembiayaan, dan Pengadaan",
-      "Identifikasi Risiko, Analisis Risiko, dan Evaluasi Risiko",
-      "Mitigasi Risiko, Transfer Risiko, dan Penerimaan Risiko",
-      "Penyusunan SOP, Sosialisasi, dan Uji Petik"
-    ],
-    correctIndex: 1,
-    explanation: "Tahap Penilaian Risiko (Risk Assessment) terdiri dari 3 sub-proses: (1) Identifikasi Risiko (mengenali sumber bahaya & aset), (2) Analisis Risiko (mengukur likelihood x impact untuk besaran risiko), dan (3) Evaluasi Risiko (menentukan prioritas berdasarkan selera risiko)."
-  },
-  {
-    id: 20,
-    category: "Manajemen Risiko ISO 31000",
-    question: "Opsi penanganan risiko (Risk Treatment) apakah yang tepat dipilih apabila estimasi biaya mitigasi teknis jauh lebih besar daripada potensi dampak kerugian finansial/operasional yang timbul?",
-    options: [
-      "Penghindaran Risiko (Risk Avoidance)",
-      "Penerimaan Risiko (Risk Acceptance)",
-      "Pembagian Risiko (Risk Sharing / Transfer)",
-      "Mitigasi Risiko Maksimal (Risk Mitigation)"
-    ],
-    correctIndex: 1,
-    explanation: "Penerimaan Risiko (Risk Acceptance) diambil sebagai keputusan rasional manakala tingkat risiko berada dalam batas selera risiko (risk appetite) organisasi dan biaya pengendalian/mitigasi tidak ekonomis dibandingkan potensi kerugian."
-  },
-  {
-    id: 21,
-    category: "Manajemen Risiko ISO 31000",
-    question: "Dalam konteks ISO 31000, peristiwa ketidakpastian yang berpotensi memberikan dampak positif bagi pencapaian target organisasi diklasifikasikan sebagai...",
-    options: [
-      "Risiko Negatif (Threat / Ancaman)",
-      "Risiko Positif (Opportunity / Peluang)",
-      "Residual Risk (Risiko Sisa)",
-      "Inherent Risk (Risiko Bawaan)"
-    ],
-    correctIndex: 1,
-    explanation: "ISO 31000 mendefinisikan risiko sebagai 'dampak ketidakpastian terhadap sasaran'. Dampak ini bisa bersifat negatif (ancaman/threat) maupun positif (peluang/opportunity yang dapat dimanfaatkan untuk percepatan transformasi digital)."
-  },
-  {
     id: 22,
     category: "Manajemen Risiko ISO 31000",
-    question: "Tindakan mengalihkan sebagian beban risiko kegagalan sistem data center kepada pihak ketiga melalui polis asuransi atau kontrak SLA penyedia cloud disebut...",
+    question: "Berdasarkan standar ISO 31000:2018, apa definisi resmi dari kata 'Risiko'?",
     options: [
-      "Risk Mitigation (Pengurangan)",
-      "Risk Sharing / Transfer (Pemindahan Risiko)",
-      "Risk Avoidance (Penghindaran)",
-      "Risk Retaining (Penahanan)"
+      "Kerusakan fatal pada motherboard server database",
+      "Pengaruh ketidakpastian terhadap pencapaian sasaran / tujuan organisasi (Effect of uncertainty on objectives)",
+      "Tindakan pelanggaran disiplin oleh pegawai",
+      "Kekurangan anggaran operasional bulanan"
     ],
     correctIndex: 1,
-    explanation: "Risk Sharing / Transfer adalah strategi membagi atau memindahkan dampak kerugian finansial dan operasional kepada pihak eksternal, seperti penyedia asuransi aset TIK atau vendor cloud bergaransi SLA 99.99%."
+    explanation: "ISO 31000:2018 mendefinisikan Risiko sebagai 'Effect of uncertainty on objectives' (dampak ketidakpastian terhadap pencapaian sasaran/tujuan), yang dapat berupa penyimpangan positif maupun negatif."
   },
   {
     id: 23,
     category: "Manajemen Risiko ISO 31000",
-    question: "Batas toleransi maksimal terhadap besaran risiko yang bersedia dihadapi oleh pimpinan instansi dalam mencapai sasarannya disebut...",
+    question: "Tiga tahapan utama yang membentuk proses Penilaian Risiko (Risk Assessment) secara berurutan adalah...",
     options: [
-      "Risk Register",
-      "Risk Appetite (Selera Risiko)",
-      "Risk Control",
-      "Risk Threshold"
+      "Perencanaan, Pelaksanaan, Evaluasi",
+      "Identifikasi Risiko, Analisis Risiko, dan Evaluasi Risiko",
+      "Pencegahan, Penindakan, Pemulihan",
+      "Deteksi Malware, Karantina, Hapus File"
     ],
     correctIndex: 1,
-    explanation: "Risk Appetite (Selera Risiko) adalah jumlah dan jenis risiko yang siap diterima oleh instansi pemerintah dalam rangka mewujudkan sasaran strategis pelayanannya."
+    explanation: "Risk Assessment terdiri dari 3 sub-proses: (1) Identifikasi Risiko (mengenali sumber bahaya), (2) Analisis Risiko (mengukur tingkat kemungkinan & dampak), dan (3) Evaluasi Risiko (membandingkan dengan selera risiko organisasi)."
   },
   {
     id: 24,
     category: "Manajemen Risiko ISO 31000",
-    question: "Dokumen tabel yang memuat daftar inventaris aset TI, potensi ancaman, skor kemungkinan, skor dampak, level risiko, dan rencana aksi mitigasi disebut...",
+    question: "Strategi penanganan risiko dengan cara memindahkan dampak finansial ke pihak ketiga (misalnya asuransi perangkat keras atau kontrak pihak ketiga) disebut...",
     options: [
-      "Risk Matrix",
-      "Risk Register (Daftar Risiko)",
-      "Configuration Item",
-      "Business Case"
+      "Risk Mitigation (Pengurangan Risiko)",
+      "Risk Avoidance (Menghindari Risiko)",
+      "Risk Sharing / Transfer (Berbagi / Memindahkan Risiko)",
+      "Risk Acceptance (Menerima Risiko)"
     ],
-    correctIndex: 1,
-    explanation: "Risk Register adalah dokumen induk pencatatan hasil manajemen risiko yang mencatat seluruh identifikasi ancaman, analisis besaran risiko, unit pemilik risiko, dan rencana tindakan mitigasinya."
+    correctIndex: 2,
+    explanation: "Risk Sharing/Transfer mengalihkan sebagian atau seluruh konsekuensi risiko ke pihak eksternal, seperti perjanjian asuransi server atau kontrak garansi vendor SLA 24/7."
   },
-
-  // =========================================================================
-  // 5. PENGOLAHAN DATA & DAMA DMBOK (MODUL 8)
-  // =========================================================================
   {
     id: 25,
-    category: "Pengolahan Data & DAMA DMBOK",
-    question: "Dalam pembersihan data perkara (data preparation & cleaning), proses penanganan nilai data yang menyimpang sangat jauh secara ekstrem dari sebaran data mayoritas disebut...",
+    category: "Manajemen Risiko ISO 31000",
+    question: "Dokumen yang memuat inventarisasi risiko, pemilik risiko (risk owner), skor kemungkinan, skor dampak, level risiko, dan rencana aksi mitigasi disebut...",
     options: [
-      "Penanganan Outlier (Pencilan)",
-      "Normalisasi Database 3NF",
-      "Data Indexing",
-      "Data Deduplication"
+      "Logbook Harian",
+      "Risk Register (Daftar / Register Risiko)",
+      "Surat Keputusan (SK) Tim TI",
+      "Berita Acara Serah Terima (BAST)"
     ],
-    correctIndex: 0,
-    explanation: "Outlier (Pencilan) adalah titik data yang nilainya berbeda signifikan/ekstrem dari distribusi kumpulan data lainnya. Deteksi dan perlakuan outlier wajib dilakukan agar tidak mendistorsi hasil analisis dan model prediksi statistik."
+    correctIndex: 1,
+    explanation: "Risk Register adalah dokumen hidup yang mencatat seluruh profil risiko, pemilik risiko, penilaian nilai dampak dan kemungkinan, serta status tindakan mitigasi yang harus dipantau berkala."
   },
   {
     id: 26,
-    category: "Pengolahan Data & DAMA DMBOK",
-    question: "Fungsi pivot_wider() pada bahasa pemrograman R (paket tidyr) dan fungsi pivot() pada library Python Pandas digunakan untuk melakukan manipulasi data jenis apa?",
+    category: "Manajemen Risiko ISO 31000",
+    question: "Dalam mitigasi bencana pusat data (Disaster Recovery Plan), parameter RPO (Recovery Point Objective) mengukur...",
     options: [
-      "Menghapus seluruh kolom database secara permanen",
-      "Mengubah bentuk struktur data dari format panjang (long format) menjadi format lebar (wide format)",
-      "Melakukan kompresi file zip database",
-      "Melakukan koneksi socket jaringan lokal"
+      "Batas maksimal kehilangan data yang dapat ditoleransi sejak insiden terjadi",
+      "Lama waktu yang dibutuhkan teknisi untuk menyalakan genset",
+      "Biaya pembelian harddisk eksternal baru",
+      "Jarak fisik antara kantor utama dan data center cadangan"
     ],
-    correctIndex: 1,
-    explanation: "Pivoting data adalah teknik restructuring data. `pivot_wider()` di R dan `.pivot()` / `.pivot_table()` di Python Pandas digunakan untuk mengubah baris-baris data observasi berformat panjang menjadi kolom-kolom berformat lebar (wide format) untuk mempermudah tabulasi statistik."
+    correctIndex: 0,
+    explanation: "RPO (Recovery Point Objective) menentukan batas maksimal volume atau rentang waktu data yang hilang dan dapat diterima oleh organisasi (misal: RPO = 1 jam berarti data hilang maksimal 1 jam terakhir)."
   },
+
+  // =========================================================================
+  // 5. PENGOLAHAN DATA & DATA MANAGEMENT (DAMA DMBOK) (MODUL 7 & 8)
+  // =========================================================================
   {
     id: 27,
     category: "Pengolahan Data & DAMA DMBOK",
-    question: "Sebutkan teknik akuisisi data otomatis dari halaman web pemerintah atau portal publik menggunakan skrip bot/spider terprogram!",
+    question: "Menurut kerangka kerja DAMA DMBOK edisi kedua (DMBOK2), fungsi manakah yang diposisikan di pusat (center) Roda Manajemen Data (DAMA Wheel)?",
     options: [
-      "Data Loading",
-      "Web Crawling / Scraping",
-      "Data Deduplication",
-      "Data Imputation"
+      "Data Storage & Operations",
+      "Data Governance (Tata Kelola Data)",
+      "Data Security",
+      "Data Warehousing & BI"
     ],
     correctIndex: 1,
-    explanation: "Web Crawling / Scraping adalah metode pengambilan data mentah secara otomatis dari halaman situs web menggunakan bot terprogram untuk dikumpulkan ke dalam repositori analitik."
+    explanation: "Data Governance (Tata Kelola Data) adalah pilar pusat (center of DAMA Wheel) yang mengarahkan dan mengendalikan 10 fungsi manajemen data lainnya (seperti Data Architecture, Data Modeling, Data Quality, dll.)."
   },
   {
     id: 28,
     category: "Pengolahan Data & DAMA DMBOK",
-    question: "Berdasarkan standar DAMA DMBOK, dimensi kualitas data yang mengukur sejauh mana semua nilai yang diharapkan telah tercatat dan tidak ada data kosong yang hilang disebut...",
+    question: "Proses normalisasi tabel basis data relasional untuk mengeliminasi ketergantungan fungsional parsial (partial dependency) menghasilkan bentuk normal...",
     options: [
-      "Accuracy (Akurasi)",
-      "Completeness (Kelengkapan)",
-      "Timeliness (Ketepatan Waktu)",
-      "Validity (Validitas)"
+      "Bentuk Normal Pertama (1NF)",
+      "Bentuk Normal Kedua (2NF)",
+      "Bentuk Normal Ketiga (3NF)",
+      "Boyce-Codd Normal Form (BCNF)"
     ],
     correctIndex: 1,
-    explanation: "Completeness (Kelengkapan) memastikan seluruh atribut data wajib (seperti NIK, nomor register perkara, tanggal sidang) telah terisi lengkap tanpa missing values yang signifikan."
+    explanation: "2NF terpenuhi jika tabel sudah berada dalam 1NF dan setiap atribut bukan kunci primer bergantung penuh pada seluruh kunci primer (menghilangkan partial dependency)."
   },
   {
     id: 29,
     category: "Pengolahan Data & DAMA DMBOK",
-    question: "Metode validasi kualitas data yang menggabungkan beberapa teknik pengumpulan informasi (observasi log, e-Monev, FGD, dan verifikasi silang) agar data objektif disebut...",
+    question: "Data tentang data yang menjelaskan struktur, format, definisi bisnis, silsilah data (data lineage), dan aturan validasi data disebut...",
     options: [
-      "Normalisasi Data",
-      "Triangulasi Data",
-      "Data Imputasi",
-      "ETL Pipeline"
+      "Master Data",
+      "Metadata",
+      "Transactional Data",
+      "Reference Data"
     ],
     correctIndex: 1,
-    explanation: "Triangulasi adalah teknik pengecekan keabsahan data dari berbagai sumber, metode, dan waktu yang berbeda untuk memverifikasi kebenaran laporan data operasional satker."
+    explanation: "Metadata adalah data yang mendeskripsikan konteks, struktur, definisi kamus data, tipe data, dan alur pergerakan data dari sumber hingga penyajian (data about data)."
   },
   {
     id: 30,
     category: "Pengolahan Data & DAMA DMBOK",
-    question: "Perbedaan mendasar antara dokumen SOP Pengolahan Data dan Petunjuk Teknis (Juknis) di lingkungan instansi adalah...",
+    question: "Dalam prinsip ACID pada manajemen transaksi database relasional, huruf 'I' (Isolation) memastikan bahwa...",
     options: [
-      "SOP hanya untuk pimpinan, Juknis untuk staf honorer",
-      "SOP memuat legalitas, wewenang, dan alur prosedur antar-unit; sedangkan Juknis memuat langkah teknis rinci pengoperasian di lapangan",
-      "SOP memuat source code program, Juknis memuat harga hardware",
-      "Tidak ada perbedaan di antara keduanya"
+      "Transaksi berjalan cepat tanpa penguncian tabel",
+      "Transaksi yang dieksekusi secara bersamaan (konkuren) tidak saling mengganggu dan menghasilkan kondisi data yang konsisten",
+      "Database harus diisolasi di ruangan ber-AC",
+      "Data hanya bisa diakses oleh 1 user saja secara permanen"
     ],
     correctIndex: 1,
-    explanation: "SOP (Standar Operasional Prosedur) mengatur wewenang, tanggung jawab, dan tahapan birokrasi legalitas, sedangkan Juknis (Petunjuk Teknis) berisi pedoman teknis langkah demi langkah pengolahan data di lapangan."
+    explanation: "Isolation memastikan bahwa eksekusi transaksi yang berlangsung secara bersamaan (concurrent) tidak saling mencemari (menghindari dirty reads, non-repeatable reads, phantom reads)."
   },
-
-  // =========================================================================
-  // 6. REKAYASA SISTEM INFORMASI & SDLC (MODUL 9)
-  // =========================================================================
   {
     id: 31,
-    category: "Sistem Informasi & SDLC",
-    question: "Berdasarkan riset rekayasa perangkat lunak dan tata kelola TI, faktor non-teknis apakah yang menduduki peringkat teratas sebagai penyebab utama kegagalan proyek sistem informasi?",
+    category: "Pengolahan Data & DAMA DMBOK",
+    question: "Dimensi kualitas data DAMA yang mengukur sejauh mana seluruh atribut data yang wajib telah terisi tanpa adanya kekosongan (null values) disebut...",
     options: [
-      "Spesifikasi monitor komputer staf kurang besar",
-      "Manajemen kebutuhan pengguna yang buruk (poor requirements management & scope creep)",
-      "Penggunaan bahasa pemrograman open-source",
-      "Kecepatan mengetik programmer yang lambat"
+      "Accuracy (Akurasi)",
+      "Completeness (Kelengkapan)",
+      "Consistency (Konsistensi)",
+      "Timeliness (Ketepatan Waktu)"
     ],
     correctIndex: 1,
-    explanation: "Riset rekayasa perangkat lunak menunjukkan bahwa penyebab utama kegagalan proyek TI bukanlah keterbatasan hardware atau bahasa pemrograman, melainkan ketidakjelasan pendefinisian kebutuhan pengguna, komunikasi yang buruk, dan perubahan lingkup yang tidak terkendali (poor requirements management)."
+    explanation: "Completeness (Kelengkapan) mengukur proporsi data yang ada dibandingkan dengan data yang seharusnya ada untuk mendukung proses bisnis."
   },
   {
     id: 32,
-    category: "Sistem Informasi & SDLC",
-    question: "Dalam tahap analisis kelayakan sistem informasi, sebutkan kepanjangan dari kerangka uji kelayakan metode TELOS!",
+    category: "Pengolahan Data & DAMA DMBOK",
+    question: "Dalam arsitektur basis data relasional, perintah SQL yang termasuk ke dalam kategori Data Manipulation Language (DML) adalah...",
     options: [
-      "Technology, Engineering, Logistics, Operation, Security",
-      "Technical, Economic, Legal, Operational, Schedule",
-      "Total, Enterprise, Level, Optimization, Standard",
-      "Testing, Execution, Logging, Overview, Support"
+      "CREATE, DROP, ALTER",
+      "SELECT, INSERT, UPDATE, DELETE",
+      "GRANT, REVOKE",
+      "COMMIT, ROLLBACK"
     ],
     correctIndex: 1,
-    explanation: "Kerangka Studi Kelayakan TELOS mencakup 5 dimensi evaluasi: (1) Technical (kemampuan teknologi & SDM), (2) Economic (analisis biaya vs manfaat), (3) Legal (kepatuhan regulasi & hukum), (4) Operational (kesiapan prosedur & pengguna), dan (5) Schedule (ketepatan jadwal peluncuran)."
+    explanation: "DML mencakup perintah manipulasi baris data yaitu SELECT, INSERT, UPDATE, dan DELETE. Sedangkan CREATE/DROP adalah DDL, GRANT/REVOKE adalah DCL, dan COMMIT/ROLLBACK adalah TCL."
   },
+
+  // =========================================================================
+  // 6. SISTEM INFORMASI & SDLC (MODUL 7 & 8)
+  // =========================================================================
   {
     id: 33,
     category: "Sistem Informasi & SDLC",
-    question: "Prinsip Pemrograman Berorientasi Objek (OOP) yang berfungsi menyembunyikan detail implementasi internal dan membatasi akses langsung ke variabel melalui metode getter/setter disebut...",
+    question: "Metodologi pengembangan perangkat lunak yang bersifat adaptif, iteratif, dan merilis fungsionalitas secara berkala dalam periode Sprint disebut...",
     options: [
-      "Inheritance (Pewarisan)",
-      "Polymorphism (Banyak Bentuk)",
-      "Encapsulation (Enkapsulasi / Pembungkusan)",
-      "Abstraction (Abstraksi)"
+      "Metode Waterfall Tradisional",
+      "Scrum / Agile Framework",
+      "Metode Big Bang",
+      "Cleanroom Software Engineering"
     ],
-    correctIndex: 2,
-    explanation: "Enkapsulasi (Encapsulation) adalah mekanisme OOP untuk membungkus data (atribut) dan kode (metode) dalam satu kesatuan kelas serta menyembunyikan detail internal objek dari manipulasi langsung dari luar kelas guna menjaga integritas data."
+    correctIndex: 1,
+    explanation: "Scrum merupakan kerangka kerja Agile yang mengedepankan kolaborasi tim, transparansi, serta pengiriman perangkat lunak yang berfungsi secara bertahap dalam siklus sprint 1-4 minggu."
   },
   {
     id: 34,
     category: "Sistem Informasi & SDLC",
-    question: "Model pengembangan perangkat lunak klasik yang bersifat linier sekuensial (Analisis Kebutuhan -> Desain -> Koding -> Pengujian -> Pemeliharaan) disebut...",
+    question: "Teknik pengujian perangkat lunak di mana penguji mengevaluasi fungsionalitas sistem berdasarkan input dan output tanpa mengetahui kode program internal disebut...",
     options: [
-      "Agile Scrum",
-      "Waterfall Model (Air Terjun)",
-      "Extreme Programming (XP)",
-      "DevSecOps"
+      "White-Box Testing",
+      "Black-Box Testing",
+      "Unit Testing Berbasis Kode",
+      "Static Code Analysis"
     ],
     correctIndex: 1,
-    explanation: "Waterfall Model adalah metodologi pengembangan perangkat lunak klasik di mana setiap fase harus diselesaikan secara berurutan sebelum melangkah ke fase berikutnya."
+    explanation: "Black-Box Testing (pengujian kotak hitam) fokus pada pengujian spesifikasi fungsional antarmuka dan respon logika aplikasi dari sudut pandang pengguna akhir tanpa melihat source code."
   },
   {
     id: 35,
     category: "Sistem Informasi & SDLC",
-    question: "Diagram yang memodelkan entitas data, atribut-atributnya, serta relasi kardinalitas (1:1, 1:N, M:N) dalam perancangan database relasional disebut...",
+    question: "Kerangka Analisis PIECES yang dikembangkan oleh James Wetherbe digunakan untuk mengevaluasi kelayakan sistem informasi. Huruf 'E' dan 'S' melambangkan...",
     options: [
-      "Data Flow Diagram (DFD)",
-      "Entity Relationship Diagram (ERD)",
-      "Use Case Diagram",
-      "State Machine Diagram"
+      "Electricity & Speed",
+      "Economics (Ekonomi/Biaya) & Service (Layanan Pengguna)",
+      "Encryption & Storage",
+      "Engineering & Software"
     ],
     correctIndex: 1,
-    explanation: "ERD (Entity Relationship Diagram) digunakan dalam perancangan basis data untuk memetakan struktur tabel, kunci primer (primary key), kunci asing (foreign key), dan relasi antar-entitas data perkara."
+    explanation: "Kerangka Analisis PIECES mengevaluasi: Performance (kinerja), Information (kualitas informasi), Economics (biaya/keuntungan), Control (keamanan/kontrol data), Efficiency (efisiensi sumber daya), dan Service (kualitas layanan pengguna)."
   },
   {
     id: 36,
     category: "Sistem Informasi & SDLC",
-    question: "Kerangka kerja analisis PIECES digunakan untuk mengidentifikasi kelemahan sistem lama berdasarkan 6 kategori, yaitu...",
+    question: "Diagram pemodelan sistem yang menggambarkan interaksi antara aktor (pengguna/sistem lain) dengan fungsi-fungsi yang disediakan oleh sistem adalah...",
     options: [
-      "Performance, Information, Economics, Control, Efficiency, Service",
-      "Planning, Implementation, Execution, Cost, Evaluation, Security",
-      "Program, Interface, Encryption, Client, Error, Server",
-      "People, Infrastructure, Ethernet, Cloud, Email, Storage"
+      "Class Diagram",
+      "Use Case Diagram",
+      "Deployment Diagram",
+      "Entity Relationship Diagram (ERD)"
     ],
-    correctIndex: 0,
-    explanation: "Kerangka Analisis PIECES mengevaluasi: Performance (kinerja), Information (kualitas informasi), Economics (biaya/keuntungan), Control (keamanan/kontrol data), Efficiency (efisiensi sumber daya), dan Service (kualitas layanan pengguna)."
+    correctIndex: 1,
+    explanation: "Use Case Diagram pada UML memetakan hubungan antara aktor (pengguna eksternal/internal) dengan use case (skenario fungsi spesifik yang disediakan oleh aplikasi)."
+  },
+  {
+    id: 37,
+    category: "Sistem Informasi & SDLC",
+    question: "Dalam Continuous Integration / Continuous Deployment (CI/CD), apa manfaat utama dari automated testing pipeline?",
+    options: [
+      "Menghilangkan kebutuhan programmer di kantor",
+      "Mendeteksi bug dan regresi kode lebih awal secara otomatis sebelum rilis ke lingkungan produksi",
+      "Membuat ukuran file program menjadi lebih besar",
+      "Menutup akses koneksi internet server"
+    ],
+    correctIndex: 1,
+    explanation: "Pipeline CI/CD otomatis menjalankan build dan unit test pada setiap commit kode untuk memastikan stabilitas aplikasi dan mencegah regresi error merambah ke production server."
   },
 
   // =========================================================================
-  // 7. HUKUM ADMINISTRASI NEGARA & LMS (MODUL 7)
+  // 7. HUKUM ADMINISTRASI NEGARA & LMS (MODUL 7 & REGULASI)
   // =========================================================================
   {
-    id: 37,
+    id: 38,
     category: "LMS & Regulasi ASN",
     question: "Berdasarkan modul hukum administrasi ASN, apa perbedaan mendasar antara konsep 'Fungsi' dan 'Tugas' bagi seorang Pegawai Negeri Sipil?",
     options: [
       "Fungsi mengatur gaji pokok, sedangkan Tugas mengatur tunjangan kinerja",
-      "Fungsi menjawab alasan filosofis mengapa ASN ada (misal: pelaksana kebijakan, pelayan publik, pemersatu bangsa), sedangkan Tugas menjawab apa pekerjaan konkrit yang dikerjakan",
+      "Fungsi menjawab alasan filosofis mengapa ASN ada (pelaksana kebijakan, pelayan publik, pemersatu bangsa), sedangkan Tugas menjawab apa pekerjaan konkrit yang dikerjakan",
       "Fungsi berlaku hanya untuk PPPK, sedangkan Tugas berlaku hanya untuk PNS",
       "Tidak ada perbedaan sama sekali antara fungsi dan tugas dalam hukum administrasi"
     ],
@@ -517,7 +627,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "Dalam hukum administrasi kepegawaian ASN: 'Fungsi' menjawab tujuan eksistensi/alasan mengapa institusi dan ASN ada, sedangkan 'Tugas' merupakan mandat operasional mengenai apa yang dikerjakan dalam rutinitas kerja pelayanan publik."
   },
   {
-    id: 38,
+    id: 39,
     category: "LMS & Regulasi ASN",
     question: "Regulasi Undang-Undang pokok yang menjadi landasan manajemen ASN, penguatan peran jabatan fungsional, dan digitalisasi manajemen kepegawaian saat ini adalah...",
     options: [
@@ -530,30 +640,17 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     explanation: "UU No. 20 Tahun 2023 tentang Aparatur Sipil Negara mencabut UU No. 5/2014 dan menjadi dasar hukum utama manajemen ASN berbasis meritokrasi, kelincahan organisasi fungsional, dan transformasi digital kepegawaian."
   },
   {
-    id: 39,
+    id: 40,
     category: "LMS & Regulasi ASN",
     question: "Mengapa pemahaman batas kewenangan dan integritas sistem TIK sangat krusial bagi tenaga fungsional di lingkungan Kejaksaan RI?",
     options: [
-      "Karena Kejaksaan lembaga penegak hukum di mana kekeliruan akses data dan wewenang berdampak langsung pada pelanggaran HAM dan integritas pembuktian perkara",
+      "Karena Kejaksaan lembaga penegak hukum di mana kekeliruan akses data dan wewenang berdampak langsung pada keabsahan pembuktian perkara dan hak asasi manusia",
       "Hanya untuk memenuhi syarat formalitas penilaian sertifikat pelatihan",
       "Agar printer kantor tidak cepat rusak",
       "Karena anggaran internet kejaksaan sangat terbatas"
     ],
     correctIndex: 0,
     explanation: "Di lembaga penegak hukum seperti Kejaksaan RI, integritas data perkara dan kepatuhan wewenang sistem sangat vital karena menyangkut status hukum seseorang, asas kerahasiaan pra-penuntutan, dan perlindungan hak asasi warga negara."
-  },
-  {
-    id: 40,
-    category: "LMS & Regulasi ASN",
-    question: "Daur manajemen Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) berdasarkan regulasi PP No. 49 Tahun 2018 terdiri dari berapa unsur tahapan?",
-    options: [
-      "3 unsur",
-      "5 unsur",
-      "9 unsur (mulai perencanaan kebutuhan hingga pemutusan hubungan perjanjian kerja)",
-      "15 unsur"
-    ],
-    correctIndex: 2,
-    explanation: "Daur Manajemen PPPK memuat 9 unsur tahapan: penetapan kebutuhan, pengadaan, penilaian kinerja, penggajian & tunjangan, pengembangan kompetensi, pemberian penghargaan, disiplin, pemutusan hubungan perjanjian kerja, dan perlindungan."
   },
   {
     id: 41,
@@ -571,6 +668,19 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: 42,
     category: "LMS & Regulasi ASN",
+    question: "Core values ASN BerAKHLAK yang wajib diinternalisasi oleh setiap pejabat fungsional Pranata Komputer merupakan akronim dari...",
+    options: [
+      "Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, Kolaboratif",
+      "Bersih, Amanah, Kreatif, Hebat, Loyal, Adil, Konsisten",
+      "Bekerja, Rajin, Andal, Kritis, Humanis, Lugas, Ksatria",
+      "Berani, Edukatif, Resik, Aktif, Komitmen, Handal, Luwes"
+    ],
+    correctIndex: 0,
+    explanation: "BerAKHLAK adalah nilai dasar ASN: Berorientasi Pelayanan, Akuntabel, Kompeten, Harmonis, Loyal, Adaptif, dan Kolaboratif."
+  },
+  {
+    id: 43,
+    category: "LMS & Regulasi ASN",
     question: "Dalam modul orientasi mandiri LMS, alokasi waktu 90 menit pembelajaran terbagi secara terstruktur menjadi...",
     options: [
       "10 menit pendahuluan, 65 menit materi inti, 15 menit rangkuman & refleksi",
@@ -580,5 +690,31 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
     correctIndex: 0,
     explanation: "Struktur standar sesi 90 menit pembelajaran mandiri modul LMS: 10 menit pembuka/pendahuluan, 65 menit pendalaman materi inti, dan 15 menit penyimpulan/refleksi akhir."
+  },
+  {
+    id: 44,
+    category: "Audit TI & IT Enterprise",
+    question: "Tim Tanggap Insiden Keamanan Siber di lingkungan Kejaksaan RI dikenal dengan singkatan CSIRT. Tugas pokok CSIRT satker adalah...",
+    options: [
+      "Melakukan pengadaan perangkat laptop dinas baru",
+      "Menerima, meninjau, menganalisis, merespon, dan memulihkan insiden serangan siber (malware, ransomware, web defacement) pada aset TIK Kejaksaan",
+      "Membuat absensi kehadiran sidik jari pegawai",
+      "Mengatur jadwal sidang perkara pidana umum"
+    ],
+    correctIndex: 1,
+    explanation: "Computer Security Incident Response Team (CSIRT) bertugas mencegah, mendeteksi, menangani, dan memitigasi insiden keamanan siber yang menyerang sistem dan jaringan instansi."
+  },
+  {
+    id: 45,
+    category: "Manajemen Layanan ITIL 4",
+    question: "Komponen dasar dalam ITIL 4 yang menggambarkan bagaimana semua komponen dan aktivitas organisasi bekerja sama untuk memfasilitasi penciptaan nilai disebut...",
+    options: [
+      "Service Value System (SVS)",
+      "Continual Improvement Model",
+      "Four Dimensions of Service Management",
+      "Guiding Principles"
+    ],
+    correctIndex: 0,
+    explanation: "Service Value System (SVS) adalah kerangka menyeluruh dalam ITIL 4 yang mengintegrasikan Guiding Principles, Governance, Service Value Chain, Practices, dan Continual Improvement."
   }
 ]

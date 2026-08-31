@@ -61,17 +61,25 @@ export function LearningProgressWidget({ totalMaterialsCount = 14 }: LearningPro
         setReadMaterialsCount(0)
       }
 
-      // 2. Quizzes completed
-      const savedQuiz = localStorage.getItem('prakom_quiz_history') || localStorage.getItem('prakom_quiz_completed')
-      if (savedQuiz) {
-        const parsed = JSON.parse(savedQuiz)
+      // 2. Quizzes completed (from completed packages or history)
+      const savedPacks = localStorage.getItem('prakom_completed_quiz_packs')
+      if (savedPacks) {
+        const parsed = JSON.parse(savedPacks)
         if (Array.isArray(parsed)) {
-          setCompletedQuizCount(parsed.length)
-        } else if (parsed && typeof parsed === 'object') {
-          setCompletedQuizCount(Object.keys(parsed).length)
+          setCompletedQuizCount(Math.min(5, parsed.length))
         }
       } else {
-        setCompletedQuizCount(0)
+        const savedQuiz = localStorage.getItem('prakom_quiz_history') || localStorage.getItem('prakom_quiz_completed')
+        if (savedQuiz) {
+          const parsed = JSON.parse(savedQuiz)
+          if (Array.isArray(parsed)) {
+            setCompletedQuizCount(Math.min(5, parsed.length))
+          } else if (parsed && typeof parsed === 'object') {
+            setCompletedQuizCount(Math.min(5, Object.keys(parsed).length))
+          }
+        } else {
+          setCompletedQuizCount(0)
+        }
       }
 
       // 3. Exam checklist (handles both Array and Object format)
@@ -143,6 +151,8 @@ export function LearningProgressWidget({ totalMaterialsCount = 14 }: LearningPro
     if (confirm('Reset seluruh riwayat & progres belajar lokal Anda?')) {
       try {
         localStorage.removeItem('prakom_materials_read')
+        localStorage.removeItem('prakom_completed_quiz_packs')
+        localStorage.removeItem('prakom_quiz_pack_scores')
         localStorage.removeItem('prakom_quiz_history')
         localStorage.removeItem('prakom_quiz_completed')
         localStorage.removeItem('prakom_exam_checklist')

@@ -18,19 +18,42 @@ import {
   Trophy,
   Filter,
   Lightbulb,
-  AlertCircle
+  AlertCircle,
+  Zap,
+  Play,
+  Bookmark,
+  ChevronRight,
+  BarChart3,
+  ShieldCheck,
+  Shield,
+  Layers
 } from "lucide-react"
-import { QUIZ_QUESTIONS, QuizQuestion } from "@/data/quiz-questions"
+import { QUIZ_QUESTIONS, QUIZ_PACKAGES, QuizQuestion, QuizPackage } from "@/data/quiz-questions"
 import { Spinner } from "@/components/ui/spinner"
+import Link from "next/link"
 
 export function QuizPlayer() {
+  // Navigation & Mode States
+  const [activeTab, setActiveTab] = React.useState<"packages" | "flash" | "category">("packages")
+  const [activePackage, setActivePackage] = React.useState<QuizPackage | null>(null)
   const [selectedCategory, setSelectedCategory] = React.useState<string>("Semua")
+  const [isQuizActive, setIsQuizActive] = React.useState(false)
+
+  // Quiz Player States
+  const [questions, setQuestions] = React.useState<QuizQuestion[]>([])
   const [currentIndex, setCurrentIndex] = React.useState(0)
   const [userAnswers, setUserAnswers] = React.useState<Record<number, number>>({})
+  const [flaggedQuestions, setFlaggedQuestions] = React.useState<Record<number, boolean>>({})
   const [isSubmitted, setIsSubmitted] = React.useState(false)
   const [isSubmittingQuiz, setIsSubmittingQuiz] = React.useState(false)
-  const [timerSeconds, setTimerSeconds] = React.useState(2520) // default 42 minutes for 42 questions
+  const [timerSeconds, setTimerSeconds] = React.useState(900)
   const [reviewFilter, setReviewFilter] = React.useState<"all" | "wrong" | "correct">("all")
+
+  // Storage Stats State
+  const [completedPacks, setCompletedPacks] = React.useState<string[]>([])
+  const [packScores, setPackScores] = React.useState<Record<string, number>>({})
+  const [quizHistoryCount, setQuizHistoryCount] = React.useState(0)
+  const [mounted, setMounted] = React.useState(false)
 
   const categories = [
     "Semua",
@@ -43,60 +66,209 @@ export function QuizPlayer() {
     "LMS & Regulasi ASN"
   ]
 
-  const filteredQuestions = React.useMemo(() => {
-    if (selectedCategory === "Semua") return QUIZ_QUESTIONS
-    return QUIZ_QUESTIONS.filter((q) => q.category === selectedCategory)
-  }, [selectedCategory])
+  const loadSavedData = React.useCallback(() => {
+    try {
+      const savedPacks = localStorage.getItem("prakom_completed_quiz_packs")
+      if (savedPacks) {
+        const parsed = JSON.parse(savedPacks)
+        if (Array.isArray(parsed)) setCompletedPacks(parsed)
+      }
 
-  const currentQ = filteredQuestions[currentIndex] || filteredQuestions[0]
+      const savedScores = localStorage.getItem("prakom_quiz_pack_scores")
+      if (savedScores) {
+        setPackScores(JSON.parse(savedScores))
+      }
 
-  // Reset timer on category change
+      const savedHistory = localStorage.getItem("prakom_quiz_history")
+      if (savedHistory) {
+        const parsed = JSON.parse(savedHistory)
+        if (Array.isArray(parsed)) setQuizHistoryCount(parsed.length)
+      }
+    } catch {
+      // Ignore
+    }
+  }, [])
+
   React.useEffect(() => {
-    setTimerSeconds(filteredQuestions.length * 60)
-  }, [selectedCategory, filteredQuestions.length])
+    setMounted(true)
+    loadSavedData()
+  }, [loadSavedData])
+
+  // Start Specific Package
+  const handleStartPackage = (pkg: QuizPackage) => {
+    setActivePackage(pkg)
+    let filtered = QUIZ_QUESTIONS.filter((q) => pkg.categories.includes(q.category))
+    
+    // If pack-5 (Tryout CAT), shuffle and take questionCount
+    if (pkg.id === "pack-5") {
+      filtered = [...QUIZ_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, pkg.questionCount)
+    } else {
+      // Shuffle & take questionCount
+      filtered = [...filtered].sort(() => Math.random() - 0.5).slice(0, pkg.questionCount)
+    }
+
+    setQuestions(filtered)
+    setCurrentIndex(0)
+    setUserAnswers({})
+    setFlaggedQuestions({})
+    setIsSubmitted(false)
+    setTimerSeconds(pkg.durationMinutes * 60)
+    setIsQuizActive(true)
+  }
+
+  // Start Flash Quiz (10 Random Questions in 5 Mins)
+  const handleStartFlashQuiz = () => {
+    setActivePackage({
+      id: "flash-quiz",
+      title: "Flash Quiz (Kuis Kilat 5 Menit)",
+      subtitle: "10 Soal Acak Seluruh Modul",
+      badge: "Kuis Cepat",
+      color: "#eab308",
+      durationMinutes: 5,
+      questionCount: 10,
+      passingScore: 75,
+      categories: ["Overview & Administrasi Prakom", "Audit TI & IT Enterprise", "Manajemen Layanan ITIL 4", "Manajemen Risiko ISO 31000", "Pengolahan Data & DAMA DMBOK", "Sistem Informasi & SDLC", "LMS & Regulasi ASN"],
+      description: "Tantangan kuis cepat 5 menit untuk menguji reflek dan pemahaman spontan materi diklat.",
+      iconName: "Zap"
+    })
+    const randomQuestions = [...QUIZ_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10)
+    setQuestions(randomQuestions)
+    setCurrentIndex(0)
+    setUserAnswers({})
+    setFlaggedQuestions({})
+    setIsSubmitted(false)
+    setTimerSeconds(300) // 5 minutes
+    setIsQuizActive(true)
+  }
+
+  // Start Category Quiz
+  const handleStartCategoryQuiz = (cat: string) => {
+    setSelectedCategory(cat)
+    const filtered = cat === "Semua" ? QUIZ_QUESTIONS : QUIZ_QUESTIONS.filter((q) => q.category === cat)
+    setActivePackage({
+      id: `cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+      title: `Kuis Modul: ${cat}`,
+      subtitle: `${filtered.length} Soal Pendalaman`,
+      badge: "Pendalaman Modul",
+      color: "#007aff",
+      durationMinutes: Math.max(5, Math.ceil(filtered.length * 1.5)),
+      questionCount: filtered.length,
+      passingScore: 75,
+      categories: [cat as any],
+      description: `Latihan fokus untuk topik ${cat}.`,
+      iconName: "BookOpen"
+    })
+    setQuestions(filtered)
+    setCurrentIndex(0)
+    setUserAnswers({})
+    setFlaggedQuestions({})
+    setIsSubmitted(false)
+    setTimerSeconds(filtered.length * 90)
+    setIsQuizActive(true)
+  }
 
   // Timer countdown
   React.useEffect(() => {
-    if (isSubmitted) return
+    if (!isQuizActive || isSubmitted) return
     const interval = setInterval(() => {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          setIsSubmitted(true)
+          handleSubmitQuiz()
           return 0
         }
         return prev - 1
       })
     }, 1000)
     return () => clearInterval(interval)
-  }, [isSubmitted])
+  }, [isQuizActive, isSubmitted])
 
   const handleSelectOption = (optionIndex: number) => {
     if (isSubmitted) return
+    const currentQ = questions[currentIndex]
+    if (!currentQ) return
     setUserAnswers((prev) => ({
       ...prev,
       [currentQ.id]: optionIndex,
     }))
   }
 
-  const handleResetQuiz = () => {
-    setUserAnswers({})
-    setCurrentIndex(0)
-    setIsSubmitted(false)
-    setReviewFilter("all")
-    setTimerSeconds(filteredQuestions.length * 60)
+  const handleToggleFlag = () => {
+    const currentQ = questions[currentIndex]
+    if (!currentQ) return
+    setFlaggedQuestions((prev) => ({
+      ...prev,
+      [currentQ.id]: !prev[currentQ.id],
+    }))
   }
 
-  // Calculate score
-  const correctCount = filteredQuestions.filter(
+  // Calculate Scores
+  const correctCount = questions.filter(
     (q) => userAnswers[q.id] === q.correctIndex
   ).length
-
   const answeredCount = Object.keys(userAnswers).length
-  const wrongCount = answeredCount - correctCount
-  const unansweredCount = filteredQuestions.length - answeredCount
-  const scorePercentage = Math.round((correctCount / filteredQuestions.length) * 100)
-  const isPassed = scorePercentage >= 75
+  const scorePercentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0
+  const isPassed = scorePercentage >= (activePackage?.passingScore || 75)
+
+  const handleSubmitQuiz = () => {
+    setIsSubmittingQuiz(true)
+    setTimeout(() => {
+      setIsSubmittingQuiz(false)
+      setIsSubmitted(true)
+
+      try {
+        // 1. Record in history
+        const savedHistory = localStorage.getItem("prakom_quiz_history")
+        let history: any[] = []
+        if (savedHistory) {
+          const parsed = JSON.parse(savedHistory)
+          if (Array.isArray(parsed)) history = parsed
+        }
+        history.push({
+          id: `quiz-${Date.now()}`,
+          packId: activePackage?.id || "custom",
+          title: activePackage?.title || "Simulasi Kuis",
+          score: scorePercentage,
+          totalQuestions: questions.length,
+          correctCount,
+          isPassed,
+          date: new Date().toISOString(),
+        })
+        localStorage.setItem("prakom_quiz_history", JSON.stringify(history))
+        localStorage.setItem("prakom_quiz_completed", JSON.stringify(history))
+
+        // 2. If it's an official package and passed, record completed pack
+        if (activePackage && activePackage.id.startsWith("pack-")) {
+          const savedPacks = localStorage.getItem("prakom_completed_quiz_packs")
+          let packs: string[] = []
+          if (savedPacks) {
+            const parsed = JSON.parse(savedPacks)
+            if (Array.isArray(parsed)) packs = parsed
+          }
+          if (!packs.includes(activePackage.id)) {
+            packs.push(activePackage.id)
+            localStorage.setItem("prakom_completed_quiz_packs", JSON.stringify(packs))
+          }
+
+          // Save highest score for package
+          const savedScores = localStorage.getItem("prakom_quiz_pack_scores")
+          let scores: Record<string, number> = {}
+          if (savedScores) {
+            try { scores = JSON.parse(savedScores) } catch {}
+          }
+          scores[activePackage.id] = Math.max(scores[activePackage.id] || 0, scorePercentage)
+          localStorage.setItem("prakom_quiz_pack_scores", JSON.stringify(scores))
+        }
+
+        // Trigger real-time synchronization across whole app
+        window.dispatchEvent(new Event("storage"))
+        window.dispatchEvent(new Event("prakom-progress-updated"))
+        loadSavedData()
+      } catch {
+        // Ignore
+      }
+    }, 500)
+  }
 
   const formatTimer = (secs: number) => {
     const m = Math.floor(secs / 60)
@@ -104,484 +276,656 @@ export function QuizPlayer() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
   }
 
-  // Jump to first unanswered question
-  const handleJumpToUnanswered = () => {
-    const nextIdx = filteredQuestions.findIndex((q) => userAnswers[q.id] === undefined)
-    if (nextIdx !== -1) {
-      setCurrentIndex(nextIdx)
-    }
-  }
+  const currentQ = questions[currentIndex] || questions[0]
 
-  const handleSubmitQuiz = React.useCallback(() => {
-    setIsSubmittingQuiz(true)
-    setTimeout(() => {
-      setIsSubmittingQuiz(false)
-      setIsSubmitted(true)
-      try {
-        const saved = localStorage.getItem("prakom_quiz_history")
-        let history: any[] = []
-        if (saved) {
-          const parsed = JSON.parse(saved)
-          if (Array.isArray(parsed)) history = parsed
-        }
-        history.push({
-          id: `quiz-${Date.now()}`,
-          category: selectedCategory,
-          score: scorePercentage,
-          date: new Date().toISOString(),
-        })
-        localStorage.setItem("prakom_quiz_history", JSON.stringify(history))
-        localStorage.setItem("prakom_quiz_completed", JSON.stringify(history))
-        window.dispatchEvent(new Event("storage"))
-        window.dispatchEvent(new Event("prakom-progress-updated"))
-      } catch {
-        // Ignore
-      }
-    }, 500)
-  }, [selectedCategory, scorePercentage])
+  if (!mounted) return null
 
-  return (
-    <div className="space-y-6">
-      
-      {/* 1. Header Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-3 py-0.5 text-xs font-semibold">
-                <Sparkles className="h-3.5 w-3.5 text-[#ff9500]" strokeWidth={2} />
-                <span>Simulasi MOOC & Bank Soal</span>
-              </span>
-              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
-                {QUIZ_QUESTIONS.length} Soal Lengkap 9 Modul
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
-              Latihan Soal Uji Kompetensi <br className="hidden sm:block" />
-              <span className="text-[#007aff] dark:text-[#60a5fa]">Pranata Komputer Keahlian.</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed max-w-3xl">
-              Simulasi komprehensif 120 JP berbasis modul resmi Pusdiklat Kejaksaan RI: SPBE, ITIL 4, ISO 31000, DAMA DMBOK, dan Studi Kelayakan TELOS.
-            </p>
-          </div>
-
-          {/* Live Timer Pill */}
-          {!isSubmitted && (
-            <div className="flex items-center gap-2 shrink-0">
-              <div className={`flex items-center gap-2 rounded-full px-4 py-2 border shadow-2xs ${
-                timerSeconds <= 180
-                  ? "bg-[#ff3b30]/10 border-[#ff3b30]/40 text-[#ff3b30] dark:text-[#f87171] animate-pulse"
-                  : "bg-[#f6f5f4] dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 text-[#000000] dark:text-white"
-              }`}>
-                <Timer className="h-4 w-4 text-[#ff9500]" strokeWidth={2} />
-                <div className="text-left">
-                  <span className="block text-[9px] font-semibold uppercase tracking-wider text-[#615d59] dark:text-[#94a3b8]">Sisa Waktu</span>
-                  <span className="font-mono text-xs sm:text-sm font-bold text-[#007aff] dark:text-[#60a5fa]">{formatTimer(timerSeconds)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Category Filter Grid & Wrapping Pills */}
-        <div className="pt-3.5 border-t border-[#e6e6e6] dark:border-white/10">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {categories.map((cat) => {
-              const count = cat === "Semua" ? QUIZ_QUESTIONS.length : QUIZ_QUESTIONS.filter((q) => q.category === cat).length
-              const isActive = selectedCategory === cat
-              return (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedCategory(cat)
-                    setCurrentIndex(0)
-                  }}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                    isActive
-                      ? "bg-[#007aff] text-white shadow-2xs"
-                      : "bg-[#f6f5f4] dark:bg-[#141b27] text-[#615d59] dark:text-[#94a3b8] hover:bg-[#e6e6e6] dark:hover:bg-[#1f283a] hover:text-[#000000] dark:hover:text-white"
-                  }`}
-                >
-                  <span>{cat}</span>
-                  <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold ${
-                    isActive ? "bg-white/20 text-white" : "bg-[#e6e6e6] dark:border-white/10 dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
-                  }`}>
-                    {count}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Main Quiz Area */}
-      {!isSubmitted ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          
-          {/* Question Card (8 Cols) */}
-          <div className="lg:col-span-8 rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-2xs space-y-4">
-            
-            {/* Top Question Progress & Category */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-[10px] font-semibold">
-                  {currentQ.category}
+  // =========================================================================
+  // VIEW 1: QUIZ SELECTION HUB (Pusat Simulasi & Paket Kuis)
+  // =========================================================================
+  if (!isQuizActive) {
+    return (
+      <div className="space-y-6">
+        {/* Banner Header */}
+        <div className="rounded-[16px] bg-gradient-to-br from-[#007aff]/10 via-[#007aff]/5 to-transparent dark:from-[#007aff]/20 dark:via-[#141b27] dark:to-[#141b27] border border-[#007aff]/20 p-6 sm:p-8 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] text-white px-3 py-0.5 text-[11px] font-semibold">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Simulasi Uji Kompetensi CAT</span>
                 </span>
-                <span className="font-mono text-xs font-medium text-[#615d59] dark:text-[#94a3b8]">
-                  Soal <strong className="text-[#000000] dark:text-white font-bold">{currentIndex + 1}</strong> dari {filteredQuestions.length}
+                <span className="inline-flex items-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-semibold">
+                  Standar 120 JP & Pusdiklat
                 </span>
               </div>
-
-              {/* Smooth Progress Bar */}
-              <div className="h-1.5 w-full bg-[#f6f5f4] dark:bg-[#101520] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#007aff] transition-all duration-300 rounded-full"
-                  style={{ width: `${((currentIndex + 1) / filteredQuestions.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Question Text */}
-            <div className="pt-1">
-              <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white leading-relaxed">
-                {currentQ.question}
-              </h3>
-            </div>
-
-            {/* Options List */}
-            <div className="space-y-2 pt-1">
-              {currentQ.options.map((opt, idx) => {
-                const isSelected = userAnswers[currentQ.id] === idx
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSelectOption(idx)}
-                    className={`flex items-start gap-3 w-full text-left rounded-[10px] p-3 sm:p-3.5 border transition-all cursor-pointer group ${
-                      isSelected
-                        ? "bg-[#007aff]/10 dark:bg-[#007aff]/20 border-[#007aff] text-[#000000] dark:text-white shadow-2xs"
-                        : "bg-[#f6f5f4] dark:bg-[#101520] border-[#e6e6e6] dark:border-white/10 text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#eae9e7] dark:hover:bg-[#182030]"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-xs font-bold transition-all ${
-                        isSelected
-                          ? "bg-[#007aff] text-white shadow-2xs"
-                          : "bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 text-[#615d59] dark:text-[#94a3b8] group-hover:border-[#007aff]"
-                      }`}
-                    >
-                      {String.fromCharCode(65 + idx)}
-                    </div>
-                    <span className="text-xs font-medium leading-relaxed pt-0.5 flex-1">
-                      {opt}
-                    </span>
-                    {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-[#007aff] dark:text-[#60a5fa] shrink-0 mt-0.5" strokeWidth={2} />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Navigation Action Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#e6e6e6] dark:border-white/10">
-              <button
-                type="button"
-                disabled={currentIndex === 0}
-                onClick={() => setCurrentIndex((prev) => prev - 1)}
-                className="flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#141b27] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white hover:bg-[#e6e6e6] dark:hover:bg-[#1f283a] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition border border-[#e6e6e6] dark:border-white/10"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2} />
-                <span>Sebelumnya</span>
-              </button>
-
-              {currentIndex < filteredQuestions.length - 1 ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrentIndex((prev) => prev + 1)}
-                  className="flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] px-4.5 py-2 text-xs font-semibold text-white cursor-pointer shadow-xs active:scale-[0.98] transition"
-                >
-                  <span>Berikutnya</span>
-                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled={isSubmittingQuiz}
-                  onClick={handleSubmitQuiz}
-                  className="flex items-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] px-5 py-2 text-xs font-semibold text-white shadow-xs cursor-pointer active:scale-[0.98] transition disabled:opacity-60"
-                >
-                  {isSubmittingQuiz ? (
-                    <>
-                      <Spinner size="xs" variant="white" />
-                      <span>Memproses Skor...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-3.5 w-3.5" strokeWidth={2} />
-                      <span>Selesaikan & Kumpulkan Kuis</span>
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Sticky Question Number Grid Sidebar (4 Cols) */}
-          <div className="lg:col-span-4 rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-4 sticky top-24">
-            <div className="space-y-0.5">
-              <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100">Navigasi Nomor Soal</h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Klik nomor untuk melompat ke soal</p>
-            </div>
-
-            {/* Answer Progress */}
-            <div className="p-3 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-slate-600 dark:text-slate-400">Terjawab:</span>
-                <span className="font-mono text-emerald-700 dark:text-emerald-400 font-black">
-                  {answeredCount} / {filteredQuestions.length} ({Math.round((answeredCount / filteredQuestions.length) * 100)}%)
-                </span>
-              </div>
-              <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-600 rounded-full transition-all duration-300"
-                  style={{ width: `${(answeredCount / filteredQuestions.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Grid of Numbers */}
-            <div className="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-5 gap-1.5 max-h-[280px] overflow-y-auto pr-1 no-scrollbar">
-              {filteredQuestions.map((q, idx) => {
-                const isAnswered = userAnswers[q.id] !== undefined
-                const isCurrent = currentIndex === idx
-                return (
-                  <button
-                    key={q.id}
-                    onClick={() => setCurrentIndex(idx)}
-                    className={`h-8 rounded-[6px] font-mono text-xs font-bold transition-all cursor-pointer relative ${
-                      isCurrent
-                        ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-2xs"
-                        : isAnswered
-                        ? "bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200"
-                        : "bg-slate-100 dark:bg-[#161B26] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#253045]"
-                    }`}
-                  >
-                    {idx + 1}
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Quick Unanswered Jump */}
-            {unansweredCount > 0 && (
-              <button
-                type="button"
-                onClick={handleJumpToUnanswered}
-                className="w-full py-1.5 px-2.5 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-[6px] hover:bg-amber-100 transition cursor-pointer"
-              >
-                ⚡ Lompat ke Soal Belum Terjawab ({unansweredCount})
-              </button>
-            )}
-
-            {/* Submit Button */}
-            <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550]">
-              <button
-                type="button"
-                onClick={() => setIsSubmitted(true)}
-                className="w-full rounded-[8px] bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 py-2.5 text-xs font-black text-white transition shadow-2xs cursor-pointer"
-              >
-                Selesaikan Kuis Sekarang
-              </button>
-            </div>
-          </div>
-
-        </div>
-      ) : (
-        /* Result Scorecard & Review View */
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="space-y-6"
-        >
-          {/* Top Score Summary Banner */}
-          <div className="rounded-[14px] bg-white dark:bg-[#1B2130] p-5 sm:p-8 border border-slate-200/90 dark:border-[#2A3550] shadow-xs text-center space-y-5">
-            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[12px] shadow-2xs ${
-              isPassed
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
-            }`}>
-              <Trophy className="h-8 w-8" />
-            </div>
-
-            <div className="space-y-1.5 max-w-xl mx-auto">
-              <span className={`rounded-full px-3 py-0.5 text-xs font-black uppercase tracking-wider ${
-                isPassed
-                  ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200"
-                  : "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-200"
-              }`}>
-                {isPassed ? "✨ LULUS TRYOUT KOMPREHENSIF" : "📚 PERLU LATIHAN LEBIH LANJUT"}
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                {scorePercentage} <span className="text-lg font-bold text-slate-400">/ 100</span>
+              <h2 className="text-xl sm:text-2xl font-black text-[#000000] dark:text-white tracking-tight">
+                Pusat Simulasi Kuis & Bank Soal Interaktif
               </h2>
-              <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 leading-relaxed">
-                Anda menjawab benar <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{correctCount}</strong> dari{" "}
-                <strong className="text-slate-900 dark:text-slate-100 font-bold">{filteredQuestions.length}</strong> butir soal pada kategori <em>{selectedCategory}</em>.
+              <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+                Pilih paket latihan resmi berjenjang atau mode kuis kilat untuk menguji kesiapan materi SPBE, ITIL 4, Manajemen Risiko, DAMA DMBOK, hingga Uji Kompetensi CAT Prakom Kejaksaan RI.
               </p>
             </div>
 
-            {/* Scorecard Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 max-w-2xl mx-auto pt-1">
-              <div className="p-3 rounded-[8px] bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800">
-                <span className="block text-xl font-black text-emerald-700 dark:text-emerald-300">{correctCount}</span>
-                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Jawaban Benar</span>
+            {/* Quick Stat Pill */}
+            <div className="flex items-center gap-3 bg-white dark:bg-[#1a2332] p-3.5 rounded-[12px] border border-[#e6e6e6] dark:border-white/10 shadow-2xs shrink-0">
+              <div className="h-10 w-10 rounded-[10px] bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] flex items-center justify-center font-bold">
+                <Trophy className="h-5 w-5" />
               </div>
-              <div className="p-3 rounded-[8px] bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800">
-                <span className="block text-xl font-black text-rose-700 dark:text-rose-300">{wrongCount}</span>
-                <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Jawaban Salah</span>
+              <div>
+                <div className="text-xs text-[#615d59] dark:text-[#94a3b8] font-semibold">Paket Selesai</div>
+                <div className="text-lg font-black font-mono text-[#000000] dark:text-white">
+                  {completedPacks.length} / 5 Paket
+                </div>
               </div>
-              <div className="p-3 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550]">
-                <span className="block text-xl font-black text-slate-700 dark:text-slate-300">{unansweredCount}</span>
-                <span className="text-[10px] font-bold text-slate-400">Tidak Dijawab</span>
-              </div>
-              <div className="p-3 rounded-[8px] bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800">
-                <span className="block text-xl font-black text-purple-700 dark:text-purple-300">{filteredQuestions.length}</span>
-                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">Total Soal</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2.5 pt-1">
-              <button
-                type="button"
-                onClick={handleResetQuiz}
-                className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 px-5 py-2.5 text-xs font-black text-white hover:bg-slate-800 transition shadow-2xs cursor-pointer"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>Ulangi Latihan Kuis Ini</span>
-              </button>
             </div>
           </div>
 
-          {/* Question Review Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Pembahasan Lengkap & Kunci Jawaban:</span>
-            </h3>
+          {/* Mode Switch Tabs */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#007aff]/15">
+            <button
+              type="button"
+              onClick={() => setActiveTab("packages")}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer border ${
+                activeTab === "packages"
+                  ? "bg-[#007aff] text-white border-[#007aff] shadow-xs"
+                  : "bg-white dark:bg-[#1a2332] text-[#31302e] dark:text-[#cbd5e1] border-[#e6e6e6] dark:border-white/10 hover:bg-[#f6f5f4]"
+              }`}
+            >
+              <Award className="h-3.5 w-3.5" />
+              <span>5 Paket Kuis Resmi (Standar 120 JP)</span>
+            </button>
 
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setReviewFilter("all")}
-                className={`px-3 py-1 rounded-[6px] text-xs font-bold transition cursor-pointer ${
-                  reviewFilter === "all" ? "bg-slate-900 dark:bg-indigo-600 text-white" : "bg-slate-100 dark:bg-[#1B2130] text-slate-600 dark:text-slate-300 hover:bg-slate-200"
-                }`}
-              >
-                Semua ({filteredQuestions.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setReviewFilter("wrong")}
-                className={`px-3 py-1 rounded-[6px] text-xs font-bold transition cursor-pointer ${
-                  reviewFilter === "wrong" ? "bg-rose-600 text-white" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100"
-                }`}
-              >
-                Salah ({wrongCount + unansweredCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setReviewFilter("correct")}
-                className={`px-3 py-1 rounded-[6px] text-xs font-bold transition cursor-pointer ${
-                  reviewFilter === "correct" ? "bg-emerald-600 text-white" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
-                }`}
-              >
-                Benar ({correctCount})
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("flash")}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer border ${
+                activeTab === "flash"
+                  ? "bg-amber-500 text-white border-amber-500 shadow-xs"
+                  : "bg-white dark:bg-[#1a2332] text-[#31302e] dark:text-[#cbd5e1] border-[#e6e6e6] dark:border-white/10 hover:bg-[#f6f5f4]"
+              }`}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span>Flash Quiz (Kuis Kilat 5 Menit)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("category")}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer border ${
+                activeTab === "category"
+                  ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                  : "bg-white dark:bg-[#1a2332] text-[#31302e] dark:text-[#cbd5e1] border-[#e6e6e6] dark:border-white/10 hover:bg-[#f6f5f4]"
+              }`}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>Latihan Per Kategori Modul</span>
+            </button>
           </div>
+        </div>
 
-          {/* Detailed Question Review Cards */}
-          <div className="space-y-3.5">
-            {filteredQuestions
-              .filter((q) => {
-                const userAns = userAnswers[q.id]
-                const isCorrect = userAns === q.correctIndex
-                if (reviewFilter === "correct") return isCorrect
-                if (reviewFilter === "wrong") return !isCorrect
-                return true
-              })
-              .map((q, idx) => {
-                const userAns = userAnswers[q.id]
-                const isCorrect = userAns === q.correctIndex
+        {/* TAB 1: 5 OFFICIAL PACKAGES */}
+        {activeTab === "packages" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#007aff]" />
+                <span>5 Paket Kuis Kurikulum Diklat Fungsional Prakom</span>
+              </h3>
+              <span className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                Selesaikan 5 paket ini untuk mencapai 100% kesiapan kuis
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {QUIZ_PACKAGES.map((pkg, idx) => {
+                const isCompleted = completedPacks.includes(pkg.id)
+                const lastScore = packScores[pkg.id]
+
                 return (
                   <div
-                    key={q.id}
-                    className={`rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border space-y-3 shadow-2xs ${
-                      isCorrect
-                        ? "border-emerald-200 dark:border-emerald-800"
-                        : "border-rose-200 dark:border-rose-900"
-                    }`}
+                    key={pkg.id}
+                    className="rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-5 shadow-2xs hover:border-[#007aff]/50 transition flex flex-col justify-between space-y-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-black text-slate-400">Soal #{idx + 1}</span>
-                        <span className="rounded-full bg-slate-100 dark:bg-[#161B26] px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:text-slate-300">
-                          {q.category}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-bold border border-[#007aff]/20">
+                          {pkg.badge}
+                        </span>
+                        {isCompleted ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 px-2 py-0.5 text-[10px] font-bold">
+                            <Check className="h-3 w-3" />
+                            <span>Lulus ({lastScore || 100}%)</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-[#615d59] dark:text-[#94a3b8]">
+                            Belum Selesai
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white leading-snug">
+                          {pkg.title}
+                        </h4>
+                        <p className="text-[11px] text-[#007aff] dark:text-[#60a5fa] font-medium mt-0.5">
+                          {pkg.subtitle}
+                        </p>
+                      </div>
+
+                      <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-3 leading-relaxed">
+                        {pkg.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-[#e6e6e6] dark:border-white/10">
+                      <div className="flex items-center justify-between text-[11px] text-[#615d59] dark:text-[#94a3b8]">
+                        <span className="flex items-center gap-1 font-mono">
+                          <BookOpen className="h-3 w-3" />
+                          {pkg.questionCount} Soal
+                        </span>
+                        <span className="flex items-center gap-1 font-mono">
+                          <Timer className="h-3 w-3" />
+                          {pkg.durationMinutes} Menit
+                        </span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Pass: {pkg.passingScore}%
                         </span>
                       </div>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                          isCorrect
-                            ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "bg-rose-50 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+
+                      <button
+                        type="button"
+                        onClick={() => handleStartPackage(pkg)}
+                        className={`w-full flex items-center justify-center gap-2 rounded-full py-2 px-4 text-xs font-bold transition shadow-xs cursor-pointer active:scale-[0.98] ${
+                          isCompleted
+                            ? "bg-slate-100 dark:bg-[#1a2332] text-slate-800 dark:text-slate-200 hover:bg-slate-200 border border-slate-200 dark:border-white/10"
+                            : "bg-[#007aff] hover:bg-[#0062cc] text-white"
                         }`}
                       >
-                        {isCorrect ? "✓ Jawaban Benar" : "✗ Jawaban Salah / Kosong"}
-                      </span>
-                    </div>
-
-                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
-                      {q.question}
-                    </h4>
-
-                    {/* Answers Comparison */}
-                    <div className="p-3 rounded-[8px] bg-slate-50 dark:bg-[#161B26] space-y-1.5 text-xs">
-                      <div className="flex items-start gap-2">
-                        <span className="font-bold text-slate-400 min-w-[80px]">Jawaban Anda:</span>
-                        <span className={`font-bold ${isCorrect ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-rose-600 dark:text-rose-400"}`}>
-                          {userAns !== undefined ? `${String.fromCharCode(65 + userAns)}. ${q.options[userAns]}` : "— (Tidak dijawab)"}
-                        </span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <span className="font-bold text-slate-400 min-w-[80px]">Kunci Jawaban:</span>
-                        <span className="text-emerald-700 dark:text-emerald-400 font-black">
-                          {String.fromCharCode(65 + q.correctIndex)}. {q.options[q.correctIndex]}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Detailed Explanation */}
-                    <div className="rounded-[8px] bg-emerald-50/70 dark:bg-emerald-950/30 p-3 text-xs text-slate-700 dark:text-slate-300 border border-emerald-200/80 dark:border-emerald-800/60 leading-relaxed">
-                      <div className="font-black text-emerald-900 dark:text-emerald-200 mb-0.5 flex items-center gap-1.5">
-                        <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Penjelasan Materi & Dasar Regulasi:</span>
-                      </div>
-                      <p>{q.explanation}</p>
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        <span>{isCompleted ? "Ulangi Kuis Paket Ini" : "Mulai Mengerjakan"}</span>
+                      </button>
                     </div>
                   </div>
                 )
               })}
+            </div>
           </div>
-        </motion.div>
-      )}
+        )}
 
+        {/* TAB 2: FLASH QUIZ */}
+        {activeTab === "flash" && (
+          <div className="rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-6 sm:p-8 text-center space-y-4 max-w-xl mx-auto">
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+              <Zap className="h-7 w-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg sm:text-xl font-bold text-[#000000] dark:text-white">
+                Flash Quiz (Kuis Kilat 5 Menit)
+              </h3>
+              <p className="text-xs text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+                Tantangan 10 soal acak dari seluruh kurikulum Diklat Fungsional Prakom. Cocok untuk mengasah ingatan cepat saat istirahat kerja!
+              </p>
+            </div>
+
+            <div className="inline-flex items-center gap-4 bg-[#f6f5f4] dark:bg-[#1a2332] p-3 rounded-[10px] text-xs font-mono font-semibold text-[#31302e] dark:text-[#cbd5e1]">
+              <span>⏱️ Waktu: 5 Menit</span>
+              <span>📝 Jumlah: 10 Soal Acak</span>
+              <span>🎯 Pass: 75%</span>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={handleStartFlashQuiz}
+                className="inline-flex items-center gap-2 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2.5 text-xs sm:text-sm shadow-xs transition active:scale-[0.98] cursor-pointer"
+              >
+                <Play className="h-4 w-4 fill-current" />
+                <span>Mulai Flash Quiz Sekarang</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: CATEGORY SPECIFIC */}
+        {activeTab === "category" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-purple-600" />
+                <span>Pilih Modul Spesifik untuk Latihan Fokus</span>
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {categories.map((cat) => {
+                const count = cat === "Semua" ? QUIZ_QUESTIONS.length : QUIZ_QUESTIONS.filter((q) => q.category === cat).length
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => handleStartCategoryQuiz(cat)}
+                    className="flex items-center justify-between p-4 rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-purple-500 transition text-left cursor-pointer group shadow-2xs"
+                  >
+                    <div className="space-y-1 min-w-0 pr-2">
+                      <div className="font-bold text-xs sm:text-sm text-[#000000] dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition truncate">
+                        {cat}
+                      </div>
+                      <div className="text-[11px] text-[#615d59] dark:text-[#94a3b8] font-mono">
+                        {count} Bank Soal
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-[#615d59] dark:text-[#94a3b8] group-hover:text-purple-600 group-hover:translate-x-0.5 transition shrink-0" />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // =========================================================================
+  // VIEW 2: QUIZ RESULT & REVIEW (Setelah Selesai Kuis)
+  // =========================================================================
+  if (isSubmitted) {
+    const wrongCount = questions.length - correctCount
+    const filteredReviewQuestions = questions.filter((q) => {
+      const isCorrect = userAnswers[q.id] === q.correctIndex
+      if (reviewFilter === "wrong") return !isCorrect
+      if (reviewFilter === "correct") return isCorrect
+      return true
+    })
+
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        {/* Score Card Banner */}
+        <div className={`rounded-[16px] p-6 sm:p-8 border text-center space-y-4 ${
+          isPassed
+            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-950 dark:text-emerald-200"
+            : "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200"
+        }`}>
+          <div className="h-16 w-16 rounded-full flex items-center justify-center mx-auto bg-white dark:bg-[#141b27] shadow-xs">
+            {isPassed ? (
+              <Trophy className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider ${
+              isPassed
+                ? "bg-emerald-600 text-white"
+                : "bg-amber-600 text-white"
+            }`}>
+              {isPassed ? "LULUS UJI KOMPETENSI 🎉" : "BELUM LULUS (PERLU REVIEW) 📚"}
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-[#000000] dark:text-white">
+              Skor Akhir: {scorePercentage}%
+            </h2>
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto">
+              {isPassed
+                ? `Selamat! Anda berhasil melampaui passing grade (${activePackage?.passingScore || 75}%) pada ${activePackage?.title}.`
+                : `Passing grade minimal adalah ${activePackage?.passingScore || 75}%. Pelajari kembali penjelasan pada soal-soal di bawah ini.`}
+            </p>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <span className="bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 px-3.5 py-1.5 rounded-[10px] text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              ✓ {correctCount} Benar
+            </span>
+            <span className="bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 px-3.5 py-1.5 rounded-[10px] text-xs font-bold text-rose-600 dark:text-rose-400">
+              ✗ {wrongCount} Salah
+            </span>
+            <span className="bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 px-3.5 py-1.5 rounded-[10px] text-xs font-bold text-[#615d59] dark:text-[#94a3b8]">
+              Total: {questions.length} Soal
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsQuizActive(false)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1a2332] text-[#31302e] dark:text-[#cbd5e1] border border-[#e6e6e6] dark:border-white/10 px-5 py-2 text-xs font-bold transition hover:bg-[#f6f5f4] cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Kembali ke Pusat Kuis</span>
+            </button>
+
+            {activePackage && (
+              <button
+                type="button"
+                onClick={() => handleStartPackage(activePackage)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white px-5 py-2 text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Ulangi Kuis Ini</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Detailed Review Section */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6e6e6] dark:border-white/10 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-[#000000] dark:text-white">
+                Pembahasan & Kunci Jawaban Lengkap
+              </h3>
+              <p className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                Pelajari rujukan materi dan alasan jawaban benar untuk tiap butir soal.
+              </p>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setReviewFilter("all")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition border cursor-pointer ${
+                  reviewFilter === "all"
+                    ? "bg-[#007aff] text-white border-[#007aff]"
+                    : "bg-white dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                }`}
+              >
+                Semua ({questions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setReviewFilter("wrong")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition border cursor-pointer ${
+                  reviewFilter === "wrong"
+                    ? "bg-rose-600 text-white border-rose-600"
+                    : "bg-white dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                }`}
+              >
+                Salah Saja ({wrongCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setReviewFilter("correct")}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition border cursor-pointer ${
+                  reviewFilter === "correct"
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-white dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                }`}
+              >
+                Benar Saja ({correctCount})
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {filteredReviewQuestions.map((q, idx) => {
+              const userAnswer = userAnswers[q.id]
+              const isUserCorrect = userAnswer === q.correctIndex
+
+              return (
+                <div
+                  key={q.id}
+                  className={`rounded-[14px] bg-white dark:bg-[#141b27] border p-5 sm:p-6 space-y-3.5 shadow-2xs ${
+                    isUserCorrect
+                      ? "border-emerald-200 dark:border-emerald-900/50"
+                      : "border-rose-200 dark:border-rose-900/50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-full bg-slate-100 dark:bg-[#1a2332] px-2.5 py-0.5 text-[10px] font-bold text-[#615d59] dark:text-[#94a3b8]">
+                      Soal #{idx + 1} • {q.category}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      isUserCorrect
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
+                        : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-700"
+                    }`}>
+                      {isUserCorrect ? "✓ Jawaban Anda Benar" : "✗ Jawaban Anda Kurang Tepat"}
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white leading-relaxed">
+                    {q.question}
+                  </h4>
+
+                  <div className="space-y-2 pt-1">
+                    {q.options.map((opt, optIdx) => {
+                      const isTargetCorrect = optIdx === q.correctIndex
+                      const isChosenByUser = optIdx === userAnswer
+
+                      let style = "bg-[#f6f5f4] dark:bg-[#1a2332] border-[#e6e6e6] dark:border-white/10 text-slate-700 dark:text-slate-300"
+                      if (isTargetCorrect) {
+                        style = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 font-semibold"
+                      } else if (isChosenByUser && !isTargetCorrect) {
+                        style = "bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-200 line-through"
+                      }
+
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`flex items-start gap-2.5 p-3 rounded-[10px] border text-xs leading-relaxed ${style}`}
+                        >
+                          <span className="font-mono font-bold shrink-0 mt-0.5">
+                            {String.fromCharCode(65 + optIdx)}.
+                          </span>
+                          <div className="flex-1">{opt}</div>
+                          {isTargetCorrect && <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />}
+                          {isChosenByUser && !isTargetCorrect && <XCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Explanation Box */}
+                  <div className="rounded-[10px] bg-slate-50 dark:bg-[#101520] p-3.5 border border-slate-200 dark:border-[#253045] space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                      <Lightbulb className="h-3.5 w-3.5" />
+                      <span>Penjelasan & Rujukan Modul:</span>
+                    </div>
+                    <p className="text-xs text-[#31302e] dark:text-[#cbd5e1] leading-relaxed">
+                      {q.explanation}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // =========================================================================
+  // VIEW 3: ACTIVE QUIZ PLAYER (Sedang Mengerjakan Soal)
+  // =========================================================================
+  const isFlagged = Boolean(flaggedQuestions[currentQ?.id])
+  const selectedOption = userAnswers[currentQ?.id]
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header Bar */}
+      <div className="rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-bold text-[#007aff] dark:text-[#60a5fa] uppercase tracking-wider">
+            {activePackage?.title || "Simulasi Kuis Aktif"}
+          </span>
+          <h3 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white">
+            Soal {currentIndex + 1} dari {questions.length}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Timer Pill */}
+          <div className="flex items-center gap-1.5 bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 px-3.5 py-1.5 rounded-full text-xs font-mono font-bold text-[#000000] dark:text-white">
+            <Timer className="h-3.5 w-3.5 text-[#007aff]" />
+            <span>{formatTimer(timerSeconds)}</span>
+          </div>
+
+          {/* Flag Question Button */}
+          <button
+            type="button"
+            onClick={handleToggleFlag}
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition border cursor-pointer ${
+              isFlagged
+                ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                : "bg-white dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10 hover:bg-[#f6f5f4]"
+            }`}
+            title="Tandai ragu-ragu"
+          >
+            <Bookmark className={`h-3 w-3 ${isFlagged ? "fill-amber-500 text-amber-500" : ""}`} />
+            <span>{isFlagged ? "Ragu-ragu" : "Tandai"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Grid: Question Content & Question Navigator Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left: Question Box (8 Cols) */}
+        <div className="lg:col-span-8 rounded-[16px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="space-y-2">
+            <span className="inline-flex items-center rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20">
+              {currentQ.category}
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-[#000000] dark:text-white leading-relaxed">
+              {currentQ.question}
+            </h2>
+          </div>
+
+          {/* Options List */}
+          <div className="space-y-3 pt-2">
+            {currentQ.options.map((opt, optIdx) => {
+              const isSelected = selectedOption === optIdx
+              return (
+                <button
+                  key={optIdx}
+                  type="button"
+                  onClick={() => handleSelectOption(optIdx)}
+                  className={`w-full flex items-start gap-3.5 p-4 rounded-[12px] border text-left transition cursor-pointer active:scale-[0.99] ${
+                    isSelected
+                      ? "bg-[#007aff]/10 border-[#007aff] text-[#007aff] dark:text-[#60a5fa] font-semibold ring-1 ring-[#007aff]"
+                      : "bg-[#f6f5f4] dark:bg-[#1a2332] border-[#e6e6e6] dark:border-white/10 text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#e6e6e6] dark:hover:bg-[#202c3f]"
+                  }`}
+                >
+                  <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-mono font-bold border ${
+                    isSelected
+                      ? "bg-[#007aff] text-white border-[#007aff]"
+                      : "bg-white dark:bg-[#141b27] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                  }`}>
+                    {String.fromCharCode(65 + optIdx)}
+                  </span>
+                  <div className="flex-1 text-xs sm:text-sm leading-relaxed mt-0.5">
+                    {opt}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="flex items-center justify-between border-t border-[#e6e6e6] dark:border-white/10 pt-4 mt-6">
+            <button
+              type="button"
+              disabled={currentIndex === 0}
+              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#31302e] dark:text-[#cbd5e1] border border-[#e6e6e6] dark:border-white/10 px-4 py-2 text-xs font-bold transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Sebelumnya</span>
+            </button>
+
+            {currentIndex < questions.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => setCurrentIndex((prev) => prev + 1)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white px-5 py-2 text-xs font-bold transition shadow-xs cursor-pointer active:scale-[0.98]"
+              >
+                <span>Berikutnya</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isSubmittingQuiz}
+                onClick={handleSubmitQuiz}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] text-white px-5 py-2 text-xs font-bold transition shadow-xs cursor-pointer active:scale-[0.98] disabled:opacity-60"
+              >
+                {isSubmittingQuiz ? (
+                  <>
+                    <Spinner size="xs" variant="white" />
+                    <span>Memproses Hasil...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    <span>Kumpulkan Jawaban</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Question Number Navigator (4 Cols) */}
+        <div className="lg:col-span-4 rounded-[16px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-5 shadow-xs space-y-4 sticky top-24">
+          <div className="space-y-1">
+            <h4 className="text-xs sm:text-sm font-bold text-[#000000] dark:text-white">
+              Navigasi Nomor Soal
+            </h4>
+            <div className="flex items-center gap-3 text-[11px] text-[#615d59] dark:text-[#94a3b8]">
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-[#007aff]" /> {answeredCount} Dijawab
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-amber-500" /> {Object.values(flaggedQuestions).filter(Boolean).length} Ragu
+              </span>
+            </div>
+          </div>
+
+          {/* Grid of Number Buttons */}
+          <div className="grid grid-cols-5 gap-2 max-h-[40vh] overflow-y-auto pr-1">
+            {questions.map((q, idx) => {
+              const isAnswered = userAnswers[q.id] !== undefined
+              const isCurrent = idx === currentIndex
+              const isFlag = Boolean(flaggedQuestions[q.id])
+
+              let btnStyle = "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+              if (isCurrent) {
+                btnStyle = "bg-[#007aff] text-white border-[#007aff] font-bold shadow-xs ring-2 ring-[#007aff]/30"
+              } else if (isFlag) {
+                btnStyle = "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold"
+              } else if (isAnswered) {
+                btnStyle = "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-bold"
+              }
+
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`h-9 rounded-[8px] border text-xs font-mono transition cursor-pointer flex items-center justify-center ${btnStyle}`}
+                >
+                  {idx + 1}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Early Submit button in sidebar */}
+          <div className="pt-2 border-t border-[#e6e6e6] dark:border-white/10">
+            <button
+              type="button"
+              disabled={isSubmittingQuiz}
+              onClick={handleSubmitQuiz}
+              className="w-full flex items-center justify-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] text-white py-2 text-xs font-bold transition shadow-xs cursor-pointer active:scale-[0.98] disabled:opacity-60"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>Selesaikan Sekarang ({answeredCount}/{questions.length})</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
