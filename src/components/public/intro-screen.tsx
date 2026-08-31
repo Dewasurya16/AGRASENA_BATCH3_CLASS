@@ -125,7 +125,7 @@ export function IntroScreen() {
             scale: 1.02,
             transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
           }}
-          className="fixed inset-0 z-[9999] flex h-screen w-screen flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300 transform-gpu will-change-transform"
+          className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300 transform-gpu will-change-transform"
         >
           {/* Ambient glow — adapts per theme */}
           <div

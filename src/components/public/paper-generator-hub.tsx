@@ -515,7 +515,7 @@ export function PaperGeneratorHub() {
             <button
               type="submit"
               disabled={isGenerating}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#af52de] hover:bg-[#9a38c9] active:scale-[0.98] py-2.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] py-2.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer disabled:opacity-60"
             >
               {isGenerating ? (
                 <>
@@ -539,7 +539,7 @@ export function PaperGeneratorHub() {
             <div className="flex flex-col gap-2.5 border-b border-[#e6e6e6] dark:border-white/10 p-4 bg-[#f6f5f4] dark:bg-[#141b27] shrink-0">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-[#af52de]" strokeWidth={2} />
+                  <BookOpen className="h-4 w-4 text-[#007aff]" strokeWidth={2} />
                   <span className="text-xs font-bold text-[#000000] dark:text-white">
                     Draf Naskah Seminar Proyek Akhir (5 Bab Lengkap)
                   </span>
