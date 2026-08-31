@@ -2006,41 +2006,27 @@ export function AdminDashboardClient({
 
           {/* Quick System Tools */}
           <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-[#2A3550]">
-            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1 flex items-center justify-between">
-              <span>Pintasan Cepat</span>
-              {isSuperAdmin && (
-                <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.5 rounded font-mono">
-                  SUPER
-                </span>
-              )}
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1">
+              Pintasan Cepat
             </div>
-            {isSuperAdmin ? (
-              <>
-                <button
-                  onClick={() => setIsWAModalOpen(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Broadcast WhatsApp</span>
-                </button>
-                <button
-                  onClick={handleExportJSON}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253045] transition cursor-pointer"
-                >
-                  <FileSpreadsheet className="h-4 w-4 text-amber-500" />
-                  <span>Backup Data (JSON)</span>
-                </button>
-              </>
-            ) : (
-              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
-                  <Lock className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Pintasan Khusus Super Admin</span>
-                </div>
-                <p className="text-[10px] text-slate-400 leading-tight">
-                  Broadcast WA & Backup Data hanya tersedia untuk akun Super Admin.
-                </p>
-              </div>
+            {/* Broadcast WhatsApp: Tersedia untuk Admin dan Super Admin */}
+            <button
+              onClick={() => setIsWAModalOpen(true)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
+            >
+              <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Broadcast WhatsApp</span>
+            </button>
+
+            {/* Backup Data (JSON): Khusus Super Admin */}
+            {isSuperAdmin && (
+              <button
+                onClick={handleExportJSON}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253045] transition cursor-pointer"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-amber-500" />
+                <span>Backup Data (JSON)</span>
+              </button>
             )}
           </div>
         </div>
