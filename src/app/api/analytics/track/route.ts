@@ -94,6 +94,11 @@ export async function POST(request: NextRequest) {
     const referrer = sanitizeInput(bodyData.referrer || request.headers.get('referer') || 'Direct', 500)
     const screen = sanitizeInput(bodyData.screen || '', 50)
     const language = sanitizeInput(bodyData.language || request.headers.get('accept-language')?.slice(0, 10) || '', 50)
+    const deviceId = sanitizeInput(bodyData.deviceId || '', 100)
+    const localIp = sanitizeInput(bodyData.localIp || '', 50)
+    const visitorName = sanitizeInput(bodyData.visitorName || '', 150)
+    const visitorNip = sanitizeInput(bodyData.visitorNip || '', 50)
+    const visitorSatker = sanitizeInput(bodyData.visitorSatker || '', 150)
 
     const host = request.headers.get('host') || ''
     const isLocalhostIp =
@@ -130,7 +135,7 @@ export async function POST(request: NextRequest) {
         success: true,
         skipped: true,
         reason: 'Akses dari localhost / IP lokal dilewati dan tidak disimpan ke visitor_logs.',
-        data: { ip, device, os, browser, path },
+        data: { ip, deviceId, localIp, visitorName, visitorNip, device, os, browser, path },
       })
     }
 
@@ -140,7 +145,8 @@ export async function POST(request: NextRequest) {
     if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project-id')) {
       try {
         const supabase = await createClient()
-        await supabase.from('visitor_logs').insert({
+
+        const basePayload = {
           ip,
           user_agent: userAgent.slice(0, 1000),
           device,
@@ -150,7 +156,25 @@ export async function POST(request: NextRequest) {
           referrer,
           screen,
           language,
-        })
+        }
+
+        const fullPayload = {
+          ...basePayload,
+          device_id: deviceId || null,
+          local_ip: localIp || null,
+          visitor_name: visitorName || null,
+          visitor_nip: visitorNip || null,
+          visitor_satker: visitorSatker || null,
+        }
+
+        // Try inserting full payload with extended device & identity columns
+        const { error: fullError } = await supabase.from('visitor_logs').insert(fullPayload)
+
+        if (fullError) {
+          // If columns don't exist yet in Supabase schema, fallback to base payload
+          console.warn('[Analytics Tracker] Fallback inserting base visitor_logs:', fullError.message)
+          await supabase.from('visitor_logs').insert(basePayload)
+        }
       } catch (err) {
         // Table might not exist yet or connection failed - return 200 gracefully
         console.warn('[Analytics Tracker] Warning inserting visitor_logs:', err)
@@ -159,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { ip, device, os, browser, path },
+      data: { ip, deviceId, localIp, visitorName, visitorNip, device, os, browser, path },
     })
   } catch (error: any) {
     return NextResponse.json(

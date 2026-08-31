@@ -79,7 +79,8 @@ import {
   Send,
   Lightbulb,
   Award,
-  Zap
+  Zap,
+  User,
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
@@ -87,6 +88,11 @@ import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 interface VisitorLog {
   id: string
   ip: string
+  local_ip?: string
+  device_id?: string
+  visitor_name?: string
+  visitor_nip?: string
+  visitor_satker?: string
   user_agent?: string
   device: string
   os: string
@@ -97,6 +103,7 @@ interface VisitorLog {
   language?: string
   created_at: string
 }
+
 
 interface AdminDashboardClientProps {
   initialMaterials: any[]
@@ -512,6 +519,8 @@ export function AdminDashboardClient({
   const [visitorSearch, setVisitorSearch] = React.useState("")
   const [visitorDeviceFilter, setVisitorDeviceFilter] = React.useState<string>("all")
   const [copiedIp, setCopiedIp] = React.useState<string | null>(null)
+  const [copiedDeviceId, setCopiedDeviceId] = React.useState<string | null>(null)
+
 
   const [materialSearch, setMaterialSearch] = React.useState("")
   const [materialTahapFilter, setMaterialTahapFilter] = React.useState("all")
@@ -948,13 +957,19 @@ export function AdminDashboardClient({
   // --- FILTERED & PAGINATED DATA LISTS (5 PER PAGE) ---
   const filteredVisitorLogs = React.useMemo(() => {
     return initialVisitorLogs.filter((log) => {
+      const q = visitorSearch.toLowerCase().trim()
       const matchesSearch =
-        visitorSearch === "" ||
-        (log.ip || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
-        (log.path || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
-        (log.browser || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
-        (log.os || "").toLowerCase().includes(visitorSearch.toLowerCase()) ||
-        (log.referrer || "").toLowerCase().includes(visitorSearch.toLowerCase())
+        q === "" ||
+        (log.ip || "").toLowerCase().includes(q) ||
+        (log.local_ip || "").toLowerCase().includes(q) ||
+        (log.device_id || "").toLowerCase().includes(q) ||
+        (log.visitor_name || "").toLowerCase().includes(q) ||
+        (log.visitor_nip || "").toLowerCase().includes(q) ||
+        (log.visitor_satker || "").toLowerCase().includes(q) ||
+        (log.path || "").toLowerCase().includes(q) ||
+        (log.browser || "").toLowerCase().includes(q) ||
+        (log.os || "").toLowerCase().includes(q) ||
+        (log.referrer || "").toLowerCase().includes(q)
 
       const matchesDevice =
         visitorDeviceFilter === "all" ||
@@ -963,6 +978,7 @@ export function AdminDashboardClient({
       return matchesSearch && matchesDevice
     })
   }, [initialVisitorLogs, visitorSearch, visitorDeviceFilter])
+
 
   const totalVisitorPages = Math.ceil(filteredVisitorLogs.length / ITEMS_PER_PAGE) || 1
   const paginatedVisitorLogs = React.useMemo(() => {
@@ -1074,6 +1090,12 @@ export function AdminDashboardClient({
     setTimeout(() => setCopiedIp(null), 2000)
   }
 
+  const handleCopyDeviceId = (deviceId: string) => {
+    navigator.clipboard.writeText(deviceId)
+    setCopiedDeviceId(deviceId)
+    setTimeout(() => setCopiedDeviceId(null), 2000)
+  }
+
   const handleExportVisitorsJSON = () => {
     const blob = new Blob([JSON.stringify(initialVisitorLogs, null, 2)], {
       type: "application/json",
@@ -1092,17 +1114,37 @@ export function AdminDashboardClient({
       showFeedback("error", "Belum ada data pengunjung untuk diekspor.")
       return
     }
-    const headers = ["Waktu (UTC)", "IP Address", "Media Akses", "OS", "Browser", "Halaman (Path)", "Referrer"]
+    const headers = [
+      "Waktu Akses",
+      "Nama Peserta",
+      "NIP",
+      "Satker Kejaksaan",
+      "Device ID",
+      "IP Publik",
+      "IP Lokal (LAN)",
+      "Media Akses",
+      "OS",
+      "Browser",
+      "Halaman (Path)",
+      "Referrer",
+      "Resolusi Layar",
+    ]
     const rows = initialVisitorLogs.map((v) => [
-      `"${v.created_at}"`,
-      `"${v.ip}"`,
-      `"${v.device}"`,
-      `"${v.os}"`,
-      `"${v.browser}"`,
-      `"${v.path}"`,
-      `"${v.referrer}"`,
+      `"${formatWibDate(v.created_at)}"`,
+      `"${(v.visitor_name || "-").replace(/"/g, '""')}"`,
+      `"${(v.visitor_nip || "-").replace(/"/g, '""')}"`,
+      `"${(v.visitor_satker || "-").replace(/"/g, '""')}"`,
+      `"${(v.device_id || "-").replace(/"/g, '""')}"`,
+      `"${v.ip || "-"}"`,
+      `"${v.local_ip || "-"}"`,
+      `"${v.device || "-"}"`,
+      `"${v.os || "-"}"`,
+      `"${v.browser || "-"}"`,
+      `"${v.path || "-"}"`,
+      `"${(v.referrer || "-").replace(/"/g, '""')}"`,
+      `"${v.screen || "-"}"`,
     ])
-    const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -1112,6 +1154,7 @@ export function AdminDashboardClient({
     URL.revokeObjectURL(url)
     showFeedback("success", "Data log pengunjung berhasil diekspor ke CSV!")
   }
+
 
   const handleDeleteVisitor = async (id: string) => {
     if (!confirm("Hapus baris riwayat pengunjung ini?")) return
@@ -2468,6 +2511,8 @@ export function AdminDashboardClient({
                           <tr>
                             <th className="py-2.5 px-3.5">#</th>
                             <th className="py-2.5 px-3.5">Waktu Akses</th>
+                            <th className="py-2.5 px-3.5">Identitas Peserta</th>
+                            <th className="py-2.5 px-3.5">ID Perangkat</th>
                             <th className="py-2.5 px-3.5">Alamat IP</th>
                             <th className="py-2.5 px-3.5">Media</th>
                             <th className="py-2.5 px-3.5">OS & Browser</th>
@@ -2486,21 +2531,72 @@ export function AdminDashboardClient({
                                   {formatWibDate(log.created_at)}
                                 </td>
                                 <td className="py-3 px-3.5">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#253045] px-2 py-0.5 rounded-[4px] text-[11px] border border-slate-200/80 dark:border-[#2A3550]">
-                                      {log.ip || "127.0.0.1"}
-                                    </span>
-                                    <button
-                                      onClick={() => handleCopyIp(log.ip || "127.0.0.1")}
-                                      title="Salin Alamat IP"
-                                      className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded hover:bg-slate-200 dark:hover:bg-[#253045] transition cursor-pointer"
-                                    >
-                                      {copiedIp === (log.ip || "127.0.0.1") ? (
-                                        <CheckCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                                      ) : (
-                                        <Copy className="h-3 w-3" />
+                                  {log.visitor_name ? (
+                                    <div className="flex flex-col max-w-[170px]">
+                                      <span className="font-bold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1">
+                                        <User className="h-3 w-3 text-indigo-500 shrink-0" />
+                                        <span className="truncate">{log.visitor_name}</span>
+                                      </span>
+                                      {log.visitor_nip && (
+                                        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                                          NIP. {log.visitor_nip}
+                                        </span>
                                       )}
-                                    </button>
+                                      {log.visitor_satker && (
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate" title={log.visitor_satker}>
+                                          {log.visitor_satker}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">
+                                      Pengunjung Umum
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3.5">
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-mono font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-[4px] text-[11px] border border-indigo-200/60 dark:border-indigo-800/40 whitespace-nowrap">
+                                      {log.device_id || "DEV-UMUM"}
+                                    </span>
+                                    {log.device_id && (
+                                      <button
+                                        onClick={() => handleCopyDeviceId(log.device_id || "")}
+                                        title="Salin ID Perangkat"
+                                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded hover:bg-slate-200 dark:hover:bg-[#253045] transition cursor-pointer"
+                                      >
+                                        {copiedDeviceId === log.device_id ? (
+                                          <CheckCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                        ) : (
+                                          <Copy className="h-3 w-3" />
+                                        )}
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-3 px-3.5">
+                                  <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#253045] px-2 py-0.5 rounded-[4px] text-[11px] border border-slate-200/80 dark:border-[#2A3550]">
+                                        {log.ip || "127.0.0.1"}
+                                      </span>
+                                      <button
+                                        onClick={() => handleCopyIp(log.ip || "127.0.0.1")}
+                                        title="Salin Alamat IP Publik"
+                                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded hover:bg-slate-200 dark:hover:bg-[#253045] transition cursor-pointer"
+                                      >
+                                        {copiedIp === (log.ip || "127.0.0.1") ? (
+                                          <CheckCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                        ) : (
+                                          <Copy className="h-3 w-3" />
+                                        )}
+                                      </button>
+                                    </div>
+                                    {log.local_ip && (
+                                      <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40 w-fit" title="IP Lokal Kartu Jaringan">
+                                        LAN: {log.local_ip}
+                                      </span>
+                                    )}
                                   </div>
                                 </td>
                                 <td className="py-3 px-3.5 whitespace-nowrap">
@@ -2517,7 +2613,7 @@ export function AdminDashboardClient({
                                     {log.path || "/"}
                                   </span>
                                 </td>
-                                <td className="py-3 px-3.5 text-slate-500 dark:text-slate-400 max-w-[150px] truncate" title={log.referrer}>
+                                <td className="py-3 px-3.5 text-slate-500 dark:text-slate-400 max-w-[140px] truncate" title={log.referrer}>
                                   {log.referrer || "Direct"}
                                 </td>
                                 <td className="py-3 px-3.5 text-center">
@@ -2537,6 +2633,7 @@ export function AdminDashboardClient({
                         </tbody>
                       </table>
                     </div>
+
 
                     {/* Pagination Controls */}
                     <PaginationControls
