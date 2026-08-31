@@ -333,6 +333,46 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
     }, 400)
   }
 
+  // Read Progress tracking for Local Storage
+  const [readMaterialIds, setReadMaterialIds] = React.useState<string[]>([])
+
+  // Load read status from localStorage
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prakom_materials_read")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setReadMaterialIds(parsed)
+      }
+    } catch {}
+  }, [])
+
+  const markMaterialAsRead = React.useCallback((id: string) => {
+    setReadMaterialIds((prev) => {
+      if (prev.includes(id)) return prev
+      const updated = [...prev, id]
+      try {
+        localStorage.setItem("prakom_materials_read", JSON.stringify(updated))
+        window.dispatchEvent(new Event("storage"))
+        window.dispatchEvent(new Event("prakom-progress-updated"))
+      } catch {}
+      return updated
+    })
+  }, [])
+
+  const toggleMaterialRead = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setReadMaterialIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      try {
+        localStorage.setItem("prakom_materials_read", JSON.stringify(next))
+        window.dispatchEvent(new Event("storage"))
+        window.dispatchEvent(new Event("prakom-progress-updated"))
+      } catch {}
+      return next
+    })
+  }
+
   // Load study notes from localStorage
   React.useEffect(() => {
     try {
@@ -573,12 +613,21 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-[#e6e6e6] dark:border-white/10 pt-3.5 mt-4 text-xs text-[#615d59] dark:text-[#94a3b8] gap-3">
-                <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8] truncate max-w-[180px]">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa]">
-                    <FileText className="h-3.5 w-3.5" strokeWidth={2} />
-                  </div>
-                  {item.file_name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => toggleMaterialRead(item.id, e)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold transition border cursor-pointer ${
+                      readMaterialIds.includes(item.id)
+                        ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+                        : "bg-slate-100 dark:bg-[#1f283a] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200"
+                    }`}
+                    title={readMaterialIds.includes(item.id) ? "Klik untuk tandai belum dibaca" : "Klik untuk tandai sudah dibaca"}
+                  >
+                    <Check className={`h-3 w-3 ${readMaterialIds.includes(item.id) ? "text-emerald-600 dark:text-emerald-400" : "opacity-40"}`} />
+                    <span>{readMaterialIds.includes(item.id) ? "Selesai Dibaca" : "Tandai Dibaca"}</span>
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <button
@@ -587,6 +636,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                     onClick={() => {
                       setPreviewMaterial(item)
                       setReaderTab("pdf")
+                      markMaterialAsRead(item.id)
                     }}
                   >
                     <Eye className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
@@ -597,6 +647,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                     target="_blank"
                     rel="noopener noreferrer"
                     download={item.file_name}
+                    onClick={() => markMaterialAsRead(item.id)}
                   >
                     <button
                       type="button"

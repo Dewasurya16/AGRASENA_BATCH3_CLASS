@@ -40,6 +40,7 @@ export default async function HomePage() {
   let announcements: any[] = []
   let tasks: any[] = []
   let schedules: any[] = []
+  let materials: any[] = []
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -47,14 +48,16 @@ export default async function HomePage() {
   if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
     try {
       const supabase = await createClient()
-      const [annRes, taskRes, schedRes] = await Promise.all([
+      const [annRes, taskRes, schedRes, matRes] = await Promise.all([
         supabase.from("announcements").select("*").eq("is_active", true),
         supabase.from("tasks").select("*").order("due_date", { ascending: true }),
         supabase.from("schedules").select("*").order("start_time", { ascending: true }),
+        supabase.from("materials").select("id"),
       ])
       announcements = annRes.data || []
       tasks = taskRes.data || []
       schedules = schedRes.data || []
+      materials = matRes.data || []
     } catch {
       // Offline fallback
     }
@@ -88,13 +91,17 @@ export default async function HomePage() {
         <TwinkleHero />
 
         {/* 5. AI Asisten Kelas (Sapaan Santai, Motivasi Harian & Peringatan Tugas) */}
-        <AiCompanionCard />
+        <AiCompanionCard
+          summary={summary}
+          todaySchedules={schedules}
+          closestTask={closestTask}
+        />
 
         {/* 6. Live Reminder Deadline Terdekat (Simpel & Ringkas) */}
         <HomeTaskReminder targetTask={closestTask} />
 
         {/* 6.5 Status Belajar & Kesiapan Diklat Peserta (Local Storage Private Progress) */}
-        <LearningProgressWidget />
+        <LearningProgressWidget totalMaterialsCount={materials.length || 14} />
 
         {/* 7. Roadmap 4 Tahap Story Block */}
         <section className="rounded-[16px] bg-white dark:bg-[#151c28] p-6 sm:p-8 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-6 transition-colors duration-200">

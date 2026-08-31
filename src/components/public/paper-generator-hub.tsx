@@ -225,6 +225,17 @@ export function PaperGeneratorHub() {
       const data = await res.json()
       if (data.paper) {
         setGeneratedPaper(data.paper)
+        try {
+          localStorage.setItem("prakom_paper_draft", JSON.stringify({
+            title: topicTitle,
+            paper: data.paper,
+            created_at: new Date().toISOString()
+          }))
+          window.dispatchEvent(new Event("storage"))
+          window.dispatchEvent(new Event("prakom-progress-updated"))
+        } catch {
+          // Ignore
+        }
       } else {
         alert(data.error || "Gagal menyusun naskah. Silakan coba kembali.")
       }

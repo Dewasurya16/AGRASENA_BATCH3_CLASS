@@ -112,6 +112,34 @@ export function QuizPlayer() {
     }
   }
 
+  const handleSubmitQuiz = React.useCallback(() => {
+    setIsSubmittingQuiz(true)
+    setTimeout(() => {
+      setIsSubmittingQuiz(false)
+      setIsSubmitted(true)
+      try {
+        const saved = localStorage.getItem("prakom_quiz_history")
+        let history: any[] = []
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed)) history = parsed
+        }
+        history.push({
+          id: `quiz-${Date.now()}`,
+          category: selectedCategory,
+          score: scorePercentage,
+          date: new Date().toISOString(),
+        })
+        localStorage.setItem("prakom_quiz_history", JSON.stringify(history))
+        localStorage.setItem("prakom_quiz_completed", JSON.stringify(history))
+        window.dispatchEvent(new Event("storage"))
+        window.dispatchEvent(new Event("prakom-progress-updated"))
+      } catch {
+        // Ignore
+      }
+    }, 500)
+  }, [selectedCategory, scorePercentage])
+
   return (
     <div className="space-y-6">
       
@@ -286,13 +314,7 @@ export function QuizPlayer() {
                 <button
                   type="button"
                   disabled={isSubmittingQuiz}
-                  onClick={() => {
-                    setIsSubmittingQuiz(true)
-                    setTimeout(() => {
-                      setIsSubmittingQuiz(false)
-                      setIsSubmitted(true)
-                    }, 500)
-                  }}
+                  onClick={handleSubmitQuiz}
                   className="flex items-center gap-1.5 rounded-full bg-[#34c759] hover:bg-[#2db84d] px-5 py-2 text-xs font-semibold text-white shadow-xs cursor-pointer active:scale-[0.98] transition disabled:opacity-60"
                 >
                   {isSubmittingQuiz ? (
