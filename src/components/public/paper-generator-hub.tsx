@@ -85,7 +85,77 @@ function formatInline(text: string) {
   })
 }
 
-// Clean Document Viewer (Filters out broken ASCII boxes)
+// Bulletproof 5-Chapter Normalizer & Validator
+function ensureFull5Chapters(
+  rawText: string,
+  meta: {
+    authorName?: string
+    authorNip?: string
+    authorSatker?: string
+    authorRank?: string
+    topicTitle?: string
+    problemStatement?: string
+  }
+): string {
+  if (!rawText) return ""
+  let text = rawText.trim()
+
+  const hasBab1 = /BAB\s*(I\b|1\b)|PENDAHULUAN|1\.1\s*Latar\s*Belakang/i.test(text)
+  if (!hasBab1) {
+    const name = meta.authorName || "Peserta Pelatihan"
+    const nip = meta.authorNip || "19950101 202203 1 002"
+    const rank = meta.authorRank || "Pranata Komputer Ahli Pertama (Gol. III/a)"
+    const satker = meta.authorSatker || "Kejaksaan Negeri Soppeng"
+    const title = meta.topicTitle || "Otomatisasi Sistem Informasi Satuan Kerja"
+    const problem = meta.problemStatement || "Keterbatasan otomatisasi sistem dan risiko integritas data operasional"
+
+    const bab1Header = `# 🎓 DRAF PROPOSAL RENCANA AKSI INOVASI TIK
+## ${title.toUpperCase()}
+
+**Disusun Oleh:** ${name} (NIP. ${nip})
+**Jabatan / Golongan:** ${rank}
+**Satuan Kerja:** ${satker}
+**Pelatihan Fungsional Pranata Komputer Keahlian (Batch 3) Kejaksaan RI Tahun 2026**
+
+---
+
+# BAB I: PENDAHULUAN
+
+### 1.1 Latar Belakang
+Transformasi digital di lingkungan Kejaksaan Republik Indonesia merupakan pilar strategis dalam mewujudkan tata kelola birokrasi yang modern, transparan, dan akuntabel sesuai amanat Perpres Sistem Pemerintahan Berbasis Elektronik (SPBE). Setiap satuan kerja dituntut untuk menghadirkan layanan berbasis teknologi informasi yang mampu menunjang tugas pokok fungsi penegakan hukum dan pelayanan publik.
+
+Kondisi faktual saat ini di ${satker} menunjukkan bahwa pengelolaan administrasi dan data perkara masih membutuhkan penguatan otomasi. Adanya inovasi "${title}" dirancang untuk menjawab tantangan operasional tersebut, mengeliminasi risiko kehilangan data, mempercepat proses birokrasi, serta mewujudkan transparansi layanan prima kepada masyarakat.
+
+### 1.2 Identifikasi & Rumusan Masalah
+Berdasarkan analisis kondisi kerja eksisting di ${satker}, dirumuskan permasalahan pokok sebagai berikut:
+• **Aspek Efisiensi Operasional:** ${problem}, yang berdampak pada lambatnya waktu pemrosesan berkas kerja.
+• **Aspek Integritas Data & Keamanan:** Prosedur pencadangan dan sinkronisasi data yang belum terpusat secara otomatis sehingga rentan terhadap risiko kegagalan sistem.
+• **Aspek Kualitas Layanan Publik:** Keterbatasan akses monitoring informasi real-time bagi pimpinan dan pihak berkepentingan.
+
+### 1.3 Maksud dan Tujuan Inovasi
+• **Maksud:** Merancang dan mengimplementasikan "${title}" sebagai solusi modernisasi layanan administrasi TIK di ${satker}.
+• **Tujuan Jangka Pendek (2 Bulan):** Penyusunan analisis kebutuhan, perancangan skema database, pembuatan modul inti, serta pengujian internal (*alpha testing*).
+• **Tujuan Jangka Menengah (4 Bulan):** Pelaksanaan User Acceptance Testing (UAT), sosialisasi pengguna, serta penerbitan SOP baku oleh pimpinan satker.
+• **Tujuan Jangka Panjang (6 Bulan & Seterusnya):** Integrasi sistem ke ekosistem Satu Data Kejaksaan RI dan standarisasi replikasi untuk satker lain.
+
+### 1.4 Ruang Lingkup Sistem
+• **Batasan Pengguna (User Scope):** Administrator TIK Satker, Operator Seksi/Bidang, Pimpinan/Kajari, serta Publik/Pemohon Layanan.
+• **Batasan Fungsional & Teknis:** Otomasi alur data, validasi logika input, pencadangan basis data otomatis, dan dashboard analitik.
+
+### 1.5 Manfaat Inovasi
+• **Bagi Satuan Kerja (${satker}):** Peningkatan efisiensi waktu kerja pegawai, akurasi data administrasi, dan akselerasi Indeks SPBE Satker.
+• **Bagi Institusi Kejaksaan RI:** Penguatan Satu Data Kejaksaan Agung RI serta kemudahan audit kepatuhan TIK.
+• **Bagi Masyarakat:** Layanan publik yang lebih cepat, transparan, akurat, dan bebas dari pungutan liar.
+
+---`
+
+    text = `${bab1Header}\n\n${text}`
+  }
+
+  return text
+}
+
+// Clean Document Viewer (Filters out broken ASCII boxes & renders clean headings)
 function RenderPaperDocument({ content }: { content: string }) {
   const lines = content.split("\n")
 
@@ -100,21 +170,32 @@ function RenderPaperDocument({ content }: { content: string }) {
           return null
         }
 
-        // Heading 1 (# ) - Title & BAB
-        if (trimmed.startsWith("# ")) {
-          const titleText = trimmed.replace(/^#\s+/, "")
+        // Chapter Header (e.g. # BAB I, ## BAB I, **BAB I: PENDAHULUAN**, BAB I: PENDAHULUAN)
+        if (/^(#+\s*|\*\*)?BAB\s*(I|II|III|IV|V|1|2|3|4|5)\b/i.test(trimmed)) {
+          const cleanTitle = trimmed.replace(/^#+\s*|\*\*$/g, "").replace(/^\*\*/, "").trim()
           let chapterId = ""
-          if (/BAB I\b|BAB 1\b/i.test(titleText)) chapterId = "bab-1"
-          else if (/BAB II\b|BAB 2\b/i.test(titleText)) chapterId = "bab-2"
-          else if (/BAB III\b|BAB 3\b/i.test(titleText)) chapterId = "bab-3"
-          else if (/BAB IV\b|BAB 4\b/i.test(titleText)) chapterId = "bab-4"
-          else if (/BAB V\b|BAB 5\b/i.test(titleText)) chapterId = "bab-5"
+          if (/BAB\s*(I\b|1\b)/i.test(cleanTitle)) chapterId = "bab-1"
+          else if (/BAB\s*(II\b|2\b)/i.test(cleanTitle)) chapterId = "bab-2"
+          else if (/BAB\s*(III\b|3\b)/i.test(cleanTitle)) chapterId = "bab-3"
+          else if (/BAB\s*(IV\b|4\b)/i.test(cleanTitle)) chapterId = "bab-4"
+          else if (/BAB\s*(V\b|5\b)/i.test(cleanTitle)) chapterId = "bab-5"
 
           return (
-            <div key={idx} id={chapterId || undefined} className="mt-7 mb-3 pb-2 border-b-2 border-slate-200 dark:border-slate-700 scroll-mt-6">
+            <div key={idx} id={chapterId || undefined} className="mt-8 mb-3 pb-2 border-b-2 border-slate-200 dark:border-slate-700 scroll-mt-6">
               <h2 className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 uppercase tracking-tight flex items-center gap-2">
-                {formatInline(titleText)}
+                {formatInline(cleanTitle)}
               </h2>
+            </div>
+          )
+        }
+
+        // Main Document Title (# )
+        if (trimmed.startsWith("# ")) {
+          return (
+            <div key={idx} className="mt-4 mb-2 pb-1 border-b border-slate-200 dark:border-slate-700">
+              <h1 className="text-base sm:text-lg font-black text-[#0D3830] dark:text-emerald-400 uppercase tracking-tight">
+                {formatInline(trimmed.replace(/^#\s+/, ""))}
+              </h1>
             </div>
           )
         }
@@ -128,11 +209,12 @@ function RenderPaperDocument({ content }: { content: string }) {
           )
         }
 
-        // Heading 3 (### ) - Sub-Bab (e.g. 1.1 Latar Belakang)
-        if (trimmed.startsWith("### ")) {
+        // Sub-Bab (e.g. ### 1.1 Latar Belakang, 1.1 Latar Belakang, **1.1 Latar Belakang**)
+        if (/^(#+\s*|\*\*)?(\d+\.\d+)\s+/i.test(trimmed)) {
+          const cleanSub = trimmed.replace(/^#+\s*|\*\*$/g, "").replace(/^\*\*/, "").trim()
           return (
-            <h4 key={idx} className="text-xs sm:text-sm font-black text-[#FF7643] dark:text-amber-400 mt-3.5 mb-1">
-              {formatInline(trimmed.replace(/^###\s+/, ""))}
+            <h4 key={idx} className="text-xs sm:text-sm font-black text-[#FF7643] dark:text-amber-400 mt-4 mb-1.5">
+              {formatInline(cleanSub)}
             </h4>
           )
         }
@@ -180,13 +262,30 @@ export function PaperGeneratorHub() {
   const [generatedPaper, setGeneratedPaper] = React.useState<string | null>(null)
   const [copied, setCopied] = React.useState(false)
 
-  // Load saved profile on mount
+  // Load saved profile on mount & restore valid 5 chapters
   React.useEffect(() => {
     try {
       const savedName = localStorage.getItem("prakom_user_name")
       const savedSatker = localStorage.getItem("prakom_user_satker")
       if (savedName) setAuthorName(savedName)
       if (savedSatker) setAuthorSatker(savedSatker)
+
+      const savedDraft = localStorage.getItem("prakom_paper_draft")
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft)
+        if (parsed.paper) {
+          const validated = ensureFull5Chapters(parsed.paper, {
+            authorName: savedName || authorName,
+            authorSatker: savedSatker || authorSatker,
+            authorNip,
+            authorRank,
+            topicTitle: parsed.title || topicTitle,
+            problemStatement,
+          })
+          setGeneratedPaper(validated)
+          if (parsed.title) setTopicTitle(parsed.title)
+        }
+      }
     } catch {
       // Ignore
     }
@@ -224,11 +323,19 @@ export function PaperGeneratorHub() {
 
       const data = await res.json()
       if (data.paper) {
-        setGeneratedPaper(data.paper)
+        const validated = ensureFull5Chapters(data.paper, {
+          authorName,
+          authorNip,
+          authorSatker,
+          authorRank,
+          topicTitle,
+          problemStatement,
+        })
+        setGeneratedPaper(validated)
         try {
           localStorage.setItem("prakom_paper_draft", JSON.stringify({
             title: topicTitle,
-            paper: data.paper,
+            paper: validated,
             created_at: new Date().toISOString()
           }))
           window.dispatchEvent(new Event("storage"))

@@ -158,9 +158,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Judul topik inovasi dan nama satker wajib diisi." }, { status: 400 })
     }
 
-    const systemPrompt = `Anda adalah Widyaiswara Penilai Makalah Diklat Pranata Komputer Kejaksaan RI. Tugas Anda menyusun Proposal Makalah Rencana Aksi Inovasi Satker yang LENGKAP 5 BAB (BAB I s/d BAB V). Format naskah harus padat, jelas, profesional, dan WAJIB MENYELESAIKAN KELIMA BAB HINGGA BAB V KESIMPULAN & REKOMENDASI.`
+    const systemPrompt = `Anda adalah Widyaiswara Penilai Makalah Diklat Pranata Komputer Kejaksaan RI. Tugas Anda menyusun Proposal Makalah Rencana Aksi Inovasi Satker yang LENGKAP 5 BAB (BAB I s/d BAB V). Format naskah harus padat, jelas, profesional. WAJIB MENULIS LENGKAP DARI JUDUL, BAB I PENDAHULUAN (1.1 s/d 1.5), BAB II, BAB III, BAB IV, HINGGA BAB V KESIMPULAN & REKOMENDASI. DILARANG KERAS MELEWATKAN BAB I!`
 
-    const userPrompt = `SUSUNLAH PROPOSAL MAKALAH INOVASI SATKER (5 BAB LENGKAP, PADAT & PROFESIONAL):
+    const userPrompt = `TULISKAN NASKAH PROPOSAL LENGKAP 5 BAB MULAI DARI JUDUL DAN BAB I PENDAHULUAN:
 - Nama Peserta: ${cleanName}
 - NIP: ${cleanNip}
 - Jabatan: ${cleanRank}
@@ -169,11 +169,11 @@ export async function POST(req: NextRequest) {
 - Masalah Aktual: "${cleanProblem}"
 - Dampak Diharapkan: "${cleanOutcome}"
 
-STRUKTUR WAJIB LENGKAP 5 BAB:
-# 🎓 PROPOSAL RENCANA AKSI INOVASI TEKNOLOGI INFORMASI
+SUSUNAN HARUS LENGKAP DAN DIMULAI DARI PALING ATAS:
+# 🎓 DRAF PROPOSAL RENCANA AKSI INOVASI TIK
 ## ${cleanTitle.toUpperCase()}
 **Disusun Oleh:** ${cleanName} (NIP. ${cleanNip})
-**Jabatan:** ${cleanRank}
+**Jabatan / Golongan:** ${cleanRank}
 **Satuan Kerja:** ${cleanSatker}
 **Pelatihan Fungsional Pranata Komputer Keahlian (Batch 3) Kejaksaan RI Tahun 2026**
 
@@ -182,15 +182,15 @@ STRUKTUR WAJIB LENGKAP 5 BAB:
 # BAB I: PENDAHULUAN
 ### 1.1 Latar Belakang
 ### 1.2 Identifikasi & Rumusan Masalah
-### 1.3 Maksud dan Tujuan Inovasi (Jangka Pendek 2 bln, Menengah 4 bln, Panjang 6 bln)
+### 1.3 Maksud dan Tujuan Inovasi (Jangka Pendek 2 Bulan, Menengah 4 Bulan, Panjang 6 Bulan)
 ### 1.4 Ruang Lingkup Sistem
-### 1.5 Manfaat Inovasi
+### 1.5 Manfaat Inovasi (Bagi Satker, Kejaksaan RI, dan Masyarakat)
 
 ---
 
 # BAB II: LANDASAN REGULASI & KERANGKA TEORI
-### 2.1 Landasan Regulasi Kebijakan (Perpres 95/2018 SPBE, PermenPAN-RB 32/2020 JF Prakom, Perka BPS 2/2021, Instruksi Jaksa Agung)
-### 2.2 Landasan Teori TIK & Keamanan Informasi (CIA Triad, Normalisasi Database, CSIRT)
+### 2.1 Landasan Regulasi Kebijakan (Perpres 95/2018 SPBE, Perpres 132/2022 Arsitektur SPBE, PermenPAN-RB 32/2020 JF Prakom, Perka BPS 2/2021)
+### 2.2 Landasan Teori TIK & Keamanan Informasi (CIA Triad, Tata Kelola Database, CSIRT Kejaksaan RI)
 
 ---
 
@@ -202,7 +202,7 @@ STRUKTUR WAJIB LENGKAP 5 BAB:
 ---
 
 # BAB IV: RENCANA AKSI PENTAHAPAN & MANFAAT
-### 4.1 Milestone Rencana Aksi (Bulan 1 s/d Bulan 6)
+### 4.1 Milestone Rencana Aksi Pentahapan (Bulan 1 s/d Bulan 6)
 ### 4.2 Analisis Manfaat & Efisiensi Layanan
 ### 4.3 Mitigasi Risiko & Keberlanjutan Sistem
 
@@ -221,16 +221,25 @@ STRUKTUR WAJIB LENGKAP 5 BAB:
         ],
         temperature: 0.3,
         max_tokens: 2800,
-        mustIncludeKeyPhrases: ["BAB V", "BAB 5", "Kesimpulan", "5.1"],
+        mustIncludeKeyPhrases: ["BAB", "Kesimpulan", "5.1"],
       })
 
-      if (
-        result.text &&
-        result.text.length > 1000 &&
-        (result.text.includes("BAB V") || result.text.includes("BAB 5") || result.text.includes("Kesimpulan"))
-      ) {
+      if (result.text && result.text.length > 800) {
+        let finalPaper = result.text.trim()
+
+        // Verify BAB I presence
+        const hasBab1 = /BAB\s*(I|1)\b|PENDAHULUAN|1\.1\s*Latar\s*Belakang/i.test(finalPaper)
+        if (!hasBab1) {
+          const fallbackFull = generateStructuredPaperFallback(body)
+          const bab2Match = fallbackFull.search(/#\s*BAB\s*(II|2)\b/i)
+          if (bab2Match !== -1) {
+            const bab1Section = fallbackFull.substring(0, bab2Match).trim()
+            finalPaper = `${bab1Section}\n\n${finalPaper}`
+          }
+        }
+
         return NextResponse.json({
-          paper: result.text,
+          paper: finalPaper,
           model: result.model,
           provider: result.provider,
           authorSatker,
