@@ -294,8 +294,7 @@ export function DupakExplorer() {
                 return (
                   <motion.div
                     key={item.id}
-                    layout
-                    className="rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/30 transition-all overflow-hidden"
+                    className="rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/30 transition-colors duration-150 overflow-hidden"
                   >
                     {/* Main Row */}
                     <div className="p-4 sm:p-4.5 flex flex-col sm:flex-row sm:items-start justify-between gap-3">

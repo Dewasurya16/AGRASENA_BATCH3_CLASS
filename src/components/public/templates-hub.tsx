@@ -685,10 +685,10 @@ export function TemplatesHub() {
         {filteredTemplates.map((template) => (
           <motion.div
             key={template.id}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className="flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs transition-all duration-200"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,border-color] duration-200 ease-out will-change-transform"
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">

@@ -115,7 +115,7 @@ export function ModernNavbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-all ${
+                  className={`relative flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 ${
                     isActive
                       ? "text-white font-semibold"
                       : "text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white hover:bg-white/70 dark:hover:bg-[#141b27]/80"
@@ -138,7 +138,7 @@ export function ModernNavbar() {
               <button
                 type="button"
                 onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
-                className={`relative flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`relative flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                   isMoreActive
                     ? "bg-[#007aff] text-white font-semibold shadow-xs"
                     : moreDropdownOpen
@@ -157,7 +157,7 @@ export function ModernNavbar() {
                     initial={{ opacity: 0, y: 6, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                     className="absolute right-0 top-full mt-2 w-64 rounded-[14px] bg-white dark:bg-[#141b27] p-1.5 border border-[#e6e6e6] dark:border-white/10 shadow-xl z-50 space-y-0.5"
                   >
                     {moreLinks.map((item) => {
@@ -169,7 +169,7 @@ export function ModernNavbar() {
                           key={item.href}
                           href={item.href}
                           onClick={() => setMoreDropdownOpen(false)}
-                          className={`group flex items-start gap-2.5 rounded-[10px] p-2 transition-all ${
+                          className={`group flex items-start gap-2.5 rounded-[10px] p-2 transition-colors duration-150 ${
                             isItemActive
                               ? "bg-[#007aff]/10 text-[#007aff] font-semibold dark:bg-[#007aff]/20"
                               : "text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] hover:text-[#000000] dark:hover:text-white"

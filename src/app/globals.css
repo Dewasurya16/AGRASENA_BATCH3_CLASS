@@ -171,7 +171,7 @@
   background-color: var(--figma-canvas);
   border: 1px solid var(--figma-hairline);
   border-radius: 24px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
 }
 
 /* Custom Soft Shadows */
@@ -185,7 +185,9 @@
 }
 
 .soft-card-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .soft-card-hover:hover {
@@ -219,6 +221,24 @@ html {
 .transform-gpu {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+}
+
+.will-change-transform {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Respect user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================

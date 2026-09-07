@@ -200,7 +200,7 @@ export function MobileNav() {
               <Link
                 key={idx}
                 href={tab.href}
-                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-[8px] transition-all ${
+                className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-[8px] transition-colors duration-150 ${
                   isActive ? "text-slate-900 dark:text-indigo-300 font-black" : "text-slate-400 dark:text-slate-400 hover:text-slate-700"
                 }`}
               >

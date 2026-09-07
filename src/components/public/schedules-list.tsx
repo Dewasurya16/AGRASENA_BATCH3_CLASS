@@ -295,10 +295,7 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
           </span>
         </div>
 
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredDays.map((item) => {
             const isCompleted = item.status === "completed"
             const isToday = item.isTodayExact
@@ -334,20 +331,18 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
             return (
               <motion.div
                 key={item.dayNumber}
-                layout
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ y: -2, transition: { duration: 0.15 } }}
-                whileTap={{ scale: 0.99 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 onClick={() => setActiveModalDay(item)}
-                className={`group cursor-pointer rounded-[14px] bg-white dark:bg-[#141b27] border overflow-hidden flex flex-col justify-between transition-all ${
+                className={`group cursor-pointer rounded-[14px] bg-white dark:bg-[#141b27] border overflow-hidden flex flex-col justify-between hover:-translate-y-0.5 active:scale-[0.99] transition-[transform,box-shadow,border-color] duration-200 ease-out will-change-transform ${
                   isToday
                     ? "border-[#ff9500] ring-2 ring-[#ff9500]/20 shadow-xs"
                     : isNextUpcoming
                     ? "border-[#007aff] ring-2 ring-[#007aff]/20 shadow-xs"
                     : isCompleted
-                    ? "border-[#e6e6e6] dark:border-white/10 hover:border-[#34c759] shadow-2xs"
-                    : "border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 shadow-2xs"
+                    ? "border-[#e6e6e6] dark:border-white/10 hover:border-[#34c759] shadow-2xs hover:shadow-md"
+                    : "border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 shadow-2xs hover:shadow-md"
                 }`}
               >
                 {/* Window Header */}
@@ -442,7 +437,7 @@ export function SchedulesList({ schedules = [] }: { schedules?: ScheduleItem[] }
               </motion.div>
             )
           })}
-        </motion.div>
+        </div>
       </div>
 
       {/* Modal Detail Sesi Perkuliahan Hari Tertentu */}

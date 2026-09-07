@@ -313,9 +313,9 @@ export function DiscussionsHub() {
             return (
               <motion.div
                 key={thread.id}
-                layout
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="rounded-[12px] bg-white dark:bg-[#1B2130] p-4 sm:p-5 border border-slate-200/90 dark:border-[#2A3550] shadow-2xs space-y-3.5"
               >
                 {/* Author Info & Tag */}

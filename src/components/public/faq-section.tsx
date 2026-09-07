@@ -732,7 +732,7 @@ _Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
                 key={faq.id}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-[10px] transition-all overflow-hidden border ${
+                className={`rounded-[10px] transition-colors duration-150 overflow-hidden border ${
                   isExpanded
                     ? "bg-white dark:bg-[#1B2130] border-slate-400 dark:border-indigo-500 shadow-2xs"
                     : "bg-white dark:bg-[#1B2130] border-slate-200/90 dark:border-[#2A3550] hover:border-slate-300 dark:hover:border-slate-600 shadow-2xs"

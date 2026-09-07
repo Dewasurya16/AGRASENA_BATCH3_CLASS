@@ -758,15 +758,14 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
           </button>
         </div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((item) => (
             <motion.div
               key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ y: -2, transition: { duration: 0.15 } }}
-              className="group flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs transition-all duration-200"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              className="group flex flex-col justify-between rounded-[14px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow,border-color] duration-200 ease-out will-change-transform"
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -836,7 +835,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       )}
 
       {/* 4. Modal PDF Preview & Personal Study Notes with AI Summarizer */}
