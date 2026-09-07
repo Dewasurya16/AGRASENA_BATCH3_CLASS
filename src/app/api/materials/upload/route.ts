@@ -101,7 +101,6 @@ export async function POST(req: NextRequest) {
       try {
         revalidatePath("/materials")
         revalidatePath("/")
-        revalidatePath("/dashboard")
         revalidatePath("/admin/dashboard")
       } catch (revErr) {
         console.warn("revalidatePath error:", revErr)
@@ -217,7 +216,6 @@ export async function POST(req: NextRequest) {
     try {
       revalidatePath("/materials")
       revalidatePath("/")
-      revalidatePath("/dashboard")
       revalidatePath("/admin/dashboard")
     } catch (revErr) {
       console.warn("revalidatePath error:", revErr)

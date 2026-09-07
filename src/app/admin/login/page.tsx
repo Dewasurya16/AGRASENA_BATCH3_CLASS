@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@kejaksaan.go.id atau admin"
+                  placeholder="admin@kejaksaan.com atau admin"
                   className="h-10 w-full rounded-[10px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/50 dark:bg-[#141824] pl-10 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition-all"
                 />
               </div>
@@ -142,7 +142,7 @@ export default function AdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setEmail("admin@kejaksaan.go.id")
+                    setEmail("admin@kejaksaan.com")
                     setPassword("adminprakom625")
                   }}
                   className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
@@ -151,7 +151,7 @@ export default function AdminLoginPage() {
                 </button>
               </div>
               <div className="font-mono text-[10px] space-y-0.5 text-slate-500 dark:text-slate-400">
-                <p>User: <span className="text-slate-800 dark:text-slate-200 font-bold">admin@kejaksaan.go.id</span></p>
+                <p>User: <span className="text-slate-800 dark:text-slate-200 font-bold">admin@kejaksaan.com</span></p>
                 <p>Pass: <span className="text-slate-800 dark:text-slate-200 font-bold">adminprakom625</span></p>
               </div>
             </div>

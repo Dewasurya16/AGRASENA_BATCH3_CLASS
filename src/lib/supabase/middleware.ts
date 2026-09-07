@@ -49,6 +49,13 @@ export async function updateSession(request: NextRequest) {
 
   const isAuthenticated = Boolean(user || hasValidAdminSession)
 
+  // Redirect legacy /dashboard routes to unified /admin/dashboard
+  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin/dashboard'
+    return NextResponse.redirect(url)
+  }
+
   // Protect /admin routes (except /admin/login)
   if (
     !isAuthenticated &&

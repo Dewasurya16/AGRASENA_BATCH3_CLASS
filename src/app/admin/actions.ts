@@ -66,10 +66,10 @@ export async function adminSignIn(formData: FormData) {
 
   // Master Admin Credentials for Diklat
   const allowedAdminEmails = [
-    (process.env.ADMIN_EMAIL || 'admin@kejaksaan.go.id').toLowerCase(),
+    (process.env.ADMIN_EMAIL || 'admin@kejaksaan.com').toLowerCase(),
+    'admin@kejaksaan.com',
     'admin@kejaksaan.go.id',
     'admin@kejaksaan.ri',
-    'admin@kejaksaan.com',
     'admin@kejaksaan.sch.id',
     'admin@prakom.id',
     'admin@prakom625.id',
@@ -92,11 +92,13 @@ export async function adminSignIn(formData: FormData) {
 
   // Super Admin credentials (akses penuh termasuk halaman deteksi IP)
   const superAdminEmails = [
-    (process.env.SUPER_ADMIN_EMAIL || 'superadmin@kejaksaan.go.id').toLowerCase(),
+    (process.env.SUPER_ADMIN_EMAIL || 'superadmin@kejaksaan.com').toLowerCase(),
+    'superadmin@kejaksaan.com',
     'superadmin@kejaksaan.go.id',
     'superadmin@prakom.id',
     'superadmin@prakom625.id',
     'superadmin',
+    'admin@kejaksaan.com',
     'admin@kejaksaan.go.id',
     'admin',
   ]

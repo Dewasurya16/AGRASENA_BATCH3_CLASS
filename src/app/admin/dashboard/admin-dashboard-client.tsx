@@ -2119,7 +2119,7 @@ export function AdminDashboardClient({
                   {isSuperAdmin ? 'Super Admin' : 'Admin Diklat'}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                  {isSuperAdmin ? 'Akses Penuh & Deteksi IP' : 'admin@kejaksaan.go.id'}
+                  {isSuperAdmin ? 'Akses Penuh & Deteksi IP' : 'admin@kejaksaan.com'}
                 </div>
               </div>
             </div>

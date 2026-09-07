@@ -369,7 +369,7 @@ const INITIAL_DATABASE: Record<string, Array<Record<string, any>>> = {
     { id: 4, judul_tugas: "Audit Keamanan Jaringan Satker", pengirim: "Dewi Anggraini", nilai: 88, status: "Terkirim" },
   ],
   log_audit_spbe: [
-    { id: 101, aksi: "LOGIN_AUTH", aktor: "admin@kejaksaan.go.id", ip: "192.168.10.45", status: "SUCCESS" },
+    { id: 101, aksi: "LOGIN_AUTH", aktor: "admin@kejaksaan.com", ip: "192.168.10.45", status: "SUCCESS" },
     { id: 102, aksi: "EXPORT_DATA_JSON", aktor: "prakom625_operator", ip: "10.20.4.12", status: "SUCCESS" },
     { id: 103, aksi: "UPDATE_JADWAL_SESI", aktor: "pengurus_diklat", ip: "192.168.10.45", status: "SUCCESS" },
     { id: 104, aksi: "QUERY_TABLE_PEGAWAI", aktor: "peserta_batch3", ip: "127.0.0.1", status: "SUCCESS" },
