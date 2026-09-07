@@ -55,12 +55,13 @@ async function syncStatusToSupabase(isConnected, userInfo = {}) {
       key: 'bot_runtime_status',
       value: {
         connected: isConnected,
-        phone_number: userInfo.phoneNumber || null,
-        push_name: userInfo.pushName || null,
+        phone_number: userInfo.phoneNumber || botStatus.phoneNumber || null,
+        push_name: userInfo.pushName || botStatus.pushName || null,
         last_seen: new Date().toISOString(),
+        target_group_jid: targetGroupJid || null,
       },
       updated_at: new Date().toISOString(),
-    })
+    }, { onConflict: 'key' })
   } catch (err) {
     // Non-blocking
   }
@@ -73,12 +74,76 @@ async function loadTargetGroupFromSupabase() {
   if (!supabase) return
   try {
     const { data } = await supabase.from('wa_bot_config').select('value').eq('key', 'general_settings').single()
-    if (data?.value?.target_group_jid) {
+    if (data?.value?.target_group_jid && data.value.target_group_jid !== targetGroupJid) {
       targetGroupJid = data.value.target_group_jid
       console.log('[Config] Memuat Target Group JID dari database:', targetGroupJid)
     }
   } catch (e) {
     // Abaikan jika tabel belum ada
+  }
+}
+
+/**
+ * Polling & Memproses Antrean Aksi dari Web Dashboard (Supabase Cloud Bridge)
+ */
+async function processPendingActions() {
+  if (!supabase || !sock || !botStatus.connected) return
+
+  try {
+    const { data, error } = await supabase
+      .from('wa_bot_config')
+      .select('value')
+      .eq('key', 'pending_actions')
+      .single()
+
+    if (error || !data || !Array.isArray(data.value) || data.value.length === 0) {
+      return
+    }
+
+    const actions = data.value
+    const pending = actions.filter((a) => a.status === 'pending')
+
+    if (pending.length === 0) return
+
+    for (const action of pending) {
+      console.log(`[Bridge Action] Memproses aksi dari web: ${action.type}`)
+      try {
+        if (action.type === 'send') {
+          const to = action.to || targetGroupJid
+          if (to) {
+            await sock.sendMessage(to, { text: action.message })
+            console.log(`[Bridge Action] Berhasil kirim pesan siaran ke ${to}`)
+          }
+        } else if (action.type === 'trigger_schedule') {
+          const to = action.target || targetGroupJid
+          if (to) {
+            await sendScheduleNotification(sock, supabase, to)
+            console.log(`[Bridge Action] Berhasil kirim pengingat jadwal ke ${to}`)
+          }
+        } else if (action.type === 'trigger_task') {
+          const to = action.target || targetGroupJid
+          if (to) {
+            await sendTaskNotification(sock, supabase, to)
+            console.log(`[Bridge Action] Berhasil kirim pengingat tugas ke ${to}`)
+          }
+        }
+        action.status = 'completed'
+        action.processed_at = new Date().toISOString()
+      } catch (err) {
+        console.error(`[Bridge Action Error]`, err)
+        action.status = 'failed'
+        action.error = err.message
+      }
+    }
+
+    // Simpan status kembali ke Supabase (maksimal 20 riwayat terakhir)
+    await supabase.from('wa_bot_config').upsert({
+      key: 'pending_actions',
+      value: actions.slice(-20),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'key' })
+  } catch (e) {
+    // Non-blocking
   }
 }
 
@@ -104,15 +169,72 @@ async function handleIncomingMessage(m) {
   console.log(`[Command Masuk] Dari: ${from} | Teks: "${cleanBody}"`)
 
   try {
-    // 1. Perintah !id (Mengetahui ID Grup ini secara instan)
+    // 1. Perintah !id / !jid (Mengetahui ID Obrolan ini secara instan)
     if (command === '!id' || command === '!jid') {
       const isGroup = from.endsWith('@g.us')
       let reply = `🆔 *INFORMASI IDENTITAS WHATSAPP*\n━━━━━━━━━━━━━━━━━━━━━\n`
       reply += `• *Tipe Obrolan*: ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
-      reply += `• *ID Obrolan (JID)*: \`${from}\`\n\n`
+      reply += `• *ID Obrolan (JID)*:\n\`${from}\`\n\n`
       if (isGroup) {
-        reply += `💡 _Salin ID di atas dan masukkan ke dashboard web untuk menetapkan grup ini sebagai target pengingat harian!_`
+        reply += `💡 *Tips Praktis:*\n`
+        reply += `Ketik *!setgrup* di grup ini sekarang untuk langsung menetapkan grup ini sebagai target pengingat otomatis tanpa perlu salin ID ke web!`
       }
+      await sock.sendMessage(from, { text: reply }, { quoted: msg })
+      return
+    }
+
+    // 1b. Perintah !setgrup / !settarget (Auto-set grup ini sebagai target pengingat)
+    if (command === '!setgrup' || command === '!settarget') {
+      const isGroup = from.endsWith('@g.us')
+      if (!isGroup) {
+        await sock.sendMessage(
+          from,
+          { text: '⚠️ Perintah *!setgrup* hanya dapat dijalankan di dalam Grup WhatsApp kelas.' },
+          { quoted: msg }
+        )
+        return
+      }
+
+      targetGroupJid = from
+      if (supabase) {
+        try {
+          const { data: currentCfg } = await supabase
+            .from('wa_bot_config')
+            .select('value')
+            .eq('key', 'general_settings')
+            .single()
+
+          const val = currentCfg?.value || {}
+          val.target_group_jid = from
+          await supabase.from('wa_bot_config').upsert({
+            key: 'general_settings',
+            value: val,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'key' })
+        } catch (e) {
+          console.error('[Config Save Error]', e)
+        }
+      }
+
+      let reply = `✅ *TARGET GRUP BERHASIL DIATUR!*\n━━━━━━━━━━━━━━━━━━━━━\n`
+      reply += `Grup ini resmi ditetapkan sebagai target pengingat notifikasi otomatis Diklat Agrasena Batch 3.\n\n`
+      reply += `• *ID Grup*: \`${from}\`\n`
+      reply += `• *Jadwal Pengingat Kuliah*: 07:00 WIB\n`
+      reply += `• *Jadwal Pengingat Tugas*: 16:00 WIB\n\n`
+      reply += `_Semua pengingat dan siaran dari dashboard web sekarang akan otomatis masuk ke grup ini._`
+      await sock.sendMessage(from, { text: reply }, { quoted: msg })
+      return
+    }
+
+    // 1c. Perintah !status
+    if (command === '!status') {
+      let reply = `🤖 *STATUS SISTEM BOT WHATSAPP*\n━━━━━━━━━━━━━━━━━━━━━\n`
+      reply += `• *Status Bot*: 🟢 Aktif & Terhubung\n`
+      reply += `• *Nama Akun*: ${botStatus.pushName || 'Bot Kelas'}\n`
+      reply += `• *Nomor*: ${botStatus.phoneNumber || '-'}\n`
+      reply += `• *Target Grup Saat Ini*: ${targetGroupJid ? `\`${targetGroupJid}\`` : '⚠️ Belum Disetel (Ketik !setgrup)'}\n`
+      reply += `• *Waktu Server*: ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n`
+      reply += `_Website Portal:_ https://agrasena-batch-3-class.vercel.app`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
@@ -123,12 +245,14 @@ async function handleIncomingMessage(m) {
       reply += `*KEJAKSAAN REPUBLIK INDONESIA*\n`
       reply += `━━━━━━━━━━━━━━━━━━━━━\n`
       reply += `Halo! Saya adalah bot pengingat resmi kelas Diklat. Berikut daftar perintah yang bisa Anda gunakan:\n\n`
-      reply += `📌 *!jadwal* — Cek jadwal perkuliahan hari ini & besok\n`
+      reply += `📌 *!jadwal* — Cek jadwal perkuliahan hari ini\n`
       reply += `📝 *!tugas* — Cek daftar penugasan mandiri yang aktif\n`
-      reply += `🔗 *!link* — Akses cepat portal web, Zoom, & Google Drive modul\n`
-      reply += `🆔 *!id* — Mengetahui ID/JID grup ini\n`
-      reply += `ℹ️ *!info* — Informasi penyelenggaraan Diklat Prakom RI\n\n`
-      reply += `_Website Kelas:_ https://agrasena-batch3.vercel.app`
+      reply += `🔗 *!link* — Akses cepat portal web kelas\n`
+      reply += `🆔 *!id* — Mengetahui ID/JID obrolan ini\n`
+      reply += `⚙️ *!setgrup* — Tetapkan grup ini sebagai target pengingat\n`
+      reply += `📊 *!status* — Cek status koneksi bot\n`
+      reply += `ℹ️ *!info* — Informasi Diklat Prakom RI\n\n`
+      reply += `_Website Kelas:_ https://agrasena-batch-3-class.vercel.app`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
@@ -356,8 +480,20 @@ async function start() {
 
   // Hubungkan ke WhatsApp
   connectToWhatsApp()
+
+  // Heartbeat berkala ke Supabase setiap 15 detik & sinkronisasi target group
+  setInterval(async () => {
+    if (botStatus.connected && sock) {
+      await syncStatusToSupabase(true)
+      await loadTargetGroupFromSupabase()
+    }
+  }, 15000)
+
+  // Polling pemrosesan antrean aksi dari Web Dashboard Vercel setiap 2.5 detik
+  setInterval(processPendingActions, 2500)
 }
 
 start().catch((err) => {
   console.error('[Fatal Error] Gagal memulai bot:', err)
 })
+

@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# WhatsApp Bot engine local files
+wa-bot/auth_info_baileys/
+wa-bot/node_modules/
+wa-bot/package-lock.json
+

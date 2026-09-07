@@ -594,18 +594,18 @@ export function WhatsAppBotManager() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                <p className="font-bold text-slate-700 dark:text-slate-300">
-                  💡 Cara termudah mengetahui ID Grup WhatsApp:
+              <div className="p-3.5 rounded-[12px] bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/40 text-[11px] text-slate-600 dark:text-slate-300 space-y-1.5">
+                <p className="font-black text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5">
+                  <span>⚡ Cara Termudah Menyetel Grup WhatsApp Target:</span>
                 </p>
-                <p>
-                  1. Masukkan nomor bot ke dalam grup WhatsApp kelas Anda.
+                <p className="leading-relaxed">
+                  1. Pastikan nomor bot (+62 897-9139-773) sudah bergabung ke dalam grup WhatsApp kelas Anda.
                 </p>
-                <p>
-                  2. Ketik perintah <code className="bg-slate-200 dark:bg-[#253045] px-1 py-0.5 rounded font-mono font-bold text-slate-800 dark:text-slate-200">!id</code> di dalam grup tersebut.
+                <p className="leading-relaxed">
+                  2. Cukup ketik <code className="bg-white dark:bg-[#1B2130] px-1.5 py-0.5 rounded font-mono font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">!setgrup</code> langsung di grup WhatsApp tersebut! Bot akan otomatis menetapkan grup tersebut sebagai target pengingat tanpa perlu copy-paste.
                 </p>
-                <p>
-                  3. Bot akan membalas dengan ID grup secara instan. Salin dan tempelkan ke kolom di atas.
+                <p className="leading-relaxed text-slate-500 dark:text-slate-400">
+                  <i>Atau ketik <code className="bg-white dark:bg-[#1B2130] px-1 py-0.5 rounded font-mono font-bold">!id</code> di grup untuk melihat ID obrolan (JID) lalu salin ke input di atas.</i>
                 </p>
               </div>
             </form>
@@ -623,13 +623,41 @@ export function WhatsAppBotManager() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
                 <div>
+                  <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">!setgrup</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Auto-set grup ini jadi target bot</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard("!setgrup", "cmd-setgrup")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {copiedId === "cmd-setgrup" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
+                <div>
+                  <span className="font-mono font-black text-purple-600 dark:text-purple-400">!id</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cek JID grup otomatis</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard("!id", "cmd-id")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {copiedId === "cmd-id" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
+                <div>
                   <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">!jadwal</span>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Jadwal hari ini & besok</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyToClipboard("!jadwal", "cmd-jadwal")}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   {copiedId === "cmd-jadwal" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -643,7 +671,7 @@ export function WhatsAppBotManager() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard("!tugas", "cmd-tugas")}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   {copiedId === "cmd-tugas" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -657,7 +685,7 @@ export function WhatsAppBotManager() {
                 <button
                   type="button"
                   onClick={() => copyToClipboard("!link", "cmd-link")}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   {copiedId === "cmd-link" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
@@ -665,15 +693,15 @@ export function WhatsAppBotManager() {
 
               <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
                 <div>
-                  <span className="font-mono font-black text-purple-600 dark:text-purple-400">!id</span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cek JID grup otomatis</p>
+                  <span className="font-mono font-black text-teal-600 dark:text-teal-400">!status</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cek status koneksi bot</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copyToClipboard("!id", "cmd-id")}
-                  className="p-1 text-slate-400 hover:text-slate-600"
+                  onClick={() => copyToClipboard("!status", "cmd-status")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  {copiedId === "cmd-id" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedId === "cmd-status" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
             </div>
