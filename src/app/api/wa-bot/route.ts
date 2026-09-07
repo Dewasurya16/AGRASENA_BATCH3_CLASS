@@ -343,6 +343,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Gagal memicu pengingat tugas." }, { status: 500 })
     }
 
+    // 5. Trigger Jadwal Besok
+    if (action === "trigger_tomorrow") {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+        const res = await fetch(`${botUrl}/api/trigger/tomorrow`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${botSecret}`,
+          },
+          body: JSON.stringify({ target: body.target }),
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (res.ok) {
+          const result = await res.json()
+          return NextResponse.json(result)
+        }
+      } catch {}
+
+      const queued = await queueActionToSupabase({ type: "trigger_tomorrow", target: body.target })
+      if (queued) {
+        return NextResponse.json({
+          success: true,
+          message: "Perintah jadwal besok berhasil diteruskan ke Bot WhatsApp!",
+        })
+      }
+      return NextResponse.json({ error: "Gagal memicu jadwal besok." }, { status: 500 })
+    }
+
     return NextResponse.json({ error: "Aksi tidak dikenal." }, { status: 400 })
   } catch (err: any) {
     return NextResponse.json(

@@ -162,6 +162,29 @@ function createApiServer({
     }
   })
 
+  // 7. Trigger Jadwal Besok
+  app.post('/api/trigger/tomorrow', verifySecret, async (req, res) => {
+    const sock = getSock()
+    const status = getBotStatus()
+    if (!sock || !status.connected) {
+      return res.status(503).json({ error: 'Bot WhatsApp sedang offline.' })
+    }
+
+    const targetJid = req.body.target || getTargetJid()
+    if (!targetJid) {
+      return res.status(400).json({ error: 'Target Group JID belum disetel.' })
+    }
+
+    try {
+      const { generateTomorrowScheduleMessage } = require('./scheduler')
+      const { text, count } = await generateTomorrowScheduleMessage(supabase)
+      await sock.sendMessage(targetJid, { text })
+      res.json({ success: true, message: 'Jadwal besok berhasil dikirim ke grup.', count })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
   // 7. Ambil Daftar Semua Grup yang Diikuti Bot (Memudahkan Pemilihan Target JID)
   app.get('/api/groups', verifySecret, async (req, res) => {
     const sock = getSock()

@@ -19,6 +19,7 @@ const {
   sendScheduleNotification,
   sendTaskNotification,
   generateDailyScheduleMessage,
+  generateTomorrowScheduleMessage,
   generateClosingAndTaskMessage,
   formatIndonesianDate,
   ZOOM_CONFIG,
@@ -126,14 +127,21 @@ async function processPendingActions() {
         } else if (action.type === 'trigger_schedule') {
           const to = action.target || targetGroupJid
           if (to) {
-            await sendScheduleNotification(sock, supabase, to)
+            await sendScheduleNotification(sock, supabase, to, { force: true })
             console.log(`[Bridge Action] Berhasil kirim pengingat jadwal ke ${to}`)
           }
         } else if (action.type === 'trigger_task') {
           const to = action.target || targetGroupJid
           if (to) {
-            await sendTaskNotification(sock, supabase, to)
+            await sendTaskNotification(sock, supabase, to, { force: true })
             console.log(`[Bridge Action] Berhasil kirim pengingat tugas ke ${to}`)
+          }
+        } else if (action.type === 'trigger_tomorrow') {
+          const to = action.target || targetGroupJid
+          if (to) {
+            const { text } = await generateTomorrowScheduleMessage(supabase)
+            await sock.sendMessage(to, { text })
+            console.log(`[Bridge Action] Berhasil kirim jadwal besok ke ${to}`)
           }
         }
         action.status = 'completed'
@@ -267,8 +275,9 @@ async function handleIncomingMessage(m) {
       reply += `━━━━━━━━━━━━━━━━━━━━━\n`
       reply += `Halo! Saya adalah bot asisten resmi kelas Diklat. Berikut daftar perintah yang bisa Anda gunakan:\n\n`
       reply += `📌 *!jadwal* — Cek jadwal mata diklat & akses Zoom hari ini\n`
-      reply += `📝 *!tugas* — Cek daftar penugasan mandiri aktif & tenggat waktu\n`
-      reply += `🔗 *!link* — Akses cepat portal web kelas, Zoom, & modul\n`
+      reply += `📅 *!besok* — Cek jadwal perkuliahan esok hari\n`
+      reply += `📝 *!tugas* — Cek daftar penugasan mandiri aktif terbaru\n`
+      reply += `🔗 *!link* — Akses cepat portal web kelas, Zoom, & LMS\n`
       reply += `🆔 *!id* — Mengetahui ID/JID obrolan ini\n`
       reply += `⚙️ *!setgrup* — Tetapkan grup ini sebagai target pengingat\n`
       reply += `📊 *!status* — Cek status koneksi bot\n`
@@ -286,6 +295,18 @@ async function handleIncomingMessage(m) {
       }
 
       const { text } = await generateDailyScheduleMessage(supabase)
+      await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 3b. Perintah !besok (Menampilkan jadwal esok hari agar tidak spam di pagi hari)
+    if (command === '!besok') {
+      if (!supabase) {
+        await sock.sendMessage(from, { text: '⚠️ Koneksi database website belum siap.' }, { quoted: msg })
+        return
+      }
+
+      const { text } = await generateTomorrowScheduleMessage(supabase)
       await sock.sendMessage(from, { text }, { quoted: msg })
       return
     }

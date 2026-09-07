@@ -205,6 +205,30 @@ export function WhatsAppBotManager() {
     }
   }
 
+  // Handle Trigger Tomorrow Schedule Notification
+  const handleTriggerTomorrow = async () => {
+    if (!confirm("Kirim jadwal perkuliahan esok hari ke grup WhatsApp sekarang?")) return
+    setActionLoading("trigger_tomorrow")
+    try {
+      const res = await fetch("/api/wa-bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trigger_tomorrow", target: targetJid || undefined }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showFeedback("success", "Jadwal perkuliahan esok hari berhasil dikirimkan ke grup WhatsApp!")
+      } else {
+        showFeedback("error", data.error || "Gagal mengirim jadwal esok hari.")
+      }
+    } catch {
+      showFeedback("error", "Gagal memicu pengiriman jadwal esok hari.")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+
   // Handle Send Custom Broadcast
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -488,44 +512,58 @@ export function WhatsAppBotManager() {
               Gunakan tombol di bawah untuk segera mengirim notifikasi ke grup WhatsApp tanpa harus menunggu jadwal cron harian otomatis:
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-              {/* Trigger Jadwal */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              {/* Trigger Jadwal Hari Ini */}
               <button
                 type="button"
                 onClick={handleTriggerSchedule}
                 disabled={actionLoading === "trigger_schedule"}
-                className="flex items-start gap-3 p-4 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-sky-50 dark:hover:bg-sky-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-sky-300 dark:hover:border-sky-800 transition text-left cursor-pointer group disabled:opacity-50"
+                className="flex flex-col items-start p-3.5 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-sky-50 dark:hover:bg-sky-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-sky-300 dark:hover:border-sky-800 transition text-left cursor-pointer group disabled:opacity-50"
               >
-                <div className="p-2.5 rounded-[10px] bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 group-hover:scale-105 transition-transform">
-                  <Calendar className="h-5 w-5" />
+                <div className="p-2 rounded-[8px] bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 group-hover:scale-105 transition-transform mb-2">
+                  <Calendar className="h-4 w-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-black text-slate-900 dark:text-slate-100">
-                    Siarkan Jadwal Hari Ini
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Kirim rekap mata diklat, widyaiswara, dan link Zoom hari ini.
-                  </div>
+                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  Jadwal Hari Ini
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Mata diklat, pemateri, & Zoom hari ini.
                 </div>
               </button>
 
-              {/* Trigger Tugas */}
+              {/* Trigger Jadwal Besok */}
+              <button
+                type="button"
+                onClick={handleTriggerTomorrow}
+                disabled={actionLoading === "trigger_tomorrow"}
+                className="flex flex-col items-start p-3.5 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-indigo-50 dark:hover:bg-indigo-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-indigo-300 dark:hover:border-indigo-800 transition text-left cursor-pointer group disabled:opacity-50"
+              >
+                <div className="p-2 rounded-[8px] bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 group-hover:scale-105 transition-transform mb-2">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  Jadwal Besok
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Intipan persiapan sesi esok hari.
+                </div>
+              </button>
+
+              {/* Trigger Penutup & Tugas */}
               <button
                 type="button"
                 onClick={handleTriggerTask}
                 disabled={actionLoading === "trigger_task"}
-                className="flex items-start gap-3 p-4 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-amber-300 dark:hover:border-amber-800 transition text-left cursor-pointer group disabled:opacity-50"
+                className="flex flex-col items-start p-3.5 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-amber-50 dark:hover:bg-amber-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-amber-300 dark:hover:border-amber-800 transition text-left cursor-pointer group disabled:opacity-50"
               >
-                <div className="p-2.5 rounded-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 group-hover:scale-105 transition-transform">
-                  <BookOpen className="h-5 w-5" />
+                <div className="p-2 rounded-[8px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 group-hover:scale-105 transition-transform mb-2">
+                  <BookOpen className="h-4 w-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-black text-slate-900 dark:text-slate-100">
-                    Siarkan Peringatan Tugas
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Kirim daftar tugas mandiri yang mendekati batas waktu pengumpulan.
-                  </div>
+                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  Penutup & Tugas
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Apresiasi & tugas mandiri aktif.
                 </div>
               </button>
             </div>
@@ -628,6 +666,48 @@ export function WhatsAppBotManager() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
                 <div>
+                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">!jadwal</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Jadwal & Zoom hari ini</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard("!jadwal", "cmd-jadwal")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {copiedId === "cmd-jadwal" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
+                <div>
+                  <span className="font-mono font-black text-sky-600 dark:text-sky-400">!besok</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Intip jadwal esok hari</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard("!besok", "cmd-besok")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {copiedId === "cmd-besok" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
+                <div>
+                  <span className="font-mono font-black text-amber-600 dark:text-amber-400">!tugas</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Tugas mandiri terbaru aktif</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard("!tugas", "cmd-tugas")}
+                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  {copiedId === "cmd-tugas" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
+                <div>
                   <span className="font-mono font-black text-indigo-600 dark:text-indigo-400">!setgrup</span>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">Auto-set grup ini jadi target bot</p>
                 </div>
@@ -656,29 +736,15 @@ export function WhatsAppBotManager() {
 
               <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
                 <div>
-                  <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">!jadwal</span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Jadwal hari ini & besok</p>
+                  <span className="font-mono font-black text-teal-600 dark:text-teal-400">!status</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cek status koneksi bot</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copyToClipboard("!jadwal", "cmd-jadwal")}
+                  onClick={() => copyToClipboard("!status", "cmd-status")}
                   className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  {copiedId === "cmd-jadwal" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-
-              <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
-                <div>
-                  <span className="font-mono font-black text-amber-600 dark:text-amber-400">!tugas</span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Daftar tugas mandiri aktif</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard("!tugas", "cmd-tugas")}
-                  className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  {copiedId === "cmd-tugas" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedId === "cmd-status" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
 
