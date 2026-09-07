@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "bot": "node wa-bot/index.js",
     "lint": "eslint"
   },
   "dependencies": {

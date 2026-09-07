@@ -1,0 +1,30 @@
+{
+  "name": "agrasena-wa-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp Reminder & Notification Bot for Diklat Agrasena Batch 3 Kejaksaan RI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "kejaksaan",
+    "diklat",
+    "agrasena"
+  ],
+  "author": "Agrasena Batch 3 Tech Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.0",
+    "@whiskeysockets/baileys": "^6.7.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  }
+}

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: agrasena-wa-bot
+    runtime: node
+    rootDir: wa-bot
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: TIMEZONE
+        value: Asia/Jakarta
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: BOT_SECRET_KEY
+        sync: false
+      - key: TARGET_GROUP_JID
+        sync: false

@@ -86,6 +86,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
+import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 
@@ -232,7 +233,7 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen"
+    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen" | "wa_bot"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -1984,6 +1985,7 @@ export function AdminDashboardClient({
     { id: "templates", label: "Pusat Template BPS & TIK", icon: Layers, count: allAdminTemplates.length, color: "text-teal-600" },
     { id: "exam_prep", label: "Kesiapan Ujian & Seminar", icon: Clock, count: 10, color: "text-amber-600" },
     { id: "paper_gen", label: "AI Makalah Inovasi Satker", icon: GraduationCap, count: null, color: "text-rose-600" },
+    { id: "wa_bot", label: "Bot WhatsApp Grup", icon: Bot, count: null, color: "text-emerald-600" },
   ]
 
   return (
@@ -2091,13 +2093,25 @@ export function AdminDashboardClient({
             <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1">
               Pintasan Cepat
             </div>
-            {/* Broadcast WhatsApp: Tersedia untuk Admin dan Super Admin */}
+            {/* Bot WhatsApp: Tersedia untuk Admin dan Super Admin */}
             <button
-              onClick={() => setIsWAModalOpen(true)}
+              onClick={() => {
+                setActiveTab("wa_bot")
+                setIsSidebarOpen(false)
+              }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
             >
+              <Bot className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Bot WhatsApp Otomatis</span>
+            </button>
+
+            {/* Broadcast WhatsApp: Manual Modal Share */}
+            <button
+              onClick={() => setIsWAModalOpen(true)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#253045] transition cursor-pointer"
+            >
               <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Broadcast WhatsApp</span>
+              <span>Salin Teks WA Manual</span>
             </button>
 
             {/* Backup Data (JSON): Khusus Super Admin */}
@@ -2176,6 +2190,7 @@ export function AdminDashboardClient({
                   {activeTab === "templates" && "Pusat Template BPS & TIK"}
                   {activeTab === "exam_prep" && "Checklist Kelulusan & Ujian"}
                   {activeTab === "paper_gen" && "AI Makalah Inovasi Satker"}
+                  {activeTab === "wa_bot" && "Gateway Bot WhatsApp (Agrasena RI)"}
                 </h2>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
@@ -4718,6 +4733,13 @@ export function AdminDashboardClient({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 13. WHATSAPP BOT GATEWAY TAB */}
+          {/* ========================================================================= */}
+          {activeTab === "wa_bot" && (
+            <WhatsAppBotManager />
           )}
         </div>
       </main>
