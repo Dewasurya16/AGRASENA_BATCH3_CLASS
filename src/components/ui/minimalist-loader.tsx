@@ -203,7 +203,7 @@ export function MinimalistLoader({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/75 dark:bg-[#0c1017]/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="fixed inset-0 z-[9999] flex h-[100dvh] w-full items-center justify-center p-4 bg-[#F4F6FA]/90 dark:bg-[#14181F]/95 backdrop-blur-xs animate-in fade-in duration-150 select-none">
         {content}
       </div>
     )
