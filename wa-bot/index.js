@@ -20,10 +20,14 @@ const {
   sendTaskNotification,
   generateDailyScheduleMessage,
   generateTomorrowScheduleMessage,
+  generateScheduleForQuery,
   generateClosingAndTaskMessage,
+  generateProgressMessage,
+  searchMaterialsMessage,
   formatIndonesianDate,
   ZOOM_CONFIG,
 } = require('./scheduler')
+const { askAiAssistant } = require('./ai')
 const { createApiServer } = require('./api')
 
 
@@ -195,18 +199,19 @@ async function handleIncomingMessage(m) {
   chatCommandCooldowns.set(from, now)
 
   const command = cleanBody.toLowerCase().split(/\s+/)[0]
+  const args = cleanBody.slice(command.length).trim()
   console.log(`[Command Masuk] Dari: ${from} | Teks: "${cleanBody}"`)
 
   try {
     // 1. Perintah !id / !jid (Mengetahui ID Obrolan ini secara instan)
     if (command === '!id' || command === '!jid') {
       const isGroup = from.endsWith('@g.us')
-      let reply = `🆔 *INFORMASI IDENTITAS WHATSAPP*\n━━━━━━━━━━━━━━━━━━━━━\n`
-      reply += `• *Tipe Obrolan*: ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
-      reply += `• *ID Obrolan (JID)*:\n\`${from}\`\n\n`
+      let reply = `🆔 *IDENTITAS WHATSAPP*\n`
+      reply += `────────────────────────\n`
+      reply += `• *Tipe:* ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
+      reply += `• *JID:* \`${from}\`\n\n`
       if (isGroup) {
-        reply += `💡 *Tips Praktis:*\n`
-        reply += `Ketik *!setgrup* di grup ini sekarang untuk langsung menetapkan grup ini sebagai target pengingat otomatis tanpa perlu salin ID ke web!`
+        reply += `💡 *Tips:* Ketik *!setgrup* untuk menetapkan grup ini sebagai target pengingat otomatis.`
       }
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
@@ -245,61 +250,81 @@ async function handleIncomingMessage(m) {
         }
       }
 
-      let reply = `✅ *TARGET GRUP BERHASIL DIATUR!*\n━━━━━━━━━━━━━━━━━━━━━\n`
-      reply += `Grup ini resmi ditetapkan sebagai target pengingat notifikasi otomatis Diklat Agrasena Batch 3.\n\n`
-      reply += `• *ID Grup*: \`${from}\`\n`
-      reply += `• *Jadwal Pengingat Kuliah Pagi*: 07:00 WIB\n`
-      reply += `• *Jadwal Penutup & Tugas Sore*: 16:00 WIB\n\n`
-      reply += `_Semua pengingat dan siaran dari dashboard web sekarang akan otomatis masuk ke grup ini._`
+      let reply = `✅ *TARGET GRUP BERHASIL DISETEL!*\n`
+      reply += `────────────────────────\n`
+      reply += `Grup ini resmi ditetapkan sebagai penerima pengingat otomatis Diklat Agrasena Batch 3.\n\n`
+      reply += `• *ID Grup:* \`${from}\`\n`
+      reply += `• *Jadwal Pagi:* 07:00 WIB\n`
+      reply += `• *Penutup & Tugas:* 16:00 WIB\n\n`
+      reply += `_Semua pengingat & siaran web sekarang otomatis masuk ke grup ini._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
 
     // 1c. Perintah !status
     if (command === '!status') {
-      let reply = `🤖 *STATUS SISTEM BOT WHATSAPP*\n━━━━━━━━━━━━━━━━━━━━━\n`
-      reply += `• *Status Bot*: 🟢 Aktif & Terhubung\n`
-      reply += `• *Nama Akun*: ${botStatus.pushName || 'Bot Kelas'}\n`
-      reply += `• *Nomor*: ${botStatus.phoneNumber || '-'}\n`
-      reply += `• *Target Grup Saat Ini*: ${targetGroupJid ? `\`${targetGroupJid}\`` : '⚠️ Belum Disetel (Ketik !setgrup)'}\n`
-      reply += `• *Waktu Server*: ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n`
-      reply += `_Website Portal:_ https://agrasena-batch-3-class.vercel.app`
+      let reply = `🤖 *STATUS SISTEM BOT*\n`
+      reply += `────────────────────────\n`
+      reply += `• *Status:* 🟢 Aktif & Terhubung\n`
+      reply += `• *Nama Akun:* ${botStatus.pushName || 'Bot Kelas'}\n`
+      reply += `• *Nomor:* ${botStatus.phoneNumber || '-'}\n`
+      reply += `• *Target Grup:* ${targetGroupJid ? '✅ Terhubung' : '⚠️ Belum Disetel'}\n`
+      reply += `• *Waktu:* ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n`
+      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
 
-    // 2. Perintah !help / !menu
-    if (command === '!help' || command === '!menu') {
-      let reply = `🤖 *ASISTEN DIKLAT AGRASENA BATCH 3*\n`
-      reply += `*KEJAKSAAN REPUBLIK INDONESIA*\n`
-      reply += `━━━━━━━━━━━━━━━━━━━━━\n`
-      reply += `Halo! Saya adalah bot asisten resmi kelas Diklat. Berikut daftar perintah yang bisa Anda gunakan:\n\n`
-      reply += `📌 *!jadwal* — Cek jadwal mata diklat & akses Zoom hari ini\n`
-      reply += `📅 *!besok* — Cek jadwal perkuliahan esok hari\n`
-      reply += `📝 *!tugas* — Cek daftar penugasan mandiri aktif terbaru\n`
-      reply += `🔗 *!link* — Akses cepat portal web kelas, Zoom, & LMS\n`
-      reply += `🆔 *!id* — Mengetahui ID/JID obrolan ini\n`
-      reply += `⚙️ *!setgrup* — Tetapkan grup ini sebagai target pengingat\n`
-      reply += `📊 *!status* — Cek status koneksi bot\n`
-      reply += `ℹ️ *!info* — Informasi Diklat Prakom RI\n\n`
-      reply += `_Website Kelas:_ https://agrasena-batch-3-class.vercel.app`
+    // 2. Perintah !help / !menu / !petunjuk / !panduan
+    if (command === '!help' || command === '!menu' || command === '!petunjuk' || command === '!panduan') {
+      let reply = `🤖 *PANDUAN BOT AGRASENA BATCH 3*\n`
+      reply += `*Kejaksaan Republik Indonesia*\n`
+      reply += `────────────────────────\n`
+      reply += `Daftar perintah yang dapat digunakan:\n\n`
+      reply += `📌 *!jadwal*\n`
+      reply += `└ Jadwal pembelajaran hari ini\n\n`
+      reply += `📅 *!jadwal <tanggal / hari>*\n`
+      reply += `└ Cek jadwal per tanggal / hari ke-N (cth: *!jadwal 8 Sep*)\n\n`
+      reply += `⏰ *!besok*\n`
+      reply += `└ Cek jadwal perkuliahan esok hari\n\n`
+      reply += `📝 *!tugas*\n`
+      reply += `└ Daftar tugas mandiri yang aktif\n\n`
+      reply += `📚 *!modul <topik>*\n`
+      reply += `└ Cari modul & materi PDF (cth: *!modul jarkom*)\n\n`
+      reply += `📊 *!progress*\n`
+      reply += `└ Tracker progres diklat 35 hari\n\n`
+      reply += `🤖 *!tanya <pertanyaan>*\n`
+      reply += `└ Tanya Asisten AI Prakom seputar materi / IT SPBE\n\n`
+      reply += `🔗 *!link*\n`
+      reply += `└ Akses Portal Kelas (Zoom), modul & LMS\n\n`
+      reply += `ℹ️ *!status*\n`
+      reply += `└ Cek status koneksi bot\n\n`
+      reply += `────────────────────────\n`
+      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
 
-    // 3. Perintah !jadwal (Menampilkan jadwal hari ini lengkap dengan Zoom dan kata motivasi)
-    if (command === '!jadwal') {
+    // 3. Perintah !jadwal / !tgl / !tanggal (Mendukung Cek Jadwal Hari Ini atau Per Tanggal)
+    if (command === '!jadwal' || command === '!tgl' || command === '!tanggal') {
       if (!supabase) {
         await sock.sendMessage(from, { text: '⚠️ Koneksi database website belum siap.' }, { quoted: msg })
         return
       }
 
-      const { text } = await generateDailyScheduleMessage(supabase)
-      await sock.sendMessage(from, { text }, { quoted: msg })
+      if (args) {
+        // Cek per tanggal atau hari ke-N
+        const { text } = await generateScheduleForQuery(supabase, args)
+        await sock.sendMessage(from, { text }, { quoted: msg })
+      } else {
+        // Default hari ini
+        const { text } = await generateDailyScheduleMessage(supabase)
+        await sock.sendMessage(from, { text }, { quoted: msg })
+      }
       return
     }
 
-    // 3b. Perintah !besok (Menampilkan jadwal esok hari agar tidak spam di pagi hari)
+    // 3b. Perintah !besok (Jadwal Esok Hari)
     if (command === '!besok') {
       if (!supabase) {
         await sock.sendMessage(from, { text: '⚠️ Koneksi database website belum siap.' }, { quoted: msg })
@@ -311,7 +336,7 @@ async function handleIncomingMessage(m) {
       return
     }
 
-    // 4. Perintah !tugas (Menampilkan tugas aktif & pesan penyemangat)
+    // 4. Perintah !tugas (Penugasan Mandiri Aktif)
     if (command === '!tugas') {
       if (!supabase) {
         await sock.sendMessage(from, { text: '⚠️ Koneksi database website belum siap.' }, { quoted: msg })
@@ -323,21 +348,44 @@ async function handleIncomingMessage(m) {
       return
     }
 
-    // 5. Perintah !link
-    if (command === '!link') {
+    // 4b. Perintah !modul / !materi (Pencarian Modul Diklat)
+    if (command === '!modul' || command === '!materi') {
+      const { text } = await searchMaterialsMessage(supabase, args)
+      await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 4c. Perintah !progress / !tahap (Tracker Progres Diklat 35 Hari)
+    if (command === '!progress' || command === '!progres' || command === '!tahap') {
+      const { text } = generateProgressMessage()
+      await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 4d. Perintah !tanya / !ai / !ask (Asisten Cerdas AI Prakom)
+    if (command === '!tanya' || command === '!ai' || command === '!ask') {
+      const { text } = await askAiAssistant(args)
+      await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 5. Perintah !link / !zoom / !portal (Hanya mengarahkan ke Portal Kelas)
+    if (command === '!link' || command === '!zoom' || command === '!portal') {
       let reply = `🔗 *TAUTAN RESMI DIKLAT PRAKOM BATCH 3*\n`
-      reply += `*AGRASENA KEJAKSAAN REPUBLIK INDONESIA*\n`
-      reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`
-      reply += `🎥 *Ruang Zoom Tatap Muka Online (Angkatan 3)*:\n`
-      reply += `• Link: ${ZOOM_CONFIG.joinUrl}\n`
-      reply += `• Meeting ID: \`${ZOOM_CONFIG.meetingIdDisplay}\`\n`
-      reply += `• Passcode: \`${ZOOM_CONFIG.passcode}\`\n\n`
-      reply += `🌐 *Portal Website Kelas*:\n${ZOOM_CONFIG.portalUrl}\n\n`
-      reply += `📚 *Pustaka Modul PDF (120 JP)*:\n${ZOOM_CONFIG.portalUrl}/materials\n\n`
-      reply += `📅 *Kalender Jadwal 35 Hari*:\n${ZOOM_CONFIG.portalUrl}/schedules\n\n`
-      reply += `📝 *Unggah Penugasan Mandiri*:\n${ZOOM_CONFIG.portalUrl}/tasks\n\n`
-      reply += `🏛️ *LMS Ruang Diklat Kejaksaan*:\n${ZOOM_CONFIG.lmsUrl}\n\n`
-      reply += `_Simpan tautan ini untuk memudahkan kegiatan pembelajaran Anda._`
+      reply += `*Diklat Agrasena • Kejaksaan RI 2026*\n`
+      reply += `────────────────────────\n\n`
+      reply += `🌐 *Portal Kelas (Akses Zoom & Materi):*\n`
+      reply += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+      reply += `📅 *Kalender & Jadwal Perkuliahan:*\n`
+      reply += `👉 ${ZOOM_CONFIG.portalUrl}/schedules\n\n`
+      reply += `📝 *Unggah Penugasan Mandiri:*\n`
+      reply += `👉 ${ZOOM_CONFIG.portalUrl}/tasks\n\n`
+      reply += `📚 *Pustaka Modul Pembelajaran:*\n`
+      reply += `👉 ${ZOOM_CONFIG.portalUrl}/materials\n\n`
+      reply += `🏛️ *LMS Ruang Diklat Kejaksaan:*\n`
+      reply += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
+      reply += `────────────────────────\n`
+      reply += `💡 _Ketik *!jadwal* untuk melihat jadwal hari ini._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
@@ -345,12 +393,12 @@ async function handleIncomingMessage(m) {
     // 6. Perintah !info
     if (command === '!info') {
       let reply = `🏛️ *DIKLAT FUNGSIONAL PRANATA KOMPUTER*\n`
-      reply += `*ANGKATAN III (AGRASENA) KEJAKSAAN RI TAHUN 2026*\n`
-      reply += `━━━━━━━━━━━━━━━━━━━━━\n\n`
-      reply += `• *Durasi Pelatihan*: 35 Hari Kerja (120 JP)\n`
-      reply += `• *Penyelenggara*: Badan Diklat Kejaksaan RI & Pusdiklat BPS RI\n`
-      reply += `• *Tujuan*: Penguatan Kompetensi Jabatan Fungsional Prakom dalam Transformasi Digital SPBE Kejaksaan RI.\n\n`
-      reply += `Portal Resmi: https://agrasena-batch-3-class.vercel.app`
+      reply += `*ANGKATAN III (AGRASENA) KEJAKSAAN RI 2026*\n`
+      reply += `────────────────────────\n`
+      reply += `• *Pelatihan:* 35 Hari Kerja (120 JP)\n`
+      reply += `• *Penyelenggara:* Badan Diklat Kejaksaan RI & Pusdiklat BPS RI\n`
+      reply += `• *Tujuan:* Peningkatan Kompetensi SDM SPBE Kejaksaan RI\n\n`
+      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }

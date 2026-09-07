@@ -152,44 +152,151 @@ async function saveNotificationHistory(supabase, update) {
 }
 
 // =========================================================================
-// 1. JADWAL HARI INI (SIMPEL, RAPI, FONT JELAS)
+// 1. DATE QUERY PARSER (UNTUK CEK JADWAL PER TANGGAL / HARI KE-N)
 // =========================================================================
 
-async function generateDailyScheduleMessage(supabase, date = new Date()) {
+function parseDateQuery(query) {
+  if (!query || typeof query !== 'string') {
+    return { success: true, date: new Date(), queryType: 'today' }
+  }
+
+  const str = query.trim().toLowerCase()
+  if (!str || str === 'hari ini' || str === 'today') {
+    return { success: true, date: new Date(), queryType: 'today' }
+  }
+
+  if (str === 'besok' || str === 'tomorrow') {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return { success: true, date: d, queryType: 'tomorrow' }
+  }
+
+  if (str === 'kemarin' || str === 'yesterday') {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return { success: true, date: d, queryType: 'yesterday' }
+  }
+
+  // 1. Pola nomor hari diklat: "12", "hari 12", "h12", "ke-12"
+  const dayMatch = str.match(/^(?:hari\s+(?:ke-?)?|h|ke-?)?(\d{1,2})$/i)
+  if (dayMatch) {
+    const dayNum = parseInt(dayMatch[1], 10)
+    if (dayNum >= 1 && dayNum <= 35) {
+      const cur = CURRICULUM_DAYS.find((c) => c.day === dayNum)
+      if (cur) {
+        const [y, m, d] = cur.date.split('-').map(Number)
+        const targetDate = new Date(y, m - 1, d, 8, 0, 0)
+        return { success: true, date: targetDate, dayNum, queryType: 'dayNumber' }
+      }
+    }
+  }
+
+  // 2. Pola nama bulan: "8 Sep", "8 September", "08 September 2026", "8-Sep-2026"
+  const monthMap = {
+    jan: 0, januari: 0,
+    feb: 1, februari: 1,
+    mar: 2, maret: 2,
+    apr: 3, april: 3,
+    mei: 4,
+    jun: 5, juni: 5,
+    jul: 6, juli: 6,
+    ags: 7, agust: 7, agustus: 7,
+    sep: 8, sept: 8, september: 8,
+    okt: 9, oktober: 9,
+    nov: 10, november: 10,
+    des: 11, desember: 11,
+  }
+
+  const textDateMatch = str.match(/^(\d{1,2})\s*[-/ ]\s*([a-zA-Z]+)(?:\s*[-/ ]\s*(\d{2,4}))?$/)
+  if (textDateMatch) {
+    const day = parseInt(textDateMatch[1], 10)
+    const mStr = textDateMatch[2].toLowerCase()
+    let foundMonth = null
+    for (const [key, val] of Object.entries(monthMap)) {
+      if (mStr.startsWith(key)) {
+        foundMonth = val
+        break
+      }
+    }
+    if (foundMonth !== null && day >= 1 && day <= 31) {
+      let year = textDateMatch[3] ? parseInt(textDateMatch[3], 10) : 2026
+      if (year < 100) year += 2000
+      const targetDate = new Date(year, foundMonth, day, 8, 0, 0)
+      return { success: true, date: targetDate, queryType: 'date' }
+    }
+  }
+
+  // 3. Pola numerik: "DD-MM-YYYY", "DD/MM/YYYY", "DD/MM", "YYYY-MM-DD", "DD.MM.YYYY"
+  const isoMatch = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/)
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10)
+    const month = parseInt(isoMatch[2], 10) - 1
+    const day = parseInt(isoMatch[3], 10)
+    const targetDate = new Date(year, month, day, 8, 0, 0)
+    return { success: true, date: targetDate, queryType: 'date' }
+  }
+
+  const ddmmyyyyMatch = str.match(/^(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{2,4}))?$/)
+  if (ddmmyyyyMatch) {
+    const day = parseInt(ddmmyyyyMatch[1], 10)
+    const month = parseInt(ddmmyyyyMatch[2], 10) - 1
+    let year = ddmmyyyyMatch[3] ? parseInt(ddmmyyyyMatch[3], 10) : 2026
+    if (year < 100) year += 2000
+    const targetDate = new Date(year, month, day, 8, 0, 0)
+    return { success: true, date: targetDate, queryType: 'date' }
+  }
+
+  return { success: false }
+}
+
+// =========================================================================
+// 2. GENERATOR JADWAL PEMBELAJARAN (RAPI, MENARIK & TIDAK PANJANG)
+// =========================================================================
+
+async function generateScheduleMessage(supabase, date = new Date(), options = {}) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
+  const { isMorningCron = false } = options
 
-  const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % MORNING_QUOTES.length : 0
-  const quote = MORNING_QUOTES[quoteIndex]
-
-  let msg = `🏛️ *JADWAL PEMBELAJARAN HARI INI*\n`
+  let msg = `🏛️ *JADWAL PEMBELAJARAN*\n`
   msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
   msg += `📅 ${fullDateFormatted}`
   if (dayInfo.day) {
-    msg += ` | Hari ke-${dayInfo.day} (${dayInfo.stage})`
+    msg += ` | Hari ke-${dayInfo.day}`
+    if (dayInfo.stage) msg += ` (${dayInfo.stage})`
   }
   msg += `\n────────────────────────\n\n`
 
-  msg += `✨ _"${quote}"_\n\n`
+  if (isMorningCron) {
+    const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % MORNING_QUOTES.length : 0
+    msg += `✨ _"${MORNING_QUOTES[quoteIndex]}"_\n\n`
+  }
 
   if (dayInfo.isWeekend || !dayInfo.day) {
-    msg += `☕ *Agenda Hari Ini:*\n`
-    msg += `Hari ini adalah hari libur tatap muka. Selamat beristirahat dan memulihkan stamina bersama keluarga.\n\n`
-    msg += `👉 Ketik *!besok* untuk mengintip jadwal sesi berikutnya.\n`
-    msg += `🌐 Portal Kelas: ${ZOOM_CONFIG.portalUrl}`
+    msg += `☕ *Agenda:*\n`
+    msg += `Hari libur pembelajaran tatap muka. Selamat beristirahat!\n\n`
+    msg += `🎥 *Akses Zoom & Materi:*\n`
+    msg += `Buka Portal Kelas 👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+    msg += `────────────────────────\n`
+    msg += `💡 *Petunjuk Perintah:*\n`
+    msg += `• *!jadwal besok* — Jadwal esok hari\n`
+    msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep* atau *!jadwal 12*\n`
+    msg += `• *!tugas* — Cek tugas | *!help* — Menu panduan`
     return { text: msg, count: 0, dayInfo }
   }
 
-  // Ambil Jadwal Sesi Hari Ini dari Database
+  // Ambil Jadwal Sesi dari Database
   let sessions = []
   try {
     const { data: allSchedules } = await supabase.from('schedules').select('*').order('created_at', { ascending: true })
 
     if (allSchedules && allSchedules.length > 0) {
-      sessions = allSchedules.filter((s) => {
-        const title = s.subject_name || s.title || ''
-        return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
-      })
+      if (dayInfo.day) {
+        sessions = allSchedules.filter((s) => {
+          const title = s.subject_name || s.title || ''
+          return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
+        })
+      }
 
       if (sessions.length === 0) {
         const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
@@ -201,7 +308,7 @@ async function generateDailyScheduleMessage(supabase, date = new Date()) {
     console.error('[Scheduler Error] Gagal mengambil jadwal:', e.message)
   }
 
-  msg += `📚 *Agenda Mata Diklat:*\n`
+  msg += `📚 *Mata Diklat:*\n`
   if (sessions.length === 0) {
     msg += `• Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo.stage}*.\n`
   } else {
@@ -213,98 +320,60 @@ async function generateDailyScheduleMessage(supabase, date = new Date()) {
       const lecturer = s.lecturer || 'Widyaiswara Pusdiklat'
 
       msg += `• *${timeStr}* — ${cleanTitle}\n`
-      msg += `  Pemateri: ${lecturer}\n`
+      msg += `  👤 ${lecturer}\n`
     })
   }
 
-  msg += `\n🎥 *Ruang Zoom Angkatan 3:*\n`
-  msg += `• *ID*: \`${ZOOM_CONFIG.meetingIdDisplay}\` | *Pass*: \`${ZOOM_CONFIG.passcode}\`\n`
-  msg += `• *Link*: ${ZOOM_CONFIG.joinUrl}\n\n`
+  // AKSES ZOOM: HANYA LINK PORTAL KELAS (TANPA ID / PASSCODE / LINK ZOOM LANGSUNG)
+  msg += `\n🎥 *Akses Ruang Zoom:*\n`
+  msg += `Tautan Zoom resmi dapat dibuka via Portal Kelas:\n`
+  msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
 
   msg += `────────────────────────\n`
-  msg += `👉 Ketik *!besok* untuk melihat jadwal esok hari\n`
-  msg += `🌐 Portal: ${ZOOM_CONFIG.portalUrl}`
+  msg += `💡 *Petunjuk Perintah:*\n`
+  msg += `• *!jadwal besok* — Jadwal esok hari\n`
+  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep* atau *!jadwal 12*\n`
+  msg += `• *!tugas* — Cek tugas mandiri | *!help* — Menu panduan`
 
   return { text: msg, count: sessions.length, dayInfo }
 }
 
-// =========================================================================
-// 2. JADWAL BESOK (OPTIONAL AGAR TIDAK SPAM DI PAGI HARI)
-// =========================================================================
+async function generateDailyScheduleMessage(supabase, date = new Date(), options = {}) {
+  return generateScheduleMessage(supabase, date, options)
+}
 
 async function generateTomorrowScheduleMessage(supabase, date = new Date()) {
   const tomorrow = new Date(date)
   tomorrow.setDate(tomorrow.getDate() + 1)
+  return generateScheduleMessage(supabase, tomorrow, { isManualQuery: true })
+}
 
-  const dayInfo = getDiklatDayInfo(tomorrow)
-  const fullDateFormatted = formatIndonesianDate(tomorrow)
-
-  let msg = `🏛️ *JADWAL PEMBELAJARAN BESOK*\n`
-  msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
-  msg += `📅 ${fullDateFormatted}`
-  if (dayInfo.day) {
-    msg += ` | Hari ke-${dayInfo.day} (${dayInfo.stage})`
-  }
-  msg += `\n────────────────────────\n\n`
-
-  if (dayInfo.isWeekend || !dayInfo.day) {
-    msg += `☕ *Agenda Esok Hari:*\n`
-    msg += `Besok adalah hari libur pembelajaran tatap muka. Selamat beristirahat!\n\n`
-    msg += `🌐 Portal Kelas: ${ZOOM_CONFIG.portalUrl}`
-    return { text: msg, count: 0, dayInfo }
+async function generateScheduleForQuery(supabase, query) {
+  const parsed = parseDateQuery(query)
+  if (!parsed.success) {
+    let msg = `⚠️ *Format Tanggal Belum Sesuai*\n`
+    msg += `────────────────────────\n`
+    msg += `Gunakan format berikut:\n`
+    msg += `• *!jadwal 8 Sep* atau *!jadwal 10 September*\n`
+    msg += `• *!jadwal 12* (Cek jadwal Diklat Hari ke-12)\n`
+    msg += `• *!jadwal 08-09-2026* atau *!jadwal 8/9*\n`
+    msg += `• *!jadwal besok* (Jadwal esok hari)\n\n`
+    msg += `💡 _Ketik *!jadwal* tanpa tanggal untuk melihat jadwal hari ini._`
+    return { text: msg, count: 0, error: true }
   }
 
-  // Ambil Jadwal Sesi Besok dari Database
-  let sessions = []
-  try {
-    const { data: allSchedules } = await supabase.from('schedules').select('*').order('created_at', { ascending: true })
-
-    if (allSchedules && allSchedules.length > 0) {
-      sessions = allSchedules.filter((s) => {
-        const title = s.subject_name || s.title || ''
-        return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
-      })
-    }
-  } catch (e) {}
-
-  msg += `📚 *Agenda Mata Diklat Besok:*\n`
-  if (sessions.length === 0) {
-    msg += `• Sesi pembelajaran tatap muka online sesuai kurikulum *${dayInfo.stage}*.\n`
-  } else {
-    sessions.forEach((s) => {
-      let cleanTitle = (s.subject_name || s.title || 'Mata Diklat').replace(/\[Hari\s+\d+\]\s*/i, '').trim()
-      const timeStr = s.start_time && s.end_time
-        ? `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)} WIB`
-        : s.time_slot || '08:00 WIB'
-      const lecturer = s.lecturer || 'Widyaiswara Pusdiklat'
-
-      msg += `• *${timeStr}* — ${cleanTitle}\n`
-      msg += `  Pemateri: ${lecturer}\n`
-    })
-  }
-
-  msg += `\n🎥 *Ruang Zoom Angkatan 3:*\n`
-  msg += `• *ID*: \`${ZOOM_CONFIG.meetingIdDisplay}\` | *Pass*: \`${ZOOM_CONFIG.passcode}\`\n`
-  msg += `• *Link*: ${ZOOM_CONFIG.joinUrl}\n\n`
-
-  msg += `────────────────────────\n`
-  msg += `🌐 Portal: ${ZOOM_CONFIG.portalUrl}`
-
-  return { text: msg, count: sessions.length, dayInfo }
+  return generateScheduleMessage(supabase, parsed.date, { isManualQuery: true })
 }
 
 // =========================================================================
-// 3. PENUTUP SORE & PENGINGAT TUGAS MANDIRI AKTIF/BELUM SELESAI
+// 3. PENUTUP SORE & PENGINGAT TUGAS MANDIRI AKTIF
 // =========================================================================
 
 async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
 
-  const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % CLOSING_QUOTES.length : 0
-  const closingQuote = CLOSING_QUOTES[quoteIndex]
-
-  let msg = `🌟 *SESI PERKULIAHAN HARI INI SELESAI*\n`
+  let msg = `🌟 *PENUTUP KELAS & TUGAS MANDIRI*\n`
   msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
   msg += `📅 ${fullDateFormatted}`
   if (dayInfo.day) {
@@ -312,11 +381,9 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   }
   msg += `\n────────────────────────\n\n`
 
-  msg += `Alhamdulillah, perkuliahan hari ini telah selesai dengan baik. Terima kasih atas atensi dan partisipasi aktif rekan-rekan peserta sekalian.\n\n`
+  msg += `Alhamdulillah, perkuliahan hari ini telah selesai dengan baik. Selamat beristirahat sejenak rekan-rekan sekalian! ✨\n\n`
 
-  msg += `✨ _"${closingQuote}"_\n\n`
-
-  // Ambil Tugas yang BELUM SELESAI & TERBARU (Maksimal 2-3 tugas terbaru)
+  // Ambil Tugas yang BELUM SELESAI & TERBARU
   let tasks = []
   try {
     const { data: dbTasks } = await supabase
@@ -333,14 +400,14 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
 
   if (tasks.length === 0) {
     msg += `📝 *Status Penugasan Mandiri:*\n`
-    msg += `Saat ini tidak ada tugas mandiri baru yang belum selesai. Selamat menikmati waktu istirahat sore bersama keluarga! ✨\n\n`
+    msg += `Saat ini tidak ada tugas aktif yang belum selesai. Selamat beristirahat sore bersama keluarga!\n\n`
   } else {
-    msg += `📝 *Tugas Mandiri Terbaru / Belum Selesai:*\n\n`
+    msg += `📝 *Tugas Mandiri Aktif:*\n\n`
 
     tasks.forEach((t, i) => {
       const taskTitle = t.title || t.name || 'Tugas Mandiri'
       const deadline = t.due_date ? formatIndonesianDate(t.due_date) : 'Segera'
-      const desc = t.description ? t.description.slice(0, 110).replace(/\r?\n/g, ' ') : ''
+      const desc = t.description ? t.description.slice(0, 90).replace(/\r?\n/g, ' ') : ''
 
       msg += `*${i + 1}. ${taskTitle}*\n`
       msg += `   ⏳ Tenggat: *${deadline}*\n`
@@ -351,13 +418,15 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
     })
 
     msg += `📤 *Pengumpulan Tugas:*\n`
-    msg += `Kirim berkas laporan (PDF) melalui *LMS Pengembangan Kejaksaan RI*:\n`
-    msg += `🔗 ${ZOOM_CONFIG.lmsUrl}\n\n`
+    msg += `Unggah laporan (PDF) melalui LMS Kejaksaan:\n`
+    msg += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
   }
 
   msg += `────────────────────────\n`
-  msg += `👉 Ketik *!besok* untuk melihat jadwal esok hari\n`
-  msg += `_Semangat mengerjakan, jaga kesehatan, dan sampai jumpa besok! ✨_`
+  msg += `💡 *Petunjuk Perintah:*\n`
+  msg += `• *!jadwal besok* — Jadwal esok hari\n`
+  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep*\n`
+  msg += `• *!help* — Menu panduan lengkap`
 
   return { text: msg, count: tasks.length, dayInfo }
 }
@@ -471,13 +540,137 @@ function initScheduler(getSock, supabase, getTargetJid) {
   )
 }
 
+// =========================================================================
+// 6. PROGRES DIKLAT 35 HARI & PENCARIAN MODUL
+// =========================================================================
+
+function generateProgressMessage() {
+  const dayInfo = getDiklatDayInfo(new Date())
+  const fullDateFormatted = formatIndonesianDate(new Date())
+  const totalDays = 35
+  const dayNum = dayInfo.day || 11
+  const pct = ((dayNum / totalDays) * 100).toFixed(1)
+  const barLen = 12
+  const filled = Math.min(barLen, Math.max(1, Math.round((dayNum / totalDays) * barLen)))
+  const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled)
+  const sisa = Math.max(0, totalDays - dayNum)
+
+  let nextStageInfo = 'Tahap 3 • Lab Prakom (Mulai 14 Sep 2026)'
+  if (dayNum > 15 && dayNum <= 30) {
+    nextStageInfo = 'Tahap 4 • Seminar Proyek (Mulai 05 Okt 2026)'
+  } else if (dayNum > 30) {
+    nextStageInfo = 'Penyusunan Laporan Akhir & Penutupan Diklat'
+  }
+
+  let msg = `📊 *PROGRES DIKLAT AGRASENA BATCH 3*\n`
+  msg += `*Kejaksaan Republik Indonesia*\n`
+  msg += `📅 ${fullDateFormatted}\n`
+  msg += `────────────────────────\n\n`
+  msg += `• *Hari Pelatihan:* Ke-${dayNum} dari ${totalDays} Hari Kerja\n`
+  msg += `• *Progres Angkatan:* [${bar}] *${pct}%*\n`
+  msg += `• *Tahap Saat Ini:* ${dayInfo.stage || 'Tahap 2 • TMO'}\n`
+  msg += `• *Tahap Selanjutnya:* ${nextStageInfo}\n`
+  msg += `• *Sisa Pelatihan:* ${sisa} hari kerja lagi\n\n`
+  msg += `────────────────────────\n`
+  msg += `✨ _Tetap semangat dan jaga kekompakan rekan-rekan Prakom Adhyaksa!_\n`
+  msg += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}`
+
+  return { text: msg }
+}
+
+async function searchMaterialsMessage(supabase, query) {
+  if (!supabase) {
+    return { text: '⚠️ Koneksi database website belum siap.' }
+  }
+
+  const cleanQuery = (query || '').trim()
+
+  if (!cleanQuery) {
+    // Tampilkan 3 modul terbaru
+    let materials = []
+    try {
+      const { data } = await supabase
+        .from('materials')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3)
+      materials = data || []
+    } catch {}
+
+    let msg = `📚 *PUSTAKA MODUL DIKLAT (120 JP)*\n`
+    msg += `*Diklat Prakom Batch 3 • Agrasena*\n`
+    msg += `────────────────────────\n\n`
+    msg += `Beberapa materi pembelajaran tersedia:\n\n`
+
+    if (materials.length > 0) {
+      materials.forEach((m, idx) => {
+        const sizeStr = m.file_size ? ` | ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
+        msg += `*${idx + 1}. ${m.title}*\n`
+        msg += `   📁 ${m.subject_name || 'Modul Pembelajaran'}${sizeStr}\n`
+      })
+      msg += `\n`
+    }
+
+    msg += `────────────────────────\n`
+    msg += `💡 *Tips:* Ketik *!modul <kata kunci>* untuk mencari spesifik.\n`
+    msg += `   _Contoh:_ *!modul lms* atau *!modul jarkom*\n`
+    msg += `🌐 *Pustaka Lengkap:* ${ZOOM_CONFIG.portalUrl}/materials`
+    return { text: msg }
+  }
+
+  // Cari di database Supabase
+  let results = []
+  try {
+    const { data } = await supabase
+      .from('materials')
+      .select('*')
+      .or(`title.ilike.%${cleanQuery}%,subject_name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`)
+      .limit(4)
+
+    results = data || []
+  } catch (err) {
+    console.error('[Search Materials Error]', err.message)
+  }
+
+  if (results.length === 0) {
+    let msg = `📚 *MODUL TIDAK DITEMUKAN*\n`
+    msg += `────────────────────────\n`
+    msg += `Tidak ditemukan modul dengan kata kunci: *"${cleanQuery}"*\n\n`
+    msg += `💡 _Coba gunakan kata kunci lain (misal: *!modul lms*, *!modul data*, atau *!modul prakom*)._\n\n`
+    msg += `🌐 *Buka Pustaka Lengkap di Portal:*\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}/materials`
+    return { text: msg }
+  }
+
+  let msg = `📚 *HASIL PENCARIAN MODUL*\n`
+  msg += `Kata kunci: *"${cleanQuery}"*\n`
+  msg += `────────────────────────\n\n`
+
+  results.forEach((m, idx) => {
+    const sizeStr = m.file_size ? ` | ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
+    msg += `*${idx + 1}. ${m.title}*\n`
+    msg += `   📁 ${m.subject_name || 'Modul'}${sizeStr}\n`
+  })
+
+  msg += `\n────────────────────────\n`
+  msg += `📖 *Unduh / Baca Modul Lengkap di Portal:*\n`
+  msg += `👉 ${ZOOM_CONFIG.portalUrl}/materials`
+
+  return { text: msg }
+}
+
 module.exports = {
   initScheduler,
   sendScheduleNotification,
   sendTaskNotification,
   generateDailyScheduleMessage,
   generateTomorrowScheduleMessage,
+  generateScheduleForQuery,
   generateClosingAndTaskMessage,
+  generateProgressMessage,
+  searchMaterialsMessage,
+  parseDateQuery,
   formatIndonesianDate,
+  CURRICULUM_DAYS,
   ZOOM_CONFIG,
 }
