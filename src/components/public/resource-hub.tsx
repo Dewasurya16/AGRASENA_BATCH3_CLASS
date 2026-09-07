@@ -22,11 +22,14 @@ import {
   Trash2,
   Maximize2,
   Edit3,
-  BookMarked
+  BookMarked,
+  RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Modal } from "@/components/ui/modal"
+import { DEFAULT_MATERIALS } from "@/data/materials-data"
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
 
 export interface MaterialItem {
   id: string
@@ -36,7 +39,9 @@ export interface MaterialItem {
   file_url: string
   file_name: string
   file_size?: number | null
+  file_type?: string | null
   description?: string | null
+  uploaded_by?: string | null
   created_at: string
 }
 
@@ -95,7 +100,7 @@ function renderInlineFormatted(text: string) {
           // HTML <i> or <em>
           if (
             (lowerPart.startsWith("<i>") && lowerPart.endsWith("</i>")) ||
-            (lowerPart.startsWith("<em>") && lowerPart.endsWith("</em>"))
+            (lowerPart.startsWith("em") && lowerPart.endsWith("</em>"))
           ) {
             const inner = part.replace(/^<[^>]+>|<\/[^>]+>$/g, "")
             return (
@@ -294,7 +299,28 @@ function RichNoteRenderer({ content }: { content: string }) {
 }
 
 export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) {
-  const items = materials
+  // Priority: materials prop -> localStorage cache -> DEFAULT_MATERIALS
+  const [items, setItems] = React.useState<MaterialItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("prakom_materials_cache")
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (!materials || materials.length === 0 || parsed.length >= materials.length) {
+              return parsed
+            }
+          }
+        }
+      } catch {}
+    }
+    return materials && materials.length > 0 ? materials : DEFAULT_MATERIALS
+  })
+  const [isSyncing, setIsSyncing] = React.useState(false)
+  const [isRealtimeConnected, setIsRealtimeConnected] = React.useState(false)
+  const [newlyAddedCount, setNewlyAddedCount] = React.useState<number | null>(null)
+  const [lastSyncTime, setLastSyncTime] = React.useState<Date | null>(null)
+
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedSubject, setSelectedSubject] = React.useState("Semua")
   const [selectedWeek, setSelectedWeek] = React.useState("Semua")
@@ -306,6 +332,125 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [copiedNote, setCopiedNote] = React.useState(false)
   const [isPdfLoading, setIsPdfLoading] = React.useState(true)
   const [pdfLoadProgress, setPdfLoadProgress] = React.useState(15)
+
+  const fetchLatestMaterials = React.useCallback(async (silent = false) => {
+    if (!silent) setIsSyncing(true)
+    try {
+      const res = await fetch(`/api/materials?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Pragma": "no-cache",
+          "Cache-Control": "no-cache",
+        },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          setItems((prev) => {
+            // Check if there are brand new modules
+            if (prev.length > 0 && json.data.length > prev.length) {
+              const diff = json.data.length - prev.length
+              setNewlyAddedCount(diff)
+              setTimeout(() => setNewlyAddedCount(null), 6000)
+            }
+            return json.data
+          })
+          setLastSyncTime(new Date())
+
+          // Persist to localStorage
+          try {
+            localStorage.setItem("prakom_materials_cache", JSON.stringify(json.data))
+            localStorage.setItem("prakom_materials_cache_time", Date.now().toString())
+            window.dispatchEvent(new Event("prakom-materials-updated"))
+          } catch {}
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync materials:", err)
+    } finally {
+      if (!silent) setIsSyncing(false)
+    }
+  }, [])
+
+  // 1. Always immediately fetch latest fresh materials on component mount
+  React.useEffect(() => {
+    fetchLatestMaterials(true)
+  }, [fetchLatestMaterials])
+
+  // 2. Sync state if materials prop changes
+  React.useEffect(() => {
+    if (materials && materials.length > 0) {
+      setItems((prev) => {
+        if (materials.length >= prev.length) {
+          return materials
+        }
+        return prev
+      })
+    }
+  }, [materials])
+
+  // 3. Supabase Realtime Subscription: auto-update as soon as a module is added/updated in DB
+  React.useEffect(() => {
+    let channel: any = null
+    try {
+      const supabase = createBrowserSupabaseClient()
+      channel = supabase
+        .channel("realtime-materials-channel")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "materials" },
+          (payload) => {
+            console.log("[ResourceHub] Realtime material change detected:", payload.eventType)
+            fetchLatestMaterials(true)
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            setIsRealtimeConnected(true)
+          } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
+            setIsRealtimeConnected(false)
+          }
+        })
+    } catch (subErr) {
+      console.warn("[ResourceHub] Realtime subscription error:", subErr)
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          const supabase = createBrowserSupabaseClient()
+          supabase.removeChannel(channel)
+        } catch {}
+      }
+    }
+  }, [fetchLatestMaterials])
+
+  // 4. Revalidate whenever window is focused or tab becomes visible, plus 30s background poll
+  React.useEffect(() => {
+    const handleFocus = () => {
+      fetchLatestMaterials(true)
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchLatestMaterials(true)
+      }
+    }
+
+    window.addEventListener("focus", handleFocus)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchLatestMaterials(true)
+      }
+    }, 30000)
+
+    return () => {
+      window.removeEventListener("focus", handleFocus)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+      clearInterval(interval)
+    }
+  }, [fetchLatestMaterials])
 
   // Manage PDF Loading Progress Simulation
   React.useEffect(() => {
@@ -501,6 +646,13 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Akses Instan 24 Jam
               </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Auto-Update Realtime</span>
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
@@ -509,14 +661,37 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             </h1>
 
             <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
-              Seluruh modul pelatihan fungsional 120 JP telah diarsipkan lengkap. Baca langsung di browser dengan PDF Reader responsif, buat rangkuman otomatis dengan asisten AI, dan simpan catatan belajar pribadi Anda.
+              Seluruh modul pelatihan fungsional 120 JP telah diarsipkan lengkap. Setiap ada modul atau materi baru yang diunggah instruktur, sistem langsung menyinkronkan data secara otomatis ke layar Anda.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-            <span className="rounded-full bg-[#f6f5f4] dark:bg-[#141b27] px-3.5 py-1.5 text-xs font-semibold text-[#31302e] dark:text-[#cbd5e1] border border-[#e6e6e6] dark:border-white/10 shadow-2xs">
-              Total {items.length} Modul Resmi
-            </span>
+          <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-center">
+            {newlyAddedCount !== null && newlyAddedCount > 0 && (
+              <motion.span
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-3 py-1 text-xs font-semibold border border-emerald-500/30 flex items-center gap-1.5 animate-pulse"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                +{newlyAddedCount} Modul Baru Ditemukan!
+              </motion.span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fetchLatestMaterials(false)}
+              disabled={isSyncing}
+              title="Sinkronisasi manual dengan database Supabase"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#141b27] px-3 py-1.5 text-xs font-semibold text-[#31302e] dark:text-[#cbd5e1] border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#1f283a] transition cursor-pointer disabled:opacity-60"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin text-[#007aff]" : ""}`} strokeWidth={2} />
+              <span>{isSyncing ? "Menyinkronkan..." : "Sync Modul"}</span>
+            </button>
+
+            <div className="flex items-center gap-1.5 rounded-full bg-[#007aff]/10 text-[#007aff] dark:text-[#60a5fa] px-3 py-1.5 text-xs font-semibold border border-[#007aff]/20 shadow-2xs">
+              <span className={`h-2 w-2 rounded-full ${isRealtimeConnected ? "bg-emerald-500 animate-pulse" : "bg-[#007aff]"}`} title={isRealtimeConnected ? "Realtime Sinkron Aktif" : "Auto-Sync Siap"} />
+              <span>{items.length} Modul Aktif</span>
+            </div>
           </div>
         </div>
       </motion.div>

@@ -36,8 +36,9 @@ const CHECKLIST_ITEMS_PREVIEW = [
   { id: "pdh_lengkap", label: "Seragam PDH & Kelengkapan Atribut", stage: "Tahap 4 • Seminar" },
 ]
 
-export function LearningProgressWidget({ totalMaterialsCount = 14 }: LearningProgressWidgetProps) {
+export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningProgressWidgetProps) {
   const [mounted, setMounted] = React.useState(false)
+  const [dynamicTotalCount, setDynamicTotalCount] = React.useState(totalMaterialsCount)
   const [readMaterialsCount, setReadMaterialsCount] = React.useState(0)
   const [completedQuizCount, setCompletedQuizCount] = React.useState(0)
   const [examChecklistCount, setExamChecklistCount] = React.useState(0)
@@ -45,8 +46,36 @@ export function LearningProgressWidget({ totalMaterialsCount = 14 }: LearningPro
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false)
   const [rawChecklist, setRawChecklist] = React.useState<Record<string, boolean>>({})
 
+  React.useEffect(() => {
+    try {
+      const cached = localStorage.getItem("prakom_materials_cache")
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDynamicTotalCount(Math.max(totalMaterialsCount, parsed.length))
+        }
+      }
+    } catch {}
+  }, [totalMaterialsCount])
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      try {
+        const cached = localStorage.getItem("prakom_materials_cache")
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDynamicTotalCount(Math.max(totalMaterialsCount, parsed.length))
+          }
+        }
+      } catch {}
+    }
+    window.addEventListener("prakom-materials-updated", handleUpdate)
+    return () => window.removeEventListener("prakom-materials-updated", handleUpdate)
+  }, [totalMaterialsCount])
+
   // Total targets
-  const TOTAL_MATERIALS = Math.max(1, totalMaterialsCount)
+  const TOTAL_MATERIALS = Math.max(1, dynamicTotalCount)
   const TOTAL_QUIZZES = 5
   const TOTAL_EXAM_CHECKLIST = 10
 

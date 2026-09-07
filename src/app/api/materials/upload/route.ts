@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { isRequestAdminAuthenticated, sanitizeInput, getClientIp, checkRateLimit } from "@/lib/security"
 
@@ -95,6 +96,15 @@ export async function POST(req: NextRequest) {
           { error: "Gagal menyimpan metadata ke database: " + dbError.message },
           { status: 500 }
         )
+      }
+
+      try {
+        revalidatePath("/materials")
+        revalidatePath("/")
+        revalidatePath("/dashboard")
+        revalidatePath("/admin/dashboard")
+      } catch (revErr) {
+        console.warn("revalidatePath error:", revErr)
       }
 
       return NextResponse.json({
@@ -202,6 +212,15 @@ export async function POST(req: NextRequest) {
         { error: "Gagal menyimpan metadata modul: " + dbError.message },
         { status: 500 }
       )
+    }
+
+    try {
+      revalidatePath("/materials")
+      revalidatePath("/")
+      revalidatePath("/dashboard")
+      revalidatePath("/admin/dashboard")
+    } catch (revErr) {
+      console.warn("revalidatePath error:", revErr)
     }
 
     return NextResponse.json({

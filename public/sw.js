@@ -1,4 +1,4 @@
-const CACHE_NAME = 'prakom625-v1';
+const CACHE_NAME = 'prakom625-v2';
 
 const STATIC_ASSETS = [
   '/',
@@ -49,9 +49,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip API routes, Supabase calls, and external streaming endpoints
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase.co')) {
-    return;
+  // CRITICAL: NEVER cache API routes, Supabase calls, or Next.js RSC requests
+  // Next.js client-side navigation uses RSC fetches (?_rsc=... or rsc header).
+  // Caching these caused materials and other modules to appear outdated.
+  const isRscRequest =
+    url.searchParams.has('_rsc') ||
+    request.headers.get('rsc') === '1' ||
+    Boolean(request.headers.get('next-router-state-tree'));
+
+  const isApiOrSupabase =
+    url.pathname.startsWith('/api/') ||
+    url.hostname.includes('supabase.co');
+
+  const isDynamicRoute =
+    url.pathname.startsWith('/materials') ||
+    url.pathname.startsWith('/schedules') ||
+    url.pathname.startsWith('/tasks') ||
+    url.pathname.startsWith('/dashboard') ||
+    url.pathname.startsWith('/admin');
+
+  if (isApiOrSupabase || isRscRequest || isDynamicRoute) {
+    return; // Pass through directly to network
   }
 
   // Navigation requests (HTML pages) -> Network-First, fallback to cache

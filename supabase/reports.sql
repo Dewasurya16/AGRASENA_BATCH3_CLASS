@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_reports_category ON public.reports(category);
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Izinkan peserta umum mengirim laporan tanpa login (INSERT)
+DROP POLICY IF EXISTS "Allow public insert to reports" ON public.reports;
 CREATE POLICY "Allow public insert to reports"
 ON public.reports
 FOR INSERT
@@ -31,6 +32,7 @@ TO public, anon, authenticated
 WITH CHECK (true);
 
 -- Policy 2: Izinkan pembacaan laporan untuk admin dan publik (SELECT)
+DROP POLICY IF EXISTS "Allow select from reports" ON public.reports;
 CREATE POLICY "Allow select from reports"
 ON public.reports
 FOR SELECT
@@ -38,6 +40,7 @@ TO public, anon, authenticated
 USING (true);
 
 -- Policy 3: Izinkan pembaruan status laporan (UPDATE)
+DROP POLICY IF EXISTS "Allow update to reports" ON public.reports;
 CREATE POLICY "Allow update to reports"
 ON public.reports
 FOR UPDATE
@@ -45,8 +48,20 @@ TO public, anon, authenticated
 USING (true);
 
 -- Policy 4: Izinkan penghapusan laporan (DELETE)
+DROP POLICY IF EXISTS "Allow delete from reports" ON public.reports;
 CREATE POLICY "Allow delete from reports"
 ON public.reports
 FOR DELETE
 TO public, anon, authenticated
 USING (true);
+
+-- Aktifkan Supabase Realtime untuk tabel reports (agar admin menerima laporan live)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'reports'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.reports;
+  END IF;
+END $$;

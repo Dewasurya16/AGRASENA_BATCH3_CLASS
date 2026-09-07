@@ -101,7 +101,7 @@ export default async function HomePage() {
         <HomeTaskReminder targetTask={closestTask} />
 
         {/* 6.5 Status Belajar & Kesiapan Diklat Peserta (Local Storage Private Progress) */}
-        <LearningProgressWidget totalMaterialsCount={materials.length || 14} />
+        <LearningProgressWidget totalMaterialsCount={materials.length || 24} />
 
         {/* 7. Roadmap 4 Tahap Story Block */}
         <section className="rounded-[16px] bg-white dark:bg-[#151c28] p-6 sm:p-8 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-6 transition-colors duration-200">

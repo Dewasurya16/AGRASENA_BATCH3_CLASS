@@ -122,6 +122,27 @@ interface AdminDashboardClientProps {
 
 const ITEMS_PER_PAGE = 5
 
+function formatWibDate(dateStr?: string | null): string {
+  if (!dateStr) return "-"
+  try {
+    const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return String(dateStr)
+    return (
+      new Intl.DateTimeFormat("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZone: "Asia/Jakarta",
+      }).format(date) + " WIB"
+    )
+  } catch {
+    return String(dateStr || "-")
+  }
+}
+
 function PaginationControls({
   currentPage,
   totalPages,
@@ -252,6 +273,39 @@ export function AdminDashboardClient({
   const [isUpdatingReportMap, setIsUpdatingReportMap] = React.useState<Record<string, boolean>>({})
   const [reportPage, setReportPage] = React.useState(1)
   const [selectedReportForModal, setSelectedReportForModal] = React.useState<any | null>(null)
+
+  // Realtime subscription for incoming reports from participants
+  React.useEffect(() => {
+    let channel: any = null
+    try {
+      const supabase = createBrowserSupabaseClient()
+      channel = supabase
+        .channel("realtime-admin-reports-feed")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "reports" },
+          async () => {
+            const { data } = await supabase
+              .from("reports")
+              .select("*")
+              .order("created_at", { ascending: false })
+            if (data) {
+              setAdminReports(data)
+            }
+          }
+        )
+        .subscribe()
+    } catch {}
+
+    return () => {
+      if (channel) {
+        try {
+          const supabase = createBrowserSupabaseClient()
+          supabase.removeChannel(channel)
+        } catch {}
+      }
+    }
+  }, [])
 
   // AI Diagnostic & Live Test State
   const [isTestingAi, setIsTestingAi] = React.useState(false)
@@ -1188,18 +1242,27 @@ export function AdminDashboardClient({
 
     // 5. Reports logs
     adminReports.forEach((r) => {
-      if (r.status === 'resolved' || r.status === 'in_progress') {
-        logs.push({
-          id: `rep-${r.id}`,
-          category: "Laporan",
-          action: r.status === 'resolved' ? "Penyelesaian Aspirasi" : "Disposisi Laporan",
-          title: `Tiket #${(r.id || '').slice(0, 8)} - ${r.category || 'Kendala'}`,
-          actor: "Admin Helpdesk",
-          timestamp: r.updated_at || r.created_at || new Date().toISOString(),
-          details: `Pelapor: ${r.name || 'Peserta'} (${r.satker || '-'}) • ${r.admin_notes ? `Catatan: ${r.admin_notes}` : 'Status diubah'}`,
-          badgeColor: r.status === 'resolved' ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200" : "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200"
-        })
+      let action = "Laporan Aspirasi Masuk"
+      let badgeColor = "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200"
+
+      if (r.status === "resolved") {
+        action = "Penyelesaian Aspirasi"
+        badgeColor = "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200"
+      } else if (r.status === "in_progress") {
+        action = "Disposisi Laporan"
+        badgeColor = "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300 border-orange-200"
       }
+
+      logs.push({
+        id: `rep-${r.id}`,
+        category: "Laporan",
+        action,
+        title: `Tiket #${(r.id || "").slice(0, 8)} - ${r.category || "Kendala"}`,
+        actor: r.status === "pending" ? (r.name || "Peserta") : "Admin Helpdesk",
+        timestamp: r.created_at || new Date().toISOString(),
+        details: `Pelapor: ${r.name || "Peserta"} (${r.satker || "-"}) • Status: ${r.status || "pending"}${r.admin_notes ? ` • Catatan: ${r.admin_notes}` : ""}`,
+        badgeColor,
+      })
     })
 
     // Sort by timestamp descending
@@ -1209,12 +1272,15 @@ export function AdminDashboardClient({
   const filteredAuditLogs = React.useMemo(() => {
     return adminAuditLogs.filter((log) => {
       const q = auditSearch.toLowerCase().trim()
+      const formattedDate = formatWibDate(log.timestamp).toLowerCase()
       const matchesSearch =
         q === "" ||
         log.title.toLowerCase().includes(q) ||
         log.action.toLowerCase().includes(q) ||
         log.actor.toLowerCase().includes(q) ||
-        (log.details || "").toLowerCase().includes(q)
+        log.category.toLowerCase().includes(q) ||
+        (log.details || "").toLowerCase().includes(q) ||
+        formattedDate.includes(q)
 
       const matchesCat = auditCategoryFilter === "all" || log.category.toLowerCase() === auditCategoryFilter.toLowerCase()
       return matchesSearch && matchesCat
@@ -1838,25 +1904,6 @@ export function AdminDashboardClient({
     } finally {
       setIsLoading(false)
       setActionLoadingMap((prev) => ({ ...prev, [`ann-delete-${id}`]: false }))
-    }
-  }
-
-  const formatWibDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr)
-      return (
-        new Intl.DateTimeFormat("id-ID", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          timeZone: "Asia/Jakarta",
-        }).format(date) + " WIB"
-      )
-    } catch {
-      return dateStr
     }
   }
 
