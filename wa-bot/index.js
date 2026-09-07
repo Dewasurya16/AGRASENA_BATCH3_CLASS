@@ -24,6 +24,7 @@ const {
   generateClosingAndTaskMessage,
   generateProgressMessage,
   searchMaterialsMessage,
+  generateAnnouncementMessage,
   formatIndonesianDate,
   ZOOM_CONFIG,
 } = require('./scheduler')
@@ -289,12 +290,16 @@ async function handleIncomingMessage(m) {
       reply += `└ Cek jadwal perkuliahan esok hari\n\n`
       reply += `📝 *!tugas*\n`
       reply += `└ Daftar tugas mandiri yang aktif\n\n`
+      reply += `📢 *!pengumuman*\n`
+      reply += `└ Siaran pengumuman resmi diklat terbaru\n\n`
+      reply += `👥 *!tagall <pesan>*\n`
+      reply += `└ Panggil / tag seluruh anggota di grup\n\n`
       reply += `📚 *!modul <topik>*\n`
       reply += `└ Cari modul & materi PDF (cth: *!modul jarkom*)\n\n`
       reply += `📊 *!progress*\n`
       reply += `└ Tracker progres diklat 35 hari\n\n`
       reply += `🤖 *!tanya <pertanyaan>*\n`
-      reply += `└ Tanya Asisten AI Prakom seputar materi / IT SPBE\n\n`
+      reply += `└ Tanya Asisten AI Prakom seputar materi / SPBE\n\n`
       reply += `🔗 *!link*\n`
       reply += `└ Akses Portal Kelas (Zoom), modul & LMS\n\n`
       reply += `ℹ️ *!status*\n`
@@ -366,6 +371,59 @@ async function handleIncomingMessage(m) {
     if (command === '!tanya' || command === '!ai' || command === '!ask') {
       const { text } = await askAiAssistant(args)
       await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 4e. Perintah !pengumuman / !berita (Pengumuman Resmi Terkini)
+    if (command === '!pengumuman' || command === '!berita') {
+      const { text } = await generateAnnouncementMessage(supabase)
+      await sock.sendMessage(from, { text }, { quoted: msg })
+      return
+    }
+
+    // 4f. Perintah !tagall / !everyone / !panggil / !hidetag (Panggil Semua Anggota Grup)
+    if (command === '!tagall' || command === '!everyone' || command === '!panggil' || command === '!hidetag') {
+      const isGroup = from.endsWith('@g.us')
+      if (!isGroup) {
+        await sock.sendMessage(
+          from,
+          { text: '⚠️ Perintah *!tagall* hanya dapat digunakan di dalam Grup WhatsApp kelas.' },
+          { quoted: msg }
+        )
+        return
+      }
+
+      try {
+        const groupMeta = await sock.groupMetadata(from)
+        const participants = (groupMeta.participants || []).map((p) => p.id)
+
+        if (participants.length === 0) {
+          await sock.sendMessage(from, { text: '⚠️ Gagal membaca daftar anggota grup.' }, { quoted: msg })
+          return
+        }
+
+        const customNote = args ? args : 'Perhatian seluruh rekan peserta Diklat Agrasena Batch 3!'
+        let tagText = `📢 *PANGGILAN SELURUH ANGGOTA KELAS*\n`
+        tagText += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+        tagText += `────────────────────────\n\n`
+        tagText += `📝 *Pesan:*\n`
+        tagText += `${customNote}\n\n`
+        tagText += `👥 *Total Peserta Disebut:* ${participants.length} Anggota\n`
+        tagText += `────────────────────────\n`
+        tagText += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
+
+        await sock.sendMessage(
+          from,
+          {
+            text: tagText,
+            mentions: participants,
+          },
+          { quoted: msg }
+        )
+      } catch (err) {
+        console.error('[TagAll Error]', err.message)
+        await sock.sendMessage(from, { text: '⚠️ Gagal memanggil anggota grup: ' + err.message }, { quoted: msg })
+      }
       return
     }
 

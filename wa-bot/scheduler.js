@@ -659,6 +659,65 @@ async function searchMaterialsMessage(supabase, query) {
   return { text: msg }
 }
 
+// =========================================================================
+// 7. PENGUMUMAN RESMI DIKLAT
+// =========================================================================
+
+async function generateAnnouncementMessage(supabase) {
+  if (!supabase) {
+    return { text: '⚠️ Koneksi database website belum siap.' }
+  }
+
+  let announcements = []
+  try {
+    const { data } = await supabase
+      .from('announcements')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(2)
+
+    announcements = data || []
+  } catch (err) {
+    console.error('[Announcement Fetch Error]', err.message)
+  }
+
+  if (announcements.length === 0) {
+    let msg = `📢 *PENGUMUMAN KELAS AGRASENA BATCH 3*\n`
+    msg += `*Kejaksaan Republik Indonesia*\n`
+    msg += `────────────────────────\n\n`
+    msg += `Saat ini belum ada pengumuman baru dari panitia atau widyaiswara.\n\n`
+    msg += `🌐 *Portal Pengumuman:* ${ZOOM_CONFIG.portalUrl}/announcements`
+    return { text: msg }
+  }
+
+  let msg = `📢 *PENGUMUMAN RESMI DIKLAT*\n`
+  msg += `*Diklat Prakom Batch 3 • Agrasena*\n`
+  msg += `────────────────────────\n\n`
+
+  announcements.forEach((a, idx) => {
+    const dateFormatted = formatIndonesianDate(a.created_at)
+    const authorStr = a.author ? `👤 ${a.author} | ` : ''
+    let cleanContent = (a.content || '').replace(/\r?\n/g, ' ').trim()
+    if (cleanContent.length > 160) {
+      cleanContent = cleanContent.slice(0, 160) + '...'
+    }
+
+    msg += `*${idx + 1}. ${a.title}*\n`
+    msg += `   ${authorStr}📅 ${dateFormatted}\n`
+    if (cleanContent) {
+      msg += `   _${cleanContent}_\n`
+    }
+    msg += `\n`
+  })
+
+  msg += `────────────────────────\n`
+  msg += `📖 *Baca Pengumuman Selengkapnya di Portal:*\n`
+  msg += `👉 ${ZOOM_CONFIG.portalUrl}/announcements`
+
+  return { text: msg }
+}
+
 module.exports = {
   initScheduler,
   sendScheduleNotification,
@@ -669,6 +728,7 @@ module.exports = {
   generateClosingAndTaskMessage,
   generateProgressMessage,
   searchMaterialsMessage,
+  generateAnnouncementMessage,
   parseDateQuery,
   formatIndonesianDate,
   CURRICULUM_DAYS,
