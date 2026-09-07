@@ -55,22 +55,22 @@ export function MinimalistLoader({
       )}
     >
       {/* ── Cute & Playful Center Mascot Animation ── */}
-      <div className="relative flex h-16 w-16 items-center justify-center">
+      <div className="relative flex h-18 w-18 items-center justify-center">
         {/* Soft Colorful Breathing Glow */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#007aff]/20 via-[#af52de]/15 to-[#34c759]/20 dark:from-[#60a5fa]/25 dark:via-[#c084fc]/20 dark:to-[#4ade80]/25 blur-lg animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#0D824B]/20 via-[#007aff]/15 to-[#f59e0b]/20 dark:from-[#34d399]/25 dark:via-[#60a5fa]/20 dark:to-[#fbbf24]/20 blur-lg animate-pulse" />
 
         {/* Playful Outer Orbit Ring with Gradient Dash */}
         <svg
           className="absolute inset-0 h-full w-full animate-spin"
-          viewBox="0 0 64 64"
+          viewBox="0 0 72 72"
           fill="none"
           style={{ animationDuration: '1.4s' }}
         >
           {/* Subtle dotted guide track */}
           <circle
-            cx="32"
-            cy="32"
-            r="28"
+            cx="36"
+            cy="36"
+            r="32"
             stroke="currentColor"
             strokeWidth="2.5"
             strokeDasharray="4 6"
@@ -78,19 +78,19 @@ export function MinimalistLoader({
           />
           {/* Smooth spinning accent arc */}
           <circle
-            cx="32"
-            cy="32"
-            r="28"
+            cx="36"
+            cy="36"
+            r="32"
             stroke="url(#cuteLoaderGradient)"
-            strokeWidth="3"
+            strokeWidth="3.2"
             strokeLinecap="round"
-            strokeDasharray="50 130"
+            strokeDasharray="56 140"
           />
           <defs>
             <linearGradient id="cuteLoaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#007aff" />
-              <stop offset="60%" stopColor="#af52de" />
-              <stop offset="100%" stopColor="#34c759" />
+              <stop offset="0%" stopColor="#0D824B" />
+              <stop offset="50%" stopColor="#007aff" />
+              <stop offset="100%" stopColor="#f59e0b" />
             </linearGradient>
           </defs>
         </svg>
@@ -126,27 +126,33 @@ export function MinimalistLoader({
             delay: 1.0,
             ease: 'easeInOut',
           }}
-          className="absolute -bottom-1 -left-1 z-20 text-[#af52de] dark:text-[#c084fc] text-xs font-bold pointer-events-none"
+          className="absolute -bottom-1 -left-1 z-20 text-[#0D824B] dark:text-[#34d399] text-xs font-bold pointer-events-none"
         >
           ✦
         </motion.div>
 
-        {/* Center Cute Mascot Badge with Cartoon Squash & Stretch Wiggle */}
+        {/* Center Prakom Logo Badge with Cartoon Squash & Stretch Wiggle */}
         <motion.div
           animate={{
-            y: [0, -7, 0, -2, 0],
-            rotate: [0, -8, 8, -4, 0],
-            scaleX: [1, 0.92, 1.08, 0.98, 1],
-            scaleY: [1, 1.1, 0.92, 1.02, 1],
+            y: [0, -6, 0, -2, 0],
+            rotate: [0, -6, 6, -3, 0],
+            scaleX: [1, 0.94, 1.06, 0.98, 1],
+            scaleY: [1, 1.08, 0.94, 1.02, 1],
           }}
           transition={{
             duration: 1.7,
             repeat: Infinity,
             ease: [0.34, 1.56, 0.64, 1],
           }}
-          className="relative z-10 flex h-10 w-10 items-center justify-center rounded-2xl bg-white dark:bg-[#151c28] border-2 border-sky-100 dark:border-white/15 shadow-md shadow-sky-500/15 text-[#007aff] dark:text-[#60a5fa]"
+          className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-[#151c28] border-2 border-emerald-100/80 dark:border-white/15 shadow-md shadow-emerald-600/10 p-1.5 overflow-hidden"
         >
-          {icon || <GraduationCap className="h-5 w-5" strokeWidth={2.2} />}
+          {icon || (
+            <img
+              src="/Logo.webp"
+              alt="Logo Prakom"
+              className="h-full w-full object-contain drop-shadow-xs select-none pointer-events-none"
+            />
+          )}
         </motion.div>
       </div>
 
