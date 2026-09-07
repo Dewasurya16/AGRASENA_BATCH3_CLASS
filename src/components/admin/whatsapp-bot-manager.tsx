@@ -244,21 +244,26 @@ export function WhatsAppBotManager() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Quick Templates
+  // Quick Templates dengan Bahasa Berwibawa & Sarat Motivasi
   const templates = [
     {
       title: "Sesi Zoom Dimulai",
-      text: `📢 *PEMBERITAHUAN SESI PEMBELAJARAN DIMULAI*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n\nSesi perkuliahan hari ini akan segera dimulai dalam 10 menit.\nRekan-rekan peserta diharapkan segera memasuki ruang Zoom dengan format nama satker:\n🔗 Link Zoom: https://zoom.us/j/...\n\n_Mohon mengaktifkan kamera dan mengisi daftar hadir._`,
+      text: `📢 *PEMBERITAHUAN SESI PERKULIAHAN AKAN DIMULAI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n\nSelamat pagi rekan-rekan peserta! Sesi perkuliahan hari ini akan segera dimulai dalam 10 menit.\n\n🎥 *Akses Ruang Zoom (Angkatan 3):*\n• Meeting ID: *980 1123 8540*\n• Passcode: *Biropeg-24*\n• Link Zoom: https://zoom.us/j/98011238540\n\n_Mohon hadir tepat waktu dengan format nama: [No. Absen] - [Nama] - [Satker], mengaktifkan kamera, dan mengisi presensi kehadiran._`,
+    },
+    {
+      title: "Penutup Kelas & Semangat Tugas",
+      text: `🌟 *APRESIASI SELESAI KELAS & SEMANGAT TUGAS MANDIRI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n\nAlhamdulillah, seluruh agenda perkuliahan hari ini telah selesai dengan baik. Terima kasih atas partisipasi aktif, atensi, dan kedisiplinan rekan-rekan peserta sekalian.\n\n💬 *Untaian Motivasi:*\n_"Ilmu yang diserap di ruang kelas akan berakar kokoh saat diwujudkan dalam analisis dan kerja nyata. Selamat beristirahat sejenak, jaga stamina, lalu selesaikan tugas mandiri dengan teliti, cermat, dan berintegritas tinggi."_\n\n📂 Portal Lembar Kerja & Tugas:\nhttps://agrasena-batch-3-class.vercel.app/tasks\n\n_Jaga kesehatan, luangkan waktu istirahat yang cukup, dan sampai jumpa di sesi perkuliahan besok pagi! ✨_`,
     },
     {
       title: "Presensi Kehadiran",
-      text: `📝 *LINK PRESENSI KEHADIRAN TELAH DIBUKA*\n*DIKLAT PRAKOM BATCH 3 KEJAKSAAN RI*\n\nPresensi kehadiran sesi mata diklat hari ini telah dibuka.\nBatas waktu pengisian hingga pukul 08:30 WIB:\n🌐 Link Presensi: https://agrasena-batch3.vercel.app\n\n_Terima kasih atas kedisiplinan rekan-rekan!_`,
+      text: `📝 *LINK PRESENSI KEHADIRAN TELAH DIBUKA*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n\nPresensi kehadiran sesi mata diklat hari ini telah dibuka di portal LMS.\nMohon rekan-rekan peserta segera mengisi daftar hadir sebelum batas waktu ditutup:\n🌐 Portal Kelas: https://agrasena-batch-3-class.vercel.app\n\n_Kedisiplinan adalah awal dari keberhasilan. Terima kasih atas perhatian rekan-rekan!_`,
     },
     {
-      title: "Pengingat Tugas Baru",
-      text: `⚠️ *PENUGASAN MANDIRI BARU TELAH TERBIT*\n*DIKLAT PRAKOM BATCH 3 KEJAKSAAN RI*\n\nBahan penugasan mandiri telah diunggah oleh Widyaiswara ke portal kelas.\nSilakan unduh lembar kerja dan perhatikan tenggat pengumpulan:\n📂 Portal Tugas: https://agrasena-batch3.vercel.app/tasks\n\n_Selamat mengerjakan dan tetap semangat! 💪_`,
+      title: "Pengingat Deadline Tugas",
+      text: `⚠️ *PENGINGAT BATAS WAKTU PENGUMPULAN TUGAS*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n\nBatas waktu pengunggahan tugas mandiri akan segera ditutup sore ini pukul 16:59 WIB.\nBagi rekan-rekan yang belum mengunggah, mohon segera menyelesaikan dan mengirimkan berkas laporan melalui:\n📂 Portal Tugas: https://agrasena-batch-3-class.vercel.app/tasks\n\n_Tetap semangat, kerjakan dengan teliti dan penuh dedikasi prima! 💪_`,
     },
   ]
+
 
   const isConnected = botStatus?.online && botStatus?.status?.connected
 
