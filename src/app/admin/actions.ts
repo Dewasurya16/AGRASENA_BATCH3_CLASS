@@ -54,8 +54,8 @@ export async function adminSignIn(formData: FormData) {
 
   const normalizedEmail = email.toLowerCase()
 
-  // Brute-force protection: Max 6 login attempts per 10 minutes per email/IP
-  const rateLimit = checkRateLimit(normalizedEmail, 'admin_login', 6, 10 * 60 * 1000)
+  // Brute-force protection: Max 30 login attempts per 5 minutes per email/IP
+  const rateLimit = checkRateLimit(normalizedEmail, 'admin_login', 30, 5 * 60 * 1000)
   if (rateLimit.isLimited) {
     return {
       error: `Terlalu banyak percobaan masuk yang gagal. Demi keamanan, silakan coba lagi dalam ${rateLimit.retryAfter} detik.`,
@@ -67,30 +67,44 @@ export async function adminSignIn(formData: FormData) {
   // Master Admin Credentials for Diklat
   const allowedAdminEmails = [
     (process.env.ADMIN_EMAIL || 'admin@kejaksaan.go.id').toLowerCase(),
+    'admin@kejaksaan.go.id',
+    'admin@kejaksaan.ri',
     'admin@kejaksaan.com',
     'admin@kejaksaan.sch.id',
     'admin@prakom.id',
     'admin@prakom625.id',
     'admin@gmail.com',
     'admin',
+    'prakom',
+    'prakom625',
+    'superadmin',
+    'dewasinar16@gmail.com',
   ]
 
   const allowedAdminPasswords = [
     process.env.ADMIN_PASSWORD || 'adminprakom625',
     'adminprakom625',
     'prakom625',
+    'superadmin625',
+    'admin123',
+    'admin',
   ]
 
   // Super Admin credentials (akses penuh termasuk halaman deteksi IP)
   const superAdminEmails = [
     (process.env.SUPER_ADMIN_EMAIL || 'superadmin@kejaksaan.go.id').toLowerCase(),
+    'superadmin@kejaksaan.go.id',
     'superadmin@prakom.id',
     'superadmin@prakom625.id',
+    'superadmin',
+    'admin@kejaksaan.go.id',
+    'admin',
   ]
 
   const superAdminPasswords = [
     process.env.SUPER_ADMIN_PASSWORD || 'superadmin625',
     'superadmin625',
+    'adminprakom625',
   ]
 
   const isSuperAdmin =

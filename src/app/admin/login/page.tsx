@@ -83,17 +83,17 @@ export default function AdminLoginPage() {
 
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Email Pengurus
+                Email / Username Pengurus
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   name="email"
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@kejaksaan.go.id"
+                  placeholder="admin@kejaksaan.go.id atau admin"
                   className="h-10 w-full rounded-[10px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/50 dark:bg-[#141824] pl-10 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition-all"
                 />
               </div>
@@ -134,6 +134,27 @@ export default function AdminLoginPage() {
                 </>
               )}
             </button>
+
+            {/* Quick Demo Autofill Helper */}
+            <div className="rounded-[10px] bg-slate-50 dark:bg-[#141824] p-3 text-[11px] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-[#2A3550] space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-700 dark:text-slate-300">🔑 Akun Admin Default:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("admin@kejaksaan.go.id")
+                    setPassword("adminprakom625")
+                  }}
+                  className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                >
+                  Isi Otomatis
+                </button>
+              </div>
+              <div className="font-mono text-[10px] space-y-0.5 text-slate-500 dark:text-slate-400">
+                <p>User: <span className="text-slate-800 dark:text-slate-200 font-bold">admin@kejaksaan.go.id</span></p>
+                <p>Pass: <span className="text-slate-800 dark:text-slate-200 font-bold">adminprakom625</span></p>
+              </div>
+            </div>
           </form>
 
           {/* Quick Demo Info & Back link */}
