@@ -1,12 +1,14 @@
 'use client'
 
 import * as React from 'react'
+import { GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   variant?: 'primary' | 'emerald' | 'amber' | 'indigo' | 'white' | 'current'
   type?: 'ios' | 'ring'
+  icon?: React.ReactNode
   label?: string
   fullscreen?: boolean
   /** Delay in milliseconds before spinner becomes visible to avoid ugly flickering on fast actions */
@@ -35,6 +37,7 @@ export function Spinner({
   size = 'md',
   variant = 'current',
   type = 'ring',
+  icon,
   label,
   fullscreen = false,
   delayMs = 200,
@@ -122,10 +125,45 @@ export function Spinner({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-white/70 dark:bg-[#0c1017]/75 backdrop-blur-sm animate-in fade-in duration-150 gap-2.5">
-        {spinnerElement}
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-white/75 dark:bg-[#0c1017]/80 backdrop-blur-sm animate-in fade-in duration-150 gap-3 select-none">
+        <div className="relative flex h-14 w-14 items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-[#007aff]/10 dark:bg-[#60a5fa]/15 blur-md animate-pulse" />
+          <svg
+            className="absolute inset-0 h-full w-full animate-spin"
+            viewBox="0 0 56 56"
+            fill="none"
+            style={{ animationDuration: '1.2s' }}
+          >
+            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2.5" className="text-slate-200/80 dark:text-white/10" />
+            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="42 120" className="text-[#007aff] dark:text-[#60a5fa]" />
+          </svg>
+          <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-[#151c28] border border-slate-200/90 dark:border-white/10 shadow-xs text-[#007aff] dark:text-[#60a5fa]">
+            {icon || <GraduationCap className="h-4 w-4" strokeWidth={2} />}
+          </div>
+        </div>
         {label && (
-          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 tracking-tight">
+          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
+            {label}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  if (icon) {
+    return (
+      <div className="relative inline-flex items-center justify-center gap-2">
+        <div className="relative flex h-9 w-9 items-center justify-center">
+          <svg className="absolute inset-0 h-full w-full animate-spin text-current" viewBox="0 0 56 56" fill="none" style={{ animationDuration: '1.2s' }}>
+            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="42 120" className="opacity-95" />
+          </svg>
+          <div className="relative z-10 flex items-center justify-center text-current">
+            {icon}
+          </div>
+        </div>
+        {label && (
+          <span className="text-xs font-semibold text-current">
             {label}
           </span>
         )}

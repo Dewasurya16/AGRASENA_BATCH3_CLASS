@@ -2,12 +2,14 @@
 
 import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface MinimalistLoaderProps {
   title?: string
   subtitle?: string
   steps?: string[]
+  icon?: React.ReactNode
   fullscreen?: boolean
   delayMs?: number
   className?: string
@@ -17,6 +19,7 @@ export function MinimalistLoader({
   title = 'Memuat...',
   subtitle,
   steps,
+  icon,
   fullscreen = false,
   delayMs = 0,
   className,
@@ -47,19 +50,59 @@ export function MinimalistLoader({
   const content = (
     <div
       className={cn(
-        'flex flex-col items-center justify-center text-center space-y-3 p-4 select-none',
+        'flex flex-col items-center justify-center text-center space-y-3.5 p-4 select-none',
         className
       )}
     >
-      {/* Sleek Minimalist Ring Spinner */}
-      <div className="relative flex items-center justify-center">
-        {/* Subtle breathing ambient glow ring */}
-        <div className="absolute h-9 w-9 rounded-full bg-[#007aff]/15 dark:bg-[#60a5fa]/15 blur-sm animate-pulse" />
-        {/* Smooth Track & Accent Spinner */}
-        <div
-          className="h-8 w-8 rounded-full border-2 border-[#e6e6e6] dark:border-white/10 border-t-[#007aff] dark:border-t-[#60a5fa] animate-spin"
-          style={{ animationDuration: '0.75s' }}
-        />
+      {/* Modern Dual-Orbital Ring with Centered Animated Icon */}
+      <div className="relative flex h-14 w-14 items-center justify-center">
+        {/* Soft Ambient Breathing Halo */}
+        <div className="absolute inset-0 rounded-full bg-[#007aff]/10 dark:bg-[#60a5fa]/15 blur-md animate-pulse" />
+
+        {/* Outer Continuous Precision Spinning Track */}
+        <svg
+          className="absolute inset-0 h-full w-full animate-spin"
+          viewBox="0 0 56 56"
+          fill="none"
+          style={{ animationDuration: '1.2s' }}
+        >
+          {/* Subtle Background Track Ring */}
+          <circle
+            cx="28"
+            cy="28"
+            r="24"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="text-slate-200/80 dark:text-white/10"
+          />
+          {/* Active Gradient/Accent Spinning Arc */}
+          <circle
+            cx="28"
+            cy="28"
+            r="24"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="42 120"
+            className="text-[#007aff] dark:text-[#60a5fa]"
+          />
+        </svg>
+
+        {/* Center Animated Icon Badge (Gentle Breathing Micro-Motion) */}
+        <motion.div
+          animate={{
+            scale: [0.93, 1.06, 0.93],
+            opacity: [0.85, 1, 0.85],
+          }}
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+          className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-[#151c28] border border-slate-200/90 dark:border-white/10 shadow-xs text-[#007aff] dark:text-[#60a5fa]"
+        >
+          {icon || <GraduationCap className="h-4 w-4" strokeWidth={2} />}
+        </motion.div>
       </div>
 
       {/* Clean Text Hierarchy */}
@@ -98,7 +141,7 @@ export function MinimalistLoader({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/70 dark:bg-[#0c1017]/75 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/75 dark:bg-[#0c1017]/80 backdrop-blur-sm animate-in fade-in duration-150">
         {content}
       </div>
     )
