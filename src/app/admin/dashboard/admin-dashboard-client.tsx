@@ -239,8 +239,14 @@ export function AdminDashboardClient({
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [feedback, setFeedback] = React.useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  // Per-item Action Loading Map (for visual feedback on delete, status change, etc.)
   const [actionLoadingMap, setActionLoadingMap] = React.useState<Record<string, boolean>>({})
+
+  // Cegah admin biasa mengakses tab khusus Super Admin
+  React.useEffect(() => {
+    if (!isSuperAdmin && (activeTab === "visitors" || activeTab === "audit_log")) {
+      setActiveTab("overview")
+    }
+  }, [activeTab, isSuperAdmin])
 
   // Helper: Cek apakah tugas sudah otomatis selesai (ditandai selesai atau batas waktu deadline telah terlewati)
   const isTaskEffectivelyCompleted = React.useCallback((task: { status?: string; due_date?: string }) => {
@@ -2234,36 +2240,48 @@ export function AdminDashboardClient({
             <div className="space-y-6">
               {/* 6 KPI Hero Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
-                {/* 1. Visitors KPI (Highlight Card) */}
-                <div
-                  onClick={() => isSuperAdmin && setActiveTab("visitors")}
-                  className={`group rounded-[12px] bg-gradient-to-br from-emerald-600 to-teal-800 p-4 text-white space-y-2.5 shadow-sm relative overflow-hidden transition-all ${
-                    isSuperAdmin
-                      ? 'cursor-pointer hover:shadow-md hover:scale-[1.01]'
-                      : 'cursor-default opacity-80'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-100">Pengunjung</span>
-                    {isSuperAdmin ? (
+                {/* 1. Visitors KPI (Super Admin) OR Forum Diskusi (Regular Admin) */}
+                {isSuperAdmin ? (
+                  <div
+                    onClick={() => setActiveTab("visitors")}
+                    className="group rounded-[12px] bg-gradient-to-br from-emerald-600 to-teal-800 p-4 text-white space-y-2.5 shadow-sm relative overflow-hidden transition-all cursor-pointer hover:shadow-md hover:scale-[1.01]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-100">Pengunjung & IP</span>
                       <Users className="h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
-                    ) : (
-                      <Shield className="h-4 w-4 text-emerald-200" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-black">{totalVisitors.toLocaleString('id-ID')}</div>
-                    <div className="text-[11px] text-emerald-100 font-semibold mt-0.5 truncate">
-                      {isSuperAdmin
-                        ? `${uniqueIps} IP Unik • ${todayVisitors} Hari Ini`
-                        : 'Hanya Super Admin yang dapat melihat detail'}
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black">{totalVisitors.toLocaleString('id-ID')}</div>
+                      <div className="text-[11px] text-emerald-100 font-semibold mt-0.5 truncate">
+                        {uniqueIps} IP Unik • {todayVisitors} Hari Ini
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
+                      <span>Statistik & Log IP</span>
+                      <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
-                    <span>{isSuperAdmin ? 'Statistik & IP' : 'Akses Terbatas'}</span>
-                    {isSuperAdmin && <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />}
+                ) : (
+                  <div
+                    onClick={() => setActiveTab("discussions")}
+                    className="group rounded-[12px] bg-gradient-to-br from-purple-700 to-indigo-800 p-4 text-white space-y-2.5 shadow-sm relative overflow-hidden transition-all cursor-pointer hover:shadow-md hover:scale-[1.01]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-purple-100">Forum Diskusi</span>
+                      <MessageSquare className="h-4 w-4 text-purple-200 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black">{adminDiscussions.length}</div>
+                      <div className="text-[11px] text-purple-100 font-semibold mt-0.5 truncate">
+                        Topik Tanya Jawab Peserta
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-purple-400/30 flex items-center justify-between text-[11px] font-bold text-purple-200">
+                      <span>Moderasi Forum</span>
+                      <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* 2. Reports & Feedback */}
                 <div
@@ -2377,26 +2395,48 @@ export function AdminDashboardClient({
 
               {/* Extended Row for Discussions, Templates, Exam Prep, AI Generator */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                {/* Forum Diskusi */}
-                <div
-                  onClick={() => setActiveTab("discussions")}
-                  className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-4 space-y-2.5 shadow-xs hover:shadow-md transition cursor-pointer group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Forum Diskusi</span>
-                    <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{adminDiscussions.length}</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
-                      Topik Tanya Jawab Peserta
+                {/* Forum Diskusi (Super Admin) OR Broadcast WA (Regular Admin) */}
+                {isSuperAdmin ? (
+                  <div
+                    onClick={() => setActiveTab("discussions")}
+                    className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-4 space-y-2.5 shadow-xs hover:shadow-md transition cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Forum Diskusi</span>
+                      <MessageSquare className="h-4 w-4 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{adminDiscussions.length}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
+                        Topik Tanya Jawab Peserta
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-[11px] font-bold text-purple-600 dark:text-purple-400">
+                      <span>Moderasi Forum</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-[11px] font-bold text-purple-600 dark:text-purple-400">
-                    <span>Moderasi Forum</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
+                ) : (
+                  <div
+                    onClick={() => setIsWAModalOpen(true)}
+                    className="rounded-[12px] bg-white dark:bg-[#1B2130] border border-emerald-200/80 dark:border-emerald-800/50 p-4 space-y-2.5 shadow-xs hover:shadow-md transition cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Broadcast Pengumuman</span>
+                      <MessageCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">WhatsApp</div>
+                      <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 truncate">
+                        Kirim Format Siaran Peserta
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-100 dark:border-emerald-950/40 flex items-center justify-between text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                      <span>Buka Template WA</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Templates BPS */}
                 <div
@@ -2510,18 +2550,18 @@ export function AdminDashboardClient({
                 </div>
               </div>
 
-              {/* Traffic & Device Distribution Widget */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                {/* Media Distribution Bars */}
-                <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm lg:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                      <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
-                        Distribusi Media Akses Pengunjung
-                      </h3>
-                    </div>
-                    {isSuperAdmin && (
+              {/* Traffic & Device Distribution Widget (Super Admin) OR Diklat Resource Overview (Regular Admin) */}
+              {isSuperAdmin ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  {/* Media Distribution Bars */}
+                  <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm lg:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                          Distribusi Media Akses Pengunjung
+                        </h3>
+                      </div>
                       <button
                         onClick={() => setActiveTab("visitors")}
                         className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
@@ -2529,102 +2569,180 @@ export function AdminDashboardClient({
                         <span>Lihat Rincian IP</span>
                         <ArrowRight className="h-3 w-3" />
                       </button>
-                    )}
+                    </div>
+
+                    <div className="space-y-3 pt-1">
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <Laptop className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> Desktop / Laptop ({deviceStats.desktop})
+                          </span>
+                          <span>{deviceStats.desktopPct}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                            style={{ width: `${deviceStats.desktopPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <Smartphone className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /> Smartphone ({deviceStats.mobile})
+                          </span>
+                          <span>{deviceStats.mobilePct}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                            style={{ width: `${deviceStats.mobilePct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                          <span className="flex items-center gap-1.5">
+                            <Tablet className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" /> Tablet ({deviceStats.tablet})
+                          </span>
+                          <span>{deviceStats.tabletPct}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                            style={{ width: `${deviceStats.tabletPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] p-3 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                          Integrasi <strong>@vercel/analytics</strong> & Pelacak IP Supabase aktif.
+                        </span>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5">
+                        Ready
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        <span className="flex items-center gap-1.5">
-                          <Laptop className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> Desktop / Laptop ({deviceStats.desktop})
-                        </span>
-                        <span>{deviceStats.desktopPct}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                          style={{ width: `${deviceStats.desktopPct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        <span className="flex items-center gap-1.5">
-                          <Smartphone className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" /> Smartphone ({deviceStats.mobile})
-                        </span>
-                        <span>{deviceStats.mobilePct}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                          style={{ width: `${deviceStats.mobilePct}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        <span className="flex items-center gap-1.5">
-                          <Tablet className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" /> Tablet ({deviceStats.tablet})
-                        </span>
-                        <span>{deviceStats.tabletPct}%</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 dark:bg-[#141824] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                          style={{ width: `${deviceStats.tabletPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] p-3 flex items-center justify-between text-xs">
+                  {/* Database Metrics Preview (Super Admin with IP & Visits) */}
+                  <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm">
                     <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">
-                        Integrasi <strong>@vercel/analytics</strong> & Pelacak IP Supabase aktif.
-                      </span>
+                      <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Status Database</h3>
                     </div>
-                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5">
-                      Ready
-                    </span>
-                  </div>
-                </div>
 
-                {/* Database Metrics Preview */}
-                <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Status Database</h3>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Total Seluruh Data:</span>
-                      <span className="font-black text-slate-900 dark:text-slate-100">
-                        {initialMaterials.length +
-                          initialSchedules.length +
-                          initialTasks.length +
-                          initialAnnouncements.length +
-                          initialVisitorLogs.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Pengunjung Unik:</span>
-                      <span className="font-black text-emerald-700 dark:text-emerald-400">{uniqueIps} IP</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Kunjungan Hari Ini:</span>
-                      <span className="font-black text-blue-700 dark:text-blue-400">{todayVisitors} Hits</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
-                      <span className="text-slate-600 dark:text-slate-400 font-medium">Total Modul PDF:</span>
-                      <span className="font-black text-indigo-700 dark:text-indigo-400">{initialMaterials.length} Berkas</span>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Total Seluruh Data:</span>
+                        <span className="font-black text-slate-900 dark:text-slate-100">
+                          {initialMaterials.length +
+                            initialSchedules.length +
+                            initialTasks.length +
+                            initialAnnouncements.length +
+                            initialVisitorLogs.length}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Pengunjung Unik:</span>
+                        <span className="font-black text-emerald-700 dark:text-emerald-400">{uniqueIps} IP</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Kunjungan Hari Ini:</span>
+                        <span className="font-black text-blue-700 dark:text-blue-400">{todayVisitors} Hits</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Total Modul PDF:</span>
+                        <span className="font-black text-indigo-700 dark:text-indigo-400">{initialMaterials.length} Berkas</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  {/* Progress Kurikulum & Modul 120 JP (Regular Admin) */}
+                  <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm lg:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+                          Kelengkapan Bahan Pembelajaran Diklat (120 JP)
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab("materials")}
+                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Kelola Modul</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                      <div className="p-3.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550]">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Pustaka Modul PDF</div>
+                        <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">{initialMaterials.length} Berkas</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{totalMaterialSizeMB.toFixed(1)} MB di Cloud Storage</div>
+                      </div>
+                      <div className="p-3.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550]">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Jadwal Sesi Agenda</div>
+                        <div className="text-2xl font-black text-sky-600 dark:text-sky-400 mt-1">{initialSchedules.length} Sesi</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">Target 35 Hari Pelatihan</div>
+                      </div>
+                      <div className="p-3.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550]">
+                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Tugas Mandiri & Kuis</div>
+                        <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{initialTasks.length} Tugas</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">{completedTasksCount} tugas selesai</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 rounded-[10px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/80 dark:border-[#2A3550] p-3 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">
+                          Portal Operasional Diklat — Akses aktif untuk modul, jadwal kuliah, tugas, dan moderasi forum.
+                        </span>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2.5 py-0.5">
+                        Admin Diklat
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Database Metrics Preview (Regular Admin - Pure Diklat Resources) */}
+                  <div className="rounded-[14px] bg-white dark:bg-[#1B2130] border border-slate-200/90 dark:border-[#2A3550] p-5 sm:p-6 space-y-4 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">Status Basis Data Diklat</h3>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Modul Pembelajaran:</span>
+                        <span className="font-black text-indigo-700 dark:text-indigo-400">{initialMaterials.length} Berkas PDF</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Jadwal Sesi:</span>
+                        <span className="font-black text-sky-700 dark:text-sky-400">{initialSchedules.length} Sesi Terjadwal</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Tugas Mandiri:</span>
+                        <span className="font-black text-amber-700 dark:text-amber-400">{initialTasks.length} Penugasan</span>
+                      </div>
+                      <div className="flex items-center justify-between p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550]">
+                        <span className="text-slate-600 dark:text-slate-400 font-medium">Pengumuman:</span>
+                        <span className="font-black text-rose-700 dark:text-rose-400">{initialAnnouncements.length} Informasi</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}          {/* ========================================================================= */}
           {/* 2. VISITOR ANALYTICS TAB (5 PER HALAMAN) */}

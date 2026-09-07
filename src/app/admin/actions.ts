@@ -639,6 +639,14 @@ export async function clearLocalhostLogs() {
     return { error: 'Konfigurasi database belum tersedia.' }
   }
 
+  const { cookies } = await import('next/headers')
+  const { verifySuperAdminSessionToken } = await import('@/lib/security')
+  const cookieStore = await cookies()
+  const superAdminCookie = cookieStore.get('prakom_super_admin')?.value
+  if (!verifySuperAdminSessionToken(superAdminCookie)) {
+    return { error: 'Akses ditolak: Operasi ini hanya diizinkan untuk Super Admin.' }
+  }
+
   const supabase = await createClient()
   // Delete all localhost and private IP logs
   const { error } = await supabase
