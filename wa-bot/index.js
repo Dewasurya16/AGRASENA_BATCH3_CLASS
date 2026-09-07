@@ -10,6 +10,7 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  Browsers,
 } = require('@whiskeysockets/baileys')
 const pino = require('pino')
 const { createClient } = require('@supabase/supabase-js')
@@ -478,8 +479,12 @@ async function connectToWhatsApp() {
     version,
     logger: pino({ level: 'silent' }),
     auth: state,
-    browser: ['Agrasena Bot Diklat', 'Chrome', '1.0.0'],
+    browser: Browsers.windows('Desktop'),
+    syncFullHistory: false,
+    generateHighQualityLinkPreview: true,
     defaultQueryTimeoutMs: 60000,
+    connectTimeoutMs: 60000,
+    keepAliveIntervalMs: 30000,
   })
 
   // Simpan kredensial setiap ada pembaruan auth token
