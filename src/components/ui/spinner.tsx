@@ -122,15 +122,13 @@ export function Spinner({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-200">
-        <div className="flex flex-col items-center justify-center gap-4 p-8 rounded-[24px] bg-white/95 dark:bg-[#161B26]/95 border border-slate-200/90 dark:border-[#2A3550] shadow-2xl max-w-xs w-full text-center">
-          {spinnerElement}
-          {label && (
-            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide">
-              {label}
-            </span>
-          )}
-        </div>
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-white/70 dark:bg-[#0c1017]/75 backdrop-blur-sm animate-in fade-in duration-150 gap-2.5">
+        {spinnerElement}
+        {label && (
+          <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 tracking-tight">
+            {label}
+          </span>
+        )}
       </div>
     )
   }
