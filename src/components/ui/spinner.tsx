@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { GraduationCap } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { GraduationCap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -125,24 +126,53 @@ export function Spinner({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-white/75 dark:bg-[#0c1017]/80 backdrop-blur-sm animate-in fade-in duration-150 gap-3 select-none">
-        <div className="relative flex h-14 w-14 items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-[#007aff]/10 dark:bg-[#60a5fa]/15 blur-md animate-pulse" />
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-white/75 dark:bg-[#0c1017]/80 backdrop-blur-sm animate-in fade-in duration-150 gap-3.5 select-none">
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#007aff]/20 via-[#af52de]/15 to-[#34c759]/20 dark:from-[#60a5fa]/25 dark:via-[#c084fc]/20 dark:to-[#4ade80]/25 blur-lg animate-pulse" />
           <svg
             className="absolute inset-0 h-full w-full animate-spin"
-            viewBox="0 0 56 56"
+            viewBox="0 0 64 64"
             fill="none"
-            style={{ animationDuration: '1.2s' }}
+            style={{ animationDuration: '1.4s' }}
           >
-            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2.5" className="text-slate-200/80 dark:text-white/10" />
-            <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="42 120" className="text-[#007aff] dark:text-[#60a5fa]" />
+            <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="2.5" strokeDasharray="4 6" className="text-slate-200/90 dark:text-white/10" />
+            <circle cx="32" cy="32" r="28" stroke="#007aff" strokeWidth="3" strokeLinecap="round" strokeDasharray="50 130" className="dark:stroke-[#60a5fa]" />
           </svg>
-          <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-[#151c28] border border-slate-200/90 dark:border-white/10 shadow-xs text-[#007aff] dark:text-[#60a5fa]">
-            {icon || <GraduationCap className="h-4 w-4" strokeWidth={2} />}
-          </div>
+          <motion.div
+            animate={{
+              scale: [0, 1.2, 0],
+              rotate: [0, 90, 180],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              delay: 0.1,
+              ease: 'easeInOut',
+            }}
+            className="absolute -top-1 -right-1 z-20 text-amber-400 dark:text-amber-300 pointer-events-none"
+          >
+            <Sparkles className="h-3.5 w-3.5 fill-amber-400 dark:fill-amber-300" />
+          </motion.div>
+          <motion.div
+            animate={{
+              y: [0, -7, 0, -2, 0],
+              rotate: [0, -8, 8, -4, 0],
+              scaleX: [1, 0.92, 1.08, 0.98, 1],
+              scaleY: [1, 1.1, 0.92, 1.02, 1],
+            }}
+            transition={{
+              duration: 1.7,
+              repeat: Infinity,
+              ease: [0.34, 1.56, 0.64, 1],
+            }}
+            className="relative z-10 flex h-10 w-10 items-center justify-center rounded-2xl bg-white dark:bg-[#151c28] border-2 border-sky-100 dark:border-white/15 shadow-md shadow-sky-500/15 text-[#007aff] dark:text-[#60a5fa]"
+          >
+            {icon || <GraduationCap className="h-5 w-5" strokeWidth={2.2} />}
+          </motion.div>
         </div>
         {label && (
-          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
+          <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight">
             {label}
           </span>
         )}
