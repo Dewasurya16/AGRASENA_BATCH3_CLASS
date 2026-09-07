@@ -1,4 +1,10 @@
-require('dotenv').config()
+const path = require('path')
+const fs = require('fs')
+require('dotenv').config({ path: path.join(__dirname, '.env') })
+if (!process.env.SUPABASE_URL) {
+  require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') })
+}
+
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -7,8 +13,6 @@ const {
 } = require('@whiskeysockets/baileys')
 const pino = require('pino')
 const { createClient } = require('@supabase/supabase-js')
-const path = require('path')
-const fs = require('fs')
 
 const { initScheduler, sendScheduleNotification, sendTaskNotification, formatIndonesianDate } = require('./scheduler')
 const { createApiServer } = require('./api')
@@ -247,7 +251,6 @@ async function connectToWhatsApp() {
   sock = makeWASocket({
     version,
     logger: pino({ level: 'silent' }),
-    printQRInTerminal: true,
     auth: state,
     browser: ['Agrasena Bot Diklat', 'Chrome', '1.0.0'],
     defaultQueryTimeoutMs: 60000,
@@ -264,6 +267,12 @@ async function connectToWhatsApp() {
       currentQr = qr
       console.log('\n[QR Code] QR Code baru telah dihasilkan! Silakan scan melalui WhatsApp di HP Anda:')
       console.log('------------------------------------------------------------')
+      try {
+        const qrTerminal = await require('qrcode').toString(qr, { type: 'terminal', small: true })
+        console.log(qrTerminal)
+      } catch (e) {}
+      console.log('------------------------------------------------------------')
+      console.log('💡 Atau buka Dashboard Web: /admin/dashboard (Tab Bot WhatsApp) untuk scan QR gambar!')
     }
 
     if (connection === 'open') {
