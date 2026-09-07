@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { QUIZ_QUESTIONS, QUIZ_PACKAGES, QuizQuestion, QuizPackage } from "@/data/quiz-questions"
 import { Spinner } from "@/components/ui/spinner"
+import { Modal } from "@/components/ui/modal"
 import Link from "next/link"
 
 export function QuizPlayer() {
@@ -48,6 +49,13 @@ export function QuizPlayer() {
   const [isSubmittingQuiz, setIsSubmittingQuiz] = React.useState(false)
   const [timerSeconds, setTimerSeconds] = React.useState(900)
   const [reviewFilter, setReviewFilter] = React.useState<"all" | "wrong" | "correct">("all")
+
+  // AI Quiz Generator States
+  const [isAiModalOpen, setIsAiModalOpen] = React.useState(false)
+  const [aiTopicInput, setAiTopicInput] = React.useState("")
+  const [aiDifficulty, setAiDifficulty] = React.useState<"mudah" | "sedang" | "sulit">("sedang")
+  const [isGeneratingAiQuiz, setIsGeneratingAiQuiz] = React.useState(false)
+  const [aiErrorMsg, setAiErrorMsg] = React.useState<string | null>(null)
 
   // Storage Stats State
   const [completedPacks, setCompletedPacks] = React.useState<string[]>([])
@@ -165,6 +173,54 @@ export function QuizPlayer() {
     setIsSubmitted(false)
     setTimerSeconds(filtered.length * 90)
     setIsQuizActive(true)
+  }
+
+  // Generate and Start AI Quiz
+  const handleGenerateAiQuiz = async (presetTopic?: string) => {
+    const chosenTopic = presetTopic || aiTopicInput.trim() || "Regulasi SPBE & Tata Kelola Prakom"
+    setIsGeneratingAiQuiz(true)
+    setAiErrorMsg(null)
+    try {
+      const res = await fetch("/api/ai/generate-quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: chosenTopic,
+          difficulty: aiDifficulty,
+          count: 5,
+        }),
+      })
+      const data = await res.json()
+      if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
+        setActivePackage({
+          id: `ai-quiz-${Date.now()}`,
+          title: `Kuis AI: ${chosenTopic}`,
+          subtitle: `5 Soal Adaptif AI (${aiDifficulty.toUpperCase()})`,
+          badge: "AI Generator",
+          color: "#8b5cf6",
+          durationMinutes: 10,
+          questionCount: data.questions.length,
+          passingScore: 75,
+          categories: ["Sistem Informasi & SDLC"],
+          description: `Kuis interaktif yang digenerate cerdas oleh AI untuk topik "${chosenTopic}".`,
+          iconName: "Sparkles",
+        })
+        setQuestions(data.questions)
+        setCurrentIndex(0)
+        setUserAnswers({})
+        setFlaggedQuestions({})
+        setIsSubmitted(false)
+        setTimerSeconds(600) // 10 minutes
+        setIsQuizActive(true)
+        setIsAiModalOpen(false)
+      } else {
+        setAiErrorMsg("Gagal membuat soal AI. Silakan coba lagi.")
+      }
+    } catch (err: any) {
+      setAiErrorMsg(err.message || "Terjadi kendala jaringan.")
+    } finally {
+      setIsGeneratingAiQuiz(false)
+    }
   }
 
   // Timer countdown
@@ -361,6 +417,15 @@ export function QuizPlayer() {
               <BookOpen className="h-3.5 w-3.5" />
               <span>Latihan Per Kategori Modul</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAiModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold transition cursor-pointer border bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white border-indigo-500 shadow-xs"
+            >
+              <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+              <span>✨ Buat Kuis AI (Topik Bebas)</span>
+            </button>
           </div>
         </div>
 
@@ -522,6 +587,115 @@ export function QuizPlayer() {
             </div>
           </div>
         )}
+
+        {/* MODAL: AI Quiz Generator */}
+        <Modal
+          isOpen={isAiModalOpen}
+          onClose={() => setIsAiModalOpen(false)}
+          title="✨ AI Exam Master — Generator Soal Bebas"
+          description="Pilih atau ketik topik apa pun seputar kurikulum Prakom, SPBE, database, atau regulasi ASN Kejaksaan untuk membuat 5 soal interaktif baru."
+          className="max-w-lg"
+        >
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#31302e] dark:text-[#e6e6e6]">
+                Topik / Materi Kuis:
+              </label>
+              <input
+                type="text"
+                value={aiTopicInput}
+                onChange={(e) => setAiTopicInput(e.target.value)}
+                placeholder="Contoh: CSIRT & Keamanan Siber, SPBE, SQL Indexing..."
+                className="w-full rounded-[8px] border border-[#e6e6e6] dark:border-white/10 bg-white dark:bg-[#1a2332] p-2.5 text-xs text-[#000000] dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            {/* Quick Topic Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold text-[#615d59] dark:text-[#94a3b8]">
+                Rekomendasi Topik Cepat:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Regulasi SPBE & Perpres 95/2018",
+                  "Manajemen Database SQL & Indexing",
+                  "CSIRT & Respon Insiden Siber",
+                  "ITIL 4 Service Management",
+                  "DUPAK & SKP PermenPAN-RB 1/2023",
+                  "Linux Server & Cloud Backup",
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => {
+                      setAiTopicInput(preset)
+                    }}
+                    className="rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 px-2.5 py-1 text-[10px] font-semibold hover:bg-indigo-100 transition cursor-pointer"
+                  >
+                    + {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Difficulty Selector */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#31302e] dark:text-[#e6e6e6]">
+                Tingkat Kesulitan:
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["mudah", "sedang", "sulit"] as const).map((diff) => (
+                  <button
+                    key={diff}
+                    type="button"
+                    onClick={() => setAiDifficulty(diff)}
+                    className={`py-2 rounded-[8px] border text-xs font-bold capitalize transition cursor-pointer ${
+                      aiDifficulty === diff
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                        : "bg-white dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                    }`}
+                  >
+                    {diff}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {aiErrorMsg && (
+              <div className="p-2.5 rounded-[8px] bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 text-xs border border-red-200 dark:border-red-800">
+                {aiErrorMsg}
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(false)}
+                className="px-4 py-2 rounded-full border border-[#e6e6e6] dark:border-white/10 text-xs font-semibold text-[#615d59] dark:text-[#94a3b8] hover:bg-[#f6f5f4] cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isGeneratingAiQuiz}
+                onClick={() => handleGenerateAiQuiz()}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+              >
+                {isGeneratingAiQuiz ? (
+                  <>
+                    <Spinner className="h-3.5 w-3.5 text-white" />
+                    <span>Sedang Merumuskan Soal...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>Generate & Mulai Kuis</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     )
   }

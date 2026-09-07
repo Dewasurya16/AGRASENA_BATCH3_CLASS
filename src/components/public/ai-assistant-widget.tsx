@@ -14,7 +14,9 @@ import {
   Edit3,
   Code2,
   Database,
-  BookOpen
+  BookOpen,
+  Volume2,
+  VolumeX
 } from 'lucide-react'
 import { getCurrentDiklatDay, RAW_DAYS_DATA } from '@/lib/roadmap-utils'
 import { Spinner } from '@/components/ui/spinner'
@@ -262,6 +264,7 @@ export function AIAssistantWidget() {
   const [isTyping, setIsTyping] = React.useState(false)
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
   const [currentDayNum, setCurrentDayNum] = React.useState(getCurrentDiklatDay)
+  const [speakingMsgId, setSpeakingMsgId] = React.useState<string | null>(null)
 
   // User Profile State
   const [userName, setUserName] = React.useState('')
@@ -270,6 +273,40 @@ export function AIAssistantWidget() {
   const [isEditingProfile, setIsEditingProfile] = React.useState(false)
   const [tempNameInput, setTempNameInput] = React.useState('')
   const [tempSatkerInput, setTempSatkerInput] = React.useState('')
+
+  const handleSpeak = (text: string, id: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+    if (speakingMsgId === id) {
+      window.speechSynthesis.cancel()
+      setSpeakingMsgId(null)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    const clean = text
+      .replace(/[*#`_~\[\]]/g, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/https?:\/\/\S+/g, '')
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(clean)
+    utterance.lang = 'id-ID'
+    utterance.rate = 1.05
+    utterance.onend = () => setSpeakingMsgId(null)
+    utterance.onerror = () => setSpeakingMsgId(null)
+
+    setSpeakingMsgId(id)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
@@ -543,33 +580,94 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
           userName: userName || 'Rekan Prakom',
           userSatker: userSatker || 'Kejaksaan RI',
           currentDayNumber: currentDayNum,
+          stream: true,
         }),
       })
 
-      const data = await res.json().catch(() => null)
+      const contentType = res.headers.get('content-type') || ''
+      if (res.ok && contentType.includes('text/event-stream') && res.body) {
+        const aiMsgId = `ai-${Date.now()}`
+        const timestamp = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
 
-      if (res.ok && data?.reply) {
+        // Add empty AI bubble immediately for live streaming
         setMessages((prev) => [
           ...prev,
           {
-            id: `ai-${Date.now()}`,
+            id: aiMsgId,
             sender: 'ai',
-            text: data.reply,
-            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
-          }
+            text: '',
+            timestamp,
+          },
         ])
+
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let accumulatedText = ''
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data:')) continue
+            const dataStr = trimmed.replace(/^data:\s*/, '')
+            if (dataStr === '[DONE]') break
+
+            try {
+              const parsed = JSON.parse(dataStr)
+              if (parsed.text) {
+                accumulatedText += parsed.text
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === aiMsgId ? { ...msg, text: accumulatedText } : msg
+                  )
+                )
+              }
+            } catch {
+              // Ignore partial JSON parse errors
+            }
+          }
+        }
+
+        if (!accumulatedText.trim()) {
+          const fallback = generateOfflineResponse(query)
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMsgId ? { ...msg, text: fallback.response, codeSnippet: fallback.code } : msg
+            )
+          )
+        }
       } else {
-        const fallback = generateOfflineResponse(query)
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `ai-${Date.now()}`,
-            sender: 'ai',
-            text: fallback.response,
-            codeSnippet: fallback.code,
-            timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
-          }
-        ])
+        const data = await res.json().catch(() => null)
+        if (res.ok && data?.reply) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              sender: 'ai',
+              text: data.reply,
+              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+            }
+          ])
+        } else {
+          const fallback = generateOfflineResponse(query)
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              sender: 'ai',
+              text: fallback.response,
+              codeSnippet: fallback.code,
+              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+            }
+          ])
+        }
       }
     } catch {
       const fallback = generateOfflineResponse(query)
@@ -812,8 +910,28 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
                       )}
                     </div>
 
-                    <div className={`text-[9px] text-slate-400 font-mono px-1 ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                      {msg.timestamp}
+                    <div className={`text-[9px] text-slate-400 font-mono px-1 flex items-center gap-1.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <span>{msg.timestamp}</span>
+                      {msg.sender === 'ai' && msg.text && (
+                        <button
+                          type="button"
+                          onClick={() => handleSpeak(msg.text, msg.id)}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title="Dengarkan Audio Penjelasan"
+                        >
+                          {speakingMsgId === msg.id ? (
+                            <>
+                              <VolumeX className="h-2.5 w-2.5 text-red-500 animate-pulse" />
+                              <span className="text-red-500 font-sans">Berhenti</span>
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="h-2.5 w-2.5" />
+                              <span className="font-sans">Dengarkan</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

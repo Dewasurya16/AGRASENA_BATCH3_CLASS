@@ -23,7 +23,9 @@ import {
   Maximize2,
   Edit3,
   BookMarked,
-  RefreshCw
+  RefreshCw,
+  Volume2,
+  VolumeX
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -330,6 +332,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [studyNotes, setStudyNotes] = React.useState<Record<string, string>>({})
   const [isSummarizing, setIsSummarizing] = React.useState(false)
   const [copiedNote, setCopiedNote] = React.useState(false)
+  const [isSpeakingNotes, setIsSpeakingNotes] = React.useState(false)
   const [isPdfLoading, setIsPdfLoading] = React.useState(true)
   const [pdfLoadProgress, setPdfLoadProgress] = React.useState(15)
 
@@ -626,6 +629,45 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
       localStorage.setItem("prakom_study_notes", JSON.stringify(newNotes))
     }
   }
+
+  // Audio Voice Reader (Text-to-Speech) for Study Notes & AI Summary
+  const handleToggleSpeechNotes = () => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return
+
+    if (isSpeakingNotes) {
+      window.speechSynthesis.cancel()
+      setIsSpeakingNotes(false)
+      return
+    }
+
+    if (!previewMaterial) return
+    const text = studyNotes[previewMaterial.id] || ""
+    if (!text.trim()) return
+
+    window.speechSynthesis.cancel()
+    const clean = text
+      .replace(/[*#`_~\[\]]/g, " ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/https?:\/\/\S+/g, "")
+      .trim()
+
+    const utterance = new SpeechSynthesisUtterance(clean)
+    utterance.lang = "id-ID"
+    utterance.rate = 1.05
+    utterance.onend = () => setIsSpeakingNotes(false)
+    utterance.onerror = () => setIsSpeakingNotes(false)
+
+    setIsSpeakingNotes(true)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   return (
     <section className="space-y-6">
@@ -987,6 +1029,29 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleToggleSpeechNotes}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                          isSpeakingNotes
+                            ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/60 dark:text-red-400 dark:border-red-800 animate-pulse"
+                            : "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                        }`}
+                        title="Dengarkan Catatan / Rangkuman Modul"
+                      >
+                        {isSpeakingNotes ? (
+                          <>
+                            <VolumeX className="h-3.5 w-3.5" />
+                            <span>Stop Audio</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="h-3.5 w-3.5" />
+                            <span>Dengarkan Audio</span>
+                          </>
+                        )}
+                      </button>
+
                       <button
                         type="button"
                         onClick={handleCopyNotes}

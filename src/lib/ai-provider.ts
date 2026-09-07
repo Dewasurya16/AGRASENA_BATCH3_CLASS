@@ -227,6 +227,19 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
   }
 
   // 3. KNOWLEDGE-AWARE LOCAL FALLBACK (Ensures bot ALWAYS gives a helpful response)
+  const fallbackResponse = getLocalFallbackText(messages)
+
+  return {
+    text: fallbackResponse,
+    model: "knowledge-engine",
+    provider: "fallback",
+  }
+}
+
+/**
+ * Knowledge-aware local fallback generator for offline or provider downtime
+ */
+export function getLocalFallbackText(messages: ChatMessage[]): string {
   const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content || ""
   const query = lastUserMsg.toLowerCase()
 
@@ -283,9 +296,180 @@ Untuk rincian lengkap 35 hari, silakan kunjungi menu **/schedules**!`
 - Template rekapitulasi butir kegiatan dapat Anda unduh di menu **/templates**.`
   }
 
-  return {
-    text: fallbackResponse,
-    model: "knowledge-engine",
-    provider: "fallback",
+  return fallbackResponse
+}
+
+/**
+ * Stream AI completion as a standard SSE ReadableStream
+ */
+export async function streamAiCompletion(options: GenerateAiOptions): Promise<ReadableStream<Uint8Array>> {
+  const { messages, temperature = 0.35, max_tokens = 2500, userApiKey } = options
+  const encoder = new TextEncoder()
+
+  const groqKey =
+    process.env.GROQ_API_KEY ||
+    (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
+
+  const openRouterKey =
+    (userApiKey && userApiKey.startsWith("sk-or-") ? userApiKey : null) ||
+    process.env.OPENROUTER_API_KEY
+
+  // Helper to emit a SSE event
+  function sseEvent(payload: { text?: string; done?: boolean; error?: string }): Uint8Array {
+    return encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)
   }
+
+  // 1. Try Groq Streaming first
+  if (groqKey) {
+    try {
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          messages,
+          temperature,
+          max_tokens,
+          stream: true,
+        }),
+      })
+
+      if (groqRes.ok && groqRes.body) {
+        const reader = groqRes.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ""
+
+        return new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) {
+                controller.enqueue(sseEvent({ done: true }))
+                controller.close()
+                return
+              }
+
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split("\n")
+              buffer = lines.pop() || ""
+
+              for (const line of lines) {
+                const trimmed = line.trim()
+                if (!trimmed || !trimmed.startsWith("data:")) continue
+                const dataStr = trimmed.replace(/^data:\s*/, "")
+                if (dataStr === "[DONE]") {
+                  controller.enqueue(sseEvent({ done: true }))
+                  controller.close()
+                  return
+                }
+
+                try {
+                  const json = JSON.parse(dataStr)
+                  const token = json.choices?.[0]?.delta?.content
+                  if (token) {
+                    controller.enqueue(sseEvent({ text: token }))
+                  }
+                } catch {
+                  // Ignore JSON parse errors on partial chunks
+                }
+              }
+            }
+          },
+        })
+      }
+    } catch {
+      // Groq failed, fallback to OpenRouter or local
+    }
+  }
+
+  // 2. Try OpenRouter Streaming
+  if (openRouterKey) {
+    try {
+      const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openRouterKey}`,
+          "HTTP-Referer": "https://prakom-batch3.kejaksaan.go.id",
+          "X-Title": "Agrasena Diklat Prakom Batch 3",
+        },
+        body: JSON.stringify({
+          model: "minimax/minimax-m3:free",
+          messages,
+          temperature,
+          max_tokens,
+          stream: true,
+        }),
+      })
+
+      if (orRes.ok && orRes.body) {
+        const reader = orRes.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ""
+
+        return new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) {
+                controller.enqueue(sseEvent({ done: true }))
+                controller.close()
+                return
+              }
+
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split("\n")
+              buffer = lines.pop() || ""
+
+              for (const line of lines) {
+                const trimmed = line.trim()
+                if (!trimmed || !trimmed.startsWith("data:")) continue
+                const dataStr = trimmed.replace(/^data:\s*/, "")
+                if (dataStr === "[DONE]") {
+                  controller.enqueue(sseEvent({ done: true }))
+                  controller.close()
+                  return
+                }
+
+                try {
+                  const json = JSON.parse(dataStr)
+                  const token = json.choices?.[0]?.delta?.content
+                  if (token) {
+                    controller.enqueue(sseEvent({ text: token }))
+                  }
+                } catch {
+                  // Ignore partial line errors
+                }
+              }
+            }
+          },
+        })
+      }
+    } catch {
+      // OpenRouter stream failed
+    }
+  }
+
+  // 3. Fallback Synthesized Stream (Simulates real-time typing of the local knowledge response)
+  const fallbackText = getLocalFallbackText(messages)
+  const words = fallbackText.split(/(\s+)/)
+  let wordIdx = 0
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      if (wordIdx < words.length) {
+        const chunk = words.slice(wordIdx, wordIdx + 4).join("")
+        wordIdx += 4
+        controller.enqueue(sseEvent({ text: chunk }))
+        // Short pause for natural typing cadence
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      } else {
+        controller.enqueue(sseEvent({ done: true }))
+        controller.close()
+      }
+    },
+  })
 }

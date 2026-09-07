@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getAutoRoadmapData } from "@/lib/roadmap-utils"
 import { TEMPLATES_DATA } from "@/lib/templates-data"
-import { generateAiCompletion } from "@/lib/ai-provider"
+import { generateAiCompletion, streamAiCompletion } from "@/lib/ai-provider"
 import { checkRateLimit, getClientIp, sanitizeInput } from "@/lib/security"
 
 export async function POST(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { messages, userApiKey, userName, userSatker, currentDayNumber = 3 } = body
+    const { messages, userApiKey, userName, userSatker, currentDayNumber = 3, stream = false } = body
 
     const cleanUserName = sanitizeInput(userName, 80)
     const cleanUserSatker = sanitizeInput(userSatker, 100)
@@ -223,12 +223,31 @@ Format jawaban dengan Markdown rapi, bullet points, dan blok kode dengan sintaks
       })
     }
 
-    // 4. Generate AI Completion via OpenRouter (with Multi-Model & Groq Fallback)
+    // 4. Generate AI Completion via OpenRouter / Groq (Streaming or JSON)
+    const aiMessages = [
+      { role: "system" as const, content: systemPrompt },
+      ...cleanMessages.slice(-6),
+    ]
+
+    if (stream) {
+      const readableStream = await streamAiCompletion({
+        messages: aiMessages,
+        temperature: 0.35,
+        max_tokens: 1500,
+        userApiKey,
+      })
+
+      return new Response(readableStream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          "Connection": "keep-alive",
+        },
+      })
+    }
+
     const result = await generateAiCompletion({
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...cleanMessages.slice(-6),
-      ],
+      messages: aiMessages,
       temperature: 0.35,
       max_tokens: 1500,
       userApiKey,

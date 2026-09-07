@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import crypto from 'crypto'
 
 // Secret key for HMAC signing
 const SECRET_KEY =
@@ -78,30 +79,39 @@ export function getClientIp(req: NextRequest | Request): string {
 }
 
 /**
- * Pure portable fast hash function (Edge-safe, zero Node.js 'crypto' dependency)
+ * Constant-time string comparison to prevent timing attacks
  */
-function computeSignature(payload: string, secret: string): string {
-  let hash = 0
-  const combined = `${payload}:${secret}`
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
+export function constantTimeCompare(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false
+  if (a.length !== b.length) return false
+  let result = 0
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
   }
-  // Convert to positive hex representation
-  const hexPart1 = (hash >>> 0).toString(16).padStart(8, '0')
-  
-  // Secondary pass for high entropy
-  let hash2 = 5381
-  for (let i = combined.length - 1; i >= 0; i--) {
-    hash2 = (hash2 * 33) ^ combined.charCodeAt(i)
-  }
-  const hexPart2 = (hash2 >>> 0).toString(16).padStart(8, '0')
-  return `${hexPart1}${hexPart2}`
+  return result === 0
 }
 
 /**
- * Generate a cryptographically signed session token (Edge-compatible)
+ * Standard Cryptographic HMAC-SHA256 signature generator
+ */
+function computeSignature(payload: string, secret: string): string {
+  try {
+    return crypto.createHmac('sha256', secret).update(payload).digest('hex')
+  } catch {
+    // Fallback if native crypto HMAC is unavailable
+    let hash = 0
+    const combined = `${payload}:${secret}`
+    for (let i = 0; i < combined.length; i++) {
+      const char = combined.charCodeAt(i)
+      hash = (hash << 5) - hash + char
+      hash = hash & hash
+    }
+    return (hash >>> 0).toString(16).padStart(16, '0')
+  }
+}
+
+/**
+ * Generate a cryptographically signed session token (HMAC-SHA256)
  */
 export function generateAdminSessionToken(): string {
   const timestamp = Date.now().toString()
@@ -141,7 +151,7 @@ export function verifyAdminSessionToken(token: string | undefined | null): boole
   const payload = `prakom_admin_${timestampStr}`
   const expectedSignature = computeSignature(payload, SECRET_KEY)
 
-  return providedSignature === expectedSignature
+  return constantTimeCompare(providedSignature, expectedSignature)
 }
 
 /**
@@ -164,7 +174,23 @@ export function verifySuperAdminSessionToken(token: string | undefined | null): 
   const payload = `prakom_superadmin_${timestampStr}`
   const expectedSignature = computeSignature(payload, SECRET_KEY)
 
-  return providedSignature === expectedSignature
+  return constantTimeCompare(providedSignature, expectedSignature)
+}
+
+/**
+ * Verify Origin/Referer to prevent Cross-Site Request Forgery (CSRF) on API mutations
+ */
+export function verifyCsrfOrigin(req: NextRequest): boolean {
+  const origin = req.headers.get('origin')
+  const host = req.headers.get('host')
+  if (!origin || !host) return true // Allow non-browser or same-origin direct calls
+
+  try {
+    const originUrl = new URL(origin)
+    return originUrl.host === host
+  } catch {
+    return false
+  }
 }
 
 /**
