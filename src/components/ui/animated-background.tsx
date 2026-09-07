@@ -8,15 +8,24 @@ export function AnimatedBackground() {
       {/* Soft Base Mesh Gradient */}
       <div className="absolute inset-0 bg-[#f6f5f4] dark:bg-[#0c1017] transition-colors duration-300" />
 
-      {/* Static GPU-Accelerated Soft Ambient Orbs (Zero CPU/GPU render loop overhead) */}
+      {/* Pre-blended Zero-GPU-Overhead Ambient Radial Orbs */}
       <div
-        className="absolute -top-24 -left-24 h-[450px] w-[450px] rounded-full bg-[#0075de]/8 dark:bg-[#0075de]/12 blur-[100px] transform-gpu"
+        className="absolute -top-24 -left-24 h-[450px] w-[450px] rounded-full pointer-events-none opacity-80 dark:opacity-60"
+        style={{
+          background: 'radial-gradient(circle, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0) 70%)',
+        }}
       />
       <div
-        className="absolute top-1/4 -right-28 h-[500px] w-[500px] rounded-full bg-[#d6b6f6]/10 dark:bg-[#a855f7]/10 blur-[110px] transform-gpu"
+        className="absolute top-1/4 -right-28 h-[500px] w-[500px] rounded-full pointer-events-none opacity-80 dark:opacity-60"
+        style={{
+          background: 'radial-gradient(circle, rgba(175, 82, 222, 0.08) 0%, rgba(175, 82, 222, 0) 70%)',
+        }}
       />
       <div
-        className="absolute -bottom-32 left-1/3 h-[500px] w-[500px] rounded-full bg-[#1aae39]/8 dark:bg-[#10b981]/8 blur-[100px] transform-gpu"
+        className="absolute -bottom-32 left-1/3 h-[500px] w-[500px] rounded-full pointer-events-none opacity-80 dark:opacity-60"
+        style={{
+          background: 'radial-gradient(circle, rgba(52, 199, 89, 0.07) 0%, rgba(52, 199, 89, 0) 70%)',
+        }}
       />
 
       {/* Subtle Micro-Grid Overlay */}

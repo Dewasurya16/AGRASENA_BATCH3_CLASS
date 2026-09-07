@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from "react"
-import { motion } from "framer-motion"
 import { ModernNavbar } from "@/components/public/modern-navbar"
 import { AIAssistantWidget } from "@/components/public/ai-assistant-widget"
 import { CommandPalette } from "@/components/public/command-palette"
@@ -21,14 +20,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       {/* 3. Main Single-Column Fluid Container */}
       <main className="flex-1 w-full">
         <div className="mx-auto max-w-6xl px-3.5 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-6 sm:space-y-8 pb-24 sm:pb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-            className="space-y-8"
-          >
+          <div className="space-y-8 animate-in fade-in duration-200">
             {children}
-          </motion.div>
+          </div>
         </div>
       </main>
 

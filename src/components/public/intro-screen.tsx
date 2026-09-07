@@ -39,29 +39,31 @@ export function IntroScreen() {
   const [timeInfo, setTimeInfo] = React.useState({ greeting: "Selamat Datang", period: "hari ini", icon: "👋" })
 
   React.useEffect(() => {
-    setMounted(true)
-    setTimeInfo(getTimeGreeting())
-
     try {
       const hasEntered = sessionStorage.getItem("has_entered_portal_session")
-      const savedName = localStorage.getItem("prakom_user_name")
-      const savedNip = localStorage.getItem("prakom_user_nip")
-      const savedSatker = localStorage.getItem("prakom_user_satker")
+      if (hasEntered) {
+        setMounted(true)
+        return
+      }
+
+      const savedName = localStorage.getItem("prakom_user_name") || ""
+      const savedNip = localStorage.getItem("prakom_user_nip") || ""
+      const savedSatker = localStorage.getItem("prakom_user_satker") || ""
 
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
 
-      if (!hasEntered) {
-        setShowIntro(true)
-        if (savedName && savedName.trim().length > 0) {
-          setViewState('recognized')
-        } else {
-          setViewState('welcome')
-        }
+      setTimeInfo(getTimeGreeting())
+      setMounted(true)
+      setShowIntro(true)
+      if (savedName.trim().length > 0) {
+        setViewState('recognized')
+      } else {
+        setViewState('welcome')
       }
     } catch {
-      // Safe fallback
+      setMounted(true)
     }
   }, [])
 
@@ -127,13 +129,14 @@ export function IntroScreen() {
           }}
           className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300 transform-gpu will-change-transform"
         >
-          {/* Ambient glow — adapts per theme */}
+          {/* Ambient glow — adapts per theme without heavy blur filter */}
           <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full blur-[100px] pointer-events-none transform-gpu transition-opacity duration-500 ${
-              isDark
-                ? "bg-gradient-to-tr from-[#0D3830]/50 via-[#1E293B]/40 to-[#0F172A]/30"
-                : "bg-gradient-to-tr from-[#D7F3FE]/60 via-[#FFE3EB]/60 to-[#FFF2D1]/60"
-            }`}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full pointer-events-none transition-opacity duration-300"
+            style={{
+              background: isDark
+                ? "radial-gradient(circle, rgba(13, 56, 48, 0.35) 0%, rgba(30, 41, 59, 0.2) 45%, transparent 70%)"
+                : "radial-gradient(circle, rgba(215, 243, 254, 0.65) 0%, rgba(255, 227, 235, 0.45) 45%, transparent 70%)",
+            }}
           />
 
           {/* Decorative stars */}

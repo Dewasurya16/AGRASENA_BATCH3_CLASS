@@ -81,34 +81,28 @@ export function TwinkleHero() {
               />
 
               {/* Floating Apple SF Pill 1: Semangat */}
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-1 -right-2 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20 dark:border-white/10 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default"
+              <div
+                className="absolute -top-1 -right-2 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20 dark:border-white/10 px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default animate-float-1"
               >
                 <Sparkles className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
                 <span>Semangat Diklat</span>
-              </motion.div>
+              </div>
 
               {/* Floating Apple SF Pill 2: Prakom 625 */}
-              <motion.div
-                animate={{ y: [0, 4, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                className="absolute top-4 -left-2 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#31302e] dark:text-[#e0e0e0] border border-[#e6e6e6] dark:border-white/10 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default"
+              <div
+                className="absolute top-4 -left-2 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#31302e] dark:text-[#e0e0e0] border border-[#e6e6e6] dark:border-white/10 px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default animate-float-2"
               >
                 <Code2 className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
                 <span>Prakom 625</span>
-              </motion.div>
+              </div>
 
               {/* Floating Apple SF Pill 3: 120 JP Ready */}
-              <motion.div
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-2 -right-1 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#16a34a] dark:text-[#4ade80] border border-[#16a34a]/20 dark:border-white/10 backdrop-blur-xs px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default"
+              <div
+                className="absolute -bottom-2 -right-1 z-20 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-[#1c2433]/95 text-[#16a34a] dark:text-[#4ade80] border border-[#16a34a]/20 dark:border-white/10 px-3.5 py-1 text-xs font-semibold shadow-xs cursor-default animate-float-3"
               >
                 <Star className="h-3.5 w-3.5 text-[#16a34a]" strokeWidth={2} />
                 <span>120 JP Siap</span>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
 

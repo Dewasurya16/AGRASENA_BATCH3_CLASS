@@ -171,7 +171,7 @@ export function LiveSessionBanner({
       })
   }, [todaySchedules, upcomingDayNum])
 
-  const fallbackSession = {
+  const fallbackSession = React.useMemo(() => ({
     id: `live-day-${activeDayNum}`,
     subject_name: `[Hari ${activeDayNum}] Tata Kelola TI & SPBE Nasional (120 JP)`,
     start_time: "08:00",
@@ -179,13 +179,13 @@ export function LiveSessionBanner({
     lecturer: "Widyaiswara / Tim Pusdiklat Kejaksaan RI",
     room: "Ruang Diklat Virtual Zoom • Batch 3",
     zoom_url: RUANG_DIKLAT_URL,
-  }
+  }), [activeDayNum])
 
   const [activeSession, setActiveSession] = React.useState(
     daysSchedules[0] || fallbackSession
   )
 
-  const firstUpcomingSession = upcomingDaySchedules[0] || {
+  const firstUpcomingSession = React.useMemo(() => upcomingDaySchedules[0] || ({
     id: `upcoming-day-${upcomingDayNum}`,
     subject_name: `[Hari ${upcomingDayNum}] Perkuliahan Diklat Fungsional Prakom`,
     start_time: "09:30",
@@ -193,7 +193,7 @@ export function LiveSessionBanner({
     lecturer: "Widyaiswara Pusdiklat",
     room: "Ruang Diklat LMS",
     zoom_url: RUANG_DIKLAT_URL,
-  }
+  }), [upcomingDaySchedules, upcomingDayNum])
 
   React.useEffect(() => {
     setMounted(true)
