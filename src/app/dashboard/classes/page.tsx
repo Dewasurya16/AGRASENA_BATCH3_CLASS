@@ -15,96 +15,97 @@ import {
   BookOpen,
   Calendar,
   Layers,
-  GraduationCap
+  GraduationCap,
+  Building2,
+  Sparkles
 } from "lucide-react"
 
-interface ClassItem {
+interface CohortGroup {
   id: string
   name: string
-  grade: string
-  academicYear: string
+  stage: string
+  batchYear: string
   code: string
   description: string
-  studentCount: number
+  memberCount: number
 }
 
-const INITIAL_CLASSES: ClassItem[] = [
+const INITIAL_GROUPS: CohortGroup[] = [
   {
     id: "1",
-    name: "X IPA 1 - Matematika Wajib",
-    grade: "Kelas 10",
-    academicYear: "2026/2027",
-    code: "MTK-X1",
-    description: "Pembelajaran Aljabar, Trigonometri, dan Kalkulus Dasar",
-    studentCount: 32,
+    name: "Kelompok 1 — Kejaksaan Agung & Badan Diklat",
+    stage: "Tahap 2 • TMO Zoom",
+    batchYear: "Batch 3 — 2026",
+    code: "AGR-P01",
+    description: "Fokus koordinasi SPBE Nasional, arsitektur data warehouse perkara terpadu, dan CSIRT Kejaksaan RI.",
+    memberCount: 35,
   },
   {
     id: "2",
-    name: "XI IPA 2 - Fisika Dasar",
-    grade: "Kelas 11",
-    academicYear: "2026/2027",
-    code: "FSK-XI2",
-    description: "Mekanika, Termodinamika, dan Gelombang Optik",
-    studentCount: 30,
+    name: "Kelompok 2 — Wilayah Kejati Jawa, Bali & NTB/NTT",
+    stage: "Tahap 2 • TMO Zoom",
+    batchYear: "Batch 3 — 2026",
+    code: "AGR-P02",
+    description: "Pendalaman infrastruktur server Linux satker, query tuning database perkara CMS, dan SOP TIK pelayanan publik.",
+    memberCount: 42,
   },
   {
     id: "3",
-    name: "XII IPS 1 - Ekonomi & Akuntansi",
-    grade: "Kelas 12",
-    academicYear: "2026/2027",
-    code: "EKO-XII1",
-    description: "Prinsip Akuntansi Dasar dan Ekonomi Makro",
-    studentCount: 34,
+    name: "Kelompok 3 — Wilayah Kejati se-Sumatera",
+    stage: "Tahap 2 • TMO Zoom",
+    batchYear: "Batch 3 — 2026",
+    code: "AGR-P03",
+    description: "Manajemen jaringan intra-pemerintah, mitigasi risiko siber ISO 31000, dan bukti fisik DUPAK fungsional.",
+    memberCount: 36,
   },
   {
     id: "4",
-    name: "X IPS 3 - Bahasa Inggris",
-    grade: "Kelas 10",
-    academicYear: "2026/2027",
-    code: "ING-X3",
-    description: "English Grammar, Reading Comprehension, & Public Speaking",
-    studentCount: 32,
+    name: "Kelompok 4 — Wilayah Kalimantan, Sulawesi, Maluku & Papua",
+    stage: "Tahap 2 • TMO Zoom",
+    batchYear: "Batch 3 — 2026",
+    code: "AGR-P04",
+    description: "Optimalisasi bandwidth satker kepulauan, sistem backup cloud otomatis, dan proposal aksi perubahan seminar.",
+    memberCount: 38,
   },
 ]
 
 export default function ClassesPage() {
-  const [classes, setClasses] = React.useState<ClassItem[]>(INITIAL_CLASSES)
+  const [groups, setGroups] = React.useState<CohortGroup[]>(INITIAL_GROUPS)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [isModalOpen, setIsModalOpen] = React.useState(false)
   const [copiedCode, setCopiedCode] = React.useState<string | null>(null)
 
   // Form State
   const [name, setName] = React.useState("")
-  const [grade, setGrade] = React.useState("Kelas 10")
-  const [academicYear, setAcademicYear] = React.useState("2026/2027")
+  const [stage, setStage] = React.useState("Tahap 2 • TMO Zoom")
+  const [batchYear, setBatchYear] = React.useState("Batch 3 — 2026")
   const [description, setDescription] = React.useState("")
 
-  const filteredClasses = classes.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.code.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredGroups = groups.filter(
+    (g) =>
+      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.code.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleCreateClass = (e: React.FormEvent) => {
+  const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name) return
 
     const randomCode =
-      name.substring(0, 3).toUpperCase() +
-      "-" +
+      "AGR-" +
       Math.floor(100 + Math.random() * 900)
 
-    const newClass: ClassItem = {
+    const newGroup: CohortGroup = {
       id: Date.now().toString(),
       name,
-      grade,
-      academicYear,
+      stage,
+      batchYear,
       code: randomCode,
-      description: description || "Kelas pembelajaran digital aktif",
-      studentCount: 0,
+      description: description || "Kelompok studi diklat fungsional aktif",
+      memberCount: 0,
     }
 
-    setClasses([newClass, ...classes])
+    setGroups([newGroup, ...groups])
     setIsModalOpen(false)
     setName("")
     setDescription("")
@@ -122,13 +123,13 @@ export default function ClassesPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <Badge eyebrow variant="purple" dot>
-            Manajemen Akademik
+            Pengelompokan Belajar & Satker
           </Badge>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-2">
-            Manajemen Kelas & Rombel
+            Kelompok Belajar Diklat Prakom
           </h2>
           <p className="text-xs sm:text-sm text-slate-400">
-            Kelola ruang kelas, kode pendaftaran siswa, dan kurikulum aktif
+            Kelola pembagian kelompok regional, kode penugasan lab satker, dan pendampingan widyaiswara
           </p>
         </div>
 
@@ -138,7 +139,7 @@ export default function ClassesPage() {
           size="md"
           icon={<Plus className="h-4 w-4" />}
         >
-          Buat Kelas Baru
+          Buat Kelompok Baru
         </Button>
       </div>
 
@@ -148,23 +149,23 @@ export default function ClassesPage() {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan nama mata pelajaran atau kode kelas..."
+            placeholder="Cari berdasarkan nama kelompok atau kode..."
             icon={<Search className="h-4 w-4 text-slate-400" />}
           />
         </div>
         <span className="text-xs text-slate-400 ml-auto hidden sm:block">
-          Menampilkan {filteredClasses.length} dari {classes.length} kelas
+          Menampilkan {filteredGroups.length} dari {groups.length} kelompok regional
         </span>
       </div>
 
-      {/* Classes Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredClasses.map((item) => (
+      {/* Groups Grid */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2">
+        {filteredGroups.map((item) => (
           <Card key={item.id}>
             <CardHeader className="flex flex-row items-start justify-between pb-2">
               <div className="space-y-1">
                 <Badge variant="purple" dot>
-                  {item.grade}
+                  {item.stage}
                 </Badge>
                 <CardTitle className="mt-2 text-base line-clamp-1">{item.name}</CardTitle>
                 <CardDescription className="line-clamp-2">{item.description}</CardDescription>
@@ -175,7 +176,7 @@ export default function ClassesPage() {
               {/* Code Box */}
               <div className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
                 <div>
-                  <p className="text-[10px] uppercase font-semibold text-slate-400">Kode Kelas</p>
+                  <p className="text-[10px] uppercase font-semibold text-slate-400">Kode Kelompok / Penugasan</p>
                   <p className="font-mono text-sm font-bold text-indigo-300">{item.code}</p>
                 </div>
                 <Button
@@ -198,26 +199,26 @@ export default function ClassesPage() {
               <div className="flex items-center justify-between text-xs text-slate-400 border-t border-white/[0.05] pt-3">
                 <span className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5 text-indigo-400" />
-                  {item.studentCount} Siswa Terdaftar
+                  {item.memberCount} Rekan Prakom Terdaftar
                 </span>
-                <span>{item.academicYear}</span>
+                <span className="font-mono">{item.batchYear}</span>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Modal Buat Kelas Baru */}
+      {/* Modal Buat Kelompok Baru */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Buat Ruang Kelas Baru"
-        description="Lengkapi detail kelas di bawah untuk membuat ruang kelas dan kode pendaftaran otomatis."
+        title="Buat Kelompok Belajar Baru"
+        description="Lengkapi informasi kelompok regional untuk sesi diskusi dan penugasan lab satker."
       >
-        <form onSubmit={handleCreateClass} className="space-y-4">
+        <form onSubmit={handleCreateGroup} className="space-y-4">
           <Input
-            label="Nama Kelas / Mata Pelajaran"
-            placeholder="Contoh: X IPA 1 - Biologi"
+            label="Nama Kelompok / Regional Satker"
+            placeholder="Contoh: Kelompok 5 — Wilayah Kalimantan Barat & Tengah"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -226,41 +227,42 @@ export default function ClassesPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Tingkat
+                Tahap Diklat
               </label>
               <select
-                value={grade}
-                onChange={(e) => setGrade(e.target.value)}
-                className="w-full rounded-2xl border border-white/[0.08] bg-[#0c101d] px-4 py-2.5 text-sm text-slate-100 focus:border-indigo-500/60 focus:outline-none"
+                value={stage}
+                onChange={(e) => setStage(e.target.value)}
+                className="w-full rounded-2xl border border-white/[0.08] bg-[#0c101d] px-4 py-2.5 text-xs text-slate-100 focus:border-indigo-500/60 focus:outline-none"
               >
-                <option value="Kelas 10">Kelas 10</option>
-                <option value="Kelas 11">Kelas 11</option>
-                <option value="Kelas 12">Kelas 12</option>
+                <option value="Tahap 1 • MOOC 120 JP">Tahap 1 • MOOC 120 JP</option>
+                <option value="Tahap 2 • TMO Zoom">Tahap 2 • TMO Zoom</option>
+                <option value="Tahap 3 • Lab Satker">Tahap 3 • Lab Satker</option>
+                <option value="Tahap 4 • Seminar Aksi Perubahan">Tahap 4 • Seminar Aksi Perubahan</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Tahun Ajaran
+                Angkatan / Batch
               </label>
               <Input
-                value={academicYear}
-                onChange={(e) => setAcademicYear(e.target.value)}
-                placeholder="2026/2027"
+                value={batchYear}
+                onChange={(e) => setBatchYear(e.target.value)}
+                placeholder="Batch 3 — 2026"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Deskripsi Kelas
+              Fokus Penugasan / Deskripsi
             </label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Deskripsi materi atau silabus kelas..."
-              className="w-full rounded-2xl border border-white/[0.08] bg-[#0c101d] p-3 text-sm text-slate-100 placeholder-slate-500 focus:border-indigo-500/60 focus:outline-none"
+              placeholder="Deskripsi fokus kajian TIK atau penugasan satker..."
+              className="w-full rounded-2xl border border-white/[0.08] bg-[#0c101d] p-3 text-xs text-slate-100 placeholder-slate-500 focus:border-indigo-500/60 focus:outline-none"
             />
           </div>
 
@@ -274,7 +276,7 @@ export default function ClassesPage() {
               Batal
             </Button>
             <Button type="submit" variant="primary" size="md">
-              Simpan Kelas
+              Simpan Kelompok
             </Button>
           </div>
         </form>

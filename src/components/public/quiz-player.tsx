@@ -26,7 +26,9 @@ import {
   BarChart3,
   ShieldCheck,
   Shield,
-  Layers
+  Layers,
+  Printer,
+  Download
 } from "lucide-react"
 import { QUIZ_QUESTIONS, QUIZ_PACKAGES, QuizQuestion, QuizPackage } from "@/data/quiz-questions"
 import { Spinner } from "@/components/ui/spinner"
@@ -57,6 +59,11 @@ export function QuizPlayer() {
   const [isGeneratingAiQuiz, setIsGeneratingAiQuiz] = React.useState(false)
   const [aiErrorMsg, setAiErrorMsg] = React.useState<string | null>(null)
 
+  // Certificate Modal States
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = React.useState(false)
+  const [certName, setCertName] = React.useState("Rekan Prakom Kejaksaan")
+  const [certSatker, setCertSatker] = React.useState("Kejaksaan RI")
+
   // Storage Stats State
   const [completedPacks, setCompletedPacks] = React.useState<string[]>([])
   const [packScores, setPackScores] = React.useState<Record<string, number>>({})
@@ -76,6 +83,11 @@ export function QuizPlayer() {
 
   const loadSavedData = React.useCallback(() => {
     try {
+      const savedName = localStorage.getItem("prakom_user_name")
+      const savedSatker = localStorage.getItem("prakom_user_satker")
+      if (savedName) setCertName(savedName)
+      if (savedSatker) setCertSatker(savedSatker)
+
       const savedPacks = localStorage.getItem("prakom_completed_quiz_packs")
       if (savedPacks) {
         const parsed = JSON.parse(savedPacks)
@@ -770,6 +782,17 @@ export function QuizPlayer() {
               <span>Kembali ke Pusat Kuis</span>
             </button>
 
+            {isPassed && (
+              <button
+                type="button"
+                onClick={() => setIsCertificateModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-2 text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                <Trophy className="h-3.5 w-3.5 text-amber-300" />
+                <span>🏆 Cetak Sertifikat Kelulusan</span>
+              </button>
+            )}
+
             {activePackage && (
               <button
                 type="button"
@@ -907,6 +930,125 @@ export function QuizPlayer() {
             })}
           </div>
         </div>
+
+        {/* MODAL: Official Certificate */}
+        <Modal
+          isOpen={isCertificateModalOpen}
+          onClose={() => setIsCertificateModalOpen(false)}
+          title="🏆 Sertifikat Kelulusan Uji Kompetensi Simulasi"
+          description="Sertifikat penghargaan atas keberhasilan menyelesaikan evaluasi kurikulum Diklat Fungsional Prakom."
+          className="max-w-2xl"
+        >
+          <div className="space-y-4 pt-2">
+            {/* User Details Form in Modal */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-[#161b26] border border-slate-200 dark:border-white/10 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Nama Peserta Diklat</label>
+                <input
+                  type="text"
+                  value={certName}
+                  onChange={(e) => {
+                    setCertName(e.target.value)
+                    try { localStorage.setItem("prakom_user_name", e.target.value) } catch {}
+                  }}
+                  className="w-full rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1a2332] p-2 text-xs text-slate-900 dark:text-white focus:outline-none"
+                  placeholder="Nama Lengkap & Gelar"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Satuan Kerja</label>
+                <input
+                  type="text"
+                  value={certSatker}
+                  onChange={(e) => {
+                    setCertSatker(e.target.value)
+                    try { localStorage.setItem("prakom_user_satker", e.target.value) } catch {}
+                  }}
+                  className="w-full rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-[#1a2332] p-2 text-xs text-slate-900 dark:text-white focus:outline-none"
+                  placeholder="Kejari / Kejati / Kejagung"
+                />
+              </div>
+            </div>
+
+            {/* Certificate Preview Card */}
+            <div
+              className="relative p-6 sm:p-8 rounded-2xl border-4 border-double border-amber-600/60 bg-gradient-to-br from-amber-50/50 via-white to-amber-50/30 dark:from-[#0d121c] dark:via-[#131926] dark:to-[#0d121c] text-center space-y-4 shadow-xl text-slate-800 dark:text-slate-100"
+            >
+              {/* Header Badge */}
+              <div className="space-y-1 border-b border-amber-600/30 pb-3">
+                <div className="text-[10px] font-mono tracking-widest text-amber-700 dark:text-amber-400 uppercase font-black">
+                  DIKLAT FUNGSIONAL PRANATA KOMPUTER BATCH 3 • KEJAKSAAN RI
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  SERTIFIKAT KELULUSAN EVALUASI
+                </h3>
+                <div className="text-[10px] font-mono text-slate-400">
+                  NO: AGR-CERT-{activePackage?.id?.toUpperCase() || "CAT"}-{new Date().getFullYear()}
+                </div>
+              </div>
+
+              {/* Recipient */}
+              <div className="space-y-1 py-1">
+                <div className="text-xs text-slate-500 italic">Diberikan secara terhormat kepada:</div>
+                <div className="text-lg sm:text-xl font-black text-indigo-700 dark:text-indigo-400 underline decoration-amber-500 decoration-2 underline-offset-4">
+                  {certName || "Rekan Prakom Kejaksaan RI"}
+                </div>
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  Satuan Kerja: {certSatker || "Kejaksaan RI"}
+                </div>
+              </div>
+
+              {/* Achievement description */}
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg mx-auto">
+                Telah berhasil menyelesaikan evaluasi simulasi uji kompetensi CAT pada mata pelatihan: <br />
+                <strong className="text-slate-900 dark:text-white font-bold">{activePackage?.title || "Simulasi Kuis Terpadu"}</strong> <br />
+                dengan perolehan hasil uji kompetensi:
+              </p>
+
+              {/* Score Pill */}
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-amber-500/20 via-emerald-500/20 to-indigo-500/20 px-6 py-2 rounded-full border border-amber-500/40 text-xs sm:text-sm font-black font-mono">
+                <span className="text-emerald-600 dark:text-emerald-400">SKOR: {scorePercentage}%</span>
+                <span className="text-slate-400">•</span>
+                <span className="text-indigo-600 dark:text-indigo-400">PREDIKAT: {scorePercentage >= 90 ? "SANGAT MEMUASKAN" : "MEMUASKAN"}</span>
+              </div>
+
+              {/* Footer Signatures */}
+              <div className="pt-4 border-t border-amber-600/30 flex items-center justify-between text-[10px] text-slate-500 px-4">
+                <div className="text-left">
+                  <div>Terbit Digital:</div>
+                  <div className="font-mono font-semibold text-slate-700 dark:text-slate-300">
+                    {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-slate-700 dark:text-slate-300">Portal Diklat Agrasena</div>
+                  <div className="text-[9px] text-emerald-600 font-mono">STATUS: VERIFIED LULUS</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsCertificateModalOpen(false)}
+                className="px-4 py-2 rounded-full border border-[#e6e6e6] dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.print()
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span>Cetak / Simpan PDF</span>
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     )
   }

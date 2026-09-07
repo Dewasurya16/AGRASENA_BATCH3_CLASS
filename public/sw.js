@@ -1,7 +1,10 @@
-const CACHE_NAME = 'prakom625-v2';
+const CACHE_NAME = 'prakom625-v3';
 
 const STATIC_ASSETS = [
   '/',
+  '/materials',
+  '/schedules',
+  '/quiz',
   '/icon-192x192.png',
   '/icon-512x512.png',
   '/icon-maskable-192x192.png',
@@ -17,7 +20,9 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch((err) => {
+        console.warn('[SW] Pre-cache partial warning:', err);
+      });
     })
   );
   self.skipWaiting();
@@ -39,19 +44,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Fetch event: Stale-While-Revalidate for static assets, Network-First for navigation & API
+// 3. Fetch event: Stale-While-Revalidate for static assets, Network-First for navigation
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests and browser-extension requests
+  // Skip non-GET requests and non-http(s)
   if (request.method !== 'GET' || !url.protocol.startsWith('http')) {
     return;
   }
 
   // CRITICAL: NEVER cache API routes, Supabase calls, or Next.js RSC requests
-  // Next.js client-side navigation uses RSC fetches (?_rsc=... or rsc header).
-  // Caching these caused materials and other modules to appear outdated.
   const isRscRequest =
     url.searchParams.has('_rsc') ||
     request.headers.get('rsc') === '1' ||
@@ -61,23 +64,16 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/api/') ||
     url.hostname.includes('supabase.co');
 
-  const isDynamicRoute =
-    url.pathname.startsWith('/materials') ||
-    url.pathname.startsWith('/schedules') ||
-    url.pathname.startsWith('/tasks') ||
-    url.pathname.startsWith('/dashboard') ||
-    url.pathname.startsWith('/admin');
-
-  if (isApiOrSupabase || isRscRequest || isDynamicRoute) {
+  if (isApiOrSupabase || isRscRequest) {
     return; // Pass through directly to network
   }
 
-  // Navigation requests (HTML pages) -> Network-First, fallback to cache
+  // Navigation requests (HTML pages) -> Network-First, fallback to cached page or root
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.status === 200) {
+          if (response && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseClone);
@@ -90,7 +86,10 @@ self.addEventListener('fetch', (event) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          return caches.match('/');
+          return (await caches.match('/')) || new Response(
+            '<html><head><meta charset="utf-8"><title>Mode Offline - Diklat Prakom</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:sans-serif;text-align:center;padding:40px 20px;background:#0f172a;color:#f8fafc;"><h2>📡 Mode Offline</h2><p>Koneksi internet Anda sedang terputus. Buka modul atau halaman yang sudah pernah Anda buka sebelumnya.</p><button onclick="window.location.reload()" style="margin-top:16px;padding:10px 20px;border-radius:20px;border:none;background:#2563eb;color:white;font-weight:bold;cursor:pointer;">Coba Muat Ulang</button></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
         })
     );
     return;

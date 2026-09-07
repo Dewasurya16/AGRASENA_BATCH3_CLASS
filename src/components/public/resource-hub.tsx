@@ -23,6 +23,7 @@ import {
   Maximize2,
   Edit3,
   BookMarked,
+  Bookmark,
   RefreshCw,
   Volume2,
   VolumeX
@@ -521,6 +522,33 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
     })
   }
 
+  // Bookmark tracking for Local Storage
+  const [bookmarkedIds, setBookmarkedIds] = React.useState<string[]>([])
+  const [showOnlyBookmarks, setShowOnlyBookmarks] = React.useState(false)
+
+  // Load bookmark status from localStorage
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prakom_materials_bookmarked")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setBookmarkedIds(parsed)
+      }
+    } catch {}
+  }, [])
+
+  const toggleBookmark = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    setBookmarkedIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      try {
+        localStorage.setItem("prakom_materials_bookmarked", JSON.stringify(next))
+        window.dispatchEvent(new Event("storage"))
+      } catch {}
+      return next
+    })
+  }
+
   // Load study notes from localStorage
   React.useEffect(() => {
     try {
@@ -562,10 +590,11 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
       const matchSubject = selectedSubject === "Semua" || item.subject_name === selectedSubject
       const matchWeek =
         selectedWeek === "Semua" || `Pertemuan ${item.week_number}` === selectedWeek
+      const matchBookmark = !showOnlyBookmarks || bookmarkedIds.includes(item.id)
 
-      return matchSearch && matchSubject && matchWeek
+      return matchSearch && matchSubject && matchWeek && matchBookmark
     })
-  }, [items, searchQuery, selectedSubject, selectedWeek])
+  }, [items, searchQuery, selectedSubject, selectedWeek, showOnlyBookmarks, bookmarkedIds])
 
   const formatFileSize = (bytes?: number | null) => {
     if (!bytes) return "Dokumen PDF"
@@ -577,6 +606,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
     setSearchQuery("")
     setSelectedSubject("Semua")
     setSelectedWeek("Semua")
+    setShowOnlyBookmarks(false)
   }
 
   // AI Summarizer Handler
@@ -780,6 +810,32 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             </select>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-white/5">
+          <button
+            type="button"
+            onClick={() => setShowOnlyBookmarks(!showOnlyBookmarks)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition border cursor-pointer ${
+              showOnlyBookmarks
+                ? "bg-amber-500 text-white border-amber-600 shadow-xs"
+                : "bg-[#f6f5f4] dark:bg-[#101520] text-[#31302e] dark:text-[#cbd5e1] border-[#e6e6e6] dark:border-white/10 hover:border-amber-400/60"
+            }`}
+          >
+            <Bookmark className={`h-3.5 w-3.5 ${showOnlyBookmarks ? "fill-white text-white" : "text-amber-500"}`} />
+            <span>Materi Disimpan ({bookmarkedIds.length})</span>
+          </button>
+
+          {(showOnlyBookmarks || selectedSubject !== "Semua" || selectedWeek !== "Semua" || searchQuery) && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-red-500 transition cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Reset Filter</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 3. Module Cards Grid */}
@@ -811,12 +867,27 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-3 py-0.5 text-[10px] font-semibold border border-[#34c759]/30">
-                    Pertemuan {item.week_number}
-                  </span>
-                  <span className="font-mono text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8]">
-                    {formatFileSize(item.file_size)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-3 py-0.5 text-[10px] font-semibold border border-[#34c759]/30">
+                      Pertemuan {item.week_number}
+                    </span>
+                    <span className="font-mono text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8]">
+                      {formatFileSize(item.file_size)}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => toggleBookmark(item.id, e)}
+                    title={bookmarkedIds.includes(item.id) ? "Hapus dari simpanan" : "Simpan materi ini (Bookmark)"}
+                    className={`p-1.5 rounded-full transition cursor-pointer ${
+                      bookmarkedIds.includes(item.id)
+                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+                        : "text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-white/5"
+                    }`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${bookmarkedIds.includes(item.id) ? "fill-amber-500 text-amber-500" : ""}`} />
+                  </button>
                 </div>
 
                 <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors line-clamp-2">
@@ -925,6 +996,19 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => toggleBookmark(previewMaterial.id, e)}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    bookmarkedIds.includes(previewMaterial.id)
+                      ? "bg-amber-500 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                  title={bookmarkedIds.includes(previewMaterial.id) ? "Hapus dari simpanan" : "Simpan modul ini"}
+                >
+                  <Bookmark className={`h-3.5 w-3.5 ${bookmarkedIds.includes(previewMaterial.id) ? "fill-white text-white" : "text-amber-500"}`} />
+                  <span>{bookmarkedIds.includes(previewMaterial.id) ? "Tersimpan" : "Simpan"}</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleGenerateAISummary}
