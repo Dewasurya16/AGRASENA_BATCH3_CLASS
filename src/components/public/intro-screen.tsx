@@ -119,9 +119,19 @@ export function IntroScreen() {
       if (savedSatker) setSatker(savedSatker)
       setHasExistingProfile(valid)
 
-      // Inisialisasi status profil dan sesi:
-      // - User yang BELUM mengisi data: akses terkunci wajib isi data lengkap
-      // - User yang SUDAH mengisi data: disambut dengan sapaan intro 'recognized' & tombol masuk instan
+      // Cek apakah pengguna sudah menekan tombol "Masuk ke Portal Kelas" dalam sesi ini
+      const hasEnteredSession = sessionStorage.getItem("has_entered_portal_session") === "true"
+
+      // JIKA PENGGUNA SUDAH MENGISI DATA & SUDAH PERNAH MASUK DI SESI INI:
+      // JANGAN TAMPILKAN INTRO KETIKA PINDAH-PINDAH HALAMAN!
+      if (valid && hasEnteredSession) {
+        setMounted(true)
+        setShowIntro(false)
+        return
+      }
+
+      // JIKA BARU PERTAMA KALI MASUK WEBSITE ATAU BELUM MENGISI DATA:
+      // TAMPILKAN INTRO!
       setTimeInfo(getTimeGreeting())
       setMounted(true)
       setShowIntro(true)
