@@ -23,7 +23,8 @@ import {
   Clock,
   MessageSquare,
   Layers,
-  Search
+  Search,
+  User
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { useTheme } from "@/components/theme-provider"
@@ -34,7 +35,25 @@ export function ModernNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const [isWAModalOpen, setIsWAModalOpen] = React.useState(false)
   const [moreDropdownOpen, setMoreDropdownOpen] = React.useState(false)
+  const [userName, setUserName] = React.useState("")
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+
+  // Listen to profile updates
+  React.useEffect(() => {
+    const updateName = () => {
+      try {
+        const saved = localStorage.getItem("prakom_user_name") || ""
+        setUserName(saved.trim())
+      } catch {}
+    }
+    updateName()
+    window.addEventListener("prakom-profile-updated", updateName)
+    window.addEventListener("prakom-portal-entered", updateName)
+    return () => {
+      window.removeEventListener("prakom-profile-updated", updateName)
+      window.removeEventListener("prakom-portal-entered", updateName)
+    }
+  }, [])
 
   // Close dropdown on click outside
   React.useEffect(() => {
@@ -217,6 +236,21 @@ export function ModernNavbar() {
               {theme === 'dark' ? <Sun className="h-3.5 w-3.5 text-amber-300" strokeWidth={2} /> : <Moon className="h-3.5 w-3.5 text-[#31302e]" strokeWidth={2} />}
             </button>
 
+            {/* User Profile Pill / Button */}
+            {userName && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('prakom-open-intro'))}
+                title={`Profil: ${userName} • Klik untuk ubah identitas atau buka intro`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 px-2.5 py-1 text-xs text-[#31302e] dark:text-[#cbd5e1] hover:border-[#007aff]/50 hover:text-[#007aff] dark:hover:text-[#60a5fa] transition cursor-pointer shadow-2xs max-w-[140px]"
+              >
+                <div className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#007aff]/10 text-[#007aff] dark:bg-[#007aff]/20 dark:text-[#60a5fa]">
+                  <User className="h-2.5 w-2.5" />
+                </div>
+                <span className="truncate text-[11px] font-semibold">{userName.split(' ')[0]}</span>
+              </button>
+            )}
+
             {/* Bagikan Kelas Button */}
             <button
               type="button"
@@ -239,7 +273,7 @@ export function ModernNavbar() {
             </a>
           </div>
 
-          {/* Mobile Actions: Search + Dark Mode + Hamburger */}
+          {/* Mobile Actions: Search + Dark Mode + Profile + Hamburger */}
           <div className="flex lg:hidden items-center gap-1.5">
             <button
               type="button"
@@ -249,6 +283,18 @@ export function ModernNavbar() {
             >
               <Search className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
+
+            {userName && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('prakom-open-intro'))}
+                aria-label="Profil Peserta"
+                title={`Profil: ${userName}`}
+                className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 text-[#007aff] dark:text-[#60a5fa] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] transition cursor-pointer shadow-2xs"
+              >
+                <User className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            )}
 
             <button
               type="button"

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import anime from 'animejs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -26,6 +27,8 @@ export function MinimalistLoader({
 }: MinimalistLoaderProps) {
   const [shouldShow, setShouldShow] = React.useState(delayMs <= 0)
   const [currentStepIdx, setCurrentStepIdx] = React.useState(0)
+  const orbitRingRef = React.useRef<SVGSVGElement>(null)
+  const innerGimbalRef = React.useRef<SVGEllipseElement>(null)
 
   React.useEffect(() => {
     if (delayMs <= 0) {
@@ -45,6 +48,38 @@ export function MinimalistLoader({
     return () => clearInterval(interval)
   }, [shouldShow, steps])
 
+  // Anime.js kinetic dual-orbit gyroscopic animation
+  React.useEffect(() => {
+    if (!shouldShow) return
+    const anims: anime.AnimeInstance[] = []
+
+    if (orbitRingRef.current) {
+      anims.push(
+        anime({
+          targets: orbitRingRef.current,
+          rotate: 360,
+          duration: 1200,
+          easing: 'cubicBezier(0.4, 0.1, 0.25, 1)',
+          loop: true,
+        })
+      )
+    }
+
+    if (innerGimbalRef.current) {
+      anims.push(
+        anime({
+          targets: innerGimbalRef.current,
+          rotate: -360,
+          duration: 800,
+          easing: 'cubicBezier(0.45, 0.05, 0.2, 0.95)',
+          loop: true,
+        })
+      )
+    }
+
+    return () => anims.forEach((a) => a.pause())
+  }, [shouldShow])
+
   if (!shouldShow) return null
 
   const content = (
@@ -59,12 +94,12 @@ export function MinimalistLoader({
         {/* Soft Breathing Ambient Glow */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#007aff]/20 via-[#16a34a]/15 to-[#af52de]/15 dark:from-[#60a5fa]/25 dark:via-[#4ade80]/20 dark:to-[#c084fc]/20 blur-md animate-pulse" />
 
-        {/* Outer Orbit Spinner Ring */}
+        {/* Outer Orbit Spinner Ring powered by Anime.js */}
         <svg
-          className="absolute inset-0 h-full w-full animate-spin"
+          ref={orbitRingRef}
+          className="absolute inset-0 h-full w-full transform-gpu overflow-visible"
           viewBox="0 0 72 72"
           fill="none"
-          style={{ animationDuration: '1.1s' }}
         >
           {/* Subtle guide track */}
           <circle
@@ -72,24 +107,41 @@ export function MinimalistLoader({
             cy="36"
             r="31"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="2"
             className="text-slate-200 dark:text-white/10 opacity-70"
           />
-          {/* Smooth spinning accent arc */}
+          {/* Smooth segmented kinetic accent arc */}
           <circle
             cx="36"
             cy="36"
             r="31"
             stroke="url(#cuteLoaderGradient)"
-            strokeWidth="3"
+            strokeWidth="3.2"
             strokeLinecap="round"
-            strokeDasharray="50 140"
+            strokeDasharray="56 120"
+          />
+          {/* Inner Counter-Rotating Gyroscopic Orbit */}
+          <ellipse
+            ref={innerGimbalRef}
+            cx="36"
+            cy="36"
+            rx="23"
+            ry="14"
+            stroke="url(#cuteLoaderInnerGradient)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray="30 16"
+            className="opacity-75 origin-center"
           />
           <defs>
             <linearGradient id="cuteLoaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#007aff" />
               <stop offset="50%" stopColor="#16a34a" />
               <stop offset="100%" stopColor="#60a5fa" />
+            </linearGradient>
+            <linearGradient id="cuteLoaderInnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#f59e0b" />
+              <stop offset="100%" stopColor="#007aff" />
             </linearGradient>
           </defs>
         </svg>

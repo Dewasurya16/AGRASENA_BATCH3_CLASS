@@ -1,7 +1,8 @@
 'use client'
 
 import * as React from "react"
-import { animate, createTimeline } from "animejs"
+import anime from "animejs"
+import "./anime-intro-logo.css"
 import {
   Sparkles,
   ArrowRight,
@@ -13,13 +14,12 @@ import {
   CreditCard,
   Edit3,
   AlertCircle,
-  CheckCircle2,
   BookOpen,
   Calendar,
-  Shield,
-  Rocket
+  RotateCcw,
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
+import { Spinner } from "@/components/ui/spinner"
 
 function getTimeGreeting(): { greeting: string; period: string; icon: string } {
   const hours = new Date().getHours()
@@ -46,6 +46,42 @@ function isProfileValid(pName: string, pSatker: string, pNip?: string): boolean 
   )
 }
 
+// Pilihan Karakter Maskot 3D Prakom Andal (Duo Kejaksaan + Apple Emojis)
+const PRAKOM_CHARACTERS = [
+  {
+    id: 'duo-kejaksaan',
+    name: 'Duo Prakom Kejaksaan',
+    role: 'Pria & Wanita Seragam Dinas',
+    src: '/prakom-duo-transparent.png',
+    thumb: '/prakom-duo-transparent.png',
+    quote: 'Siap Belajar & Berkarya Bersama! 🇮🇩',
+  },
+  {
+    id: 'prakom-dev',
+    name: 'Prakom Dev',
+    role: 'Pengembang Aplikasi TI',
+    src: '/memoji-prakom-transparent.png',
+    thumb: '/memoji-prakom-transparent.png',
+    quote: 'Yuk Coding & Bangun Solusi! 💻',
+  },
+  {
+    id: 'prakom-female',
+    name: 'Prakom Hijab',
+    role: 'Tata Kelola Sistem TI',
+    src: '/memoji-prakom-female-transparent.png',
+    thumb: '/memoji-prakom-female-transparent.png',
+    quote: 'Tata Kelola TI Andal & Presisi! ✨',
+  },
+  {
+    id: 'prakom-thumbs',
+    name: 'Prakom WWDC',
+    role: 'Infrastruktur Jaringan TI',
+    src: '/memoji-prakom-thumbs-transparent.png',
+    thumb: '/memoji-prakom-thumbs-transparent.png',
+    quote: 'Infrastruktur & Inovasi Digital! 🚀',
+  }
+]
+
 export function IntroScreen() {
   const [mounted, setMounted] = React.useState(false)
   const [showIntro, setShowIntro] = React.useState(false)
@@ -53,6 +89,9 @@ export function IntroScreen() {
   const [hasExistingProfile, setHasExistingProfile] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isExiting, setIsExiting] = React.useState(false)
+  const [isAnimationPlaying, setIsAnimationPlaying] = React.useState(false)
+  const [activeCharIndex, setActiveCharIndex] = React.useState(0)
+  const currentChar = PRAKOM_CHARACTERS[activeCharIndex]
   const { theme, toggleTheme } = useTheme()
 
   const [name, setName] = React.useState("")
@@ -60,16 +99,13 @@ export function IntroScreen() {
   const [satker, setSatker] = React.useState("")
   const [timeInfo, setTimeInfo] = React.useState({ greeting: "Selamat Datang", period: "hari ini", icon: "👋" })
 
-  // Anime.js Animation Element Refs
   const modalRef = React.useRef<HTMLDivElement>(null)
-  const sphereRef = React.useRef<HTMLDivElement>(null)
-  const ringRef = React.useRef<HTMLDivElement>(null)
-  const smileyRef = React.useRef<HTMLDivElement>(null)
   const contentCardRef = React.useRef<HTMLDivElement>(null)
-  const star1Ref = React.useRef<HTMLDivElement>(null)
-  const star2Ref = React.useRef<HTMLDivElement>(null)
-  const activeAnimationsRef = React.useRef<any[]>([])
+  const timelineRef = React.useRef<anime.AnimeTimelineInstance | null>(null)
 
+  // Inisialisasi status profil dan sesi:
+  // - User yang BELUM mengisi nama data (baru maupun lama) TIDAK BISA MASUK!
+  // - User yang SUDAH PERNAH mengisi otomatis langsung masuk ke portal!
   React.useEffect(() => {
     try {
       const savedName = localStorage.getItem("prakom_user_name") || ""
@@ -77,37 +113,37 @@ export function IntroScreen() {
       const savedSatker = localStorage.getItem("prakom_user_satker") || ""
 
       const valid = isProfileValid(savedName, savedSatker, savedNip)
-      const hasEntered = sessionStorage.getItem("has_entered_portal_session")
 
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
       setHasExistingProfile(valid)
 
-      // Jika data diri lengkap dan sesi sudah dibuka, jangan tampilkan intro lagi
-      if (valid && hasEntered) {
+      // JIKA SUDAH PERNAH MENGISI LENGKAP: OTOMATIS BISA MASUK!
+      if (valid) {
+        try {
+          sessionStorage.setItem("has_entered_portal_session", "true")
+        } catch {}
         setMounted(true)
         setShowIntro(false)
         return
       }
 
-      // Jika data diri belum lengkap tapi sesi tersimpan dari sesi sebelumnya, batalkan bypass sesi
-      if (!valid && hasEntered) {
-        try {
-          sessionStorage.removeItem("has_entered_portal_session")
-        } catch {
-          // Ignore
-        }
-      }
+      // JIKA BELUM PERNAH MENGISI ATAU DATA BELUM VALID (BAIK USER BARU MAUPUN LAMA):
+      // KUNCI AKSES! TIDAK BISA MASUK SEBELUM ISI DATA!
+      try {
+        sessionStorage.removeItem("has_entered_portal_session")
+      } catch {}
 
       setTimeInfo(getTimeGreeting())
       setMounted(true)
       setShowIntro(true)
-
-      if (valid) {
-        setViewState('recognized')
+      
+      // Jika ada nama tersimpan lama tapi NIP/Satker belum lengkap, langsung minta lengkapi
+      if (savedName.trim() && !valid) {
+        setViewState('form')
+        setErrorMessage("Silakan lengkapi NIP dan Satuan Kerja Anda untuk membuka akses portal.")
       } else {
-        // Untuk pengunjung pertama kali, jangan langsung tampilkan form data diri: tampilkan welcome dulu
         setViewState('welcome')
       }
     } catch {
@@ -115,6 +151,27 @@ export function IntroScreen() {
       setShowIntro(true)
       setViewState('welcome')
     }
+  }, [])
+
+  // Event listener jika ada yang memicu pembukaan intro secara manual (misal klik profil navbar)
+  React.useEffect(() => {
+    const handleOpenIntro = () => {
+      const savedName = localStorage.getItem("prakom_user_name") || ""
+      const savedNip = localStorage.getItem("prakom_user_nip") || ""
+      const savedSatker = localStorage.getItem("prakom_user_satker") || ""
+      const valid = isProfileValid(savedName, savedSatker, savedNip)
+
+      if (savedName) setName(savedName)
+      if (savedNip) setNip(savedNip)
+      if (savedSatker) setSatker(savedSatker)
+      setHasExistingProfile(valid)
+
+      setShowIntro(true)
+      setIsExiting(false)
+      setViewState(valid ? 'recognized' : 'form')
+    }
+    window.addEventListener("prakom-open-intro", handleOpenIntro)
+    return () => window.removeEventListener("prakom-open-intro", handleOpenIntro)
   }, [])
 
   // Cegah scrolling background ketika intro modal aktif
@@ -129,144 +186,257 @@ export function IntroScreen() {
   }, [showIntro])
 
   // =========================================================================
-  // ANIME.JS: ENTRANCE TIMELINE & CONTINUOUS ORGANIC FLOATING LOOPS
+  // KINETIC SQUASH & STRETCH ANIMATION TIMELINE: "Hallo ! 👋"
+  // Menggunakan fisika elastis murni Anime.js (Julian Garnier Bounce & Rebound)
   // =========================================================================
-  React.useEffect(() => {
-    if (!showIntro) return
+  const playLogoAnimation = React.useCallback(() => {
+    const root = modalRef.current
+    if (!root) return
 
-    // Hentikan animasi sebelumnya jika ada
-    activeAnimationsRef.current.forEach(anim => {
-      try { anim?.pause?.() } catch {}
+    const ambientGlow = root.querySelector('.apple-ambient-glow')
+    const heroStage = root.querySelector('.prakom-character-stage')
+    const speechBubble = root.querySelector('.prakom-speech-bubble')
+    const chars = root.querySelectorAll('.apple-char')
+    const excl = root.querySelector('.apple-char-excl')
+    const waveEmoji = root.querySelector<HTMLElement>('.apple-wave-emoji')
+    const descTitle = root.querySelector('.apple-desc-title')
+    const descP = root.querySelector('.apple-desc-p')
+    const interactivePanel = root.querySelector('.interactive-panel')
+
+    // Hentikan timeline lama jika ada
+    if (timelineRef.current) {
+      try {
+        timelineRef.current.pause()
+      } catch {}
+    }
+
+    setIsAnimationPlaying(true)
+    if (waveEmoji) {
+      waveEmoji.classList.remove('animate-apple-wave')
+    }
+
+    // Set nilai awal: posisi bawah tanah terkompresi
+    anime.set(chars, {
+      transformOrigin: '50% 100% 0px',
+      translateY: 140,
+      scaleX: 0.35,
+      scaleY: 0.3,
+      opacity: 0.001,
+      rotateZ: -18
     })
-    activeAnimationsRef.current = []
 
-    // 1. Entrance Timeline dengan Anime.js
-    const tl = createTimeline({
-      defaults: { ease: 'outCubic' }
-    })
-
-    if (modalRef.current) {
-      tl.add(modalRef.current, {
-        opacity: [0, 1],
-        duration: 350,
-        ease: 'outSine',
-      }, 0)
-    }
-
-    if (sphereRef.current) {
-      tl.add(sphereRef.current, {
-        scale: [0.65, 1],
-        opacity: [0, 1],
-        duration: 650,
-        ease: 'outBack(1.4)',
-      }, 60)
-    }
-
-    if (ringRef.current) {
-      tl.add(ringRef.current, {
-        scale: [0.75, 1],
-        opacity: [0, 0.85],
-        duration: 700,
-        ease: 'outCubic',
-      }, 140)
-    }
-
-    if (smileyRef.current) {
-      tl.add(smileyRef.current, {
-        scale: [0, 1],
-        rotate: [-20, 0],
-        duration: 500,
-        ease: 'outBack(1.8)',
-      }, 240)
-    }
-
-    if (contentCardRef.current) {
-      tl.add(contentCardRef.current, {
-        translateY: [20, 0],
-        opacity: [0, 1],
-        duration: 400,
-        ease: 'outCubic',
-      }, 180)
-    }
-
-    // 2. Loop Organik Floating Planet 120 JP
-    const sphereFloat = sphereRef.current ? animate(sphereRef.current, {
-      translateY: [-6, 6],
-      duration: 2600,
-      ease: 'inOutSine',
-      alternate: true,
-      loop: true,
-    }) : null
-
-    // 3. Loop Oscillating Cincin Saturnus
-    const ringFloat = ringRef.current ? animate(ringRef.current, {
-      translateY: [-3, 3],
-      rotateZ: [-3, 3],
-      duration: 3800,
-      ease: 'inOutSine',
-      alternate: true,
-      loop: true,
-    }) : null
-
-    // 4. Loop Animasi Maskot Senyum
-    const smileyFloat = smileyRef.current ? animate(smileyRef.current, {
-      translateY: [3, -3],
-      rotate: [-2, 2],
-      duration: 3000,
-      ease: 'inOutSine',
-      alternate: true,
-      loop: true,
-    }) : null
-
-    // 5. Bintang & Efek Twinkle
-    const star1Anim = star1Ref.current ? animate(star1Ref.current, {
-      scale: [0.85, 1.25],
-      opacity: [0.4, 0.95],
-      rotate: [0, 360],
-      duration: 4500,
-      ease: 'inOutSine',
-      alternate: true,
-      loop: true,
-    }) : null
-
-    const star2Anim = star2Ref.current ? animate(star2Ref.current, {
-      scale: [1.15, 0.8],
-      opacity: [0.35, 0.85],
-      duration: 3400,
-      ease: 'inOutSine',
-      alternate: true,
-      loop: true,
-    }) : null
-
-    activeAnimationsRef.current = [sphereFloat, ringFloat, smileyFloat, star1Anim, star2Anim].filter(Boolean)
-
-    return () => {
-      activeAnimationsRef.current.forEach(anim => {
-        try { anim?.pause?.() } catch {}
+    if (excl) {
+      anime.set(excl, {
+        transformOrigin: '50% 100% 0px',
+        translateY: -220,
+        scaleX: 0.5,
+        scaleY: 1.8,
+        opacity: 0.001,
+        rotateZ: 25
       })
     }
-  }, [showIntro])
 
-  // Animasikan transisi pergantian viewState (welcome <-> form <-> recognized)
+    if (waveEmoji) {
+      anime.set(waveEmoji, {
+        transformOrigin: '75% 85% 0px',
+        translateY: -180,
+        scaleX: 0.6,
+        scaleY: 1.6,
+        opacity: 0.001,
+        rotateZ: -45
+      })
+    }
+
+    if (heroStage) anime.set(heroStage, { opacity: 0.001, scale: 0.88, translateY: 25 })
+    if (speechBubble) anime.set(speechBubble, { opacity: 0.001, scale: 0.7, translateY: 12 })
+    if (ambientGlow) anime.set(ambientGlow, { opacity: 0.001, scale: 0.5 })
+    if (descTitle && descP) anime.set([descTitle, descP], { opacity: 0.001, translateY: 35 })
+    if (interactivePanel) anime.set(interactivePanel, { opacity: 0.001, translateY: 30 })
+
+    // Konstruksi Timeline kinetik elastis penuh
+    const tl = anime.timeline({
+      autoplay: false,
+      easing: 'easeOutSine',
+      complete: () => {
+        setIsAnimationPlaying(false)
+        if (waveEmoji) {
+          waveEmoji.classList.add('animate-apple-wave')
+        }
+      }
+    })
+
+    // 1. Mekar lingkaran ambient cahaya Apple
+    tl.add({
+      targets: ambientGlow,
+      opacity: [0.001, 1],
+      scale: [0.5, 1],
+      duration: 1000,
+      easing: 'easeOutCubic'
+    }, 40)
+      // 2. Ilustrasi Karakter 3D Prakom & Balon Kata membal naik elastis
+      .add({
+        targets: heroStage,
+        opacity: [0.001, 1],
+        scale: [0.88, 1],
+        translateY: [25, 0],
+        duration: 700,
+        easing: 'easeOutElastic(1.05, 0.7)'
+      }, 100)
+      .add({
+        targets: speechBubble,
+        opacity: [0.001, 1],
+        scale: [0.7, 1],
+        translateY: [12, 0],
+        duration: 550,
+        easing: 'easeOutElastic(1.2, 0.65)'
+      }, 180)
+      // 4. Huruf H - a - l - l - o melompat elastis (Squash & Stretch Rebound)
+      .add({
+        targets: chars,
+        transformOrigin: ['50% 100% 0px', '50% 100% 0px'],
+        opacity: { value: [0.001, 1], duration: 90 },
+        translateY: [
+          { value: [140, -110], duration: 200, endDelay: 20, easing: 'cubicBezier(0.225, 1, 0.915, 0.980)' },
+          { value: 6, duration: 130, easing: 'easeInQuad' },
+          { value: -14, duration: 110, easing: 'easeOutQuad' },
+          { value: 0, duration: 180, easing: 'easeOutQuad' }
+        ],
+        scaleX: [
+          { value: [0.35, 0.85], duration: 200, easing: 'easeOutQuad' },
+          { value: 1.28, duration: 130, delay: 70, easing: 'easeInOutSine' },
+          { value: 0.94, duration: 110, easing: 'easeOutQuad' },
+          { value: 1, duration: 220, easing: 'easeOutElastic(1, .6)' }
+        ],
+        scaleY: [
+          { value: [0.3, 1.35], duration: 180, easing: 'easeOutSine' },
+          { value: 0.55, duration: 130, delay: 70, easing: 'easeInOutSine' },
+          { value: 1.12, duration: 110, easing: 'easeOutQuad' },
+          { value: 1, duration: 260, easing: 'easeOutElastic(1, .6)' }
+        ],
+        rotateZ: [
+          { value: [-18, 8], duration: 200, easing: 'easeOutQuad' },
+          { value: -4, duration: 130, easing: 'easeInOutSine' },
+          { value: 0, duration: 200, easing: 'easeOutElastic(1, .5)' }
+        ],
+        delay: anime.stagger(85, { start: 80 })
+      }, 180)
+      // 4. Tanda seru emas (!) jatuh dari atas, menghantam dan membal tinggi
+      .add({
+        targets: excl,
+        transformOrigin: ['50% 100% 0px', '50% 100% 0px'],
+        opacity: { value: [0.001, 1], duration: 80 },
+        translateY: [
+          { value: [-220, 8], duration: 280, easing: 'cubicBezier(0.350, 0.560, 0.305, 1)' },
+          { value: -22, duration: 150, easing: 'easeOutQuad' },
+          { value: 4, duration: 100, easing: 'easeInQuad' },
+          { value: 0, duration: 180, easing: 'easeOutElastic(1.2, .5)' }
+        ],
+        scaleX: [
+          { value: [0.5, 0.8], duration: 280, easing: 'easeInQuad' },
+          { value: 1.45, duration: 120, easing: 'easeInOutSine' },
+          { value: 0.9, duration: 120, easing: 'easeOutQuad' },
+          { value: 1, duration: 240, easing: 'easeOutElastic(1.2, .5)' }
+        ],
+        scaleY: [
+          { value: [1.8, 1.4], duration: 280, easing: 'easeInQuad' },
+          { value: 0.45, duration: 120, easing: 'easeInOutSine' },
+          { value: 1.15, duration: 120, easing: 'easeOutQuad' },
+          { value: 1, duration: 240, easing: 'easeOutElastic(1.2, .5)' }
+        ],
+        rotateZ: [
+          { value: [25, -10], duration: 280, easing: 'easeOutQuad' },
+          { value: 4, duration: 120, easing: 'easeInOutSine' },
+          { value: 0, duration: 200, easing: 'easeOutElastic(1, .5)' }
+        ]
+      }, '-=220')
+      // 5. Emotikon 👋 jatuh elastis, membal ke atas, dan siap melambai
+      .add({
+        targets: waveEmoji,
+        transformOrigin: ['75% 85% 0px', '75% 85% 0px'],
+        opacity: { value: [0.001, 1], duration: 100 },
+        translateY: [
+          { value: [-180, 8], duration: 320, easing: 'cubicBezier(0.350, 0.560, 0.305, 1)' },
+          { value: -20, duration: 160, easing: 'easeOutQuad' },
+          { value: 0, duration: 200, easing: 'easeOutElastic(1.1, .6)' }
+        ],
+        scaleX: [
+          { value: [0.6, 0.9], duration: 320, easing: 'easeInQuad' },
+          { value: 1.35, duration: 120, easing: 'easeInOutSine' },
+          { value: 1, duration: 250, easing: 'easeOutElastic(1.1, .6)' }
+        ],
+        scaleY: [
+          { value: [1.6, 1.2], duration: 320, easing: 'easeInQuad' },
+          { value: 0.55, duration: 120, easing: 'easeInOutSine' },
+          { value: 1, duration: 250, easing: 'easeOutElastic(1.1, .6)' }
+        ],
+        rotateZ: [
+          { value: [-45, 22], duration: 320, easing: 'easeOutQuad' },
+          { value: -12, duration: 140, easing: 'easeInOutSine' },
+          { value: 0, duration: 200, easing: 'easeOutElastic(1, .5)' }
+        ]
+      }, '-=280')
+      // 6. Deskripsi teks meluncur masuk halus
+      .add({
+        targets: [descTitle, descP],
+        opacity: { value: [0.001, 1], duration: 500 },
+        translateY: [
+          { value: 35, duration: 0 },
+          { value: 0, duration: 700, easing: 'easeOutElastic(1, .8)' }
+        ],
+        delay: anime.stagger(80)
+      }, '-=200')
+      // 7. Panel tombol aksi interaktif muncul siap digunakan
+      .add({
+        targets: interactivePanel,
+        opacity: { value: [0.001, 1], duration: 450 },
+        translateY: [
+          { value: 30, duration: 0 },
+          { value: 0, duration: 700, easing: 'easeOutElastic(1, .8)' }
+        ]
+      }, '-=350')
+
+    timelineRef.current = tl
+    tl.play()
+  }, [])
+
+  // Jalankan animasi saat intro pertama kali dibuka
+  React.useEffect(() => {
+    if (!showIntro) return
+    const timer = setTimeout(() => {
+      playLogoAnimation()
+    }, 100)
+    return () => {
+      clearTimeout(timer)
+      if (timelineRef.current) {
+        try {
+          timelineRef.current.pause()
+        } catch {}
+      }
+    }
+  }, [showIntro, playLogoAnimation])
+
+  // Transisi pergantian view state (welcome <-> form <-> recognized)
   const handleSwitchViewState = (targetState: 'welcome' | 'form' | 'recognized') => {
     if (contentCardRef.current) {
-      animate(contentCardRef.current, {
+      anime({
+        targets: contentCardRef.current,
         opacity: [1, 0],
-        translateY: [0, -12],
-        scale: [1, 0.97],
-        duration: 180,
-        ease: 'inQuad',
-        onComplete: () => {
+        translateY: [0, -10],
+        scale: [1, 0.98],
+        duration: 160,
+        easing: 'easeInQuad',
+        complete: () => {
           setErrorMessage(null)
           setViewState(targetState)
           setTimeout(() => {
             if (contentCardRef.current) {
-              animate(contentCardRef.current, {
+              anime({
+                targets: contentCardRef.current,
                 opacity: [0, 1],
-                translateY: [16, 0],
-                scale: [0.97, 1],
-                duration: 260,
-                ease: 'outCubic',
+                translateY: [12, 0],
+                scale: [0.98, 1],
+                duration: 240,
+                easing: 'easeOutCubic'
               })
             }
           }, 20)
@@ -278,71 +448,30 @@ export function IntroScreen() {
     }
   }
 
-  // =========================================================================
-  // ANIME.JS: EXIT ANIMATION (BURST TRANSITION INTO PORTAL)
-  // =========================================================================
-  const handleEnterPortal = React.useCallback(() => {
-    if (isExiting) return
-
-    const currentName = (name || localStorage.getItem("prakom_user_name") || "").trim()
-    const currentSatker = (satker || localStorage.getItem("prakom_user_satker") || "").trim()
-    const currentNip = (nip || localStorage.getItem("prakom_user_nip") || "").trim()
-
-    // Validasi ketat: Data diri harus lengkap untuk dapat masuk
-    if (!isProfileValid(currentName, currentSatker, currentNip)) {
-      setErrorMessage("Silakan lengkapi data diri Anda (Nama, NIP, Satuan Kerja) terlebih dahulu untuk membuka akses.")
-      handleSwitchViewState('form')
-      return
-    }
-
+  // Eksekusi animasi keluar dan pembukaan portal kelas
+  const executePortalEntry = React.useCallback(() => {
     try {
       sessionStorage.setItem("has_entered_portal_session", "true")
-    } catch {
-      // Safe fallback
-    }
+    } catch {}
 
     setIsExiting(true)
 
-    // Hentikan loop animasi mengambang
-    activeAnimationsRef.current.forEach(anim => {
-      try { anim?.pause?.() } catch {}
-    })
-
-    // Timeline keluar yang dinamis menggunakan Anime.js
-    const exitTl = createTimeline({
-      defaults: { ease: 'inCubic' }
-    })
-
-    if (contentCardRef.current) {
-      exitTl.add(contentCardRef.current, {
-        translateY: [0, 16],
-        opacity: [1, 0],
-        duration: 180,
-      }, 0)
-    }
-
-    if (sphereRef.current) {
-      exitTl.add(sphereRef.current, {
-        scale: [1, 1.2],
-        translateY: [0, -40],
-        opacity: [1, 0],
-        duration: 280,
-        ease: 'inBack(1.4)',
-      }, 40)
-    }
-
     if (modalRef.current) {
-      exitTl.add(modalRef.current, {
+      anime({
+        targets: modalRef.current,
         opacity: [1, 0],
-        duration: 280,
-        onComplete: () => {
+        scale: [1, 1.03],
+        translateY: [0, -20],
+        duration: 350,
+        easing: 'easeInOutCubic',
+        complete: () => {
           setShowIntro(false)
           setIsExiting(false)
           try {
             window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
           } catch {}
         }
-      }, 80)
+      })
     } else {
       setShowIntro(false)
       setIsExiting(false)
@@ -350,8 +479,26 @@ export function IntroScreen() {
         window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
       } catch {}
     }
-  }, [name, satker, nip, isExiting])
+  }, [])
 
+  // Masuk ke portal kelas dengan validasi ketat
+  const handleEnterPortal = React.useCallback(() => {
+    if (isExiting) return
+
+    const currentName = (name || localStorage.getItem("prakom_user_name") || "").trim()
+    const currentSatker = (satker || localStorage.getItem("prakom_user_satker") || "").trim()
+    const currentNip = (nip || localStorage.getItem("prakom_user_nip") || "").trim()
+
+    if (!isProfileValid(currentName, currentSatker, currentNip)) {
+      setErrorMessage("Silakan lengkapi data diri Anda (Nama, NIP, Satuan Kerja) terlebih dahulu untuk membuka akses.")
+      handleSwitchViewState('form')
+      return
+    }
+
+    executePortalEntry()
+  }, [name, satker, nip, isExiting, executePortalEntry])
+
+  // Simpan data profil peserta ke LocalStorage & langsung otomatis masuk portal
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -387,17 +534,110 @@ export function IntroScreen() {
       window.dispatchEvent(new CustomEvent("prakom-profile-updated", {
         detail: { name: finalName, nip: finalNip, satker: finalSatker }
       }))
-    } catch {
-      // Ignore
-    }
+    } catch {}
 
     setName(finalName)
     setNip(finalNip)
     setSatker(finalSatker)
     setHasExistingProfile(true)
-    handleSwitchViewState('recognized')
+
+    // Pengguna yang sudah mengisi data langsung otomatis masuk portal!
+    executePortalEntry()
   }
 
+  // Interaksi klik huruf: membal elastis (Squash & Bounce)
+  const handleCharClick = (e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget
+    anime({
+      targets: el,
+      transformOrigin: '50% 100% 0px',
+      translateY: [
+        { value: -32, duration: 180, easing: 'easeOutQuad' },
+        { value: 5, duration: 130, easing: 'easeInQuad' },
+        { value: 0, duration: 160, easing: 'easeOutBounce' }
+      ],
+      scaleX: [
+        { value: 0.85, duration: 180 },
+        { value: 1.25, duration: 130 },
+        { value: 1, duration: 160 }
+      ],
+      scaleY: [
+        { value: 1.28, duration: 180 },
+        { value: 0.72, duration: 130 },
+        { value: 1, duration: 160 }
+      ]
+    })
+  }
+
+  // Animasi elastis balon kata (speech bubble) saat ganti karakter
+  const animateSpeechBubble = React.useCallback(() => {
+    const root = modalRef.current
+    const bubbleEl = root?.querySelector<HTMLElement>('.prakom-speech-bubble')
+    if (bubbleEl) {
+      anime({
+        targets: bubbleEl,
+        scale: [0.75, 1],
+        opacity: [0.3, 1],
+        translateY: [6, 0],
+        duration: 360,
+        easing: 'easeOutBack(2)'
+      })
+    }
+  }, [])
+
+  // Interaksi klik karakter 3D: pantulan elastis + ganti karakter berikutnya
+  const handleCharacterClick = () => {
+    const root = modalRef.current
+    const avatarBtn = root?.querySelector<HTMLElement>('.prakom-character-avatar-btn')
+    if (avatarBtn) {
+      anime({
+        targets: avatarBtn,
+        scale: [
+          { value: 0.93, duration: 90, easing: 'easeInQuad' },
+          { value: 1.08, duration: 160, easing: 'easeOutBack(2)' },
+          { value: 1, duration: 240, easing: 'easeOutElastic(1.1, 0.6)' }
+        ]
+      })
+    }
+    setActiveCharIndex((prev) => (prev + 1) % PRAKOM_CHARACTERS.length)
+    setTimeout(animateSpeechBubble, 40)
+  }
+
+  // Pilih langsung dari tab switcher
+  const handleSelectChar = (index: number) => {
+    setActiveCharIndex(index)
+    const root = modalRef.current
+    const imgEl = root?.querySelector<HTMLElement>('.prakom-character-img')
+    if (imgEl) {
+      anime({
+        targets: imgEl,
+        scale: [
+          { value: 0.9, duration: 80, easing: 'easeInQuad' },
+          { value: 1.08, duration: 150, easing: 'easeOutBack(2)' },
+          { value: 1, duration: 220, easing: 'easeOutElastic(1.1, 0.5)' }
+        ]
+      })
+    }
+    setTimeout(animateSpeechBubble, 40)
+  }
+
+  // Interaksi klik tangan: melambai gembira
+  const handleWaveClick = () => {
+    const root = modalRef.current
+    const waveEmoji = root?.querySelector<HTMLElement>('.apple-wave-emoji')
+    if (waveEmoji) {
+      anime({
+        targets: waveEmoji,
+        transformOrigin: '75% 85% 0px',
+        rotate: [0, 26, -18, 24, -10, 16, 0],
+        scale: [1, 1.25, 1],
+        duration: 850,
+        easing: 'easeInOutSine'
+      })
+    }
+  }
+
+  // Keyboard shortcut Enter untuk masuk
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showIntro && viewState === 'recognized' && (e.key === "Enter" || e.key === " ")) {
@@ -415,37 +655,13 @@ export function IntroScreen() {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-200 transform-gpu opacity-0"
+      className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#0c1017] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-200 transform-gpu"
     >
-      {/* Zero-overhead ambient glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full pointer-events-none opacity-50 dark:opacity-30"
-        style={{
-          background: isDark
-            ? "radial-gradient(circle, rgba(0, 122, 255, 0.25) 0%, rgba(175, 82, 222, 0.15) 45%, transparent 70%)"
-            : "radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, rgba(244, 114, 182, 0.1) 45%, transparent 70%)",
-        }}
-      />
-
-      {/* Decorative stars dianimasikan dengan Anime.js */}
-      <div
-        ref={star1Ref}
-        className="absolute top-6 right-10 sm:right-20 text-[#007aff]/40 dark:text-[#60a5fa]/40 text-2xl font-black select-none pointer-events-none"
-      >
-        ✦
-      </div>
-      <div
-        ref={star2Ref}
-        className="absolute bottom-8 left-8 sm:left-16 text-amber-400/50 dark:text-amber-300/40 text-xl font-black select-none pointer-events-none"
-      >
-        ✦
-      </div>
-
       {/* ── Top Header Bar ── */}
-      <div className="relative z-10 w-full max-w-4xl flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
+      <div className="relative z-20 w-full max-w-5xl flex items-center justify-between px-4 sm:px-8 pt-3 sm:pt-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-xs ring-1 ring-black/5 dark:ring-white/10">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-xs ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-[#141b27]">
             <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
           </div>
           <div className="flex flex-col">
@@ -453,14 +669,26 @@ export function IntroScreen() {
               Pranata Komputer Keahlian
             </span>
             <span className="text-[10px] font-semibold text-[#6B7C93] dark:text-[#8FA3BC]">
-              Kejaksaan RI × Agrasena (Prakom 625)
+              Kejaksaan RI × Agrasena 625
             </span>
           </div>
         </div>
 
-        {/* Right: badge + theme toggle */}
+        {/* Right: Badges & Controls */}
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white dark:bg-[#1A2235] px-3 py-1 text-[10px] font-black text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-700 shadow-xs">
+          {/* Replay Animation Button */}
+          <button
+            type="button"
+            onClick={playLogoAnimation}
+            disabled={isAnimationPlaying}
+            title="Putar Ulang Animasi Kinetik"
+            className="flex items-center gap-1.5 rounded-full bg-white dark:bg-[#141b27] px-3 py-1 text-[11px] font-semibold text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-800 shadow-2xs hover:bg-slate-50 dark:hover:bg-[#1c2433] active:scale-95 transition cursor-pointer disabled:opacity-50"
+          >
+            <RotateCcw className={`h-3 w-3 ${isAnimationPlaying ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Putar Ulang</span>
+          </button>
+
+          <span className="rounded-full bg-white dark:bg-[#141b27] px-3 py-1 text-[10px] font-black text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-800 shadow-2xs hidden xs:inline">
             Batch 3 • 120 JP
           </span>
 
@@ -469,150 +697,163 @@ export function IntroScreen() {
             type="button"
             onClick={toggleTheme}
             title={isDark ? 'Mode Terang' : 'Mode Gelap'}
-            className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-white dark:bg-[#1A2235] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-[#222E45] shadow-xs cursor-pointer active:scale-95 transition"
+            className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-amber-300 hover:bg-slate-100 dark:hover:bg-[#1c2433] shadow-2xs cursor-pointer active:scale-95 transition"
           >
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
-      {/* ── Center Content ── */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center gap-4 sm:gap-5 my-auto px-4 py-4 w-full max-w-xl">
+      {/* ── Center Content: Signature Kinetic "Hallo ! 👋" Typography ── */}
+      <div className="relative z-10 flex flex-col items-center justify-center my-auto px-4 py-2 sm:py-3 w-full max-w-2xl">
 
-        {/* Visual: Planet 120 JP + Ring + Smiley (Dianimasikan oleh Anime.js) */}
-        <div className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${viewState === 'form' ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-28 w-28 sm:h-36 sm:w-36'}`}>
+        <div className="apple-intro-container">
+          {/* Soft Ambient Diffusion Orb */}
+          <div className="apple-ambient-glow" />
 
-          {/* Saturn Ring */}
-          <div
-            ref={ringRef}
-            className={`absolute rounded-full border-[2.5px] border-[#007aff]/60 dark:border-[#60a5fa]/60 pointer-events-none transition-all duration-300 ${viewState === 'form' ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-28 w-28 sm:h-36 sm:w-36'}`}
-            style={{ transform: "rotateX(72deg) rotateY(-18deg)" }}
-          />
+          {/* Compact 3D Character Stage with Speech Bubble & Switcher */}
+          <div className="prakom-character-stage prakom-character-float">
+            {/* Balon Kata-kata Maskot (Apple-style Speech Bubble) */}
+            <div
+              onClick={handleCharacterClick}
+              title={`${currentChar.name} • Klik untuk kata-kata maskot berikutnya!`}
+              className="prakom-speech-bubble"
+            >
+              <span className="prakom-speech-text">{currentChar.quote}</span>
+              <span className="prakom-speech-tail" />
+            </div>
 
-          {/* Sphere */}
-          <div
-            ref={sphereRef}
-            onMouseEnter={() => {
-              if (sphereRef.current) {
-                animate(sphereRef.current, { scale: 1.08, duration: 250, ease: 'outBack(2)' })
-              }
-            }}
-            onMouseLeave={() => {
-              if (sphereRef.current) {
-                animate(sphereRef.current, { scale: 1, duration: 250, ease: 'outBack' })
-              }
-            }}
-            className={`relative flex flex-col items-center justify-center rounded-full bg-gradient-to-tr from-[#007aff] via-[#af52de] to-[#f59e0b] shadow-lg shadow-blue-500/25 border-2 border-white/80 dark:border-white/20 cursor-pointer transition-all duration-300 ${viewState === 'form' ? 'h-16 w-16 sm:h-18 sm:w-18' : 'h-20 w-20 sm:h-24 sm:w-24'}`}
-          >
-            <span className="text-white text-xs sm:text-sm font-black tracking-wider uppercase drop-shadow-md">
-              120 JP
-            </span>
-            <div className="absolute -top-2 -right-1 text-amber-300 text-base select-none">✦</div>
+            <button
+              type="button"
+              onClick={handleCharacterClick}
+              title={`${currentChar.name} • Klik untuk ganti emoji / karakter!`}
+              className="prakom-character-avatar-btn group"
+            >
+              <img
+                src={currentChar.src}
+                alt={currentChar.name}
+                className="prakom-character-img"
+              />
+            </button>
+
+            {/* Compact Switcher Pill */}
+            <div className="prakom-switcher-pill" role="tablist" aria-label="Pilih Karakter Maskot">
+              {PRAKOM_CHARACTERS.map((item, idx) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeCharIndex === idx}
+                  onClick={() => handleSelectChar(idx)}
+                  title={`${item.name} • ${item.role}`}
+                  className={`prakom-switch-tab ${activeCharIndex === idx ? 'active' : ''}`}
+                >
+                  <img src={item.thumb} alt={item.name} />
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Smiley Mascot with Interactive Anime.js Hover */}
-          <div
-            ref={smileyRef}
-            onMouseEnter={() => {
-              if (smileyRef.current) {
-                animate(smileyRef.current, { scale: 1.2, rotate: 12, duration: 200, ease: 'outBack(2.5)' })
-              }
-            }}
-            onMouseLeave={() => {
-              if (smileyRef.current) {
-                animate(smileyRef.current, { scale: 1, rotate: 0, duration: 250, ease: 'outBack' })
-              }
-            }}
-            className={`absolute -bottom-1 -left-1 sm:left-0 flex items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-[#2D2010] border-[2px] border-[#18181B] dark:border-[#D97706] shadow-md shadow-black/10 cursor-pointer z-20 transition-all duration-300 ${viewState === 'form' ? 'h-8 w-8 sm:h-9 sm:w-9' : 'h-10 w-10 sm:h-12 sm:w-12'}`}
-          >
-            <div className="flex flex-col items-center justify-center">
-              <div className="flex gap-1 mb-0.5">
-                <span className="h-1 w-1 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
-                <span className="h-1 w-1 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
-              </div>
-              <div className="h-1 w-3 rounded-b-full border-b-[1.5px] border-[#18181B] dark:border-[#FCD34D]" />
-            </div>
+          {/* Kinetic "Hallo!" with Interactive Elastic Letters & Waving Hand */}
+          <div className="apple-hello-wrapper">
+            <h1 className="apple-hello-title">
+              <span className="apple-char" onClick={handleCharClick} title="Klik saya!">H</span>
+              <span className="apple-char" onClick={handleCharClick} title="Klik saya!">a</span>
+              <span className="apple-char" onClick={handleCharClick} title="Klik saya!">l</span>
+              <span className="apple-char" onClick={handleCharClick} title="Klik saya!">l</span>
+              <span className="apple-char" onClick={handleCharClick} title="Klik saya!">o</span>
+              <span className="apple-char-excl" onClick={handleCharClick} title="Klik saya!">!</span>
+            </h1>
+            <span
+              className="apple-wave-emoji"
+              role="img"
+              aria-label="Lambaian Tangan Apple"
+              title="Klik untuk melambai!"
+              onClick={handleWaveClick}
+            >
+              👋
+            </span>
+          </div>
+
+          {/* Sub-headline & Description */}
+          <div className="space-y-1">
+            <h2 className="apple-desc-title text-[#18181B] dark:text-white">
+              Diklat Fungsional <span className="text-[#007aff] dark:text-[#60a5fa]">Pranata Komputer</span>
+            </h2>
+            <p className="apple-desc-p text-[#615d59] dark:text-[#94a3b8]">
+              Pusat materi 120 JP modul resmi, rundown 35 hari, simulasi kuis MOOC, dan asisten AI proposal makalah.
+            </p>
           </div>
         </div>
 
-        {/* Dynamic Interactive Body (Welcome vs Form vs Recognized Greeting) */}
-        <div ref={contentCardRef} className="w-full max-w-md flex flex-col items-center">
+        {/* ── Interactive User Action Panel (Welcome / Form / Recognized) ── */}
+        <div
+          ref={contentCardRef}
+          className="interactive-panel w-full max-w-md mt-3 sm:mt-4 flex flex-col items-center opacity-0"
+        >
 
-          {/* 1. STATE WELCOME: Sambutan Awal Desain Cantik dengan Tombol Masuk Isi Data Diri */}
+          {/* 1. STATE: WELCOME (Pengunjung Baru) */}
           {viewState === 'welcome' && (
-            <div className="flex flex-col items-center gap-4 max-w-md w-full">
+            <div className="flex flex-col items-center gap-4 w-full">
               {/* Badge Sapaan Jam */}
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1A2235] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-[#e6e6e6] dark:border-white/10 shadow-xs">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#141b27] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-800 shadow-2xs">
                 <span>{timeInfo.icon}</span>
-                <span>{timeInfo.greeting}, Calon Prakom Andal!</span>
-              </div>
-
-              {/* Welcome Title */}
-              <div className="space-y-1.5">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#18181B] dark:text-[#E2E8F0] tracking-tight leading-tight">
-                  Selamat Datang di <br />
-                  <span className="text-[#007aff] dark:text-[#60a5fa]">Portal Kelas Agrasena</span>
-                </h1>
-                <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] font-normal leading-relaxed max-w-sm mx-auto">
-                  Hub materi modul 120 JP resmi, rundown 35 hari, dan asisten generator AI makalah Diklat Fungsional Keahlian Kejaksaan RI.
-                </p>
+                <span>{timeInfo.greeting}, Prakom Andal!</span>
               </div>
 
               {/* 3 Mini Feature Highlight Tiles */}
-              <div className="grid grid-cols-3 gap-2 w-full pt-1">
-                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#007aff]/50 transition-colors">
+              <div className="grid grid-cols-3 gap-2 w-full">
+                <div className="rounded-[14px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#007aff]/50 transition-colors">
                   <BookOpen className="h-4 w-4 text-[#007aff] mb-1" />
                   <span className="font-bold text-[11px] text-[#18181B] dark:text-white">120 JP</span>
-                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Modul Resmi</span>
+                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Modul PDF</span>
                 </div>
-                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#16a34a]/50 transition-colors">
+                <div className="rounded-[14px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#16a34a]/50 transition-colors">
                   <Calendar className="h-4 w-4 text-[#16a34a] dark:text-[#4ade80] mb-1" />
                   <span className="font-bold text-[11px] text-[#18181B] dark:text-white">35 Hari</span>
                   <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Roadmap Sesi</span>
                 </div>
-                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#af52de]/50 transition-colors">
+                <div className="rounded-[14px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#af52de]/50 transition-colors">
                   <Sparkles className="h-4 w-4 text-[#af52de] dark:text-[#c084fc] mb-1" />
                   <span className="font-bold text-[11px] text-[#18181B] dark:text-white">AI Makalah</span>
-                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Generator Proposal</span>
+                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Generator Satker</span>
                 </div>
               </div>
 
-              {/* Primary Action Button: Masuk & Isi Data Diri */}
-              <div className="pt-2 w-full flex flex-col items-center gap-2">
+              {/* Primary Action Button */}
+              <div className="w-full flex flex-col items-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => handleSwitchViewState('form')}
                   className="group relative flex items-center justify-center gap-2.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white w-full py-3.5 px-6 text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 cursor-pointer"
                 >
                   <Sparkles className="h-4 w-4 text-amber-300" />
-                  <span>Masuk & Isi Data Diri</span>
+                  <span>Isi Data Diri & Buka Akses Portal</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
 
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                  *) Wajib mengisi Nama Lengkap, NIP, & Satuan Kerja untuk membuka akses
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium text-center">
+                  🔒 Wajib mengisi Nama, NIP, & Satker untuk membuka akses portal
                 </span>
               </div>
             </div>
           )}
 
-          {/* 2. STATE FORM: Pengisian Identitas Peserta Diklat */}
+          {/* 2. STATE: FORM (Pengisian Identitas) */}
           {viewState === 'form' && (
-            <div
-              className="w-full rounded-[20px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-2xl space-y-4 text-left"
-            >
-              {/* Header with Back Button */}
-              <div className="flex items-center justify-between border-b border-[#e6e6e6] dark:border-white/10 pb-2.5">
+            <div className="w-full rounded-[20px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 text-left">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
                 <button
                   type="button"
                   onClick={() => handleSwitchViewState(hasExistingProfile ? 'recognized' : 'welcome')}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white transition cursor-pointer"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  <span>{hasExistingProfile ? "Batal" : "Kembali"}</span>
+                  <span>{hasExistingProfile ? "Tutup" : "Kembali"}</span>
                 </button>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#007aff] dark:text-[#60a5fa] bg-[#007aff]/10 dark:bg-[#007aff]/20 px-2.5 py-0.5 rounded-full">
-                  Form Identitas Peserta
+                  Identitas Peserta Diklat (Wajib)
                 </span>
               </div>
 
@@ -621,14 +862,12 @@ export function IntroScreen() {
                   {hasExistingProfile ? "Perbarui Identitas Peserta" : "Lengkapi Data Diri Peserta"}
                 </h3>
                 <p className="text-xs text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
-                  Data Anda disimpan lokal di browser ini untuk sertifikasi DUPAK, kuis, dan draf AI Makalah.
+                  Data Anda tersimpan secara lokal di browser untuk sertifikat, kuis, dan draf AI Makalah.
                 </p>
               </div>
 
               {errorMessage && (
-                <div
-                  className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-2.5 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2"
-                >
+                <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-2.5 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
                   <span>{errorMessage}</span>
                 </div>
@@ -651,7 +890,7 @@ export function IntroScreen() {
                       placeholder="Contoh: Dewa Sinar Surya, S.Kom."
                       required
                       autoFocus
-                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
+                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] border border-slate-200 dark:border-slate-800 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
                     />
                   </div>
                 </div>
@@ -672,7 +911,7 @@ export function IntroScreen() {
                       placeholder="Contoh: 199801012022031001"
                       required
                       maxLength={25}
-                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] font-mono transition"
+                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] border border-slate-200 dark:border-slate-800 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] font-mono transition"
                     />
                   </div>
                 </div>
@@ -690,71 +929,91 @@ export function IntroScreen() {
                         setSatker(e.target.value)
                         if (errorMessage) setErrorMessage(null)
                       }}
-                      placeholder="Contoh: Kejaksaan Agung / Kejaksaan Negeri Soppeng"
+                      placeholder="Contoh: Kejaksaan Negeri Soppeng / Kejaksaan Agung"
                       required
-                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
+                      className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] border border-slate-200 dark:border-slate-800 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
                     />
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-end gap-2">
+                <div className="pt-2 flex items-center justify-end">
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer w-full"
+                    disabled={isExiting}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer w-full disabled:opacity-75"
                   >
-                    <span>{hasExistingProfile ? "Simpan Perubahan & Masuk" : "Simpan Data & Buka Akses Portal"}</span>
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    {isExiting ? (
+                      <>
+                        <Spinner size="xs" variant="white" />
+                        <span>Menyimpan & Membuka Portal...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{hasExistingProfile ? "Simpan Perubahan & Masuk" : "Simpan Data & Buka Akses Portal"}</span>
+                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* 3. STATE RECOGNIZED: Pengguna yang Sudah Terdaftar (Sapaan Personal) */}
+          {/* 3. STATE: RECOGNIZED (Pengguna Sudah Terdaftar) */}
           {viewState === 'recognized' && (
-            <div className="flex flex-col items-center gap-3.5 max-w-md w-full">
-              {/* Badge Sapaan Jam */}
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1A2235] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-[#e6e6e6] dark:border-white/10 shadow-xs">
+            <div className="flex flex-col items-center gap-3.5 w-full">
+              {/* Badge Sapaan */}
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#141b27] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-800 shadow-2xs">
                 <span>{timeInfo.icon}</span>
-                <span>{timeInfo.greeting}, Sobat Prakom!</span>
+                <span>{timeInfo.greeting}, Prakom Andal!</span>
               </div>
 
-              {/* Big Dynamic Heading */}
-              <h1 className="text-xl sm:text-2xl font-black text-[#18181B] dark:text-[#E2E8F0] tracking-tight leading-tight">
-                {timeInfo.greeting}, Rekan{" "}
-                <span className="text-[#007aff] dark:text-[#60a5fa]">{name}</span>!
-              </h1>
-
-              {/* Sub-sapaan Satker */}
-              <p className="text-xs sm:text-sm text-[#6B7C93] dark:text-[#8FA3BC] font-medium leading-relaxed max-w-sm">
-                Selamat datang dari <strong className="text-[#18181B] dark:text-white">{satker}</strong> di <strong className="text-[#007aff] dark:text-[#60a5fa]">Portal Kelas</strong> Diklat Fungsional Pranata Komputer Keahlian Batch 3.
-              </p>
+              {/* Personalized Heading */}
+              <div className="space-y-1 text-center">
+                <h2 className="text-lg sm:text-xl font-black text-[#18181B] dark:text-white tracking-tight">
+                  Selamat Datang,{" "}
+                  <span className="text-[#007aff] dark:text-[#60a5fa]">{name}</span>!
+                </h2>
+                <p className="text-xs text-[#6B7C93] dark:text-[#8FA3BC] max-w-sm">
+                  Satuan Kerja: <strong className="text-[#18181B] dark:text-white">{satker}</strong>
+                </p>
+              </div>
 
               {/* Identity Tag & Edit Option */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] px-3.5 py-1.5 text-[11px] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#141b27] px-3.5 py-1.5 text-[11px] text-[#615d59] dark:text-[#94a3b8] border border-slate-200 dark:border-slate-800 shadow-2xs">
                 <span className="truncate max-w-[220px] font-semibold text-[#000000] dark:text-white">
-                  👤 {name} • {satker}
+                  👤 {name}
                 </span>
+                <span>•</span>
                 <button
                   type="button"
                   onClick={() => handleSwitchViewState('form')}
                   title="Ubah Profil Identitas"
-                  className="text-[#007aff] dark:text-[#60a5fa] hover:underline font-bold text-[10px] inline-flex items-center gap-0.5 cursor-pointer ml-1"
+                  className="text-[#007aff] dark:text-[#60a5fa] hover:underline font-bold text-[10px] inline-flex items-center gap-0.5 cursor-pointer"
                 >
                   <Edit3 className="h-2.5 w-2.5" />
-                  <span>Ubah</span>
+                  <span>Ubah Data</span>
                 </button>
               </div>
 
-              {/* Enter Button with Anime.js Powered Burst Transition */}
+              {/* Enter Button with Enter/Space support */}
               <button
                 type="button"
                 onClick={handleEnterPortal}
                 disabled={isExiting}
-                className="group relative flex items-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-all duration-200 mt-2 hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50"
+                className="group relative flex items-center justify-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-all duration-200 mt-1 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 w-full sm:w-auto"
               >
-                <span>{isExiting ? "Membuka Portal..." : "Masuk ke Portal Kelas"}</span>
-                <ArrowRight className="h-4 w-4 text-[#FFD280] dark:text-[#EA580C] group-hover:translate-x-1 transition-transform duration-200" />
+                {isExiting ? (
+                  <>
+                    <Spinner size="xs" variant={isDark ? "primary" : "white"} />
+                    <span>Membuka Portal...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk ke Portal Kelas</span>
+                    <ArrowRight className="h-4 w-4 text-[#FFD280] dark:text-[#EA580C] group-hover:translate-x-1 transition-transform duration-200" />
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -764,12 +1023,10 @@ export function IntroScreen() {
       </div>
 
       {/* ── Bottom Info ── */}
-      <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-semibold pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+      <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-medium pb-4 sm:pb-6 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {viewState === 'recognized'
-          ? "Tekan Enter atau klik tombol di atas untuk masuk • Sesi tersimpan otomatis"
-          : viewState === 'welcome'
-          ? "Portal Resmi Diklat Fungsional Prakom Keahlian Batch 3 Kejaksaan RI Tahun 2026"
-          : "Lengkapi data diri Anda untuk membuka akses penuh • Tidak dapat dilewati"}
+          ? "Tekan tombol Enter atau spasi untuk langsung masuk • Sesi tersimpan otomatis"
+          : "Portal Resmi Diklat Fungsional Pranata Komputer Keahlian Batch 3 Kejaksaan RI 2026"}
       </div>
 
     </div>
