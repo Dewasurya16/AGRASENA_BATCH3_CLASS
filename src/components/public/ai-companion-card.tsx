@@ -141,17 +141,30 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[14px] bg-white dark:bg-[#141b27] p-4 sm:p-5 border border-[#e6e6e6] dark:border-white/10 shadow-xs transition-all duration-200">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-[16px] bg-white dark:bg-[#141b27] p-4 sm:p-5 border border-[#e6e6e6] dark:border-white/10 shadow-xs transition-colors duration-200"
+    >
+      {/* Soft Ambient Corner Glow */}
+      <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#007aff]/5 dark:bg-[#007aff]/10 blur-xl pointer-events-none" />
+
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         
         {/* Left: Bot Icon + Dynamic Greeting */}
         <div className="flex items-start gap-3.5">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20 shadow-2xs mt-0.5">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+            transition={{ duration: 0.3 }}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20 shadow-2xs mt-0.5 cursor-pointer"
+          >
             <Bot className="h-5 w-5" strokeWidth={2} />
             <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#34c759] ring-2 ring-white dark:ring-[#141b27]">
               <span className="h-1 w-1 rounded-full bg-white animate-ping" />
             </span>
-          </div>
+          </motion.div>
 
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -201,6 +214,6 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
         </button>
 
       </div>
-    </div>
+    </motion.div>
   )
 }

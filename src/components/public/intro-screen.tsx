@@ -330,11 +330,17 @@ export function IntroScreen() {
         onComplete: () => {
           setShowIntro(false)
           setIsExiting(false)
+          try {
+            window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
+          } catch {}
         }
       }, 100)
     } else {
       setShowIntro(false)
       setIsExiting(false)
+      try {
+        window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
+      } catch {}
     }
   }, [name, satker, nip, isExiting])
 

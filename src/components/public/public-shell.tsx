@@ -6,6 +6,7 @@ import { IntroScreen } from "@/components/public/intro-screen"
 import { AIAssistantWidget } from "@/components/public/ai-assistant-widget"
 import { CommandPalette } from "@/components/public/command-palette"
 import { AnimatedBackground } from "@/components/ui/animated-background"
+import { PageTransition } from "@/components/public/page-transition"
 import { Shield, BookOpen, ExternalLink, Heart, Sparkles } from "lucide-react"
 import Link from "next/link"
 
@@ -21,12 +22,14 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       {/* 2. Top Glassmorphism Sticky Navbar */}
       <ModernNavbar />
 
-      {/* 3. Main Single-Column Fluid Container */}
+      {/* 3. Main Single-Column Fluid Container with Smooth Page Transition */}
       <main className="flex-1 w-full">
         <div className="mx-auto max-w-6xl px-3.5 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-6 sm:space-y-8 pb-24 sm:pb-12">
-          <div className="space-y-8 animate-in fade-in duration-200">
-            {children}
-          </div>
+          <PageTransition>
+            <div className="space-y-8">
+              {children}
+            </div>
+          </PageTransition>
         </div>
       </main>
 

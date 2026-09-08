@@ -179,16 +179,16 @@ export default async function HomePage() {
               return (
                 <Link href="/schedules" key={stg.num} className="group block">
                   <div
-                    className={`h-full rounded-[12px] border overflow-hidden flex flex-col justify-between transition-all duration-200 ${
+                    className={`h-full rounded-[14px] border overflow-hidden flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md ${
                       stg.isCurrent
-                        ? "bg-white dark:bg-[#141b27] border-[#007aff] shadow-xs ring-1 ring-[#007aff]/30 -translate-y-0.5"
-                        : "bg-white dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/50 hover:-translate-y-0.5"
+                        ? "bg-white dark:bg-[#141b27] border-[#007aff] shadow-xs ring-2 ring-[#007aff]/30"
+                        : "bg-white dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60"
                     }`}
                   >
                     {/* Stage Header Tab */}
-                    <div className="flex items-center justify-between px-3.5 py-2 bg-[#f6f5f4] dark:bg-[#1a2332] border-b border-[#e6e6e6] dark:border-white/10">
+                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#f6f5f4] dark:bg-[#1a2332] border-b border-[#e6e6e6] dark:border-white/10">
                       <span className="text-xs font-semibold text-[#000000] dark:text-white flex items-center gap-1.5">
-                        <span className="text-[#007aff] dark:text-[#60a5fa]">{stg.icon}</span>
+                        <span className="text-[#007aff] dark:text-[#60a5fa] transition-transform group-hover:scale-110">{stg.icon}</span>
                         {stg.title}
                       </span>
                       <span className="font-mono text-xs font-bold text-[#615d59] dark:text-[#94a3b8]">0{stg.num}</span>
@@ -196,18 +196,24 @@ export default async function HomePage() {
 
                     <div className="p-3.5 space-y-2.5">
                       <div className="flex items-center justify-between gap-1">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-2xs shrink-0 ${
+                        <span className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-0.5 rounded-full border shadow-2xs shrink-0 ${
                           stg.isCurrent
                             ? "bg-[#007aff] text-white border-transparent"
                             : "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
                         }`}>
+                          {stg.isCurrent && (
+                            <span className="relative flex h-2 w-2 mr-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                            </span>
+                          )}
                           {stg.status}
                         </span>
                         <span className="font-mono text-xs font-medium text-[#615d59] dark:text-[#94a3b8] shrink-0">{stg.days}</span>
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-sm text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                        <h4 className="font-bold text-sm text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                           {stg.sub}
                         </h4>
                         <p className="text-xs text-[#615d59] dark:text-[#94a3b8] mt-0.5">
@@ -215,9 +221,9 @@ export default async function HomePage() {
                         </p>
                       </div>
 
-                      <div className="pt-2 border-t border-[#e6e6e6] dark:border-white/10 flex items-center justify-between text-xs font-medium text-[#615d59] dark:text-[#94a3b8] group-hover:text-[#000000] dark:group-hover:text-white transition">
+                      <div className="pt-2 border-t border-[#e6e6e6] dark:border-white/10 flex items-center justify-between text-xs font-medium text-[#615d59] dark:text-[#94a3b8] group-hover:text-[#000000] dark:group-hover:text-white transition-colors">
                         <span>Rincian Modul</span>
-                        <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2} />
+                        <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
                       </div>
                     </div>
                   </div>
@@ -244,17 +250,17 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Card 1: Roadmap */}
             <Link href="/schedules" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <Calendar className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     35 HARI
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     Jadwal & Roadmap Sesi
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -266,17 +272,17 @@ export default async function HomePage() {
 
             {/* Card 2: Materi */}
             <Link href="/materials" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <FileText className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     120 JP PDF
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     Pustaka Modul PDF
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -288,17 +294,17 @@ export default async function HomePage() {
 
             {/* Card 3: Tugas */}
             <Link href="/tasks" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <BookOpen className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     DEADLINE
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     Tugas & Lembar Kerja
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -310,17 +316,17 @@ export default async function HomePage() {
 
             {/* Card 4: Kuis MOOC */}
             <Link href="/quiz" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <Sparkles className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     SIMULASI
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     Simulasi Kuis MOOC
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -332,17 +338,17 @@ export default async function HomePage() {
 
             {/* Card 5: Snippets */}
             <Link href="/snippets" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <Code2 className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     LAB PRAKOM
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     Code & Query Vault
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -354,17 +360,17 @@ export default async function HomePage() {
 
             {/* Card 6: AI Makalah */}
             <Link href="/paper-generator" className="group block">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col justify-between p-4.5 space-y-3.5 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-all">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:scale-110 group-hover:bg-[#007aff] group-hover:text-white transition-all duration-200">
                     <GraduationCap className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/30 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-[#007aff]/40 group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     AI GENERATOR
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition-colors">
                     AI Makalah Inovasi
                   </h4>
                   <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
@@ -376,7 +382,7 @@ export default async function HomePage() {
 
             {/* Card 7: FAQ Sunset Section */}
             <Link href="/faq" className="group block sm:col-span-2 lg:col-span-3">
-              <div className="h-full rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 dark:hover:border-[#007aff]/50 hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col sm:flex-row items-center justify-between p-5 gap-4 shadow-2xs">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/60 dark:hover:border-[#007aff]/60 hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col sm:flex-row items-center justify-between p-5 gap-4 shadow-2xs">
                 <div className="flex items-center gap-3.5">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa]">
                     <HelpCircle className="h-5 w-5" strokeWidth={2} />
