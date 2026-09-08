@@ -148,8 +148,13 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="relative overflow-hidden rounded-[16px] bg-white dark:bg-[#141b27] p-4 sm:p-5 border border-[#e6e6e6] dark:border-white/10 shadow-xs transition-colors duration-200"
     >
-      {/* Soft Ambient Corner Glow */}
-      <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#007aff]/5 dark:bg-[#007aff]/10 blur-xl pointer-events-none" />
+      {/* Soft Ambient Corner Glow (Zero-Overhead Radial) */}
+      <div
+        className="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none opacity-40 dark:opacity-30"
+        style={{
+          background: 'radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, transparent 70%)',
+        }}
+      />
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         
