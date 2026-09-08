@@ -5,6 +5,7 @@ import { animate, createTimeline } from "animejs"
 import {
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Sun,
   Moon,
   User,
@@ -12,7 +13,11 @@ import {
   CreditCard,
   Edit3,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  BookOpen,
+  Calendar,
+  Shield,
+  Rocket
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 
@@ -44,7 +49,7 @@ function isProfileValid(pName: string, pSatker: string, pNip?: string): boolean 
 export function IntroScreen() {
   const [mounted, setMounted] = React.useState(false)
   const [showIntro, setShowIntro] = React.useState(false)
-  const [viewState, setViewState] = React.useState<'form' | 'recognized'>('form')
+  const [viewState, setViewState] = React.useState<'welcome' | 'form' | 'recognized'>('welcome')
   const [hasExistingProfile, setHasExistingProfile] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isExiting, setIsExiting] = React.useState(false)
@@ -102,12 +107,13 @@ export function IntroScreen() {
       if (valid) {
         setViewState('recognized')
       } else {
-        setViewState('form')
+        // Untuk pengunjung pertama kali, jangan langsung tampilkan form data diri: tampilkan welcome dulu
+        setViewState('welcome')
       }
     } catch {
       setMounted(true)
       setShowIntro(true)
-      setViewState('form')
+      setViewState('welcome')
     }
   }, [])
 
@@ -176,11 +182,11 @@ export function IntroScreen() {
 
     if (contentCardRef.current) {
       tl.add(contentCardRef.current, {
-        translateY: [22, 0],
+        translateY: [20, 0],
         opacity: [0, 1],
-        duration: 450,
+        duration: 400,
         ease: 'outCubic',
-      }, 200)
+      }, 180)
     }
 
     // 2. Loop Organik Floating Planet 120 JP
@@ -239,14 +245,15 @@ export function IntroScreen() {
         try { anim?.pause?.() } catch {}
       })
     }
-  }, [showIntro, viewState])
+  }, [showIntro])
 
-  // Animasikan transisi saat berpindah form <-> recognized
-  const handleSwitchViewState = (targetState: 'form' | 'recognized') => {
+  // Animasikan transisi pergantian viewState (welcome <-> form <-> recognized)
+  const handleSwitchViewState = (targetState: 'welcome' | 'form' | 'recognized') => {
     if (contentCardRef.current) {
       animate(contentCardRef.current, {
         opacity: [1, 0],
-        translateY: [0, -10],
+        translateY: [0, -12],
+        scale: [1, 0.97],
         duration: 180,
         ease: 'inQuad',
         onComplete: () => {
@@ -256,8 +263,9 @@ export function IntroScreen() {
             if (contentCardRef.current) {
               animate(contentCardRef.current, {
                 opacity: [0, 1],
-                translateY: [15, 0],
-                duration: 250,
+                translateY: [16, 0],
+                scale: [0.97, 1],
+                duration: 260,
                 ease: 'outCubic',
               })
             }
@@ -295,7 +303,7 @@ export function IntroScreen() {
 
     setIsExiting(true)
 
-    // Hentikan loop animasi mengambang agar tidak bertabrakan dengan exit
+    // Hentikan loop animasi mengambang
     activeAnimationsRef.current.forEach(anim => {
       try { anim?.pause?.() } catch {}
     })
@@ -307,26 +315,26 @@ export function IntroScreen() {
 
     if (contentCardRef.current) {
       exitTl.add(contentCardRef.current, {
-        translateY: [0, 20],
+        translateY: [0, 16],
         opacity: [1, 0],
-        duration: 200,
+        duration: 180,
       }, 0)
     }
 
     if (sphereRef.current) {
       exitTl.add(sphereRef.current, {
-        scale: [1, 1.25],
-        translateY: [0, -50],
+        scale: [1, 1.2],
+        translateY: [0, -40],
         opacity: [1, 0],
-        duration: 320,
-        ease: 'inBack(1.5)',
-      }, 50)
+        duration: 280,
+        ease: 'inBack(1.4)',
+      }, 40)
     }
 
     if (modalRef.current) {
       exitTl.add(modalRef.current, {
         opacity: [1, 0],
-        duration: 350,
+        duration: 280,
         onComplete: () => {
           setShowIntro(false)
           setIsExiting(false)
@@ -334,7 +342,7 @@ export function IntroScreen() {
             window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
           } catch {}
         }
-      }, 100)
+      }, 80)
     } else {
       setShowIntro(false)
       setIsExiting(false)
@@ -364,7 +372,7 @@ export function IntroScreen() {
       return
     }
     if (!finalSatker || finalSatker.length < 3) {
-      setErrorMessage("Satuan kerja wajib diisi.")
+      setErrorMessage("Satuan kerja wajib diisi (minimal 3 karakter).")
       return
     }
 
@@ -407,28 +415,28 @@ export function IntroScreen() {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-300 transform-gpu will-change-transform opacity-0"
+      className="fixed inset-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-full max-w-[100vw] flex-col justify-between items-center select-none overflow-y-auto bg-[#F8F9FC] dark:bg-[#10141C] text-[#18181B] dark:text-[#E2E8F0] transition-colors duration-200 transform-gpu opacity-0"
     >
-      {/* Ambient glow — adapts per theme */}
+      {/* Zero-overhead ambient glow */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full pointer-events-none transition-opacity duration-300"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[350px] w-[350px] sm:h-[500px] sm:w-[500px] rounded-full pointer-events-none opacity-50 dark:opacity-30"
         style={{
           background: isDark
-            ? "radial-gradient(circle, rgba(13, 56, 48, 0.35) 0%, rgba(30, 41, 59, 0.2) 45%, transparent 70%)"
-            : "radial-gradient(circle, rgba(215, 243, 254, 0.65) 0%, rgba(255, 227, 235, 0.45) 45%, transparent 70%)",
+            ? "radial-gradient(circle, rgba(0, 122, 255, 0.25) 0%, rgba(175, 82, 222, 0.15) 45%, transparent 70%)"
+            : "radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, rgba(244, 114, 182, 0.1) 45%, transparent 70%)",
         }}
       />
 
       {/* Decorative stars dianimasikan dengan Anime.js */}
       <div
         ref={star1Ref}
-        className="absolute top-6 right-10 sm:right-20 text-[#BFDBFE] dark:text-[#334155] text-2xl font-black select-none pointer-events-none"
+        className="absolute top-6 right-10 sm:right-20 text-[#007aff]/40 dark:text-[#60a5fa]/40 text-2xl font-black select-none pointer-events-none"
       >
         ✦
       </div>
       <div
         ref={star2Ref}
-        className="absolute bottom-8 left-8 sm:left-16 text-[#FED7AA] dark:text-[#374151] text-xl font-black select-none pointer-events-none"
+        className="absolute bottom-8 left-8 sm:left-16 text-amber-400/50 dark:text-amber-300/40 text-xl font-black select-none pointer-events-none"
       >
         ✦
       </div>
@@ -437,7 +445,7 @@ export function IntroScreen() {
       <div className="relative z-10 w-full max-w-4xl flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-xs ring-1 ring-black/5 dark:ring-white/5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] overflow-hidden shadow-xs ring-1 ring-black/5 dark:ring-white/10">
             <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
           </div>
           <div className="flex flex-col">
@@ -445,14 +453,14 @@ export function IntroScreen() {
               Pranata Komputer Keahlian
             </span>
             <span className="text-[10px] font-semibold text-[#6B7C93] dark:text-[#8FA3BC]">
-              Kejaksaan RI X Agrasena (Prakom 625)
+              Kejaksaan RI × Agrasena (Prakom 625)
             </span>
           </div>
         </div>
 
         {/* Right: badge + theme toggle */}
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white dark:bg-[#1A2235] px-3 py-1 text-[10px] font-black text-[#0D824B] dark:text-emerald-400 border border-slate-200 dark:border-slate-700 shadow-xs">
+          <span className="rounded-full bg-white dark:bg-[#1A2235] px-3 py-1 text-[10px] font-black text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-700 shadow-xs">
             Batch 3 • 120 JP
           </span>
 
@@ -472,12 +480,12 @@ export function IntroScreen() {
       <div className="relative z-10 flex flex-col items-center justify-center text-center gap-4 sm:gap-5 my-auto px-4 py-4 w-full max-w-xl">
 
         {/* Visual: Planet 120 JP + Ring + Smiley (Dianimasikan oleh Anime.js) */}
-        <div className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${viewState === 'form' ? 'h-24 w-24 sm:h-32 sm:w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}>
+        <div className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${viewState === 'form' ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-28 w-28 sm:h-36 sm:w-36'}`}>
 
           {/* Saturn Ring */}
           <div
             ref={ringRef}
-            className={`absolute rounded-full border-[3px] border-[#334155] dark:border-[#475569] opacity-85 pointer-events-none transition-all duration-300 ${viewState === 'form' ? 'h-24 w-24 sm:h-32 sm:w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}
+            className={`absolute rounded-full border-[2.5px] border-[#007aff]/60 dark:border-[#60a5fa]/60 pointer-events-none transition-all duration-300 ${viewState === 'form' ? 'h-20 w-20 sm:h-24 sm:w-24' : 'h-28 w-28 sm:h-36 sm:w-36'}`}
             style={{ transform: "rotateX(72deg) rotateY(-18deg)" }}
           />
 
@@ -494,12 +502,12 @@ export function IntroScreen() {
                 animate(sphereRef.current, { scale: 1, duration: 250, ease: 'outBack' })
               }
             }}
-            className={`relative flex flex-col items-center justify-center rounded-full bg-gradient-to-tr from-[#818CF8] via-[#F472B6] to-[#FBBF24] shadow-xl shadow-pink-400/30 border-2 border-white/60 cursor-pointer transition-all duration-300 ${viewState === 'form' ? 'h-18 w-18 sm:h-22 sm:w-22' : 'h-22 w-22 sm:h-26 sm:w-26'}`}
+            className={`relative flex flex-col items-center justify-center rounded-full bg-gradient-to-tr from-[#007aff] via-[#af52de] to-[#f59e0b] shadow-lg shadow-blue-500/25 border-2 border-white/80 dark:border-white/20 cursor-pointer transition-all duration-300 ${viewState === 'form' ? 'h-16 w-16 sm:h-18 sm:w-18' : 'h-20 w-20 sm:h-24 sm:w-24'}`}
           >
             <span className="text-white text-xs sm:text-sm font-black tracking-wider uppercase drop-shadow-md">
               120 JP
             </span>
-            <div className="absolute -top-2 -right-1 text-[#F59E0B] text-lg select-none animate-pulse">✦</div>
+            <div className="absolute -top-2 -right-1 text-amber-300 text-base select-none">✦</div>
           </div>
 
           {/* Smiley Mascot with Interactive Anime.js Hover */}
@@ -515,37 +523,105 @@ export function IntroScreen() {
                 animate(smileyRef.current, { scale: 1, rotate: 0, duration: 250, ease: 'outBack' })
               }
             }}
-            className={`absolute -bottom-1 -left-1 sm:left-0 flex items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-[#2D2010] border-[2.5px] border-[#18181B] dark:border-[#D97706] shadow-lg shadow-black/10 cursor-pointer z-20 transition-all duration-300 ${viewState === 'form' ? 'h-9 w-9 sm:h-11 sm:w-11' : 'h-11 w-11 sm:h-13 sm:w-13'}`}
+            className={`absolute -bottom-1 -left-1 sm:left-0 flex items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-[#2D2010] border-[2px] border-[#18181B] dark:border-[#D97706] shadow-md shadow-black/10 cursor-pointer z-20 transition-all duration-300 ${viewState === 'form' ? 'h-8 w-8 sm:h-9 sm:w-9' : 'h-10 w-10 sm:h-12 sm:w-12'}`}
           >
             <div className="flex flex-col items-center justify-center">
-              <div className="flex gap-1 mb-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
+              <div className="flex gap-1 mb-0.5">
+                <span className="h-1 w-1 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
+                <span className="h-1 w-1 rounded-full bg-[#18181B] dark:bg-[#FCD34D]" />
               </div>
-              <div className="h-1.5 w-3.5 rounded-b-full border-b-[2px] border-[#18181B] dark:border-[#FCD34D]" />
+              <div className="h-1 w-3 rounded-b-full border-b-[1.5px] border-[#18181B] dark:border-[#FCD34D]" />
             </div>
           </div>
         </div>
 
-        {/* Dynamic Interactive Body (Form vs Recognized Greeting) */}
+        {/* Dynamic Interactive Body (Welcome vs Form vs Recognized Greeting) */}
         <div ref={contentCardRef} className="w-full max-w-md flex flex-col items-center">
+
+          {/* 1. STATE WELCOME: Sambutan Awal Desain Cantik dengan Tombol Masuk Isi Data Diri */}
+          {viewState === 'welcome' && (
+            <div className="flex flex-col items-center gap-4 max-w-md w-full">
+              {/* Badge Sapaan Jam */}
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1A2235] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-[#e6e6e6] dark:border-white/10 shadow-xs">
+                <span>{timeInfo.icon}</span>
+                <span>{timeInfo.greeting}, Calon Prakom Andal!</span>
+              </div>
+
+              {/* Welcome Title */}
+              <div className="space-y-1.5">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#18181B] dark:text-[#E2E8F0] tracking-tight leading-tight">
+                  Selamat Datang di <br />
+                  <span className="text-[#007aff] dark:text-[#60a5fa]">Portal Kelas Agrasena</span>
+                </h1>
+                <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] font-normal leading-relaxed max-w-sm mx-auto">
+                  Hub materi modul 120 JP resmi, rundown 35 hari, dan asisten generator AI makalah Diklat Fungsional Keahlian Kejaksaan RI.
+                </p>
+              </div>
+
+              {/* 3 Mini Feature Highlight Tiles */}
+              <div className="grid grid-cols-3 gap-2 w-full pt-1">
+                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#007aff]/50 transition-colors">
+                  <BookOpen className="h-4 w-4 text-[#007aff] mb-1" />
+                  <span className="font-bold text-[11px] text-[#18181B] dark:text-white">120 JP</span>
+                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Modul Resmi</span>
+                </div>
+                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#16a34a]/50 transition-colors">
+                  <Calendar className="h-4 w-4 text-[#16a34a] dark:text-[#4ade80] mb-1" />
+                  <span className="font-bold text-[11px] text-[#18181B] dark:text-white">35 Hari</span>
+                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Roadmap Sesi</span>
+                </div>
+                <div className="rounded-[12px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-2.5 flex flex-col items-center justify-center text-center shadow-2xs hover:border-[#af52de]/50 transition-colors">
+                  <Sparkles className="h-4 w-4 text-[#af52de] dark:text-[#c084fc] mb-1" />
+                  <span className="font-bold text-[11px] text-[#18181B] dark:text-white">AI Makalah</span>
+                  <span className="text-[9px] text-[#615d59] dark:text-[#94a3b8]">Generator Proposal</span>
+                </div>
+              </div>
+
+              {/* Primary Action Button: Masuk & Isi Data Diri */}
+              <div className="pt-2 w-full flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchViewState('form')}
+                  className="group relative flex items-center justify-center gap-2.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white w-full py-3.5 px-6 text-xs sm:text-sm font-bold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200 cursor-pointer"
+                >
+                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <span>Masuk & Isi Data Diri</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </button>
+
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                  *) Wajib mengisi Nama Lengkap, NIP, & Satuan Kerja untuk membuka akses
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 2. STATE FORM: Pengisian Identitas Peserta Diklat */}
           {viewState === 'form' && (
-            /* STATE FORM: Wajib Isi Identitas Peserta Diklat (Tidak Bisa Di-skip) */
             <div
               className="w-full rounded-[20px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-2xl space-y-4 text-left"
             >
-              <div className="text-center space-y-1.5">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20">
-                  <Sparkles className="h-3 w-3" />
-                  <span>{hasExistingProfile ? "Perbarui Profil Peserta" : "Wajib Isi Data Diri ✍️"}</span>
-                </div>
-                <h3 className="text-base sm:text-lg font-black text-[#18181B] dark:text-white">
-                  {hasExistingProfile ? "Perbarui Identitas Peserta" : "Identitas Peserta Diklat"}
+              {/* Header with Back Button */}
+              <div className="flex items-center justify-between border-b border-[#e6e6e6] dark:border-white/10 pb-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchViewState(hasExistingProfile ? 'recognized' : 'welcome')}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white transition cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>{hasExistingProfile ? "Batal" : "Kembali"}</span>
+                </button>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#007aff] dark:text-[#60a5fa] bg-[#007aff]/10 dark:bg-[#007aff]/20 px-2.5 py-0.5 rounded-full">
+                  Form Identitas Peserta
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#18181B] dark:text-white">
+                  {hasExistingProfile ? "Perbarui Identitas Peserta" : "Lengkapi Data Diri Peserta"}
                 </h3>
-                <p className="text-[11px] sm:text-xs text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
-                  {hasExistingProfile
-                    ? "Ubah data diri Anda untuk pembaruan profil dan penyesuaian sesi kelas."
-                    : "Data diri wajib diisi untuk membuka akses penuh ke modul 120 JP, materi perkuliahan, dan AI Makalah."}
+                <p className="text-xs text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+                  Data Anda disimpan lokal di browser ini untuk sertifikasi DUPAK, kuis, dan draf AI Makalah.
                 </p>
               </div>
 
@@ -621,28 +697,12 @@ export function IntroScreen() {
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 italic">
-                  *) Seluruh kolom di atas wajib diisi untuk verifikasi identitas peserta diklat.
-                </p>
-
                 <div className="pt-2 flex items-center justify-end gap-2">
-                  {hasExistingProfile && (
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchViewState('recognized')}
-                      className="rounded-full px-4 py-2 text-xs font-semibold text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      Batal
-                    </button>
-                  )}
-
                   <button
                     type="submit"
-                    className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer ${
-                      !hasExistingProfile ? 'w-full' : ''
-                    }`}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer w-full"
                   >
-                    <span>{hasExistingProfile ? "Simpan Perubahan & Masuk" : "Simpan Data Diri & Buka Akses Portal"}</span>
+                    <span>{hasExistingProfile ? "Simpan Perubahan & Masuk" : "Simpan Data & Buka Akses Portal"}</span>
                     <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                   </button>
                 </div>
@@ -650,11 +710,9 @@ export function IntroScreen() {
             </div>
           )}
 
+          {/* 3. STATE RECOGNIZED: Pengguna yang Sudah Terdaftar (Sapaan Personal) */}
           {viewState === 'recognized' && (
-            /* STATE RECOGNIZED: Identitas Lengkap -> Sapaan Hangat & Tombol Masuk Portal */
-            <div
-              className="flex flex-col items-center gap-3.5 max-w-md w-full"
-            >
+            <div className="flex flex-col items-center gap-3.5 max-w-md w-full">
               {/* Badge Sapaan Jam */}
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1A2235] px-3.5 py-1 text-xs font-bold text-[#007aff] dark:text-[#60a5fa] border border-[#e6e6e6] dark:border-white/10 shadow-xs">
                 <span>{timeInfo.icon}</span>
@@ -673,7 +731,7 @@ export function IntroScreen() {
               </p>
 
               {/* Identity Tag & Edit Option */}
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] px-3 py-1 text-[11px] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] px-3.5 py-1.5 text-[11px] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10">
                 <span className="truncate max-w-[220px] font-semibold text-[#000000] dark:text-white">
                   👤 {name} • {satker}
                 </span>
@@ -700,6 +758,7 @@ export function IntroScreen() {
               </button>
             </div>
           )}
+
         </div>
 
       </div>
@@ -708,6 +767,8 @@ export function IntroScreen() {
       <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-semibold pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {viewState === 'recognized'
           ? "Tekan Enter atau klik tombol di atas untuk masuk • Sesi tersimpan otomatis"
+          : viewState === 'welcome'
+          ? "Portal Resmi Diklat Fungsional Prakom Keahlian Batch 3 Kejaksaan RI Tahun 2026"
           : "Lengkapi data diri Anda untuk membuka akses penuh • Tidak dapat dilewati"}
       </div>
 

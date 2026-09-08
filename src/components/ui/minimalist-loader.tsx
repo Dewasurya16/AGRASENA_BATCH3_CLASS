@@ -54,103 +54,63 @@ export function MinimalistLoader({
         className
       )}
     >
-      {/* ── Cute & Playful Center Mascot Animation ── */}
-      <div className="relative flex h-18 w-18 items-center justify-center">
-        {/* Soft Colorful Breathing Glow */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#0D824B]/20 via-[#007aff]/15 to-[#f59e0b]/20 dark:from-[#34d399]/25 dark:via-[#60a5fa]/20 dark:to-[#fbbf24]/20 blur-lg animate-pulse" />
+      {/* ── Modern & Harmonious Center Mascot Animation ── */}
+      <div className="relative flex h-16 w-16 items-center justify-center">
+        {/* Soft Breathing Ambient Glow */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#007aff]/20 via-[#16a34a]/15 to-[#af52de]/15 dark:from-[#60a5fa]/25 dark:via-[#4ade80]/20 dark:to-[#c084fc]/20 blur-md animate-pulse" />
 
-        {/* Playful Outer Orbit Ring with Gradient Dash */}
+        {/* Outer Orbit Spinner Ring */}
         <svg
           className="absolute inset-0 h-full w-full animate-spin"
           viewBox="0 0 72 72"
           fill="none"
-          style={{ animationDuration: '1.4s' }}
+          style={{ animationDuration: '1.1s' }}
         >
-          {/* Subtle dotted guide track */}
+          {/* Subtle guide track */}
           <circle
             cx="36"
             cy="36"
-            r="32"
+            r="31"
             stroke="currentColor"
             strokeWidth="2.5"
-            strokeDasharray="4 6"
-            className="text-slate-200/90 dark:text-white/10"
+            className="text-slate-200 dark:text-white/10 opacity-70"
           />
           {/* Smooth spinning accent arc */}
           <circle
             cx="36"
             cy="36"
-            r="32"
+            r="31"
             stroke="url(#cuteLoaderGradient)"
-            strokeWidth="3.2"
+            strokeWidth="3"
             strokeLinecap="round"
-            strokeDasharray="56 140"
+            strokeDasharray="50 140"
           />
           <defs>
             <linearGradient id="cuteLoaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#0D824B" />
-              <stop offset="50%" stopColor="#007aff" />
-              <stop offset="100%" stopColor="#f59e0b" />
+              <stop offset="0%" stopColor="#007aff" />
+              <stop offset="50%" stopColor="#16a34a" />
+              <stop offset="100%" stopColor="#60a5fa" />
             </linearGradient>
           </defs>
         </svg>
 
-        {/* Cute Sparkle 1 (Top Right Pop) */}
+        {/* Center Prakom Logo Badge with Smooth Float */}
         <motion.div
           animate={{
-            scale: [0, 1.2, 0],
-            rotate: [0, 90, 180],
-            opacity: [0, 1, 0],
+            y: [-2, 2, -2],
           }}
           transition={{
-            duration: 1.8,
+            duration: 2.4,
             repeat: Infinity,
-            delay: 0.1,
             ease: 'easeInOut',
           }}
-          className="absolute -top-1.5 -right-1.5 z-20 text-amber-400 dark:text-amber-300 pointer-events-none"
-        >
-          <Sparkles className="h-3.5 w-3.5 fill-amber-400 dark:fill-amber-300" />
-        </motion.div>
-
-        {/* Cute Star 2 (Bottom Left Tiny Twinkle) */}
-        <motion.div
-          animate={{
-            scale: [0, 1.1, 0],
-            rotate: [0, -90, -180],
-            opacity: [0, 0.9, 0],
-          }}
-          transition={{
-            duration: 1.8,
-            repeat: Infinity,
-            delay: 1.0,
-            ease: 'easeInOut',
-          }}
-          className="absolute -bottom-1 -left-1 z-20 text-[#0D824B] dark:text-[#34d399] text-xs font-bold pointer-events-none"
-        >
-          ✦
-        </motion.div>
-
-        {/* Center Prakom Logo Badge with Cartoon Squash & Stretch Wiggle */}
-        <motion.div
-          animate={{
-            y: [0, -6, 0, -2, 0],
-            rotate: [0, -6, 6, -3, 0],
-            scaleX: [1, 0.94, 1.06, 0.98, 1],
-            scaleY: [1, 1.08, 0.94, 1.02, 1],
-          }}
-          transition={{
-            duration: 1.7,
-            repeat: Infinity,
-            ease: [0.34, 1.56, 0.64, 1],
-          }}
-          className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-[#151c28] border-2 border-emerald-100/80 dark:border-white/15 shadow-md shadow-emerald-600/10 p-1.5 overflow-hidden"
+          className="relative z-10 flex h-11 w-11 items-center justify-center rounded-2xl bg-white dark:bg-[#151c28] border border-slate-200 dark:border-white/15 shadow-sm p-1.5 overflow-hidden"
         >
           {icon || (
             <img
               src="/Logo.webp"
               alt="Logo Prakom"
-              className="h-full w-full object-contain drop-shadow-xs select-none pointer-events-none"
+              className="h-full w-full object-contain select-none pointer-events-none"
             />
           )}
         </motion.div>
