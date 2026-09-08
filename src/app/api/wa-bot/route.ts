@@ -13,19 +13,18 @@ const getBotSecret = () => {
 }
 
 /**
- * Validasi otorisasi admin (hanya admin/super admin yang boleh memanggil API ini)
+ * Validasi otorisasi: Hanya Super Admin yang berwenang mengakses dan mengontrol Bot WhatsApp
  */
-async function verifyAdminAuth() {
+async function verifySuperAdminAuth() {
   const cookieStore = await cookies()
-  const isSuper = verifySuperAdminSessionToken(cookieStore.get("prakom_super_admin")?.value)
-  const isAdmin = cookieStore.get("prakom_admin_auth")?.value === "authenticated"
-  return isSuper || isAdmin
+  const superCookie = cookieStore.get("prakom_super_admin")?.value
+  return verifySuperAdminSessionToken(superCookie)
 }
 
 export async function GET(request: NextRequest) {
-  const isAuth = await verifyAdminAuth()
-  if (!isAuth) {
-    return NextResponse.json({ error: "Akses ditolak: Hanya admin yang diizinkan." }, { status: 401 })
+  const isSuper = await verifySuperAdminAuth()
+  if (!isSuper) {
+    return NextResponse.json({ error: "Akses ditolak: Hanya Super Admin yang berwenang mengakses Bot WhatsApp." }, { status: 403 })
   }
 
   const { searchParams } = new URL(request.url)
@@ -184,9 +183,9 @@ async function queueActionToSupabase(action: { type: string; [key: string]: any 
 }
 
 export async function POST(request: NextRequest) {
-  const isAuth = await verifyAdminAuth()
-  if (!isAuth) {
-    return NextResponse.json({ error: "Akses ditolak: Hanya admin yang diizinkan." }, { status: 401 })
+  const isSuper = await verifySuperAdminAuth()
+  if (!isSuper) {
+    return NextResponse.json({ error: "Akses ditolak: Hanya Super Admin yang berwenang mengelola Bot WhatsApp." }, { status: 403 })
   }
 
   const botUrl = getBotBaseUrl()

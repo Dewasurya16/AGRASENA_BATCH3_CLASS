@@ -242,9 +242,9 @@ export function AdminDashboardClient({
 
   const [actionLoadingMap, setActionLoadingMap] = React.useState<Record<string, boolean>>({})
 
-  // Cegah admin biasa mengakses tab khusus Super Admin
+  // Cegah admin biasa mengakses tab khusus Super Admin (visitors, audit_log, wa_bot)
   React.useEffect(() => {
-    if (!isSuperAdmin && (activeTab === "visitors" || activeTab === "audit_log")) {
+    if (!isSuperAdmin && (activeTab === "visitors" || activeTab === "audit_log" || activeTab === "wa_bot")) {
       setActiveTab("overview")
     }
   }, [activeTab, isSuperAdmin])
@@ -1948,13 +1948,13 @@ export function AdminDashboardClient({
     )
   }
 
-  // Navigation Items list - tab visitors & audit_log hanya untuk Super Admin
+  // Navigation Items list - tab visitors, audit_log, & wa_bot hanya untuk Super Admin
   const navItems = [
     { id: "overview", label: "Ringkasan", icon: BarChart3, count: null, color: "text-blue-600" },
     ...(isSuperAdmin ? [
       {
         id: "visitors",
-        label: "Statistik Pengunjung & IP",
+        label: "Riwayat Pengunjung & IP",
         icon: Users,
         count: totalVisitors,
         color: "text-emerald-600",
@@ -1962,11 +1962,19 @@ export function AdminDashboardClient({
       },
       {
         id: "audit_log",
-        label: "Riwayat Aktivitas Admin",
+        label: "Riwayat Log Aktivitas Admin",
         icon: History,
         count: adminAuditLogs.length,
         color: "text-amber-600",
         highlight: false,
+      },
+      {
+        id: "wa_bot",
+        label: "Bot WhatsApp Grup",
+        icon: Bot,
+        count: null,
+        color: "text-emerald-600",
+        highlight: true,
       }
     ] : []),
     {
@@ -1985,7 +1993,6 @@ export function AdminDashboardClient({
     { id: "templates", label: "Pusat Template BPS & TIK", icon: Layers, count: allAdminTemplates.length, color: "text-teal-600" },
     { id: "exam_prep", label: "Kesiapan Ujian & Seminar", icon: Clock, count: 10, color: "text-amber-600" },
     { id: "paper_gen", label: "AI Makalah Inovasi Satker", icon: GraduationCap, count: null, color: "text-rose-600" },
-    { id: "wa_bot", label: "Bot WhatsApp Grup", icon: Bot, count: null, color: "text-emerald-600" },
   ]
 
   return (
@@ -2093,17 +2100,19 @@ export function AdminDashboardClient({
             <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 pb-1">
               Pintasan Cepat
             </div>
-            {/* Bot WhatsApp: Tersedia untuk Admin dan Super Admin */}
-            <button
-              onClick={() => {
-                setActiveTab("wa_bot")
-                setIsSidebarOpen(false)
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
-            >
-              <Bot className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Bot WhatsApp Otomatis</span>
-            </button>
+            {/* Bot WhatsApp: Khusus Super Admin */}
+            {isSuperAdmin && (
+              <button
+                onClick={() => {
+                  setActiveTab("wa_bot")
+                  setIsSidebarOpen(false)
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[10px] text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/50 dark:border-emerald-800/40 transition cursor-pointer"
+              >
+                <Bot className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Bot WhatsApp Otomatis</span>
+              </button>
+            )}
 
             {/* Broadcast WhatsApp: Manual Modal Share */}
             <button
@@ -2139,7 +2148,7 @@ export function AdminDashboardClient({
                   {isSuperAdmin ? 'Super Admin' : 'Admin Diklat'}
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                  {isSuperAdmin ? 'Akses Penuh & Deteksi IP' : 'admin@kejaksaan.com'}
+                  {isSuperAdmin ? 'Akses Penuh (Bot WA, Log, Pengunjung)' : 'Akses Modul, Tugas, & Jadwal'}
                 </div>
               </div>
             </div>
@@ -2153,10 +2162,15 @@ export function AdminDashboardClient({
               </button>
             </form>
           </div>
-          {isSuperAdmin && (
+          {isSuperAdmin ? (
             <div className="flex items-center gap-1.5 rounded-[8px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 px-2.5 py-1.5">
               <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
               <span className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wide">Super Admin — Akses Penuh</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/60 px-2.5 py-1.5">
+              <Shield className="h-3 w-3 text-slate-500 shrink-0" />
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Admin Biasa — Akses Terbatas</span>
             </div>
           )}
         </div>
@@ -4736,9 +4750,9 @@ export function AdminDashboardClient({
           )}
 
           {/* ========================================================================= */}
-          {/* 13. WHATSAPP BOT GATEWAY TAB */}
+          {/* 13. WHATSAPP BOT GATEWAY TAB (KHUSUS SUPER ADMIN) */}
           {/* ========================================================================= */}
-          {activeTab === "wa_bot" && (
+          {activeTab === "wa_bot" && isSuperAdmin && (
             <WhatsAppBotManager />
           )}
         </div>

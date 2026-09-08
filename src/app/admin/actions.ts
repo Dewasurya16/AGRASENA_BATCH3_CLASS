@@ -90,7 +90,7 @@ export async function adminSignIn(formData: FormData) {
     'admin',
   ]
 
-  // Super Admin credentials (akses penuh termasuk halaman deteksi IP)
+  // Super Admin credentials (akses eksklusif: WA Bot, Riwayat Aktivitas & Log, Riwayat Pengunjung & IP)
   const superAdminEmails = [
     (process.env.SUPER_ADMIN_EMAIL || 'superadmin@kejaksaan.com').toLowerCase(),
     'superadmin@kejaksaan.com',
@@ -98,15 +98,12 @@ export async function adminSignIn(formData: FormData) {
     'superadmin@prakom.id',
     'superadmin@prakom625.id',
     'superadmin',
-    'admin@kejaksaan.com',
-    'admin@kejaksaan.go.id',
-    'admin',
+    'dewasinar16@gmail.com',
   ]
 
   const superAdminPasswords = [
     process.env.SUPER_ADMIN_PASSWORD || 'superadmin625',
     'superadmin625',
-    'adminprakom625',
   ]
 
   const isSuperAdmin =

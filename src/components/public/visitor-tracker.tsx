@@ -178,7 +178,17 @@ export function VisitorTracker() {
 
     // Small delay to ensure browser environment is idle
     const timeout = setTimeout(trackVisit, 300)
-    return () => clearTimeout(timeout)
+
+    const handleProfileUpdated = () => {
+      // Re-trigger visit tracking immediately with updated identity
+      trackVisit()
+    }
+    window.addEventListener('prakom-profile-updated', handleProfileUpdated)
+
+    return () => {
+      clearTimeout(timeout)
+      window.removeEventListener('prakom-profile-updated', handleProfileUpdated)
+    }
   }, [pathname])
 
   return null

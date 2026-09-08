@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ModernNavbar } from "@/components/public/modern-navbar"
+import { IntroScreen } from "@/components/public/intro-screen"
 import { AIAssistantWidget } from "@/components/public/ai-assistant-widget"
 import { CommandPalette } from "@/components/public/command-palette"
 import { AnimatedBackground } from "@/components/ui/animated-background"
@@ -11,6 +12,9 @@ import Link from "next/link"
 export function PublicShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col text-[#131E29] dark:text-[#D8E0EC] antialiased selection:bg-[#0D3830] selection:text-white">
+      {/* 0. Layar Intro & Identitas Peserta Gate (Wajib Isi Data Diri) */}
+      <IntroScreen />
+
       {/* 1. Dynamic Ambient Background Animation */}
       <AnimatedBackground />
 

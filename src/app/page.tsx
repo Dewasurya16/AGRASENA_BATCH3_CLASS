@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { PublicShell } from "@/components/public/public-shell"
 import { UrgentAnnouncement } from "@/components/public/urgent-announcement"
-import { IntroScreen } from "@/components/public/intro-screen"
 import { TwinkleHero } from "@/components/public/twinkle-hero"
 import { AiCompanionCard } from "@/components/public/ai-companion-card"
 import { HomeTaskReminder } from "@/components/public/home-task-reminder"
@@ -71,9 +70,6 @@ export default async function HomePage() {
 
   return (
     <PublicShell>
-      {/* 1. Layar Intro Interaktif (Tampil 1x Saat Kunjungan Awal Sesi, Hilang Setelah Masuk) */}
-      <IntroScreen />
-
       <div className="space-y-8 sm:space-y-12">
         
         {/* 2. Pengumuman Mendesak (Jika Ada) */}

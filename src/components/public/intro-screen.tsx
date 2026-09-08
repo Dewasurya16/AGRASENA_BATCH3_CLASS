@@ -10,7 +10,10 @@ import {
   User,
   Building2,
   CreditCard,
-  Edit3
+  Edit3,
+  AlertCircle,
+  Lock,
+  CheckCircle2
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 
@@ -27,10 +30,24 @@ function getTimeGreeting(): { greeting: string; period: string; icon: string } {
   }
 }
 
+function isProfileValid(pName: string, pSatker: string, pNip?: string): boolean {
+  const trimmedName = (pName || "").trim()
+  const trimmedSatker = (pSatker || "").trim()
+  const trimmedNip = (pNip || "").trim()
+  return (
+    trimmedName.length >= 3 &&
+    trimmedName.toLowerCase() !== "peserta diklat" &&
+    trimmedSatker.length >= 3 &&
+    trimmedNip.length >= 6
+  )
+}
+
 export function IntroScreen() {
   const [mounted, setMounted] = React.useState(false)
   const [showIntro, setShowIntro] = React.useState(false)
-  const [viewState, setViewState] = React.useState<'welcome' | 'form' | 'recognized'>('welcome')
+  const [viewState, setViewState] = React.useState<'form' | 'recognized'>('form')
+  const [hasExistingProfile, setHasExistingProfile] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const { theme, toggleTheme } = useTheme()
 
   const [name, setName] = React.useState("")
@@ -40,48 +57,106 @@ export function IntroScreen() {
 
   React.useEffect(() => {
     try {
-      const hasEntered = sessionStorage.getItem("has_entered_portal_session")
-      if (hasEntered) {
-        setMounted(true)
-        return
-      }
-
       const savedName = localStorage.getItem("prakom_user_name") || ""
       const savedNip = localStorage.getItem("prakom_user_nip") || ""
       const savedSatker = localStorage.getItem("prakom_user_satker") || ""
 
+      const valid = isProfileValid(savedName, savedSatker, savedNip)
+      const hasEntered = sessionStorage.getItem("has_entered_portal_session")
+
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
+      setHasExistingProfile(valid)
+
+      // Jika data diri lengkap dan sesi sudah dibuka, jangan tampilkan intro lagi
+      if (valid && hasEntered) {
+        setMounted(true)
+        setShowIntro(false)
+        return
+      }
+
+      // Jika data diri belum lengkap tapi sesi tersimpan dari sesi sebelumnya, batalkan bypass sesi
+      if (!valid && hasEntered) {
+        try {
+          sessionStorage.removeItem("has_entered_portal_session")
+        } catch {
+          // Ignore
+        }
+      }
 
       setTimeInfo(getTimeGreeting())
       setMounted(true)
       setShowIntro(true)
-      if (savedName.trim().length > 0) {
+
+      if (valid) {
         setViewState('recognized')
       } else {
-        setViewState('welcome')
+        setViewState('form')
       }
     } catch {
       setMounted(true)
+      setShowIntro(true)
+      setViewState('form')
     }
   }, [])
 
+  // Cegah scrolling background ketika intro modal aktif
+  React.useEffect(() => {
+    if (showIntro) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = originalOverflow
+      }
+    }
+  }, [showIntro])
+
   const handleEnterPortal = React.useCallback(() => {
+    const currentName = (name || localStorage.getItem("prakom_user_name") || "").trim()
+    const currentSatker = (satker || localStorage.getItem("prakom_user_satker") || "").trim()
+    const currentNip = (nip || localStorage.getItem("prakom_user_nip") || "").trim()
+
+    // Validasi ketat: Data diri harus lengkap untuk dapat masuk
+    if (!isProfileValid(currentName, currentSatker, currentNip)) {
+      setErrorMessage("Silakan lengkapi data diri Anda (Nama, NIP, Satuan Kerja) terlebih dahulu untuk membuka akses.")
+      setViewState('form')
+      return
+    }
+
     try {
       sessionStorage.setItem("has_entered_portal_session", "true")
     } catch {
       // Safe fallback
     }
     setShowIntro(false)
-  }, [])
+  }, [name, satker, nip])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const finalName = name.trim() || "Peserta Diklat"
+    const finalName = name.trim()
     const finalNip = nip.trim()
-    const finalSatker = satker.trim() || "Satuan Kerja Kejaksaan RI"
+    const finalSatker = satker.trim()
+
+    if (!finalName) {
+      setErrorMessage("Nama lengkap dan gelar wajib diisi.")
+      return
+    }
+    if (finalName.toLowerCase() === "peserta diklat" || finalName.length < 3) {
+      setErrorMessage("Mohon masukkan nama lengkap asli Anda (minimal 3 karakter).")
+      return
+    }
+    if (!finalNip || finalNip.length < 6) {
+      setErrorMessage("NIP wajib diisi dengan benar (minimal 6 karakter/digit).")
+      return
+    }
+    if (!finalSatker || finalSatker.length < 3) {
+      setErrorMessage("Satuan kerja wajib diisi.")
+      return
+    }
+
+    setErrorMessage(null)
 
     try {
       localStorage.setItem("prakom_user_name", finalName)
@@ -97,7 +172,9 @@ export function IntroScreen() {
     }
 
     setName(finalName)
+    setNip(finalNip)
     setSatker(finalSatker)
+    setHasExistingProfile(true)
     setViewState('recognized')
   }
 
@@ -183,16 +260,16 @@ export function IntroScreen() {
           </div>
 
           {/* ── Center Content ── */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-center gap-5 my-auto px-4 py-4 w-full max-w-xl">
+          <div className="relative z-10 flex flex-col items-center justify-center text-center gap-4 sm:gap-5 my-auto px-4 py-4 w-full max-w-xl">
 
             {/* Visual: Planet 120 JP + Ring + Smiley */}
-            <div className="relative flex h-32 w-32 sm:h-40 sm:w-40 items-center justify-center shrink-0">
+            <div className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${viewState === 'form' ? 'h-24 w-24 sm:h-32 sm:w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}>
 
               {/* Saturn Ring */}
               <motion.div
                 animate={{ rotateZ: [-2, 2, -2], y: [-2, 2, -2] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute h-32 w-32 sm:h-40 sm:w-40 rounded-full border-[3px] border-[#334155] dark:border-[#475569] opacity-85 pointer-events-none"
+                className={`absolute rounded-full border-[3px] border-[#334155] dark:border-[#475569] opacity-85 pointer-events-none transition-all duration-300 ${viewState === 'form' ? 'h-24 w-24 sm:h-32 sm:w-32' : 'h-32 w-32 sm:h-40 sm:w-40'}`}
                 style={{ transform: "rotateX(72deg) rotateY(-18deg)" }}
               />
 
@@ -200,7 +277,7 @@ export function IntroScreen() {
               <motion.div
                 animate={{ y: [-4, 4, -4] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="relative flex h-22 w-22 sm:h-26 sm:w-26 flex-col items-center justify-center rounded-full bg-gradient-to-tr from-[#818CF8] via-[#F472B6] to-[#FBBF24] shadow-xl shadow-pink-400/30 border-2 border-white/60 cursor-pointer"
+                className={`relative flex flex-col items-center justify-center rounded-full bg-gradient-to-tr from-[#818CF8] via-[#F472B6] to-[#FBBF24] shadow-xl shadow-pink-400/30 border-2 border-white/60 cursor-pointer transition-all duration-300 ${viewState === 'form' ? 'h-18 w-18 sm:h-22 sm:w-22' : 'h-22 w-22 sm:h-26 sm:w-26'}`}
               >
                 <span className="text-white text-xs sm:text-sm font-black tracking-wider uppercase drop-shadow-md">
                   120 JP
@@ -214,7 +291,7 @@ export function IntroScreen() {
                 whileTap={{ scale: 0.95 }}
                 animate={{ y: [3, -3, 3] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -bottom-1 -left-1 sm:left-0 flex h-11 w-11 sm:h-13 sm:w-13 items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-[#2D2010] border-[2.5px] border-[#18181B] dark:border-[#D97706] shadow-lg shadow-black/10 cursor-pointer z-20"
+                className={`absolute -bottom-1 -left-1 sm:left-0 flex items-center justify-center rounded-full bg-[#FFF2D1] dark:bg-[#2D2010] border-[2.5px] border-[#18181B] dark:border-[#D97706] shadow-lg shadow-black/10 cursor-pointer z-20 transition-all duration-300 ${viewState === 'form' ? 'h-9 w-9 sm:h-11 sm:w-11' : 'h-11 w-11 sm:h-13 sm:w-13'}`}
               >
                 <div className="flex flex-col items-center justify-center">
                   <div className="flex gap-1 mb-1">
@@ -226,135 +303,133 @@ export function IntroScreen() {
               </motion.div>
             </div>
 
-            {/* Dynamic Interactive Body (Welcome vs Form vs Recognized Greeting) */}
+            {/* Dynamic Interactive Body (Form vs Recognized Greeting) */}
             <AnimatePresence mode="wait">
-              {viewState === 'welcome' && (
-                /* STATE 1: First Visit Welcome -> Click opens Form */
-                <motion.div
-                  key="stateWelcome"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex flex-col items-center gap-4 max-w-md w-full"
-                >
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1A2235] px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#EA580C] dark:text-amber-400 border border-slate-200 dark:border-amber-900/50 shadow-xs">
-                    <Sparkles className="h-3 w-3 text-[#FF7643]" />
-                    <span>Ruang Belajar & Repositori Modul</span>
-                  </div>
-
-                  <h1 className="text-xl sm:text-2xl font-black text-[#18181B] dark:text-[#E2E8F0] tracking-tight leading-tight">
-                    Pelatihan Fungsional{" "}
-                    <span className="text-[#FF7643]">Pranata Komputer</span> Batch 3
-                  </h1>
-
-                  <p className="text-xs sm:text-sm text-[#6B7C93] dark:text-[#8FA3BC] font-medium leading-relaxed max-w-sm">
-                    Kejaksaan RI X Agrasena (Prakom 625) • 4 Tahap Pembelajaran (MOOC, TMO, Lab Prakom Satker, dan Seminar Klasikal).
-                  </p>
-
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setViewState('form')}
-                    className="group relative flex items-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-colors duration-200 mt-2"
-                  >
-                    <span>Masuk ke Portal Kelas</span>
-                    <ArrowRight className="h-4 w-4 text-[#FFD280] dark:text-[#EA580C] group-hover:translate-x-1 transition-transform duration-200" />
-                  </motion.button>
-                </motion.div>
-              )}
-
               {viewState === 'form' && (
-                /* STATE 2: Form Input Nama, NIP & Satker right on this page */
+                /* STATE FORM: Wajib Isi Identitas Peserta Diklat (Tidak Bisa Di-skip) */
                 <motion.div
                   key="stateForm"
                   initial={{ opacity: 0, y: 10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.25 }}
-                  className="w-full max-w-md rounded-[18px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-xl space-y-4 text-left"
+                  className="w-full max-w-md rounded-[20px] bg-white dark:bg-[#141b27] p-5 sm:p-6 border border-[#e6e6e6] dark:border-white/10 shadow-2xl space-y-4 text-left"
                 >
-                  <div className="text-center space-y-1">
-                    <div className="inline-flex items-center gap-1 rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 px-2.5 py-0.5 text-[10px] font-bold text-[#007aff] dark:text-[#60a5fa]">
+                  <div className="text-center space-y-1.5">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20">
                       <Sparkles className="h-3 w-3" />
-                      <span>Kenalan Singkat Dulu 👋</span>
+                      <span>{hasExistingProfile ? "Perbarui Profil Peserta" : "Wajib Isi Data Diri ✍️"}</span>
                     </div>
-                    <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white">
-                      Identitas Peserta Diklat
+                    <h3 className="text-base sm:text-lg font-black text-[#18181B] dark:text-white">
+                      {hasExistingProfile ? "Perbarui Identitas Peserta" : "Identitas Peserta Diklat"}
                     </h3>
-                    <p className="text-[11px] text-[#615d59] dark:text-[#94a3b8]">
-                      Data disimpan privat di browser untuk personalisasi draf AI Makalah & DUPAK.
+                    <p className="text-[11px] sm:text-xs text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+                      {hasExistingProfile
+                        ? "Ubah data diri Anda untuk pembaruan profil dan penyesuaian sesi kelas."
+                        : "Data diri wajib diisi untuk membuka akses penuh ke modul 120 JP, materi perkuliahan, dan AI Makalah."}
                     </p>
                   </div>
 
-                  <form onSubmit={handleSaveProfile} className="space-y-3">
+                  {errorMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-2.5 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2"
+                    >
+                      <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <span>{errorMessage}</span>
+                    </motion.div>
+                  )}
+
+                  <form onSubmit={handleSaveProfile} className="space-y-3.5">
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-[#000000] dark:text-white">
-                        Nama Lengkap & Gelar <span className="text-[#007aff]">*</span>
+                      <label className="block text-[11px] font-bold text-[#18181B] dark:text-slate-200">
+                        Nama Lengkap & Gelar <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative flex items-center">
-                        <User className="absolute left-3 h-3.5 w-3.5 text-[#615d59] dark:text-[#94a3b8]" />
+                        <User className="absolute left-3 h-4 w-4 text-[#615d59] dark:text-[#94a3b8]" />
                         <input
                           type="text"
                           value={name}
-                          onChange={(e) => setName(e.target.value)}
+                          onChange={(e) => {
+                            setName(e.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
                           placeholder="Contoh: Dewa Sinar Surya, S.Kom."
                           required
                           autoFocus
-                          className="w-full rounded-[9px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-8.5 pr-3 py-2 text-xs text-[#000000] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] transition"
+                          className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-[#000000] dark:text-white">
-                        NIP (Nomor Induk Pegawai)
+                      <label className="block text-[11px] font-bold text-[#18181B] dark:text-slate-200">
+                        NIP (Nomor Induk Pegawai) <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative flex items-center">
-                        <CreditCard className="absolute left-3 h-3.5 w-3.5 text-[#615d59] dark:text-[#94a3b8]" />
+                        <CreditCard className="absolute left-3 h-4 w-4 text-[#615d59] dark:text-[#94a3b8]" />
                         <input
                           type="text"
                           value={nip}
-                          onChange={(e) => setNip(e.target.value)}
+                          onChange={(e) => {
+                            setNip(e.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
                           placeholder="Contoh: 199801012022031001"
-                          maxLength={18}
-                          className="w-full rounded-[9px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-8.5 pr-3 py-2 text-xs text-[#000000] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] font-mono transition"
+                          required
+                          maxLength={25}
+                          className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] font-mono transition"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold text-[#000000] dark:text-white">
-                        Satuan Kerja (Satker) <span className="text-[#007aff]">*</span>
+                      <label className="block text-[11px] font-bold text-[#18181B] dark:text-slate-200">
+                        Satuan Kerja (Satker) <span className="text-rose-500">*</span>
                       </label>
                       <div className="relative flex items-center">
-                        <Building2 className="absolute left-3 h-3.5 w-3.5 text-[#615d59] dark:text-[#94a3b8]" />
+                        <Building2 className="absolute left-3 h-4 w-4 text-[#615d59] dark:text-[#94a3b8]" />
                         <input
                           type="text"
                           value={satker}
-                          onChange={(e) => setSatker(e.target.value)}
-                          placeholder="Contoh: Kejaksaan Negeri Soppeng"
+                          onChange={(e) => {
+                            setSatker(e.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
+                          placeholder="Contoh: Kejaksaan Agung / Kejaksaan Negeri Soppeng"
                           required
-                          className="w-full rounded-[9px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-8.5 pr-3 py-2 text-xs text-[#000000] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] transition"
+                          className="w-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 pl-9 pr-3 py-2 text-xs text-[#18181B] dark:text-white placeholder-[#94a3b8] dark:placeholder-[#64748b] focus:outline-hidden focus:border-[#007aff] focus:ring-1 focus:ring-[#007aff] transition"
                         />
                       </div>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        onClick={handleEnterPortal}
-                        className="text-[11px] font-medium text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white px-2 py-1.5 transition cursor-pointer"
-                      >
-                        Lewati
-                      </button>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 italic">
+                      *) Seluruh kolom di atas wajib diisi untuk verifikasi identitas peserta diklat.
+                    </p>
+
+                    <div className="pt-2 flex items-center justify-end gap-2">
+                      {hasExistingProfile && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setErrorMessage(null)
+                            setViewState('recognized')
+                          }}
+                          className="rounded-full px-4 py-2 text-xs font-semibold text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                        >
+                          Batal
+                        </button>
+                      )}
 
                       <button
                         type="submit"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-5 py-2 text-xs font-semibold shadow-xs transition cursor-pointer"
+                        className={`inline-flex items-center justify-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer ${
+                          !hasExistingProfile ? 'w-full' : ''
+                        }`}
                       >
-                        <span>Simpan & Masuk</span>
-                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+                        <span>{hasExistingProfile ? "Simpan Perubahan & Masuk" : "Simpan Data Diri & Buka Akses Portal"}</span>
+                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                       </button>
                     </div>
                   </form>
@@ -362,7 +437,7 @@ export function IntroScreen() {
               )}
 
               {viewState === 'recognized' && (
-                /* STATE 3: Sudah Pernah Isi -> Langsung Tampilkan Sapaan Hangat di Halaman Pembuka Ini! */
+                /* STATE RECOGNIZED: Identitas Lengkap -> Sapaan Hangat & Tombol Masuk Portal */
                 <motion.div
                   key="stateRecognized"
                   initial={{ opacity: 0, y: 8 }}
@@ -380,12 +455,12 @@ export function IntroScreen() {
                   {/* Big Dynamic Heading */}
                   <h1 className="text-xl sm:text-2xl font-black text-[#18181B] dark:text-[#E2E8F0] tracking-tight leading-tight">
                     {timeInfo.greeting}, Rekan{" "}
-                    <span className="text-[#007aff] dark:text-[#60a5fa]">{name || "Peserta Diklat"}</span>!
+                    <span className="text-[#007aff] dark:text-[#60a5fa]">{name}</span>!
                   </h1>
 
                   {/* Sub-sapaan Satker */}
                   <p className="text-xs sm:text-sm text-[#6B7C93] dark:text-[#8FA3BC] font-medium leading-relaxed max-w-sm">
-                    Selamat datang dari <strong className="text-[#18181B] dark:text-white">{satker || "Satker Kejaksaan RI"}</strong> di <strong className="text-[#007aff] dark:text-[#60a5fa]">Portal Kelas</strong> Diklat Fungsional Pranata Komputer Keahlian Batch 3.
+                    Selamat datang dari <strong className="text-[#18181B] dark:text-white">{satker}</strong> di <strong className="text-[#007aff] dark:text-[#60a5fa]">Portal Kelas</strong> Diklat Fungsional Pranata Komputer Keahlian Batch 3.
                   </p>
 
                   {/* Identity Tag & Edit Option */}
@@ -395,7 +470,10 @@ export function IntroScreen() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setViewState('form')}
+                      onClick={() => {
+                        setErrorMessage(null)
+                        setViewState('form')
+                      }}
                       title="Ubah Profil Identitas"
                       className="text-[#007aff] dark:text-[#60a5fa] hover:underline font-bold text-[10px] inline-flex items-center gap-0.5 cursor-pointer ml-1"
                     >
@@ -424,7 +502,7 @@ export function IntroScreen() {
           <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-semibold pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             {viewState === 'recognized'
               ? "Tekan Enter atau klik tombol di atas untuk masuk • Sesi tersimpan otomatis"
-              : "Klik tombol di atas untuk melanjutkan • Sesi tersimpan otomatis"}
+              : "Lengkapi data diri Anda untuk membuka akses penuh • Tidak dapat dilewati"}
           </div>
 
         </motion.div>
