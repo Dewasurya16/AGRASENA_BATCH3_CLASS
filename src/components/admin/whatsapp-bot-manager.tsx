@@ -332,7 +332,7 @@ export function WhatsAppBotManager() {
               Gateway Bot WhatsApp Pengingat & Notifikasi
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/80 max-w-2xl leading-relaxed">
-              Kirim rekap jadwal perkuliahan harian otomatis (07:00 WIB), pengingat deadline tugas mandiri (16:00 WIB),
+              Kirim reminder kelas pagi otomatis (07:40 WIB), notifikasi kelas selesai & tugas mandiri (15:00 WIB),
               dan siarkan pengumuman resmi langsung ke grup WhatsApp kelas Agrasena Batch 3 Kejaksaan RI.
             </p>
           </div>
@@ -410,10 +410,10 @@ export function WhatsAppBotManager() {
             <Clock className="h-4 w-4 text-sky-600 dark:text-sky-400" />
           </div>
           <div className="text-lg font-black text-slate-900 dark:text-slate-100">
-            07:00 & 16:00 WIB
+            07:40 & 15:00 WIB
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-            Jadwal Kuliah (Pagi) • Deadline Tugas (Sore)
+            Reminder Kelas (07:40) • Selesai & Tugas (15:00)
           </p>
         </div>
       </div>
@@ -560,10 +560,10 @@ export function WhatsAppBotManager() {
                   <BookOpen className="h-4 w-4" />
                 </div>
                 <div className="text-xs font-black text-slate-900 dark:text-slate-100">
-                  Penutup & Tugas
+                  Notif Selesai & Tugas
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  Apresiasi & tugas mandiri aktif.
+                  Notif kelas selesai & tugas mandiri aktif.
                 </div>
               </button>
             </div>

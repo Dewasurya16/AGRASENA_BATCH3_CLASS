@@ -258,7 +258,9 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   const fullDateFormatted = formatIndonesianDate(date)
   const { isMorningCron = false } = options
 
-  let msg = `🏛️ *JADWAL PEMBELAJARAN*\n`
+  let msg = isMorningCron
+    ? `🔔 *REMINDER KELAS PAGI & JADWAL PEMBELAJARAN*\n`
+    : `🏛️ *JADWAL PEMBELAJARAN*\n`
   msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
   msg += `📅 ${fullDateFormatted}`
   if (dayInfo.day) {
@@ -270,6 +272,10 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   if (isMorningCron) {
     const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % MORNING_QUOTES.length : 0
     msg += `✨ _"${MORNING_QUOTES[quoteIndex]}"_\n\n`
+    if (!dayInfo.isWeekend && dayInfo.day) {
+      msg += `⏰ *Waktu Siaga:* Pukul *07:40 WIB*\n`
+      msg += `📌 _Pengingat persiapan kelas: Sesi tatap muka dimulai sebentar lagi. Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian._\n\n`
+    }
   }
 
   if (dayInfo.isWeekend || !dayInfo.day) {
@@ -373,7 +379,7 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
 
-  let msg = `🌟 *PENUTUP KELAS & TUGAS MANDIRI*\n`
+  let msg = `🏁 *NOTIFIKASI KELAS SELESAI & TUGAS MANDIRI*\n`
   msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
   msg += `📅 ${fullDateFormatted}`
   if (dayInfo.day) {
@@ -381,7 +387,10 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   }
   msg += `\n────────────────────────\n\n`
 
-  msg += `Alhamdulillah, perkuliahan hari ini telah selesai dengan baik. Selamat beristirahat sejenak rekan-rekan sekalian! ✨\n\n`
+  const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % CLOSING_QUOTES.length : 0
+  msg += `✨ _"${CLOSING_QUOTES[quoteIndex]}"_\n\n`
+
+  msg += `Alhamdulillah, sesi pembelajaran tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak dan melanjutkan aktivitas rekan-rekan sekalian! 👏\n\n`
 
   // Ambil Tugas yang BELUM SELESAI & TERBARU
   let tasks = []
@@ -435,7 +444,7 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
 // 4. DISPATCHERS DENGAN ANTI-SPAM (HANYA 1X SEHARI)
 // =========================================================================
 
-async function sendScheduleNotification(sock, supabase, targetJid, { force = false } = {}) {
+async function sendScheduleNotification(sock, supabase, targetJid, { force = false, isMorningCron = true } = {}) {
   if (!sock || !targetJid) {
     console.warn('[Scheduler] Socket atau Target Group JID belum siap.')
     return { success: false, error: 'Socket atau Target Group JID belum terkonfigurasi.' }
@@ -449,7 +458,7 @@ async function sendScheduleNotification(sock, supabase, targetJid, { force = fal
   }
 
   try {
-    const { text, count } = await generateDailyScheduleMessage(supabase)
+    const { text, count } = await generateDailyScheduleMessage(supabase, new Date(), { isMorningCron })
     await sock.sendMessage(targetJid, { text })
 
     lastScheduleSentDate = todayStr
@@ -458,7 +467,7 @@ async function sendScheduleNotification(sock, supabase, targetJid, { force = fal
       last_schedule_sent_at: new Date().toISOString(),
     })
 
-    console.log(`[Scheduler] Berhasil kirim notifikasi jadwal pagi ke ${targetJid}`)
+    console.log(`[Scheduler] Berhasil kirim notifikasi pengingat kelas pagi ke ${targetJid}`)
     return { success: true, count }
   } catch (err) {
     console.error('[Scheduler Error] Gagal kirim jadwal:', err)
@@ -489,7 +498,7 @@ async function sendTaskNotification(sock, supabase, targetJid, { force = false }
       last_closing_sent_at: new Date().toISOString(),
     })
 
-    console.log(`[Scheduler] Berhasil kirim penutup kelas & tugas ke ${targetJid}`)
+    console.log(`[Scheduler] Berhasil kirim notifikasi kelas selesai & tugas ke ${targetJid}`)
     return { success: true, count }
   } catch (err) {
     console.error('[Scheduler Error] Gagal kirim penutup kelas:', err)
@@ -502,34 +511,34 @@ async function sendTaskNotification(sock, supabase, targetJid, { force = false }
 // =========================================================================
 
 function initScheduler(getSock, supabase, getTargetJid) {
-  const scheduleCron = process.env.SCHEDULE_REMINDER_CRON || '0 7 * * 1-5'
-  const taskCron = process.env.TASK_REMINDER_CRON || '0 16 * * 1-5'
+  const scheduleCron = process.env.SCHEDULE_REMINDER_CRON || '40 7 * * *'
+  const taskCron = process.env.TASK_REMINDER_CRON || '0 15 * * *'
   const timezone = process.env.TIMEZONE || 'Asia/Jakarta'
 
-  console.log(`[Scheduler] Memasang cron jadwal pagi: '${scheduleCron}' (Senin-Jumat, Timezone: ${timezone})`)
-  console.log(`[Scheduler] Memasang cron penutup kelas & tugas sore: '${taskCron}' (Senin-Jumat, Timezone: ${timezone})`)
+  console.log(`[Scheduler] Memasang cron pengingat kelas pagi: '${scheduleCron}' (Jam 07:40 WIB, Timezone: ${timezone})`)
+  console.log(`[Scheduler] Memasang cron notifikasi kelas selesai: '${taskCron}' (Jam 15:00 WIB, Timezone: ${timezone})`)
 
   loadNotificationHistory(supabase)
 
-  // 1. Cron Pagi 07:00 WIB
+  // 1. Cron Pagi 07:40 WIB
   cron.schedule(
     scheduleCron,
     async () => {
-      console.log('[Scheduler Trigger] Menjalankan pengingat jadwal pagi (07:00 WIB)...')
+      console.log('[Scheduler Trigger] Menjalankan pengingat jadwal & kelas pagi (07:40 WIB)...')
       const sock = getSock()
       const targetJid = getTargetJid()
       if (sock && targetJid) {
-        await sendScheduleNotification(sock, supabase, targetJid, { force: false })
+        await sendScheduleNotification(sock, supabase, targetJid, { force: false, isMorningCron: true })
       }
     },
     { timezone }
   )
 
-  // 2. Cron Sore 16:00 WIB
+  // 2. Cron Sore 15:00 WIB
   cron.schedule(
     taskCron,
     async () => {
-      console.log('[Scheduler Trigger] Menjalankan penutup perkuliahan & tugas sore (16:00 WIB)...')
+      console.log('[Scheduler Trigger] Menjalankan notifikasi kelas selesai & tugas sore (15:00 WIB)...')
       const sock = getSock()
       const targetJid = getTargetJid()
       if (sock && targetJid) {

@@ -7,10 +7,12 @@ Bot WhatsApp otomatis ini bertugas mengirimkan **rekap jadwal harian**, **pering
 
 ## ✨ Fitur Utama
 
-1. **Pengingat Jadwal Pembelajaran Otomatis (Setiap 07:00 WIB)**:
+1. **Pengingat Jadwal & Kelas Pagi Otomatis (Setiap 07:40 WIB)**:
+   - Mengingatkan peserta bersiap 20 menit sebelum kelas dimulai.
    - Membaca jadwal sesi hari ini dari tabel `schedules` di Supabase.
-   - Mengirim rincian mata diklat, widyaiswara, jam pelaksanaan, dan tautan Zoom langsung ke grup kelas WhatsApp.
-2. **Peringatan Deadline Tugas Mandiri (Setiap 16:00 WIB)**:
+   - Mengirim rincian mata diklat, widyaiswara, jam pelaksanaan, dan tautan Zoom via portal kelas ke grup WhatsApp.
+2. **Notifikasi Kelas Selesai & Tugas Mandiri (Setiap 15:00 WIB)**:
+   - Mengirim notifikasi penutup kelas saat sesi tatap muka selesai.
    - Membaca tugas aktif dari tabel `tasks` di Supabase.
    - Mengingatkan peserta yang belum mengunggah laporan tugas.
 3. **Respon Cepat Chat Grup / DM**:

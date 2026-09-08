@@ -41,9 +41,9 @@ VALUES
       'target_group_jid', '',
       'bot_name', 'Agrasena Bot Pengingat',
       'schedule_reminder_enabled', true,
-      'schedule_reminder_time', '07:00',
+      'schedule_reminder_time', '07:40',
       'task_reminder_enabled', true,
-      'task_reminder_time', '16:00',
+      'task_reminder_time', '15:00',
       'auto_reply_enabled', true
     ),
     'Pengaturan umum bot WhatsApp, target grup JID, dan jadwal notifikasi harian.'

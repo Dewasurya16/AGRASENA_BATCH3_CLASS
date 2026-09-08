@@ -256,8 +256,8 @@ async function handleIncomingMessage(m) {
       reply += `────────────────────────\n`
       reply += `Grup ini resmi ditetapkan sebagai penerima pengingat otomatis Diklat Agrasena Batch 3.\n\n`
       reply += `• *ID Grup:* \`${from}\`\n`
-      reply += `• *Jadwal Pagi:* 07:00 WIB\n`
-      reply += `• *Penutup & Tugas:* 16:00 WIB\n\n`
+      reply += `• *Pengingat Kelas Pagi:* 07:40 WIB\n`
+      reply += `• *Notif Selesai & Tugas:* 15:00 WIB\n\n`
       reply += `_Semua pengingat & siaran web sekarang otomatis masuk ke grup ini._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
