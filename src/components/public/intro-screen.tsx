@@ -119,28 +119,17 @@ export function IntroScreen() {
       if (savedSatker) setSatker(savedSatker)
       setHasExistingProfile(valid)
 
-      // JIKA SUDAH PERNAH MENGISI LENGKAP: OTOMATIS BISA MASUK!
-      if (valid) {
-        try {
-          sessionStorage.setItem("has_entered_portal_session", "true")
-        } catch {}
-        setMounted(true)
-        setShowIntro(false)
-        return
-      }
-
-      // JIKA BELUM PERNAH MENGISI ATAU DATA BELUM VALID (BAIK USER BARU MAUPUN LAMA):
-      // KUNCI AKSES! TIDAK BISA MASUK SEBELUM ISI DATA!
-      try {
-        sessionStorage.removeItem("has_entered_portal_session")
-      } catch {}
-
+      // Inisialisasi status profil dan sesi:
+      // - User yang BELUM mengisi data: akses terkunci wajib isi data lengkap
+      // - User yang SUDAH mengisi data: disambut dengan sapaan intro 'recognized' & tombol masuk instan
       setTimeInfo(getTimeGreeting())
       setMounted(true)
       setShowIntro(true)
-      
-      // Jika ada nama tersimpan lama tapi NIP/Satker belum lengkap, langsung minta lengkapi
-      if (savedName.trim() && !valid) {
+      setIsExiting(false)
+
+      if (valid) {
+        setViewState('recognized')
+      } else if (savedName.trim()) {
         setViewState('form')
         setErrorMessage("Silakan lengkapi NIP dan Satuan Kerja Anda untuk membuka akses portal.")
       } else {
@@ -165,6 +154,7 @@ export function IntroScreen() {
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
       setHasExistingProfile(valid)
+      setTimeInfo(getTimeGreeting())
 
       setShowIntro(true)
       setIsExiting(false)

@@ -95,7 +95,12 @@ export default async function AnnouncementsPage() {
                 </div>
 
                 <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                  {item.content}
+                  {item.content
+                    ? item.content
+                        .replace(/@[\u200E\u2068\u2069\s]*Unknown\s+user[\u200E\u2068\u2069\s]*/gi, "Widyaiswara / Pengajar BPS")
+                        .replace(/@Unknown\s+user/gi, "Widyaiswara / Pengajar BPS")
+                        .replace(/Past\s+Test/gi, "Post Test")
+                    : ""}
                 </p>
 
                 <div className="pt-2 flex items-center gap-1.5 text-xs font-semibold text-[#0D3830] dark:text-emerald-400">

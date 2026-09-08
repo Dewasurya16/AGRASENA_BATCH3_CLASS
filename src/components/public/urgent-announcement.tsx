@@ -76,7 +76,12 @@ export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
 
             {/* Content Body */}
             <div className="text-xs text-[#31302e] dark:text-[#cbd5e1] leading-relaxed whitespace-pre-line font-normal">
-              {item.content}
+              {item.content
+                ? item.content
+                    .replace(/@[\u200E\u2068\u2069\s]*Unknown\s+user[\u200E\u2068\u2069\s]*/gi, "Widyaiswara / Pengajar BPS")
+                    .replace(/@Unknown\s+user/gi, "Widyaiswara / Pengajar BPS")
+                    .replace(/Past\s+Test/gi, "Post Test")
+                : ""}
             </div>
 
             {/* Bottom Actions Bar */}
