@@ -23,6 +23,7 @@ const {
   generateTomorrowScheduleMessage,
   generateScheduleForQuery,
   generateClosingAndTaskMessage,
+  generateTaskListMessage,
   generateProgressMessage,
   searchMaterialsMessage,
   generateAnnouncementMessage,
@@ -284,13 +285,13 @@ async function handleIncomingMessage(m) {
       reply += `────────────────────────\n`
       reply += `Daftar perintah yang dapat digunakan:\n\n`
       reply += `📌 *!jadwal*\n`
-      reply += `└ Jadwal pembelajaran hari ini\n\n`
+      reply += `└ Jadwal hari ini (otomatis beralih ke jadwal besok jika lewat 15:00 WIB)\n\n`
       reply += `📅 *!jadwal <tanggal / hari>*\n`
       reply += `└ Cek jadwal per tanggal / hari ke-N (cth: *!jadwal 8 Sep*)\n\n`
       reply += `⏰ *!besok*\n`
       reply += `└ Cek jadwal perkuliahan esok hari\n\n`
       reply += `📝 *!tugas*\n`
-      reply += `└ Daftar tugas mandiri yang aktif\n\n`
+      reply += `└ Daftar tugas mandiri aktif (hanya yang masih ada deadline)\n\n`
       reply += `📢 *!pengumuman*\n`
       reply += `└ Siaran pengumuman resmi diklat terbaru\n\n`
       reply += `👥 *!tagall <pesan>*\n`
@@ -342,14 +343,14 @@ async function handleIncomingMessage(m) {
       return
     }
 
-    // 4. Perintah !tugas (Penugasan Mandiri Aktif)
+    // 4. Perintah !tugas (Penugasan Mandiri Aktif Ber-Deadline)
     if (command === '!tugas') {
       if (!supabase) {
         await sock.sendMessage(from, { text: '⚠️ Koneksi database website belum siap.' }, { quoted: msg })
         return
       }
 
-      const { text } = await generateClosingAndTaskMessage(supabase)
+      const { text } = await generateTaskListMessage(supabase)
       await sock.sendMessage(from, { text }, { quoted: msg })
       return
     }

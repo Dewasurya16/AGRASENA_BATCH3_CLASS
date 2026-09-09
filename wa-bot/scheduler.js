@@ -123,6 +123,96 @@ function getDiklatDayInfo(date = new Date()) {
   }
 }
 
+/**
+ * Memeriksa apakah waktu saat ini di zona waktu WIB (Asia/Jakarta)
+ * sudah mencapai atau melewati pukul 15:00 WIB (jam 3 sore WIB).
+ */
+function isPastAfternoonCutoff(date = new Date()) {
+  try {
+    const jakartaTimeStr = date.toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Jakarta',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    const [hour] = jakartaTimeStr.split(':').map(Number)
+    return hour >= 15
+  } catch {
+    const utcHours = date.getUTCHours()
+    const wibHours = (utcHours + 7) % 24
+    return wibHours >= 15
+  }
+}
+
+/**
+ * Mencari hari diklat aktif berikutnya dalam kalender (melewati akhir pekan / libur).
+ */
+function getNextActiveDiklatDay(startDate = new Date()) {
+  const cur = new Date(startDate)
+  for (let i = 1; i <= 7; i++) {
+    const nextDate = new Date(cur)
+    nextDate.setDate(nextDate.getDate() + i)
+    const dayInfo = getDiklatDayInfo(nextDate)
+    if (dayInfo.day && !dayInfo.isWeekend) {
+      return { date: nextDate, dayInfo }
+    }
+  }
+  return null
+}
+
+/**
+ * Menghitung timestamp batas akhir tugas (23:59:59 WIB pada hari tenggat waktu).
+ * Sesuai dengan kalkulasi pada website kelas (src/lib/utils.ts).
+ */
+function getTaskDeadlineTimestamp(dueDateStr) {
+  if (!dueDateStr) return 0
+  const d = new Date(dueDateStr)
+  let datePart = ''
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+    datePart = formatter.format(d)
+  } catch {
+    const match = String(dueDateStr).match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (match) datePart = match[0]
+  }
+
+  if (datePart) {
+    const [y, m, day] = datePart.split('-').map(Number)
+    const targetUTC = new Date(Date.UTC(y, m - 1, day, 16, 59, 59, 999))
+    return targetUTC.getTime()
+  }
+
+  const fallback = new Date(dueDateStr)
+  fallback.setHours(23, 59, 59, 999)
+  return fallback.getTime()
+}
+
+/**
+ * Format sisa waktu tenggat tugas dalam bahasa Indonesia (countdown)
+ */
+function formatRemainingTime(deadlineMs, now = Date.now()) {
+  const diffMs = deadlineMs - now
+  if (diffMs <= 0) return 'Tenggat telah berakhir'
+  const totalMinutes = Math.floor(diffMs / (1000 * 60))
+  const totalHours = Math.floor(totalMinutes / 60)
+  const days = Math.floor(totalHours / 24)
+  const hours = totalHours % 24
+  const minutes = totalMinutes % 60
+
+  if (days > 0) {
+    return `${days} hari ${hours > 0 ? hours + ' jam ' : ''}lagi`
+  }
+  if (hours > 0) {
+    return `${hours} jam ${minutes > 0 ? minutes + ' menit ' : ''}lagi`
+  }
+  return `${Math.max(1, minutes)} menit lagi`
+}
+
 async function loadNotificationHistory(supabase) {
   if (!supabase) return
   try {
@@ -253,6 +343,112 @@ function parseDateQuery(query) {
 // 2. GENERATOR JADWAL PEMBELAJARAN (RAPI, MENARIK & TIDAK PANJANG)
 // =========================================================================
 
+async function getSessionsForDate(supabase, targetDate, dayInfo) {
+  if (!supabase) return []
+  let sessions = []
+  try {
+    const { data: allSchedules } = await supabase
+      .from('schedules')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (allSchedules && allSchedules.length > 0) {
+      if (dayInfo && dayInfo.day) {
+        sessions = allSchedules.filter((s) => {
+          const title = s.subject_name || s.title || ''
+          return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
+        })
+      }
+
+      if (sessions.length === 0) {
+        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+        const currentDayName = dayNames[new Date(targetDate).getDay()]
+        sessions = allSchedules.filter((s) => (s.day || '').toLowerCase() === currentDayName.toLowerCase())
+      }
+    }
+  } catch (e) {
+    console.error('[Scheduler Error] Gagal mengambil jadwal:', e.message)
+  }
+  return sessions
+}
+
+function formatSessionsText(sessions, dayInfo) {
+  let text = ''
+  if (!sessions || sessions.length === 0) {
+    text += `• Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo?.stage || 'Pusdiklat'}*.\n`
+  } else {
+    sessions.forEach((s) => {
+      let cleanTitle = (s.subject_name || s.title || 'Mata Diklat').replace(/\[Hari\s+\d+\]\s*/i, '').trim()
+      const timeStr = s.start_time && s.end_time
+        ? `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)} WIB`
+        : s.time_slot || '08:00 WIB'
+      const lecturer = s.lecturer || 'Widyaiswara Pusdiklat'
+
+      text += `• *${timeStr}* — ${cleanTitle}\n`
+      text += `  👤 ${lecturer}\n`
+    })
+  }
+  return text
+}
+
+async function getActiveDeadlineTasks(supabase) {
+  if (!supabase) return []
+  const now = Date.now()
+  let tasks = []
+  try {
+    const { data: dbTasks } = await supabase
+      .from('tasks')
+      .select('*')
+      .neq('status', 'completed')
+      .order('due_date', { ascending: true })
+
+    if (dbTasks && dbTasks.length > 0) {
+      tasks = dbTasks.filter((t) => {
+        const status = (t.status || '').toLowerCase().trim()
+        // Jangan tampilkan yang berstatus selesai
+        if (status === 'completed' || status === 'selesai' || status === 'done') return false
+        // Cukup tampilkan yang masih ada deadline saja (belum lewat batas waktu)
+        if (!t.due_date) return false
+        const deadlineMs = getTaskDeadlineTimestamp(t.due_date)
+        return deadlineMs > now
+      })
+    }
+  } catch (e) {
+    console.error('[Scheduler Error] Gagal mengambil tugas:', e.message)
+  }
+  return tasks
+}
+
+function formatTasksText(tasks) {
+  const now = Date.now()
+  let text = ''
+  if (!tasks || tasks.length === 0) {
+    text += `📝 *Status Penugasan Mandiri:*\n`
+    text += `Saat ini *tidak ada tugas aktif* yang memiliki tenggat waktu berjalan (semua tugas telah selesai atau melewati batas waktu). Selamat beristirahat! 🎉\n\n`
+  } else {
+    text += `📝 *Tugas Mandiri Aktif (Masih Ada Deadline):*\n\n`
+    tasks.forEach((t, i) => {
+      const taskTitle = t.title || t.name || 'Tugas Mandiri'
+      const deadlineMs = getTaskDeadlineTimestamp(t.due_date)
+      const formattedDueDate = formatIndonesianDate(t.due_date)
+      const remainingStr = formatRemainingTime(deadlineMs, now)
+      const desc = t.description ? t.description.slice(0, 90).replace(/\r?\n/g, ' ') : ''
+
+      text += `*${i + 1}. ${taskTitle}*\n`
+      text += `   ⏳ Tenggat: *${formattedDueDate} (23:59 WIB)* • _(${remainingStr})_\n`
+      if (desc) {
+        text += `   📄 _${desc}..._\n`
+      }
+      text += `\n`
+    })
+
+    text += `📤 *Pengumpulan Tugas:*\n`
+    text += `Unggah laporan (PDF) melalui LMS Kejaksaan:\n`
+    text += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
+  }
+  return text
+}
+
 async function generateScheduleMessage(supabase, date = new Date(), options = {}) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
@@ -292,45 +488,12 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   }
 
   // Ambil Jadwal Sesi dari Database
-  let sessions = []
-  try {
-    const { data: allSchedules } = await supabase.from('schedules').select('*').order('created_at', { ascending: true })
-
-    if (allSchedules && allSchedules.length > 0) {
-      if (dayInfo.day) {
-        sessions = allSchedules.filter((s) => {
-          const title = s.subject_name || s.title || ''
-          return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
-        })
-      }
-
-      if (sessions.length === 0) {
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-        const currentDayName = dayNames[new Date(date).getDay()]
-        sessions = allSchedules.filter((s) => (s.day || '').toLowerCase() === currentDayName.toLowerCase())
-      }
-    }
-  } catch (e) {
-    console.error('[Scheduler Error] Gagal mengambil jadwal:', e.message)
-  }
+  const sessions = await getSessionsForDate(supabase, date, dayInfo)
 
   msg += `📚 *Mata Diklat:*\n`
-  if (sessions.length === 0) {
-    msg += `• Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo.stage}*.\n`
-  } else {
-    sessions.forEach((s) => {
-      let cleanTitle = (s.subject_name || s.title || 'Mata Diklat').replace(/\[Hari\s+\d+\]\s*/i, '').trim()
-      const timeStr = s.start_time && s.end_time
-        ? `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)} WIB`
-        : s.time_slot || '08:00 WIB'
-      const lecturer = s.lecturer || 'Widyaiswara Pusdiklat'
+  msg += formatSessionsText(sessions, dayInfo)
 
-      msg += `• *${timeStr}* — ${cleanTitle}\n`
-      msg += `  👤 ${lecturer}\n`
-    })
-  }
-
-  // AKSES ZOOM: HANYA LINK PORTAL KELAS (TANPA ID / PASSCODE / LINK ZOOM LANGSUNG)
+  // AKSES ZOOM: HANYA LINK PORTAL KELAS
   msg += `\n🎥 *Akses Ruang Zoom:*\n`
   msg += `Tautan Zoom resmi dapat dibuka via Portal Kelas:\n`
   msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
@@ -345,6 +508,73 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
 }
 
 async function generateDailyScheduleMessage(supabase, date = new Date(), options = {}) {
+  const isAfternoon = isPastAfternoonCutoff(date)
+
+  // KETIKA SUDAH MELEWATI JAM 3 SORE WIB (15:00 WIB):
+  // Otomatis tampilkan status kelas hari ini telah selesai,
+  // tampilkan "DIKLAT LANJUT BESOK", dan berikan rincian jadwal pembelajaran besok!
+  if (isAfternoon && !options.isMorningCron && !options.forceToday) {
+    const todayInfo = getDiklatDayInfo(date)
+    const todayFormatted = formatIndonesianDate(date)
+
+    const tomorrow = new Date(date)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowInfo = getDiklatDayInfo(tomorrow)
+    const tomorrowFormatted = formatIndonesianDate(tomorrow)
+
+    let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI (15:00 WIB)*\n`
+    msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+    msg += `📅 ${todayFormatted}`
+    if (todayInfo.day) {
+      msg += ` | Hari ke-${todayInfo.day}`
+      if (todayInfo.stage) msg += ` (${todayInfo.stage})`
+    }
+    msg += `\n────────────────────────\n\n`
+    msg += `Alhamdulillah, sesi pembelajaran tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak rekan-rekan sekalian! 👏\n\n`
+
+    msg += `⏩ *DIKLAT LANJUT BESOK:*\n`
+    msg += `📅 ${tomorrowFormatted}`
+    if (tomorrowInfo.day) {
+      msg += ` | Hari ke-${tomorrowInfo.day}`
+      if (tomorrowInfo.stage) msg += ` (${tomorrowInfo.stage})`
+    }
+    msg += `\n────────────────────────\n\n`
+
+    if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
+      msg += `☕ *Agenda Besok:*\n`
+      msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga!\n\n`
+
+      const nextActive = getNextActiveDiklatDay(date)
+      if (nextActive) {
+        msg += `📌 *Pembelajaran Tatap Muka Berlanjut Pada:*\n`
+        msg += `📅 *${formatIndonesianDate(nextActive.date)}* | Hari ke-${nextActive.dayInfo.day} (${nextActive.dayInfo.stage})\n\n`
+
+        const nextSessions = await getSessionsForDate(supabase, nextActive.date, nextActive.dayInfo)
+        msg += `📚 *Mata Diklat:*\n`
+        msg += formatSessionsText(nextSessions, nextActive.dayInfo)
+      }
+    } else {
+      const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
+      msg += `📚 *Mata Diklat Besok:*\n`
+      msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
+
+      msg += `\n⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n`
+      msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n`
+    }
+
+    msg += `\n🎥 *Akses Ruang Zoom:*\n`
+    msg += `Tautan Zoom resmi dapat dibuka via Portal Kelas:\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+
+    msg += `────────────────────────\n`
+    msg += `💡 *Petunjuk Perintah:*\n`
+    msg += `• *!jadwal hari ini* — Tetap ingin melihat rekapan jadwal hari ini\n`
+    msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 11 Sep* atau *!jadwal 15*\n`
+    msg += `• *!tugas* — Cek tugas mandiri aktif | *!help* — Menu panduan`
+
+    return { text: msg, count: 0, dayInfo: todayInfo, tomorrowInfo, isAfterCutoff: true }
+  }
+
   return generateScheduleMessage(supabase, date, options)
 }
 
@@ -366,6 +596,14 @@ async function generateScheduleForQuery(supabase, query) {
     msg += `• *!jadwal besok* (Jadwal esok hari)\n\n`
     msg += `💡 _Ketik *!jadwal* tanpa tanggal untuk melihat jadwal hari ini._`
     return { text: msg, count: 0, error: true }
+  }
+
+  // Jika queryType adalah 'today' dan waktu sudah lewat 15:00 WIB:
+  // Tampilkan jadwal hari ini dengan catatan bahwa kelas sudah selesai dan diklat lanjut besok
+  if (parsed.queryType === 'today' && isPastAfternoonCutoff()) {
+    const result = await generateScheduleMessage(supabase, parsed.date, { isManualQuery: true, forceToday: true })
+    const note = `💡 _Catatan: Sesi tatap muka hari ini sudah selesai pukul 15:00 WIB. Diklat lanjut besok (Ketik *!jadwal* atau *!jadwal besok*)._\n\n`
+    return { ...result, text: note + result.text }
   }
 
   return generateScheduleMessage(supabase, parsed.date, { isManualQuery: true })
@@ -392,52 +630,78 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
 
   msg += `Alhamdulillah, sesi pembelajaran tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak dan melanjutkan aktivitas rekan-rekan sekalian! 👏\n\n`
 
-  // Ambil Tugas yang BELUM SELESAI & TERBARU
-  let tasks = []
-  try {
-    const { data: dbTasks } = await supabase
-      .from('tasks')
-      .select('*')
-      .neq('status', 'completed')
-      .order('created_at', { ascending: false })
-      .limit(3)
+  // 1. DIKLAT LANJUT BESOK (JADWAL ESOK HARI)
+  const tomorrow = new Date(date)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowInfo = getDiklatDayInfo(tomorrow)
+  const tomorrowFormatted = formatIndonesianDate(tomorrow)
 
-    tasks = dbTasks || []
-  } catch (e) {
-    console.error('[Scheduler Error] Gagal mengambil tugas:', e.message)
+  msg += `⏩ *DIKLAT LANJUT BESOK:*\n`
+  msg += `📅 ${tomorrowFormatted}`
+  if (tomorrowInfo.day) {
+    msg += ` | Hari ke-${tomorrowInfo.day}`
+    if (tomorrowInfo.stage) msg += ` (${tomorrowInfo.stage})`
   }
+  msg += `\n────────────────────────\n`
 
-  if (tasks.length === 0) {
-    msg += `📝 *Status Penugasan Mandiri:*\n`
-    msg += `Saat ini tidak ada tugas aktif yang belum selesai. Selamat beristirahat sore bersama keluarga!\n\n`
+  if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
+    msg += `☕ *Agenda Besok:*\n`
+    msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga!\n\n`
+
+    const nextActive = getNextActiveDiklatDay(date)
+    if (nextActive) {
+      msg += `📌 *Pembelajaran Tatap Muka Berlanjut Pada:*\n`
+      msg += `📅 *${formatIndonesianDate(nextActive.date)}* | Hari ke-${nextActive.dayInfo.day} (${nextActive.dayInfo.stage})\n\n`
+    }
   } else {
-    msg += `📝 *Tugas Mandiri Aktif:*\n\n`
-
-    tasks.forEach((t, i) => {
-      const taskTitle = t.title || t.name || 'Tugas Mandiri'
-      const deadline = t.due_date ? formatIndonesianDate(t.due_date) : 'Segera'
-      const desc = t.description ? t.description.slice(0, 90).replace(/\r?\n/g, ' ') : ''
-
-      msg += `*${i + 1}. ${taskTitle}*\n`
-      msg += `   ⏳ Tenggat: *${deadline}*\n`
-      if (desc) {
-        msg += `   📄 _${desc}..._\n`
-      }
-      msg += `\n`
-    })
-
-    msg += `📤 *Pengumpulan Tugas:*\n`
-    msg += `Unggah laporan (PDF) melalui LMS Kejaksaan:\n`
-    msg += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
+    const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
+    msg += `📚 *Mata Diklat Besok:*\n`
+    msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
+    msg += `\n⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n\n`
   }
+
+  msg += `────────────────────────\n\n`
+
+  // 2. TUGAS MANDIRI AKTIF (HANYA YANG BELUM SELESAI & MASIH ADA DEADLINE)
+  const tasks = await getActiveDeadlineTasks(supabase)
+  msg += formatTasksText(tasks)
 
   msg += `────────────────────────\n`
   msg += `💡 *Petunjuk Perintah:*\n`
   msg += `• *!jadwal besok* — Jadwal esok hari\n`
-  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep*\n`
+  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 11 Sep*\n`
+  msg += `• *!tugas* — Cek tugas mandiri aktif\n`
   msg += `• *!help* — Menu panduan lengkap`
 
   return { text: msg, count: tasks.length, dayInfo }
+}
+
+/**
+ * Generator Khusus Perintah !tugas (Menampilkan Tugas yang Masih Ada Deadline)
+ */
+async function generateTaskListMessage(supabase, date = new Date()) {
+  const dayInfo = getDiklatDayInfo(date)
+  const fullDateFormatted = formatIndonesianDate(date)
+
+  let msg = `📝 *DAFTAR TUGAS MANDIRI AKTIF*\n`
+  msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+  msg += `📅 ${fullDateFormatted}`
+  if (dayInfo.day) {
+    msg += ` | Hari ke-${dayInfo.day}`
+  }
+  msg += `\n────────────────────────\n\n`
+
+  // HANYA AMBIL TUGAS YANG BELUM SELESAI & MASIH ADA DEADLINE AKTIF
+  const tasks = await getActiveDeadlineTasks(supabase)
+  msg += formatTasksText(tasks)
+
+  msg += `────────────────────────\n`
+  msg += `💡 *Petunjuk Perintah:*\n`
+  msg += `• *!jadwal* — Cek jadwal pembelajaran\n`
+  msg += `• *!modul* — Cari modul & materi diklat\n`
+  msg += `• *!help* — Menu panduan lengkap`
+
+  return { text: msg, count: tasks.length }
 }
 
 // =========================================================================
@@ -735,11 +999,16 @@ module.exports = {
   generateTomorrowScheduleMessage,
   generateScheduleForQuery,
   generateClosingAndTaskMessage,
+  generateTaskListMessage,
   generateProgressMessage,
   searchMaterialsMessage,
   generateAnnouncementMessage,
   parseDateQuery,
   formatIndonesianDate,
+  formatRemainingTime,
+  getTaskDeadlineTimestamp,
+  isPastAfternoonCutoff,
+  getNextActiveDiklatDay,
   CURRICULUM_DAYS,
   ZOOM_CONFIG,
 }
