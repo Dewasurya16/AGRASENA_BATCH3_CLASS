@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Radio,
   MessageCircle,
+  Megaphone,
 } from "lucide-react"
 
 export function WhatsAppBotManager() {
@@ -228,6 +229,28 @@ export function WhatsAppBotManager() {
     }
   }
 
+  // Handle Trigger Urgent Announcement Notification
+  const handleTriggerAnnouncement = async () => {
+    if (!confirm("Siarkan pengumuman mendesak (urgent) ke grup WhatsApp sekarang?")) return
+    setActionLoading("trigger_announcement")
+    try {
+      const res = await fetch("/api/wa-bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trigger_announcement", target: targetJid || undefined }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showFeedback("success", "Pengumuman mendesak berhasil disiarkan ke grup WhatsApp!")
+      } else {
+        showFeedback("error", data.error || "Gagal menyiarkan pengumuman mendesak.")
+      }
+    } catch {
+      showFeedback("error", "Gagal memicu pengiriman pengumuman.")
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
   // Handle Send Custom Broadcast
   const handleSendBroadcast = async (e: React.FormEvent) => {
@@ -271,20 +294,24 @@ export function WhatsAppBotManager() {
   // Quick Templates dengan Bahasa Berwibawa & Sarat Motivasi
   const templates = [
     {
+      title: "Pengumuman Mendesak (Urgent)",
+      text: `🚨 *PENGUMUMAN MENDESAK (URGENT)*\n*DIKLAT FUNGSIONAL PRAKOM • AGRASENA BATCH 3*\n*KEJAKSAAN REPUBLIK INDONESIA 2026*\n────────────────────────\n\n⚠️ *Perhatian Seluruh Rekan Peserta:*\n[Tuliskan pengumuman mendesak di sini...]\n\n────────────────────────\n🌐 *Portal Pengumuman Resmi Web:*\n👉 https://agrasena-batch-3-class.vercel.app/announcements\n\n_Mohon atensi dan kerja sama rekan-rekan sekalian. Terima kasih._`,
+    },
+    {
       title: "Sesi Zoom Dimulai",
-      text: `📢 *PEMBERITAHUAN SESI PERKULIAHAN AKAN DIMULAI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n\nSelamat pagi rekan-rekan peserta! Sesi perkuliahan hari ini akan segera dimulai dalam 10 menit.\n\n🎥 *Akses Ruang Zoom (Angkatan 3):*\n• Meeting ID: *980 1123 8540*\n• Passcode: *Biropeg-24*\n• Link Zoom: https://zoom.us/j/98011238540\n\n_Mohon hadir tepat waktu dengan format nama: [No. Absen] - [Nama] - [Satker], mengaktifkan kamera, dan mengisi presensi kehadiran._`,
+      text: `📢 *PEMBERITAHUAN SESI PERKULIAHAN AKAN DIMULAI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n────────────────────────\n\nSelamat pagi rekan-rekan peserta! Sesi perkuliahan hari ini akan segera dimulai dalam 10 menit.\n\n🎥 *Akses Ruang Virtual Zoom (Angkatan 3):*\n• Meeting ID : *980 1123 8540*\n• Passcode   : *Biropeg-24*\n• Link Zoom  : https://zoom.us/j/98011238540\n\n_Mohon hadir tepat waktu dengan format nama: [No. Absen] - [Nama] - [Satker], mengaktifkan kamera, dan mengisi presensi kehadiran di LMS._`,
     },
     {
       title: "Penutup Kelas & Semangat Tugas",
-      text: `🌟 *APRESIASI SELESAI KELAS & SEMANGAT TUGAS MANDIRI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n\nAlhamdulillah, seluruh agenda perkuliahan hari ini telah selesai dengan baik. Terima kasih atas partisipasi aktif, atensi, dan kedisiplinan rekan-rekan peserta sekalian.\n\n💬 *Untaian Motivasi:*\n_"Ilmu yang diserap di ruang kelas akan berakar kokoh saat diwujudkan dalam analisis dan kerja nyata. Selamat beristirahat sejenak, jaga stamina, lalu selesaikan tugas mandiri dengan teliti, cermat, dan berintegritas tinggi."_\n\n📂 Portal Lembar Kerja & Tugas:\nhttps://agrasena-batch-3-class.vercel.app/tasks\n\n_Jaga kesehatan, luangkan waktu istirahat yang cukup, dan sampai jumpa di sesi perkuliahan besok pagi! ✨_`,
+      text: `🌟 *APRESIASI SELESAI KELAS & TUGAS MANDIRI*\n*DIKLAT PRAKOM BATCH 3 — AGRASENA KEJAKSAAN RI*\n────────────────────────\n\nAlhamdulillah, seluruh agenda perkuliahan hari ini telah selesai dengan baik. Terima kasih atas partisipasi aktif, atensi, dan kedisiplinan rekan-rekan peserta sekalian.\n\n💬 *Untaian Motivasi:*\n_"Ilmu yang diserap di ruang kelas akan berakar kokoh saat diwujudkan dalam analisis dan kerja nyata. Selamat beristirahat sejenak, jaga stamina, lalu selesaikan tugas mandiri dengan teliti, cermat, dan berintegritas tinggi."_\n\n📂 *Portal Lembar Kerja & Tugas:*\n👉 https://agrasena-batch-3-class.vercel.app/tasks\n\n_Jaga kesehatan, luangkan waktu istirahat yang cukup, dan sampai jumpa di sesi perkuliahan besok pagi! ✨_`,
     },
     {
       title: "Presensi Kehadiran",
-      text: `📝 *LINK PRESENSI KEHADIRAN TELAH DIBUKA*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n\nPresensi kehadiran sesi mata diklat hari ini telah dibuka di portal LMS.\nMohon rekan-rekan peserta segera mengisi daftar hadir sebelum batas waktu ditutup:\n🌐 Portal Kelas: https://agrasena-batch-3-class.vercel.app\n\n_Kedisiplinan adalah awal dari keberhasilan. Terima kasih atas perhatian rekan-rekan!_`,
+      text: `📝 *PRESENSI KEHADIRAN TELAH DIBUKA*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n────────────────────────\n\nPresensi kehadiran sesi mata diklat hari ini telah dibuka di portal LMS.\nMohon rekan-rekan peserta segera mengisi daftar hadir sebelum batas waktu ditutup:\n\n🏛️ *LMS Ruang Diklat Kejaksaan RI:*\n👉 https://pengembangan.kejaksaan.go.id/dashboard\n\n🌐 *Portal Kelas:* https://agrasena-batch-3-class.vercel.app\n\n_Kedisiplinan adalah awal dari keberhasilan. Terima kasih atas perhatian rekan-rekan!_`,
     },
     {
       title: "Pengingat Deadline Tugas",
-      text: `⚠️ *PENGINGAT BATAS WAKTU PENGUMPULAN TUGAS*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n\nBatas waktu pengunggahan tugas mandiri akan segera ditutup sore ini pukul 16:59 WIB.\nBagi rekan-rekan yang belum mengunggah, mohon segera menyelesaikan dan mengirimkan berkas laporan melalui:\n📂 Portal Tugas: https://agrasena-batch-3-class.vercel.app/tasks\n\n_Tetap semangat, kerjakan dengan teliti dan penuh dedikasi prima! 💪_`,
+      text: `⚠️ *PENGINGAT BATAS WAKTU PENGUMPULAN TUGAS*\n*DIKLAT PRAKOM BATCH 3 — KEJAKSAAN RI*\n────────────────────────\n\nBatas waktu pengunggahan tugas mandiri akan segera ditutup malam ini pukul 23:59 WIB.\nBagi rekan-rekan yang belum mengunggah berkas, mohon segera menyelesaikan dan mengirimkan laporan melalui LMS Kejaksaan:\n\n📂 *Portal Panduan & Lembar Kerja:*\n👉 https://agrasena-batch-3-class.vercel.app/tasks\n\n_Tetap semangat, kerjakan dengan teliti dan penuh dedikasi prima! 💪_`,
     },
   ]
 
@@ -512,7 +539,7 @@ export function WhatsAppBotManager() {
               Gunakan tombol di bawah untuk segera mengirim notifikasi ke grup WhatsApp tanpa harus menunggu jadwal cron harian otomatis:
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
               {/* Trigger Jadwal Hari Ini */}
               <button
                 type="button"
@@ -564,6 +591,24 @@ export function WhatsAppBotManager() {
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
                   Notif kelas selesai & tugas mandiri aktif.
+                </div>
+              </button>
+
+              {/* Trigger Pengumuman Mendesak */}
+              <button
+                type="button"
+                onClick={handleTriggerAnnouncement}
+                disabled={actionLoading === "trigger_announcement"}
+                className="flex flex-col items-start p-3.5 rounded-[12px] bg-slate-50 dark:bg-[#161B26] hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-slate-200/80 dark:border-[#2A3550] hover:border-rose-300 dark:hover:border-rose-800 transition text-left cursor-pointer group disabled:opacity-50"
+              >
+                <div className="p-2 rounded-[8px] bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 group-hover:scale-105 transition-transform mb-2">
+                  <Megaphone className="h-4 w-4" />
+                </div>
+                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                  Pengumuman Mendesak
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
+                  Siarkan pengumuman urgent ke grup WA.
                 </div>
               </button>
             </div>
@@ -764,15 +809,15 @@ export function WhatsAppBotManager() {
 
               <div className="p-2.5 rounded-[8px] bg-slate-50 dark:bg-[#161B26] border border-slate-200/70 dark:border-[#2A3550] flex items-center justify-between">
                 <div>
-                  <span className="font-mono font-black text-teal-600 dark:text-teal-400">!status</span>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Cek status koneksi bot</p>
+                  <span className="font-mono font-black text-rose-600 dark:text-rose-400">!pengumuman</span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Pengumuman mendesak (urgent)</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => copyToClipboard("!status", "cmd-status")}
+                  onClick={() => copyToClipboard("!pengumuman", "cmd-pengumuman")}
                   className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  {copiedId === "cmd-status" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedId === "cmd-pengumuman" ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                 </button>
               </div>
             </div>

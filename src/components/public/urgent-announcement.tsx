@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Bell, X, ArrowRight, BellRing } from "lucide-react"
+import { Bell, X, ArrowRight, BellRing, ExternalLink } from "lucide-react"
 import Link from "next/link"
 
 export interface UrgentAnnouncementProps {
@@ -14,6 +14,81 @@ export interface UrgentAnnouncementProps {
     author: string
     created_at: string
   }>
+}
+
+export function getPrimaryLink(text?: string): { href: string; label: string } | null {
+  if (!text) return null
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/i
+  const match = text.match(urlRegex)
+  if (!match) return null
+
+  let url = match[0]
+  const matchTrailing = url.match(/[.,;:!?)]+$/)
+  if (matchTrailing) {
+    url = url.slice(0, -matchTrailing[0].length)
+  }
+  const href = url.startsWith("www.") ? `https://${url}` : url
+
+  let label = "Buka Tautan Lampiran"
+  const lower = url.toLowerCase()
+  if (lower.includes("drive.google.com")) {
+    label = "Buka Folder Google Drive"
+  } else if (lower.includes("docs.google.com/forms") || lower.includes("forms.gle")) {
+    label = "Buka Formulir"
+  } else if (lower.includes("docs.google.com")) {
+    label = "Buka Google Docs / Sheet"
+  } else if (lower.includes("zoom.us")) {
+    label = "Buka Ruang Zoom"
+  } else if (lower.includes("kejaksaan.go.id")) {
+    label = "Buka Portal Kejaksaan"
+  } else if (lower.includes("github.com")) {
+    label = "Buka Repositori GitHub"
+  }
+
+  return { href, label }
+}
+
+export function renderContentWithLinks(text?: string) {
+  if (!text) return null
+
+  const cleanText = text
+    .replace(/@[\u200E\u2068\u2069\s]*Unknown\s+user[\u200E\u2068\u2069\s]*/gi, "Widyaiswara / Pengajar BPS")
+    .replace(/@Unknown\s+user/gi, "Widyaiswara / Pengajar BPS")
+    .replace(/Past\s+Test/gi, "Post Test")
+
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi
+  const parts = cleanText.split(urlRegex)
+
+  return parts.map((part, index) => {
+    if (part.match(/^(https?:\/\/|www\.)/i)) {
+      let url = part
+      let trailing = ""
+      const matchTrailing = url.match(/[.,;:!?)]+$/)
+      if (matchTrailing) {
+        trailing = matchTrailing[0]
+        url = url.slice(0, -matchTrailing[0].length)
+      }
+
+      const href = url.startsWith("www.") ? `https://${url}` : url
+
+      return (
+        <React.Fragment key={index}>
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-semibold text-[#007aff] dark:text-[#60a5fa] hover:text-[#0051a8] dark:hover:text-[#93c5fd] hover:underline underline-offset-3 break-all transition-colors cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span>{url}</span>
+            <ExternalLink className="inline-block h-3 w-3 shrink-0" strokeWidth={2.2} />
+          </a>
+          {trailing}
+        </React.Fragment>
+      )
+    }
+    return part
+  })
 }
 
 const DEFAULT_URGENT_ANNOUNCEMENT = {
@@ -37,6 +112,8 @@ export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
     month: "short",
     year: "numeric",
   })
+
+  const primaryLink = getPrimaryLink(item.content)
 
   return (
     <AnimatePresence>
@@ -74,25 +151,33 @@ export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
               {item.title}
             </h4>
 
-            {/* Content Body */}
+            {/* Content Body dengan Link Aktif */}
             <div className="text-xs text-[#31302e] dark:text-[#cbd5e1] leading-relaxed whitespace-pre-line font-normal">
-              {item.content
-                ? item.content
-                    .replace(/@[\u200E\u2068\u2069\s]*Unknown\s+user[\u200E\u2068\u2069\s]*/gi, "Widyaiswara / Pengajar BPS")
-                    .replace(/@Unknown\s+user/gi, "Widyaiswara / Pengajar BPS")
-                    .replace(/Past\s+Test/gi, "Post Test")
-                : ""}
+              {renderContentWithLinks(item.content)}
             </div>
 
             {/* Bottom Actions Bar */}
-            <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2">
-              <Link href="/announcements">
-                <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
-                  <BellRing className="h-3.5 w-3.5" strokeWidth={2} />
-                  <span>Lihat Semua Pengumuman</span>
-                  <ArrowRight className="h-3 w-3" strokeWidth={2} />
-                </button>
-              </Link>
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex flex-wrap items-center gap-2">
+                {primaryLink && (
+                  <a
+                    href={primaryLink.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span>{primaryLink.label}</span>
+                  </a>
+                )}
+                <Link href="/announcements">
+                  <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
+                    <BellRing className="h-3.5 w-3.5" strokeWidth={2} />
+                    <span>Lihat Semua Pengumuman</span>
+                    <ArrowRight className="h-3 w-3" strokeWidth={2} />
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -375,17 +375,18 @@ async function getSessionsForDate(supabase, targetDate, dayInfo) {
 function formatSessionsText(sessions, dayInfo) {
   let text = ''
   if (!sessions || sessions.length === 0) {
-    text += `• Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo?.stage || 'Pusdiklat'}*.\n`
+    text += `▫️ Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo?.stage || 'Pusdiklat'}*.\n\n`
   } else {
-    sessions.forEach((s) => {
+    sessions.forEach((s, idx) => {
       let cleanTitle = (s.subject_name || s.title || 'Mata Diklat').replace(/\[Hari\s+\d+\]\s*/i, '').trim()
       const timeStr = s.start_time && s.end_time
         ? `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)} WIB`
         : s.time_slot || '08:00 WIB'
-      const lecturer = s.lecturer || 'Widyaiswara Pusdiklat'
+      const lecturer = s.lecturer ? s.lecturer.trim() : 'Widyaiswara Pusdiklat'
 
-      text += `• *${timeStr}* — ${cleanTitle}\n`
-      text += `  👤 ${lecturer}\n`
+      text += `*${idx + 1}. ${cleanTitle}*\n`
+      text += `   ⏰ Waktu   : *${timeStr}*\n`
+      text += `   👤 Pemateri: ${lecturer}\n\n`
     })
   }
   return text
@@ -423,28 +424,35 @@ function formatTasksText(tasks) {
   const now = Date.now()
   let text = ''
   if (!tasks || tasks.length === 0) {
-    text += `📝 *Status Penugasan Mandiri:*\n`
-    text += `Saat ini *tidak ada tugas aktif* yang memiliki tenggat waktu berjalan (semua tugas telah selesai atau melewati batas waktu). Selamat beristirahat! 🎉\n\n`
+    text += `📝 *STATUS TUGAS MANDIRI*\n`
+    text += `────────────────────────\n`
+    text += `✅ *Alhamdulillah, tidak ada tugas aktif dengan deadline berjalan.*\n`
+    text += `Semua tugas telah diselesaikan atau telah melewati batas waktu pengumpulan. Selamat beristirahat! 🎉\n\n`
+    text += `🌐 *Portal Tugas:* ${ZOOM_CONFIG.portalUrl}/tasks\n\n`
   } else {
-    text += `📝 *Tugas Mandiri Aktif (Masih Ada Deadline):*\n\n`
+    text += `📝 *TUGAS MANDIRI AKTIF (BER-DEADLINE)*\n`
+    text += `────────────────────────\n\n`
     tasks.forEach((t, i) => {
       const taskTitle = t.title || t.name || 'Tugas Mandiri'
       const deadlineMs = getTaskDeadlineTimestamp(t.due_date)
       const formattedDueDate = formatIndonesianDate(t.due_date)
       const remainingStr = formatRemainingTime(deadlineMs, now)
-      const desc = t.description ? t.description.slice(0, 90).replace(/\r?\n/g, ' ') : ''
+      const desc = t.description ? t.description.slice(0, 110).replace(/\r?\n/g, ' ').trim() : ''
 
       text += `*${i + 1}. ${taskTitle}*\n`
-      text += `   ⏳ Tenggat: *${formattedDueDate} (23:59 WIB)* • _(${remainingStr})_\n`
+      text += `   ⏳ Batas Waktu : *${formattedDueDate} (23:59 WIB)*\n`
+      text += `   ⏱️ Sisa Waktu  : _${remainingStr}_\n`
       if (desc) {
-        text += `   📄 _${desc}..._\n`
+        text += `   📄 Keterangan  : _${desc}${t.description.length > 110 ? '...' : ''}_\n`
       }
       text += `\n`
     })
 
     text += `📤 *Pengumpulan Tugas:*\n`
-    text += `Unggah laporan (PDF) melalui LMS Kejaksaan:\n`
+    text += `Unggah laporan / lembar kerja melalui LMS Kejaksaan:\n`
     text += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
+    text += `📂 *Panduan & Format Lembar Kerja:*\n`
+    text += `👉 ${ZOOM_CONFIG.portalUrl}/tasks\n\n`
   }
   return text
 }
@@ -455,54 +463,59 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   const { isMorningCron = false } = options
 
   let msg = isMorningCron
-    ? `🔔 *REMINDER KELAS PAGI & JADWAL PEMBELAJARAN*\n`
+    ? `🔔 *PENGINGAT KELAS PAGI & JADWAL PEMBELAJARAN*\n`
     : `🏛️ *JADWAL PEMBELAJARAN*\n`
-  msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
-  msg += `📅 ${fullDateFormatted}`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Kejaksaan Republik Indonesia 2026*\n`
+  msg += `────────────────────────\n`
+  msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}\n`
   if (dayInfo.day) {
-    msg += ` | Hari ke-${dayInfo.day}`
-    if (dayInfo.stage) msg += ` (${dayInfo.stage})`
+    msg += `📌 *Tahapan Diklat:* Hari ke-${dayInfo.day}`
+    if (dayInfo.stage) msg += ` • ${dayInfo.stage}`
+    msg += `\n`
   }
-  msg += `\n────────────────────────\n\n`
+  msg += `────────────────────────\n\n`
 
   if (isMorningCron) {
     const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % MORNING_QUOTES.length : 0
-    msg += `✨ _"${MORNING_QUOTES[quoteIndex]}"_\n\n`
+    msg += `💬 *Untaian Motivasi Pagi:*\n`
+    msg += `_"${MORNING_QUOTES[quoteIndex]}"_\n\n`
     if (!dayInfo.isWeekend && dayInfo.day) {
       msg += `⏰ *Waktu Siaga:* Pukul *07:40 WIB*\n`
-      msg += `📌 _Pengingat persiapan kelas: Sesi tatap muka dimulai sebentar lagi. Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian._\n\n`
+      msg += `📌 _Mohon rekan-rekan bersiap di ruang Zoom dan mengisi presensi harian di LMS tepat waktu._\n\n`
     }
   }
 
   if (dayInfo.isWeekend || !dayInfo.day) {
-    msg += `☕ *Agenda:*\n`
-    msg += `Hari libur pembelajaran tatap muka. Selamat beristirahat!\n\n`
-    msg += `🎥 *Akses Zoom & Materi:*\n`
-    msg += `Buka Portal Kelas 👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+    msg += `☕ *Agenda Hari Ini:*\n`
+    msg += `Hari libur pembelajaran tatap muka. Selamat berakhir pekan dan beristirahat bersama keluarga! 🌿\n\n`
+    msg += `🌐 *Portal Web Kelas & Materi:*\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
     msg += `────────────────────────\n`
-    msg += `💡 *Petunjuk Perintah:*\n`
-    msg += `• *!jadwal besok* — Jadwal esok hari\n`
-    msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep* atau *!jadwal 12*\n`
-    msg += `• *!tugas* — Cek tugas | *!help* — Menu panduan`
+    msg += `💡 *Perintah Cepat:*\n`
+    msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
+    msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
+    msg += `• *!pengumuman* — Cek info penting mendesak\n`
+    msg += `• *!help* — Daftar panduan perintah`
     return { text: msg, count: 0, dayInfo }
   }
 
   // Ambil Jadwal Sesi dari Database
   const sessions = await getSessionsForDate(supabase, date, dayInfo)
 
-  msg += `📚 *Mata Diklat:*\n`
+  msg += `📚 *Mata Diklat Hari Ini:*\n`
   msg += formatSessionsText(sessions, dayInfo)
 
-  // AKSES ZOOM: HANYA LINK PORTAL KELAS
-  msg += `\n🎥 *Akses Ruang Zoom:*\n`
-  msg += `Tautan Zoom resmi dapat dibuka via Portal Kelas:\n`
+  msg += `🎥 *Akses Ruang Virtual Zoom:*\n`
+  msg += `Tautan Zoom resmi selalu dapat diakses melalui Portal Kelas:\n`
   msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
 
   msg += `────────────────────────\n`
-  msg += `💡 *Petunjuk Perintah:*\n`
-  msg += `• *!jadwal besok* — Jadwal esok hari\n`
-  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 8 Sep* atau *!jadwal 12*\n`
-  msg += `• *!tugas* — Cek tugas mandiri | *!help* — Menu panduan`
+  msg += `💡 *Perintah Cepat:*\n`
+  msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
+  msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
+  msg += `• *!pengumuman* — Cek info penting mendesak\n`
+  msg += `• *!help* — Panduan bot lengkap`
 
   return { text: msg, count: sessions.length, dayInfo }
 }
@@ -512,7 +525,7 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
 
   // KETIKA SUDAH MELEWATI JAM 3 SORE WIB (15:00 WIB):
   // Otomatis tampilkan status kelas hari ini telah selesai,
-  // tampilkan "DIKLAT LANJUT BESOK", dan berikan rincian jadwal pembelajaran besok!
+  // tampilkan "DIKLAT BERLANJUT BESOK", dan berikan rincian jadwal pembelajaran besok!
   if (isAfternoon && !options.isMorningCron && !options.forceToday) {
     const todayInfo = getDiklatDayInfo(date)
     const todayFormatted = formatIndonesianDate(date)
@@ -522,18 +535,20 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
     const tomorrowInfo = getDiklatDayInfo(tomorrow)
     const tomorrowFormatted = formatIndonesianDate(tomorrow)
 
-    let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI (15:00 WIB)*\n`
-    msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
-    msg += `📅 ${todayFormatted}`
+    let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Kejaksaan Republik Indonesia 2026*\n`
+    msg += `────────────────────────\n`
+    msg += `📅 *Hari Ini:* ${todayFormatted}`
     if (todayInfo.day) {
       msg += ` | Hari ke-${todayInfo.day}`
       if (todayInfo.stage) msg += ` (${todayInfo.stage})`
     }
     msg += `\n────────────────────────\n\n`
-    msg += `Alhamdulillah, sesi pembelajaran tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak rekan-rekan sekalian! 👏\n\n`
+    msg += `Alhamdulillah, sesi perkuliahan tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak rekan-rekan sekalian! 👏\n\n`
 
-    msg += `⏩ *DIKLAT LANJUT BESOK:*\n`
-    msg += `📅 ${tomorrowFormatted}`
+    msg += `⏩ *DIKLAT BERLANJUT BESOK:*\n`
+    msg += `📅 *Tanggal:* ${tomorrowFormatted}`
     if (tomorrowInfo.day) {
       msg += ` | Hari ke-${tomorrowInfo.day}`
       if (tomorrowInfo.stage) msg += ` (${tomorrowInfo.stage})`
@@ -542,7 +557,7 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
 
     if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
       msg += `☕ *Agenda Besok:*\n`
-      msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga!\n\n`
+      msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat berakhir pekan bersama keluarga! 🌿\n\n`
 
       const nextActive = getNextActiveDiklatDay(date)
       if (nextActive) {
@@ -558,19 +573,20 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
       msg += `📚 *Mata Diklat Besok:*\n`
       msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
 
-      msg += `\n⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n`
-      msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n`
+      msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n`
+      msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n\n`
     }
 
-    msg += `\n🎥 *Akses Ruang Zoom:*\n`
-    msg += `Tautan Zoom resmi dapat dibuka via Portal Kelas:\n`
+    msg += `🎥 *Akses Ruang Virtual Zoom:*\n`
+    msg += `Tautan Zoom resmi selalu dapat diakses melalui Portal Kelas:\n`
     msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
 
     msg += `────────────────────────\n`
-    msg += `💡 *Petunjuk Perintah:*\n`
-    msg += `• *!jadwal hari ini* — Tetap ingin melihat rekapan jadwal hari ini\n`
-    msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 11 Sep* atau *!jadwal 15*\n`
-    msg += `• *!tugas* — Cek tugas mandiri aktif | *!help* — Menu panduan`
+    msg += `💡 *Perintah Cepat:*\n`
+    msg += `• *!jadwal hari ini* — Tetap melihat rekap sesi hari ini\n`
+    msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
+    msg += `• *!pengumuman* — Cek info penting mendesak\n`
+    msg += `• *!help* — Menu panduan lengkap`
 
     return { text: msg, count: 0, dayInfo: todayInfo, tomorrowInfo, isAfterCutoff: true }
   }
@@ -587,13 +603,15 @@ async function generateTomorrowScheduleMessage(supabase, date = new Date()) {
 async function generateScheduleForQuery(supabase, query) {
   const parsed = parseDateQuery(query)
   if (!parsed.success) {
-    let msg = `⚠️ *Format Tanggal Belum Sesuai*\n`
-    msg += `────────────────────────\n`
-    msg += `Gunakan format berikut:\n`
-    msg += `• *!jadwal 8 Sep* atau *!jadwal 10 September*\n`
+    let msg = `⚠️ *FORMAT TANGGAL BELUM SESUAI*\n`
+    msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+    msg += `────────────────────────\n\n`
+    msg += `Silakan gunakan salah satu format berikut:\n`
+    msg += `• *!jadwal 15 Sep* atau *!jadwal 15 September*\n`
     msg += `• *!jadwal 12* (Cek jadwal Diklat Hari ke-12)\n`
-    msg += `• *!jadwal 08-09-2026* atau *!jadwal 8/9*\n`
+    msg += `• *!jadwal 15-09-2026* atau *!jadwal 15/9*\n`
     msg += `• *!jadwal besok* (Jadwal esok hari)\n\n`
+    msg += `────────────────────────\n`
     msg += `💡 _Ketik *!jadwal* tanpa tanggal untuk melihat jadwal hari ini._`
     return { text: msg, count: 0, error: true }
   }
@@ -617,18 +635,21 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
 
-  let msg = `🏁 *NOTIFIKASI KELAS SELESAI & TUGAS MANDIRI*\n`
-  msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
-  msg += `📅 ${fullDateFormatted}`
+  let msg = `🏁 *NOTIFIKASI KELAS SELESAI & TUGAS SORE*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Kejaksaan Republik Indonesia 2026*\n`
+  msg += `────────────────────────\n`
+  msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}`
   if (dayInfo.day) {
     msg += ` | Hari ke-${dayInfo.day}`
   }
   msg += `\n────────────────────────\n\n`
 
   const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % CLOSING_QUOTES.length : 0
-  msg += `✨ _"${CLOSING_QUOTES[quoteIndex]}"_\n\n`
+  msg += `💬 *Untaian Motivasi Sore:*\n`
+  msg += `_"${CLOSING_QUOTES[quoteIndex]}"_\n\n`
 
-  msg += `Alhamdulillah, sesi pembelajaran tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak dan melanjutkan aktivitas rekan-rekan sekalian! 👏\n\n`
+  msg += `Alhamdulillah, sesi perkuliahan tatap muka hari ini telah rampung pada pukul *15:00 WIB*. Selamat beristirahat sejenak dan melanjutkan aktivitas rekan-rekan sekalian! 👏\n\n`
 
   // 1. DIKLAT LANJUT BESOK (JADWAL ESOK HARI)
   const tomorrow = new Date(date)
@@ -636,17 +657,17 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const tomorrowInfo = getDiklatDayInfo(tomorrow)
   const tomorrowFormatted = formatIndonesianDate(tomorrow)
 
-  msg += `⏩ *DIKLAT LANJUT BESOK:*\n`
-  msg += `📅 ${tomorrowFormatted}`
+  msg += `⏩ *DIKLAT BERLANJUT BESOK:*\n`
+  msg += `📅 *Tanggal:* ${tomorrowFormatted}`
   if (tomorrowInfo.day) {
     msg += ` | Hari ke-${tomorrowInfo.day}`
     if (tomorrowInfo.stage) msg += ` (${tomorrowInfo.stage})`
   }
-  msg += `\n────────────────────────\n`
+  msg += `\n────────────────────────\n\n`
 
   if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
     msg += `☕ *Agenda Besok:*\n`
-    msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga!\n\n`
+    msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga! 🌿\n\n`
 
     const nextActive = getNextActiveDiklatDay(date)
     if (nextActive) {
@@ -657,20 +678,18 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
     const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
     msg += `📚 *Mata Diklat Besok:*\n`
     msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
-    msg += `\n⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n\n`
+    msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n\n`
   }
-
-  msg += `────────────────────────\n\n`
 
   // 2. TUGAS MANDIRI AKTIF (HANYA YANG BELUM SELESAI & MASIH ADA DEADLINE)
   const tasks = await getActiveDeadlineTasks(supabase)
   msg += formatTasksText(tasks)
 
   msg += `────────────────────────\n`
-  msg += `💡 *Petunjuk Perintah:*\n`
-  msg += `• *!jadwal besok* — Jadwal esok hari\n`
-  msg += `• *!jadwal <tgl/hari>* — Cth: *!jadwal 11 Sep*\n`
-  msg += `• *!tugas* — Cek tugas mandiri aktif\n`
+  msg += `💡 *Perintah Cepat:*\n`
+  msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
+  msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
+  msg += `• *!pengumuman* — Cek info penting mendesak\n`
   msg += `• *!help* — Menu panduan lengkap`
 
   return { text: msg, count: tasks.length, dayInfo }
@@ -683,9 +702,11 @@ async function generateTaskListMessage(supabase, date = new Date()) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
 
-  let msg = `📝 *DAFTAR TUGAS MANDIRI AKTIF*\n`
-  msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
-  msg += `📅 ${fullDateFormatted}`
+  let msg = `📝 *STATUS TUGAS MANDIRI AKTIF*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Kejaksaan Republik Indonesia 2026*\n`
+  msg += `────────────────────────\n`
+  msg += `📅 *Per Tanggal:* ${fullDateFormatted}`
   if (dayInfo.day) {
     msg += ` | Hari ke-${dayInfo.day}`
   }
@@ -696,9 +717,10 @@ async function generateTaskListMessage(supabase, date = new Date()) {
   msg += formatTasksText(tasks)
 
   msg += `────────────────────────\n`
-  msg += `💡 *Petunjuk Perintah:*\n`
-  msg += `• *!jadwal* — Cek jadwal pembelajaran\n`
+  msg += `💡 *Perintah Cepat:*\n`
+  msg += `• *!jadwal* — Cek jadwal perkuliahan\n`
   msg += `• *!modul* — Cari modul & materi diklat\n`
+  msg += `• *!pengumuman* — Cek info penting mendesak\n`
   msg += `• *!help* — Menu panduan lengkap`
 
   return { text: msg, count: tasks.length }
@@ -821,7 +843,7 @@ function generateProgressMessage() {
   const dayInfo = getDiklatDayInfo(new Date())
   const fullDateFormatted = formatIndonesianDate(new Date())
   const totalDays = 35
-  const dayNum = dayInfo.day || 11
+  const dayNum = dayInfo.day || 14
   const pct = ((dayNum / totalDays) * 100).toFixed(1)
   const barLen = 12
   const filled = Math.min(barLen, Math.max(1, Math.round((dayNum / totalDays) * barLen)))
@@ -835,17 +857,19 @@ function generateProgressMessage() {
     nextStageInfo = 'Penyusunan Laporan Akhir & Penutupan Diklat'
   }
 
-  let msg = `📊 *PROGRES DIKLAT AGRASENA BATCH 3*\n`
-  msg += `*Kejaksaan Republik Indonesia*\n`
-  msg += `📅 ${fullDateFormatted}\n`
-  msg += `────────────────────────\n\n`
-  msg += `• *Hari Pelatihan:* Ke-${dayNum} dari ${totalDays} Hari Kerja\n`
-  msg += `• *Progres Angkatan:* [${bar}] *${pct}%*\n`
-  msg += `• *Tahap Saat Ini:* ${dayInfo.stage || 'Tahap 2 • TMO'}\n`
-  msg += `• *Tahap Selanjutnya:* ${nextStageInfo}\n`
-  msg += `• *Sisa Pelatihan:* ${sisa} hari kerja lagi\n\n`
+  let msg = `📊 *TRACKER PROGRES DIKLAT PRAKOM*\n`
+  msg += `*Diklat Agrasena Batch 3 • Kejaksaan RI 2026*\n`
   msg += `────────────────────────\n`
-  msg += `✨ _Tetap semangat dan jaga kekompakan rekan-rekan Prakom Adhyaksa!_\n`
+  msg += `📅 *Waktu Pantau:* ${fullDateFormatted}\n`
+  msg += `────────────────────────\n\n`
+  msg += `📌 *Indikator Progres Diklat:*\n`
+  msg += `• Hari Berjalan : *Ke-${dayNum}* dari ${totalDays} Hari Kerja\n`
+  msg += `• Persentase    : [${bar}] *${pct}%*\n`
+  msg += `• Tahap Aktif   : *${dayInfo.stage || 'Tahap 2 • TMO'}*\n`
+  msg += `• Tahap Lanjutan: ${nextStageInfo}\n`
+  msg += `• Sisa Pelatihan: *${sisa} hari kerja lagi*\n\n`
+  msg += `────────────────────────\n`
+  msg += `✨ _"Setiap baris kode dan analisis adalah langkah nyata kemajuan SPBE Kejaksaan RI. Tetap prima!"_\n\n`
   msg += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}`
 
   return { text: msg }
@@ -871,13 +895,13 @@ async function searchMaterialsMessage(supabase, query) {
     } catch {}
 
     let msg = `📚 *PUSTAKA MODUL DIKLAT (120 JP)*\n`
-    msg += `*Diklat Prakom Batch 3 • Agrasena*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
     msg += `────────────────────────\n\n`
-    msg += `Beberapa materi pembelajaran tersedia:\n\n`
+    msg += `📖 *Modul Pembelajaran Tersedia:*\n\n`
 
     if (materials.length > 0) {
       materials.forEach((m, idx) => {
-        const sizeStr = m.file_size ? ` | ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
+        const sizeStr = m.file_size ? ` • ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
         msg += `*${idx + 1}. ${m.title}*\n`
         msg += `   📁 ${m.subject_name || 'Modul Pembelajaran'}${sizeStr}\n`
       })
@@ -885,9 +909,10 @@ async function searchMaterialsMessage(supabase, query) {
     }
 
     msg += `────────────────────────\n`
-    msg += `💡 *Tips:* Ketik *!modul <kata kunci>* untuk mencari spesifik.\n`
-    msg += `   _Contoh:_ *!modul lms* atau *!modul jarkom*\n`
-    msg += `🌐 *Pustaka Lengkap:* ${ZOOM_CONFIG.portalUrl}/materials`
+    msg += `💡 *Pencarian Cepat:* Ketik *!modul <kata kunci>*\n`
+    msg += `   _Contoh:_ *!modul lms* atau *!modul jarkom*\n\n`
+    msg += `🌐 *Pustaka Modul Lengkap di Web:*\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}/materials`
     return { text: msg }
   }
 
@@ -906,34 +931,38 @@ async function searchMaterialsMessage(supabase, query) {
   }
 
   if (results.length === 0) {
-    let msg = `📚 *MODUL TIDAK DITEMUKAN*\n`
-    msg += `────────────────────────\n`
-    msg += `Tidak ditemukan modul dengan kata kunci: *"${cleanQuery}"*\n\n`
-    msg += `💡 _Coba gunakan kata kunci lain (misal: *!modul lms*, *!modul data*, atau *!modul prakom*)._\n\n`
-    msg += `🌐 *Buka Pustaka Lengkap di Portal:*\n`
+    let msg = `📚 *PENCARIAN MODUL DIKLAT*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `────────────────────────\n\n`
+    msg += `🔍 Kata kunci: *"${cleanQuery}"*\n\n`
+    msg += `⚠️ *Modul tidak ditemukan.* Tidak ada materi yang cocok dengan kata kunci tersebut.\n\n`
+    msg += `💡 *Saran:* Coba gunakan kata kunci umum (misal: *!modul lms*, *!modul data*, atau *!modul spbe*).\n\n`
+    msg += `🌐 *Jelajahi Pustaka Lengkap di Web:*\n`
     msg += `👉 ${ZOOM_CONFIG.portalUrl}/materials`
     return { text: msg }
   }
 
-  let msg = `📚 *HASIL PENCARIAN MODUL*\n`
-  msg += `Kata kunci: *"${cleanQuery}"*\n`
+  let msg = `📚 *HASIL PENCARIAN MODUL DIKLAT*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `────────────────────────\n`
+  msg += `🔍 Kata kunci: *"${cleanQuery}"*\n`
   msg += `────────────────────────\n\n`
 
   results.forEach((m, idx) => {
-    const sizeStr = m.file_size ? ` | ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
+    const sizeStr = m.file_size ? ` • ${(m.file_size / (1024 * 1024)).toFixed(1)} MB` : ''
     msg += `*${idx + 1}. ${m.title}*\n`
     msg += `   📁 ${m.subject_name || 'Modul'}${sizeStr}\n`
   })
 
   msg += `\n────────────────────────\n`
-  msg += `📖 *Unduh / Baca Modul Lengkap di Portal:*\n`
+  msg += `📖 *Unduh / Baca Modul Lengkap di Web:*\n`
   msg += `👉 ${ZOOM_CONFIG.portalUrl}/materials`
 
   return { text: msg }
 }
 
 // =========================================================================
-// 7. PENGUMUMAN RESMI DIKLAT
+// 7. PENGUMUMAN RESMI DIKLAT (HANYA YANG URGENT)
 // =========================================================================
 
 async function generateAnnouncementMessage(supabase) {
@@ -947,48 +976,58 @@ async function generateAnnouncementMessage(supabase) {
       .from('announcements')
       .select('*')
       .eq('is_active', true)
+      .eq('is_urgent', true)
       .order('created_at', { ascending: false })
-      .limit(2)
+      .limit(3)
 
     announcements = data || []
   } catch (err) {
     console.error('[Announcement Fetch Error]', err.message)
   }
 
+  // Jika TIDAK ADA pengumuman urgent, beri tahu & arahkan langsung untuk akses web
   if (announcements.length === 0) {
-    let msg = `📢 *PENGUMUMAN KELAS AGRASENA BATCH 3*\n`
-    msg += `*Kejaksaan Republik Indonesia*\n`
+    let msg = `📢 *PENGUMUMAN RESMI DIKLAT*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Kejaksaan Republik Indonesia 2026*\n`
     msg += `────────────────────────\n\n`
-    msg += `Saat ini belum ada pengumuman baru dari panitia atau widyaiswara.\n\n`
-    msg += `🌐 *Portal Pengumuman:* ${ZOOM_CONFIG.portalUrl}/announcements`
-    return { text: msg }
+    msg += `ℹ️ *Status Pengumuman:*\n`
+    msg += `Saat ini *tidak ada pengumuman mendesak (urgent)* dari panitia atau widyaiswara.\n\n`
+    msg += `Untuk melihat seluruh daftar pengumuman berkala, surat edaran panitia, dan informasi kegiatan diklat secara lengkap, silakan kunjungi website kelas:\n\n`
+    msg += `🌐 *Portal Pengumuman Resmi:*\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}/announcements\n\n`
+    msg += `────────────────────────\n`
+    msg += `💡 _Ketik *!help* untuk melihat menu panduan perintah._`
+    return { text: msg, count: 0 }
   }
 
-  let msg = `📢 *PENGUMUMAN RESMI DIKLAT*\n`
-  msg += `*Diklat Prakom Batch 3 • Agrasena*\n`
+  // Jika ADA pengumuman urgent, tampilkan rincian urgent-nya
+  let msg = `🚨 *PENGUMUMAN MENDESAK (URGENT)*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n\n`
+  msg += `⚠️ *PERHATIAN:* Terdapat pengumuman penting yang memerlukan atensi segera dari seluruh rekan peserta:\n\n`
 
   announcements.forEach((a, idx) => {
     const dateFormatted = formatIndonesianDate(a.created_at)
-    const authorStr = a.author ? `👤 ${a.author} | ` : ''
-    let cleanContent = (a.content || '').replace(/\r?\n/g, ' ').trim()
-    if (cleanContent.length > 160) {
-      cleanContent = cleanContent.slice(0, 160) + '...'
-    }
+    const authorStr = a.author ? `👤 ${a.author}  •  ` : ''
+    let cleanContent = (a.content || '').replace(/\r?\n/g, '\n   ').trim()
 
-    msg += `*${idx + 1}. ${a.title}*\n`
+    msg += `*${idx + 1}. ${a.title.toUpperCase()}*\n`
     msg += `   ${authorStr}📅 ${dateFormatted}\n`
+    msg += `   📌 Status: *MENDESAK (URGENT)*\n`
     if (cleanContent) {
-      msg += `   _${cleanContent}_\n`
+      msg += `\n   ${cleanContent}\n`
     }
     msg += `\n`
   })
 
   msg += `────────────────────────\n`
-  msg += `📖 *Baca Pengumuman Selengkapnya di Portal:*\n`
-  msg += `👉 ${ZOOM_CONFIG.portalUrl}/announcements`
+  msg += `📖 *Baca Selengkapnya & Unduh Lampiran di Web:*\n`
+  msg += `👉 ${ZOOM_CONFIG.portalUrl}/announcements\n\n`
+  msg += `💡 _Ketik *!jadwal* untuk jadwal hari ini | *!tugas* untuk tugas mandiri._`
 
-  return { text: msg }
+  return { text: msg, count: announcements.length }
 }
 
 module.exports = {

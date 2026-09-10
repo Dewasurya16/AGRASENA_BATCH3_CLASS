@@ -185,6 +185,29 @@ function createApiServer({
     }
   })
 
+  // 7b. Trigger Pengumuman Mendesak (Urgent)
+  app.post('/api/trigger/announcement', verifySecret, async (req, res) => {
+    const sock = getSock()
+    const status = getBotStatus()
+    if (!sock || !status.connected) {
+      return res.status(503).json({ error: 'Bot WhatsApp sedang offline.' })
+    }
+
+    const targetJid = req.body.target || getTargetJid()
+    if (!targetJid) {
+      return res.status(400).json({ error: 'Target Group JID belum disetel.' })
+    }
+
+    try {
+      const { generateAnnouncementMessage } = require('./scheduler')
+      const { text, count } = await generateAnnouncementMessage(supabase)
+      await sock.sendMessage(targetJid, { text })
+      res.json({ success: true, message: 'Pengumuman mendesak berhasil dikirim ke grup.', count })
+    } catch (err) {
+      res.status(500).json({ error: err.message })
+    }
+  })
+
   // 7. Ambil Daftar Semua Grup yang Diikuti Bot (Memudahkan Pemilihan Target JID)
   app.get('/api/groups', verifySecret, async (req, res) => {
     const sock = getSock()

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { PublicShell } from "@/components/public/public-shell"
-import { BellRing, Pin, Calendar, User, Search, Sparkles } from "lucide-react"
+import { BellRing, Pin, Calendar, User, Search, Sparkles, ExternalLink } from "lucide-react"
+import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -94,19 +95,33 @@ export default async function AnnouncementsPage() {
                   </div>
                 </div>
 
-                <p className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                  {item.content
-                    ? item.content
-                        .replace(/@[\u200E\u2068\u2069\s]*Unknown\s+user[\u200E\u2068\u2069\s]*/gi, "Widyaiswara / Pengajar BPS")
-                        .replace(/@Unknown\s+user/gi, "Widyaiswara / Pengajar BPS")
-                        .replace(/Past\s+Test/gi, "Post Test")
-                    : ""}
-                </p>
-
-                <div className="pt-2 flex items-center gap-1.5 text-xs font-semibold text-[#0D3830] dark:text-emerald-400">
-                  <User className="h-3.5 w-3.5" />
-                  <span>Oleh: {item.author}</span>
+                <div className="text-xs sm:text-sm text-[#52647C] dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                  {renderContentWithLinks(item.content)}
                 </div>
+
+                {(() => {
+                  const primaryLink = getPrimaryLink(item.content)
+                  return (
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0D3830] dark:text-emerald-400">
+                        <User className="h-3.5 w-3.5" />
+                        <span>Oleh: {item.author}</span>
+                      </div>
+
+                      {primaryLink && (
+                        <a
+                          href={primaryLink.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white px-3.5 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                          <span>{primaryLink.label}</span>
+                        </a>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             ))}
           </div>

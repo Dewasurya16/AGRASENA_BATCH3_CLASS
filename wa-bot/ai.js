@@ -10,13 +10,15 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || ''
 async function askAiAssistant(question) {
   if (!question || typeof question !== 'string' || question.trim().length === 0) {
     let msg = `🤖 *ASISTEN AI PRAKOM AGRASENA*\n`
-    msg += `────────────────────────\n`
-    msg += `Silakan ajukan pertanyaan seputar IT, SPBE, atau materi Diklat.\n\n`
-    msg += `💡 *Contoh Penggunaan:*\n`
+    msg += `*Kejaksaan Republik Indonesia 2026*\n`
+    msg += `────────────────────────\n\n`
+    msg += `Silakan ajukan pertanyaan seputar kompetensi IT, SPBE, atau materi Diklat.\n\n`
+    msg += `💡 *Contoh Perintah:*\n`
     msg += `• *!tanya apa perbedaan peran Prakom Terampil dan Ahli?*\n`
     msg += `• *!tanya jelaskan konsep interoperabilitas data SPBE*\n`
-    msg += `• *!ai bagaimana tips analisis kebutuhan sistem informasi?*\n\n`
-    msg += `🌐 *Portal:* https://agrasena-batch-3-class.vercel.app`
+    msg += `• *!ai bagaimana tips perancangan database relasional?*\n\n`
+    msg += `────────────────────────\n`
+    msg += `🌐 *Portal Kelas:* https://agrasena-batch-3-class.vercel.app`
     return { success: false, text: msg }
   }
 
@@ -63,11 +65,13 @@ Pedoman Menjawab:
       const data = await res.json()
       const answer = data.choices?.[0]?.message?.content?.trim()
       if (answer) {
-        let reply = `🤖 *ASISTEN AI PRAKOM*\n`
-        reply += `────────────────────────\n`
+        let reply = `🤖 *ASISTEN AI PRAKOM AGRASENA*\n`
+        reply += `*Kejaksaan Republik Indonesia*\n`
+        reply += `────────────────────────\n\n`
         reply += `${answer}\n\n`
         reply += `────────────────────────\n`
-        reply += `🌐 *Portal:* https://agrasena-batch-3-class.vercel.app`
+        reply += `🌐 *Portal Kelas:* https://agrasena-batch-3-class.vercel.app\n`
+        reply += `💡 _Ketik *!tanya <pertanyaan>* untuk bertanya kembali._`
         return { success: true, text: reply }
       }
     }
@@ -76,10 +80,12 @@ Pedoman Menjawab:
   }
 
   // Fallback ramah jika koneksi timeout
-  let fallback = `🤖 *ASISTEN AI PRAKOM*\n`
+  let fallback = `🤖 *ASISTEN AI PRAKOM AGRASENA*\n`
+  fallback += `────────────────────────\n\n`
+  fallback += `⚠️ Layanan AI sedang memproses antrean padat. Silakan coba ajukan kembali pertanyaan Anda sesaat lagi, atau jelajahi modul lengkap di website kelas:\n\n`
+  fallback += `👉 https://agrasena-batch-3-class.vercel.app/materials\n\n`
   fallback += `────────────────────────\n`
-  fallback += `Layanan AI sedang sibuk memproses antrean. Silakan coba tanyakan kembali sesaat lagi, atau jelajahi pustaka modul lengkap di portal:\n\n`
-  fallback += `👉 https://agrasena-batch-3-class.vercel.app/materials`
+  fallback += `💡 _Ketik *!help* untuk menu perintah lainnya._`
   return { success: true, text: fallback }
 }
 

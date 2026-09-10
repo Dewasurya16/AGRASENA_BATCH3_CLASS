@@ -150,6 +150,13 @@ async function processPendingActions() {
             await sock.sendMessage(to, { text })
             console.log(`[Bridge Action] Berhasil kirim jadwal besok ke ${to}`)
           }
+        } else if (action.type === 'trigger_announcement') {
+          const to = action.target || targetGroupJid
+          if (to) {
+            const { text } = await generateAnnouncementMessage(supabase)
+            await sock.sendMessage(to, { text })
+            console.log(`[Bridge Action] Berhasil kirim pengumuman mendesak ke ${to}`)
+          }
         }
         action.status = 'completed'
         action.processed_at = new Date().toISOString()
@@ -209,12 +216,16 @@ async function handleIncomingMessage(m) {
     // 1. Perintah !id / !jid (Mengetahui ID Obrolan ini secara instan)
     if (command === '!id' || command === '!jid') {
       const isGroup = from.endsWith('@g.us')
-      let reply = `🆔 *IDENTITAS WHATSAPP*\n`
+      let reply = `🆔 *IDENTITAS OBROLAN WHATSAPP*\n`
+      reply += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
       reply += `────────────────────────\n`
-      reply += `• *Tipe:* ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
-      reply += `• *JID:* \`${from}\`\n\n`
+      reply += `• *Tipe Obrolan:* ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
+      reply += `• *ID / JID    :* \`${from}\`\n`
+      reply += `────────────────────────\n\n`
       if (isGroup) {
-        reply += `💡 *Tips:* Ketik *!setgrup* untuk menetapkan grup ini sebagai target pengingat otomatis.`
+        reply += `💡 *Tips:* Ketik *!setgrup* untuk menetapkan grup ini sebagai tujuan pengingat otomatis harian.`
+      } else {
+        reply += `💡 *Tips:* Masukkan bot ke dalam grup kelas, lalu ketik *!setgrup* di grup tersebut.`
       }
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
@@ -253,61 +264,78 @@ async function handleIncomingMessage(m) {
         }
       }
 
-      let reply = `✅ *TARGET GRUP BERHASIL DISETEL!*\n`
+      let reply = `✅ *GRUP TARGET BERHASIL DISETEL*\n`
+      reply += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
       reply += `────────────────────────\n`
-      reply += `Grup ini resmi ditetapkan sebagai penerima pengingat otomatis Diklat Agrasena Batch 3.\n\n`
-      reply += `• *ID Grup:* \`${from}\`\n`
-      reply += `• *Pengingat Kelas Pagi:* 07:40 WIB\n`
-      reply += `• *Notif Selesai & Tugas:* 15:00 WIB\n\n`
-      reply += `_Semua pengingat & siaran web sekarang otomatis masuk ke grup ini._`
+      reply += `Grup ini resmi ditetapkan sebagai penerima pengingat otomatis & siaran diklat.\n\n`
+      reply += `📋 *Rincian Konfigurasi:*\n`
+      reply += `• *ID Grup        :* \`${from}\`\n`
+      reply += `• *Pengingat Pagi :* Pukul 07:40 WIB\n`
+      reply += `• *Penutup & Tugas:* Pukul 15:00 WIB\n\n`
+      reply += `────────────────────────\n`
+      reply += `✨ _Semua pengingat harian, jadwal kelas, dan pengumuman mendesak kini otomatis masuk ke grup ini._\n\n`
+      reply += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
 
     // 1c. Perintah !status
     if (command === '!status') {
-      let reply = `🤖 *STATUS SISTEM BOT*\n`
+      let reply = `🤖 *STATUS SISTEM BOT AGRASENA*\n`
+      reply += `*Diklat Prakom Batch 3 • Kejaksaan RI 2026*\n`
       reply += `────────────────────────\n`
-      reply += `• *Status:* 🟢 Aktif & Terhubung\n`
-      reply += `• *Nama Akun:* ${botStatus.pushName || 'Bot Kelas'}\n`
-      reply += `• *Nomor:* ${botStatus.phoneNumber || '-'}\n`
-      reply += `• *Target Grup:* ${targetGroupJid ? '✅ Terhubung' : '⚠️ Belum Disetel'}\n`
-      reply += `• *Waktu:* ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n\n`
-      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
+      reply += `• *Koneksi Bot :* 🟢 Aktif & Terhubung\n`
+      reply += `• *Nama Akun   :* ${botStatus.pushName || 'Bot Kelas Agrasena'}\n`
+      reply += `• *Nomor WA    :* ${botStatus.phoneNumber ? '+' + botStatus.phoneNumber : '-'}\n`
+      reply += `• *Target Grup :* ${targetGroupJid ? '✅ Terhubung' : '⚠️ Belum Disetel'}\n`
+      reply += `• *Waktu Server:* ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n`
+      reply += `────────────────────────\n\n`
+      reply += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}\n`
+      reply += `💡 _Ketik *!help* untuk melihat seluruh daftar perintah._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
 
     // 2. Perintah !help / !menu / !petunjuk / !panduan
     if (command === '!help' || command === '!menu' || command === '!petunjuk' || command === '!panduan') {
-      let reply = `🤖 *PANDUAN BOT AGRASENA BATCH 3*\n`
-      reply += `*Kejaksaan Republik Indonesia*\n`
+      let reply = `🤖 *PANDUAN BOT KELAS AGRASENA BATCH 3*\n`
+      reply += `*Diklat Fungsional Prakom • Kejaksaan RI 2026*\n`
       reply += `────────────────────────\n`
-      reply += `Daftar perintah yang dapat digunakan:\n\n`
-      reply += `📌 *!jadwal*\n`
-      reply += `└ Jadwal hari ini (otomatis beralih ke jadwal besok jika lewat 15:00 WIB)\n\n`
-      reply += `📅 *!jadwal <tanggal / hari>*\n`
-      reply += `└ Cek jadwal per tanggal / hari ke-N (cth: *!jadwal 8 Sep*)\n\n`
-      reply += `⏰ *!besok*\n`
-      reply += `└ Cek jadwal perkuliahan esok hari\n\n`
-      reply += `📝 *!tugas*\n`
-      reply += `└ Daftar tugas mandiri aktif (hanya yang masih ada deadline)\n\n`
-      reply += `📢 *!pengumuman*\n`
-      reply += `└ Siaran pengumuman resmi diklat terbaru\n\n`
-      reply += `👥 *!tagall <pesan>*\n`
-      reply += `└ Panggil / tag seluruh anggota di grup\n\n`
-      reply += `📚 *!modul <topik>*\n`
-      reply += `└ Cari modul & materi PDF (cth: *!modul jarkom*)\n\n`
-      reply += `📊 *!progress*\n`
-      reply += `└ Tracker progres diklat 35 hari\n\n`
-      reply += `🤖 *!tanya <pertanyaan>*\n`
-      reply += `└ Tanya Asisten AI Prakom seputar materi / SPBE\n\n`
-      reply += `🔗 *!link*\n`
-      reply += `└ Akses Portal Kelas (Zoom), modul & LMS\n\n`
-      reply += `ℹ️ *!status*\n`
-      reply += `└ Cek status koneksi bot\n\n`
+      reply += `Berikut daftar perintah yang dapat digunakan di grup:\n\n`
+
+      reply += `📅 *JADWAL & PEMBELAJARAN*\n`
+      reply += `• *!jadwal*\n`
+      reply += `  └ Jadwal hari ini (otomatis beralih ke besok setelah 15:00 WIB)\n`
+      reply += `• *!besok*\n`
+      reply += `  └ Jadwal perkuliahan esok hari\n`
+      reply += `• *!jadwal <tgl/hari>*\n`
+      reply += `  └ Cek jadwal per tanggal (cth: *!jadwal 15 Sep* atau *!jadwal 16*)\n\n`
+
+      reply += `📝 *TUGAS & PENGUMUMAN*\n`
+      reply += `• *!tugas*\n`
+      reply += `  └ Daftar tugas mandiri aktif yang memiliki tenggat waktu berjalan\n`
+      reply += `• *!pengumuman*\n`
+      reply += `  └ Cek pengumuman penting mendesak (urgent) dari panitia diklat\n\n`
+
+      reply += `📚 *MATERI & PROGRES*\n`
+      reply += `• *!modul <kata kunci>*\n`
+      reply += `  └ Cari modul / materi PDF (cth: *!modul jarkom*)\n`
+      reply += `• *!progress*\n`
+      reply += `  └ Tracker capaian 35 hari pelatihan diklat\n`
+      reply += `• *!tanya <pertanyaan>*\n`
+      reply += `  └ Asisten AI cerdas seputar materi TI, SPBE, & diklat\n\n`
+
+      reply += `🔗 *LINK & NAVIGASI KELAS*\n`
+      reply += `• *!link*\n`
+      reply += `  └ Akses Portal Kelas, Zoom, LMS Kejaksaan, & Papan Pengumuman\n`
+      reply += `• *!status*\n`
+      reply += `  └ Cek status konektivitas bot\n`
+      reply += `• *!tagall <pesan>*\n`
+      reply += `  └ Panggil / sebut seluruh rekan di grup kelas\n\n`
+
       reply += `────────────────────────\n`
-      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
+      reply += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}\n`
+      reply += `💡 _Gunakan tanda seru (!) di awal setiap perintah._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
@@ -376,7 +404,7 @@ async function handleIncomingMessage(m) {
       return
     }
 
-    // 4e. Perintah !pengumuman / !berita (Pengumuman Resmi Terkini)
+    // 4e. Perintah !pengumuman / !berita (Pengumuman Resmi Terkini - Hanya Urgent)
     if (command === '!pengumuman' || command === '!berita') {
       const { text } = await generateAnnouncementMessage(supabase)
       await sock.sendMessage(from, { text }, { quoted: msg })
@@ -405,14 +433,14 @@ async function handleIncomingMessage(m) {
         }
 
         const customNote = args ? args : 'Perhatian seluruh rekan peserta Diklat Agrasena Batch 3!'
-        let tagText = `📢 *PANGGILAN SELURUH ANGGOTA KELAS*\n`
+        let tagText = `📢 *PANGGILAN SELURUH PESERTA KELAS*\n`
         tagText += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
         tagText += `────────────────────────\n\n`
-        tagText += `📝 *Pesan:*\n`
-        tagText += `${customNote}\n\n`
+        tagText += `📝 *Pesan Panitia / Rekan:*\n`
+        tagText += `"${customNote}"\n\n`
         tagText += `👥 *Total Peserta Disebut:* ${participants.length} Anggota\n`
         tagText += `────────────────────────\n`
-        tagText += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
+        tagText += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}`
 
         await sock.sendMessage(
           from,
@@ -429,23 +457,25 @@ async function handleIncomingMessage(m) {
       return
     }
 
-    // 5. Perintah !link / !zoom / !portal (Hanya mengarahkan ke Portal Kelas)
+    // 5. Perintah !link / !zoom / !portal (Daftar Tautan Resmi Portal & Diklat)
     if (command === '!link' || command === '!zoom' || command === '!portal') {
-      let reply = `🔗 *TAUTAN RESMI DIKLAT PRAKOM BATCH 3*\n`
-      reply += `*Diklat Agrasena • Kejaksaan RI 2026*\n`
+      let reply = `🔗 *TAUTAN RESMI DIKLAT AGRASENA BATCH 3*\n`
+      reply += `*Prakom Kejaksaan Republik Indonesia 2026*\n`
       reply += `────────────────────────\n\n`
-      reply += `🌐 *Portal Kelas (Akses Zoom & Materi):*\n`
+      reply += `🌐 *Portal Utama Kelas (Zoom & Jadwal):*\n`
       reply += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
       reply += `📅 *Kalender & Jadwal Perkuliahan:*\n`
       reply += `👉 ${ZOOM_CONFIG.portalUrl}/schedules\n\n`
-      reply += `📝 *Unggah Penugasan Mandiri:*\n`
+      reply += `📝 *Penugasan Mandiri & Lembar Kerja:*\n`
       reply += `👉 ${ZOOM_CONFIG.portalUrl}/tasks\n\n`
+      reply += `📢 *Papan Pengumuman Resmi:*\n`
+      reply += `👉 ${ZOOM_CONFIG.portalUrl}/announcements\n\n`
       reply += `📚 *Pustaka Modul Pembelajaran:*\n`
       reply += `👉 ${ZOOM_CONFIG.portalUrl}/materials\n\n`
-      reply += `🏛️ *LMS Ruang Diklat Kejaksaan:*\n`
+      reply += `🏛️ *LMS Ruang Diklat Kejaksaan RI:*\n`
       reply += `👉 ${ZOOM_CONFIG.lmsUrl}\n\n`
       reply += `────────────────────────\n`
-      reply += `💡 _Ketik *!jadwal* untuk melihat jadwal hari ini._`
+      reply += `💡 _Tautan Zoom resmi selalu dapat diakses langsung via Portal Kelas._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }
@@ -454,11 +484,14 @@ async function handleIncomingMessage(m) {
     if (command === '!info') {
       let reply = `🏛️ *DIKLAT FUNGSIONAL PRANATA KOMPUTER*\n`
       reply += `*ANGKATAN III (AGRASENA) KEJAKSAAN RI 2026*\n`
-      reply += `────────────────────────\n`
-      reply += `• *Pelatihan:* 35 Hari Kerja (120 JP)\n`
+      reply += `────────────────────────\n\n`
+      reply += `• *Pelatihan   :* 35 Hari Kerja (120 Jam Pelajaran)\n`
       reply += `• *Penyelenggara:* Badan Diklat Kejaksaan RI & Pusdiklat BPS RI\n`
-      reply += `• *Tujuan:* Peningkatan Kompetensi SDM SPBE Kejaksaan RI\n\n`
-      reply += `🌐 *Portal:* ${ZOOM_CONFIG.portalUrl}`
+      reply += `• *Peserta     :* Pranata Komputer Ahli Pertama & Terampil\n`
+      reply += `• *Tujuan      :* Transformasi Digital & Penguatan SPBE Kejaksaan RI\n\n`
+      reply += `────────────────────────\n`
+      reply += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}\n`
+      reply += `💡 _Ketik *!help* untuk melihat seluruh panduan perintah._`
       await sock.sendMessage(from, { text: reply }, { quoted: msg })
       return
     }

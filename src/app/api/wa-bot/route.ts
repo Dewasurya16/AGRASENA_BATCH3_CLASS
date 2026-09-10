@@ -373,6 +373,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Gagal memicu jadwal besok." }, { status: 500 })
     }
 
+    // 6. Trigger Pengumuman Mendesak (Urgent)
+    if (action === "trigger_announcement") {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+        const res = await fetch(`${botUrl}/api/trigger/announcement`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${botSecret}`,
+          },
+          body: JSON.stringify({ target: body.target }),
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (res.ok) {
+          const result = await res.json()
+          return NextResponse.json(result)
+        }
+      } catch {}
+
+      const queued = await queueActionToSupabase({ type: "trigger_announcement", target: body.target })
+      if (queued) {
+        return NextResponse.json({
+          success: true,
+          message: "Perintah siaran pengumuman mendesak berhasil diteruskan ke Bot WhatsApp!",
+        })
+      }
+      return NextResponse.json({ error: "Gagal memicu siaran pengumuman mendesak." }, { status: 500 })
+    }
+
     return NextResponse.json({ error: "Aksi tidak dikenal." }, { status: 400 })
   } catch (err: any) {
     return NextResponse.json(
