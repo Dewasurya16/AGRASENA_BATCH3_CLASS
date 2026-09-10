@@ -89,6 +89,7 @@ import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
+import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 
 interface VisitorLog {
   id: string
@@ -4070,53 +4071,90 @@ export function AdminDashboardClient({
                 <div className="space-y-4">
                   {/* Responsive Grid View */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {paginatedAnnouncements.map((a) => (
-                      <div
-                        key={a.id}
-                        className="flex flex-col justify-between rounded-[12px] bg-slate-50/80 dark:bg-[#161B26] p-4 border border-slate-200/90 dark:border-[#2A3550] gap-3 hover:bg-white dark:hover:bg-[#1A2234] hover:shadow-xs transition"
-                      >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            {a.is_urgent ? (
-                              <span className="rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 px-2 py-0.5 text-[10px] font-black text-rose-700 dark:text-rose-300">
-                                Mendesak / Urgent
+                    {paginatedAnnouncements.map((a) => {
+                      const primaryLink = getPrimaryLink(a.content)
+                      return (
+                        <div
+                          key={a.id}
+                          className="flex flex-col justify-between rounded-[12px] bg-slate-50/80 dark:bg-[#161B26] p-4 border border-slate-200/90 dark:border-[#2A3550] gap-3 hover:bg-white dark:hover:bg-[#1A2234] hover:shadow-xs transition"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              {a.is_urgent ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 px-2 py-0.5 text-[10px] font-black text-rose-700 dark:text-rose-300">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                  Mendesak / Urgent
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-slate-200/80 dark:bg-[#253045] px-2 py-0.5 text-[10px] font-black text-slate-700 dark:text-slate-300">
+                                  Info Kelas
+                                </span>
+                              )}
+                              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px]">
+                                {a.author}
                               </span>
-                            ) : (
-                              <span className="rounded-full bg-slate-200/80 dark:bg-[#253045] px-2 py-0.5 text-[10px] font-black text-slate-700 dark:text-slate-300">
-                                Info Kelas
-                              </span>
-                            )}
-                            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px]">
-                              {a.author}
-                            </span>
-                          </div>
-                          <h5 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">{a.title}</h5>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3">{a.content}</p>
-                        </div>
+                            </div>
 
-                        <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200/60 dark:border-[#2A3550]">
-                          <button
-                            onClick={() => setEditingAnnouncement(a)}
-                            className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAnnouncement(a.id)}
-                            disabled={actionLoadingMap[`ann-delete-${a.id}`]}
-                            className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
-                          >
-                            {actionLoadingMap[`ann-delete-${a.id}`] ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
+                            <h5 className="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 leading-snug">
+                              {a.title}
+                            </h5>
+
+                            {/* Isi pengumuman dengan render link aktif */}
+                            <div className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line break-words max-h-36 overflow-y-auto pr-1">
+                              {renderContentWithLinks(a.content)}
+                            </div>
+
+                            {/* Tombol Aksi Cepat jika ada tautan */}
+                            {primaryLink && (
+                              <div className="pt-0.5">
+                                <a
+                                  href={primaryLink.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition shadow-2xs cursor-pointer"
+                                  title={primaryLink.href}
+                                >
+                                  <ExternalLink className="h-3 w-3 shrink-0" />
+                                  <span className="truncate max-w-[200px]">{primaryLink.label}</span>
+                                </a>
+                              </div>
                             )}
-                            <span>Hapus</span>
-                          </button>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/60 dark:border-[#2A3550]">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                              {new Date(a.created_at).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric"
+                              })}
+                            </span>
+
+                            <div className="flex items-center gap-3 shrink-0">
+                              <button
+                                onClick={() => setEditingAnnouncement(a)}
+                                className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAnnouncement(a.id)}
+                                disabled={actionLoadingMap[`ann-delete-${a.id}`]}
+                                className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer disabled:opacity-50"
+                              >
+                                {actionLoadingMap[`ann-delete-${a.id}`] ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                                <span>Hapus</span>
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* Pagination Controls */}
@@ -5125,6 +5163,9 @@ export function AdminDashboardClient({
               placeholder="Tuliskan detail pengumuman untuk seluruh rekan peserta diklat..."
               className="w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] p-3 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none"
             />
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              💡 Tautan web (Google Drive, Zoom, formulir, dll.) akan otomatis terdeteksi dan dapat langsung diklik oleh peserta.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -5468,6 +5509,9 @@ export function AdminDashboardClient({
                 defaultValue={editingAnnouncement.content}
                 className="w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] p-3 text-xs font-medium text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none"
               />
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                💡 Tautan web (Google Drive, Zoom, formulir, dll.) akan otomatis terdeteksi dan dapat langsung diklik oleh peserta.
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
