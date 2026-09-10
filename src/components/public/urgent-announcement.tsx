@@ -78,7 +78,6 @@ export function renderContentWithLinks(text?: string) {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 font-semibold text-[#007aff] dark:text-[#60a5fa] hover:text-[#0051a8] dark:hover:text-[#93c5fd] hover:underline underline-offset-3 break-all transition-colors cursor-pointer"
-            onClick={(e) => e.stopPropagation()}
           >
             <span>{url}</span>
             <ExternalLink className="inline-block h-3 w-3 shrink-0" strokeWidth={2.2} />

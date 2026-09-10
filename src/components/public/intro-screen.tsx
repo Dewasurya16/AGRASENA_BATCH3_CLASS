@@ -122,9 +122,15 @@ export function IntroScreen() {
       // Cek apakah pengguna sudah menekan tombol "Masuk ke Portal Kelas" dalam sesi ini
       const hasEnteredSession = sessionStorage.getItem("has_entered_portal_session") === "true"
 
-      // JIKA PENGGUNA SUDAH MENGISI DATA & SUDAH PERNAH MASUK DI SESI INI:
-      // JANGAN TAMPILKAN INTRO KETIKA PINDAH-PINDAH HALAMAN!
-      if (valid && hasEnteredSession) {
+      // JIKA PENGGUNA SUDAH MENGISI DATA (VALID):
+      // 1. Jika sudah pernah masuk di sesi ini, ATAU
+      // 2. Jika mengakses langsung tautan spesifik (seperti /announcements, /tasks, /schedules dari WhatsApp):
+      // Maka langsung tampilkan halaman yang dituju tanpa menghalangi dengan intro!
+      const isDirectSpecificPage = typeof window !== "undefined" && window.location.pathname !== "/"
+      if (valid && (hasEnteredSession || isDirectSpecificPage)) {
+        try {
+          sessionStorage.setItem("has_entered_portal_session", "true")
+        } catch {}
         setMounted(true)
         setShowIntro(false)
         return
