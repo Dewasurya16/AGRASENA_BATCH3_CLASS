@@ -9,8 +9,8 @@ export default function NotFound() {
   return (
     <KineticSvgError
       code="404"
+      mainText="TIDAK DITEMUKAN"
       badgeText="Halaman Tidak Ditemukan"
-      title="Halaman Tidak Ditemukan"
       description="Maaf, tautan atau rute yang Anda tuju tidak tersedia, telah dipindahkan, atau alamat URL yang Anda masukkan kurang tepat."
     />
   )
