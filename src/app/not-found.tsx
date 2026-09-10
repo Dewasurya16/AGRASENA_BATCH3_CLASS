@@ -1,4 +1,4 @@
-import { AnimatedErrorView } from "@/components/public/error-pages/animated-error-view"
+import { KineticSvgError } from "@/components/public/error-pages/kinetic-svg-error"
 
 export const metadata = {
   title: "404 • Halaman Tidak Ditemukan | Diklat Prakom Batch 3",
@@ -7,10 +7,9 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <AnimatedErrorView
+    <KineticSvgError
       code="404"
-      badgeText="Lost in Space • 404"
-      badgeColor="blue"
+      badgeText="Halaman Tidak Ditemukan"
       title="Halaman Tidak Ditemukan"
       description="Maaf, tautan atau rute yang Anda tuju tidak tersedia, telah dipindahkan, atau alamat URL yang Anda masukkan kurang tepat."
     />
