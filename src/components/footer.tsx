@@ -58,7 +58,7 @@ export function Footer() {
             </h3>
             <ul className="space-y-2 text-xs sm:text-sm text-[#615d59] dark:text-[#9e9e9e]">
               <li>
-                <Link href="/paper-generator" className="hover:text-[#000000] dark:hover:text-white transition font-normal">AI Makalah Inovasi</Link>
+                <Link href="/paper-generator" className="hover:text-[#000000] dark:hover:text-white transition font-normal">AI Laporan Lab Prakom</Link>
               </li>
               <li>
                 <Link href="/snippets" className="hover:text-[#000000] dark:hover:text-white transition font-normal">Gudang Kode Prakom</Link>

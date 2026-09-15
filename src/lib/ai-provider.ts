@@ -9,6 +9,7 @@ export interface GenerateAiOptions {
   max_tokens?: number
   userApiKey?: string
   mustIncludeKeyPhrases?: string[]
+  timeoutMs?: number
 }
 
 export interface GenerateAiResult {
@@ -155,7 +156,7 @@ async function fetchOpenRouterSingle(
 }
 
 export async function generateAiCompletion(options: GenerateAiOptions): Promise<GenerateAiResult> {
-  const { messages, temperature = 0.35, max_tokens = 2500, userApiKey, mustIncludeKeyPhrases } = options
+  const { messages, temperature = 0.35, max_tokens = 2500, userApiKey, mustIncludeKeyPhrases, timeoutMs } = options
 
   const openRouterKey =
     (userApiKey && userApiKey.startsWith("sk-or-") ? userApiKey : null) ||
@@ -165,7 +166,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
     process.env.GROQ_API_KEY ||
     (userApiKey && !userApiKey.startsWith("sk-or-") ? userApiKey : null)
 
-  const raceTimeoutMs = 12000
+  const raceTimeoutMs = timeoutMs || 15000
 
   // 1. FAST HIGH-SPEED RACE (Concurrent Multi-Model Dispatch)
   const raceCandidates: Promise<GenerateAiResult>[] = []
@@ -176,7 +177,7 @@ export async function generateAiCompletion(options: GenerateAiOptions): Promise<
       fetchGroqSingle("openai/gpt-oss-120b", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
     raceCandidates.push(
-      fetchGroqSingle("qwen/qwen3.8-27b", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
+      fetchGroqSingle("groq/compound", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)
     )
     raceCandidates.push(
       fetchGroqSingle("groq/compound-mini", messages, groqKey, temperature, max_tokens, raceTimeoutMs, mustIncludeKeyPhrases)

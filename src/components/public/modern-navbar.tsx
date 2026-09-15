@@ -63,7 +63,7 @@ export function ModernNavbar() {
   ]
 
   const moreLinks = [
-    { label: "AI Makalah Seminar", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun proposal inovasi satker" },
+    { label: "AI Laporan Lab Prakom", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun laporan laboratorium satker" },
     { label: "Template & DUPAK", href: "/templates", icon: Layers, desc: "Katalog Butir AK & Template SPT" },
     { label: "Persiapan Ujian & Seminar", href: "/exam-prep", icon: Clock, desc: "Countdown & 10 checklist kelulusan" },
     { label: "Forum Diskusi", href: "/discussions", icon: MessageSquare, desc: "Tanya jawab rekan seangkatan" },
