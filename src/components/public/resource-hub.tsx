@@ -301,12 +301,27 @@ function RichNoteRenderer({ content }: { content: string }) {
   return <div className="space-y-1 p-4 sm:p-5 text-[#18181B] dark:text-slate-100">{elements}</div>
 }
 
-export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) {
-  // Priority: materials prop -> localStorage cache -> DEFAULT_MATERIALS
+export interface ResourceHubProps {
+  materials?: MaterialItem[]
+  defaultDataset?: MaterialItem[]
+  batchTitle?: string
+  batchSlug?: "batch-3" | "batch-4"
+}
+
+export function ResourceHub({
+  materials = [],
+  defaultDataset,
+  batchTitle = "Agrasena Batch 3",
+  batchSlug = "batch-3"
+}: ResourceHubProps) {
+  const fallbackDataset = defaultDataset && defaultDataset.length > 0 ? defaultDataset : DEFAULT_MATERIALS
+  const cacheKey = batchSlug === "batch-4" ? "prakom_materials_b4_cache" : "prakom_materials_cache"
+
+  // Priority: materials prop -> localStorage cache -> fallbackDataset
   const [items, setItems] = React.useState<MaterialItem[]>(() => {
     if (typeof window !== "undefined") {
       try {
-        const cached = localStorage.getItem("prakom_materials_cache")
+        const cached = localStorage.getItem(cacheKey)
         if (cached) {
           const parsed = JSON.parse(cached)
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -317,7 +332,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
         }
       } catch {}
     }
-    return materials && materials.length > 0 ? materials : DEFAULT_MATERIALS
+    return materials && materials.length > 0 ? materials : fallbackDataset
   })
   const [isSyncing, setIsSyncing] = React.useState(false)
   const [isRealtimeConnected, setIsRealtimeConnected] = React.useState(false)
@@ -338,6 +353,11 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
   const [pdfLoadProgress, setPdfLoadProgress] = React.useState(15)
 
   const fetchLatestMaterials = React.useCallback(async (silent = false) => {
+    // Jika batch-4, gunakan kurikulum resmi defaultDataset tanpa ditimpa oleh data API umum
+    if (batchSlug === "batch-4") {
+      return
+    }
+
     if (!silent) setIsSyncing(true)
     try {
       const res = await fetch(`/api/materials?t=${Date.now()}`, {
@@ -363,8 +383,8 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
 
           // Persist to localStorage
           try {
-            localStorage.setItem("prakom_materials_cache", JSON.stringify(json.data))
-            localStorage.setItem("prakom_materials_cache_time", Date.now().toString())
+            localStorage.setItem(cacheKey, JSON.stringify(json.data))
+            localStorage.setItem(`${cacheKey}_time`, Date.now().toString())
             window.dispatchEvent(new Event("prakom-materials-updated"))
           } catch {}
         }
@@ -374,7 +394,7 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
     } finally {
       if (!silent) setIsSyncing(false)
     }
-  }, [])
+  }, [batchSlug, cacheKey])
 
   // 1. Always immediately fetch latest fresh materials on component mount
   React.useEffect(() => {
@@ -715,6 +735,13 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
                 <FileText className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
                 <span>Pustaka Bahan Ajar 120 JP</span>
               </span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                batchSlug === "batch-4"
+                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+              }`}>
+                {batchTitle}
+              </span>
               <span className="rounded-full bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Akses Instan 24 Jam
               </span>
@@ -729,7 +756,9 @@ export function ResourceHub({ materials = [] }: { materials?: MaterialItem[] }) 
 
             <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
               Pustaka Modul Bahan Ajar PDF & <br className="hidden sm:block" />
-              <span className="text-[#007aff] dark:text-[#60a5fa]">AI Ringkasan Belajar.</span>
+              <span className={batchSlug === "batch-4" ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
+                AI Ringkasan Belajar {batchSlug === "batch-4" ? "Batch 4" : "Batch 3"}.
+              </span>
             </h1>
 
             <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
