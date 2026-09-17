@@ -399,7 +399,7 @@ export function PaperGeneratorHub() {
   const [mentorName, setMentorName] = React.useState("Penguji Pelatihan, S.Kom., M.Si.")
   const [coachName, setCoachName] = React.useState("Coach Pembimbing, S.T., M.Kom.")
   const [examDate, setExamDate] = React.useState("Rabu, 30 September 2026")
-  const [batchName, setBatchName] = React.useState("BATCH 02 ANGKATAN 05")
+  const [batchName, setBatchName] = React.useState("AGRASENA BATCH 3 / ANGKATAN 05")
 
   const [topicTitle, setTopicTitle] = React.useState(PRESET_TOPICS[0].title)
   const [problemStatement, setProblemStatement] = React.useState(PRESET_TOPICS[0].problem)
@@ -428,9 +428,27 @@ export function PaperGeneratorHub() {
       const savedName = localStorage.getItem("prakom_user_name")
       const savedSatker = localStorage.getItem("prakom_user_satker")
       const savedNip = localStorage.getItem("prakom_user_nip")
+      const savedBatch = localStorage.getItem("prakom_user_batch")
+
       if (savedName) setAuthorName(savedName)
       if (savedSatker) setAuthorSatker(savedSatker)
       if (savedNip) setAuthorNip(savedNip)
+
+      if (savedBatch === "batch-4" || (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4"))) {
+        setBatchName("AGRASENA BATCH 4 / ANGKATAN 06")
+      } else {
+        setBatchName("AGRASENA BATCH 3 / ANGKATAN 05")
+      }
+
+      const handleBatchChanged = (e: any) => {
+        const b = e.detail?.batch
+        if (b === "batch-4") {
+          setBatchName("AGRASENA BATCH 4 / ANGKATAN 06")
+        } else {
+          setBatchName("AGRASENA BATCH 3 / ANGKATAN 05")
+        }
+      }
+      window.addEventListener("prakom-batch-changed", handleBatchChanged)
 
       const savedDraft = localStorage.getItem("prakom_paper_draft")
       if (savedDraft) {
@@ -452,6 +470,10 @@ export function PaperGeneratorHub() {
 
       const savedSummary = localStorage.getItem("prakom_paper_summary")
       if (savedSummary) setGeneratedSummary(savedSummary)
+
+      return () => {
+        window.removeEventListener("prakom-batch-changed", handleBatchChanged)
+      }
     } catch {
       // Ignore
     }
