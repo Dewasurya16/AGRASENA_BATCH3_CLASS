@@ -35,6 +35,8 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
+import { BatchAutoRedirect } from "@/components/public/batch-auto-redirect"
+
 export default async function HomePage() {
   let announcements: any[] = []
   let tasks: any[] = []
@@ -70,6 +72,7 @@ export default async function HomePage() {
 
   return (
     <PublicShell>
+      <BatchAutoRedirect />
       <div className="space-y-8 sm:space-y-12">
         
         {/* 2. Pengumuman Mendesak (Jika Ada) */}

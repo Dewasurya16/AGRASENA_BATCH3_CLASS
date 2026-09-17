@@ -142,17 +142,22 @@ export function VisitorTracker() {
         let visitorName = ''
         let visitorNip = ''
         let visitorSatker = ''
+        let visitorBatch = ''
 
         try {
           visitorName = localStorage.getItem('prakom_user_name') || ''
           visitorNip = localStorage.getItem('prakom_user_nip') || ''
           visitorSatker = localStorage.getItem('prakom_user_satker') || ''
+          visitorBatch = localStorage.getItem('prakom_user_batch') || ''
         } catch {
           // Ignore localStorage read errors
         }
 
+        const currentPath = pathname || window.location.pathname
+        const resolvedBatch = visitorBatch || (currentPath.startsWith('/batch-4') ? 'batch-4' : 'batch-3')
+
         const payload = {
-          path: pathname || window.location.pathname,
+          path: currentPath,
           referrer: document.referrer || '',
           screen: typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : '',
           language: typeof navigator !== 'undefined' ? navigator.language : '',
@@ -161,6 +166,7 @@ export function VisitorTracker() {
           visitorName,
           visitorNip,
           visitorSatker,
+          batch: resolvedBatch,
         }
 
         await fetch('/api/analytics/track', {

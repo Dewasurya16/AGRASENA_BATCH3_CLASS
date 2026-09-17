@@ -15,7 +15,8 @@ import {
   Radio,
   Layers,
   ShieldCheck,
-  Laptop
+  Laptop,
+  Users
 } from "lucide-react"
 import { BATCH3_ZOOM_CONFIG } from "@/data/batch3/zoom-config"
 import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
@@ -24,9 +25,11 @@ interface MultiBatchControlHubProps {
   batch3SchedulesCount: number
   batch3MaterialsCount: number
   batch3TasksCount: number
+  batch3VisitorsCount?: number
   batch4SchedulesCount: number
   batch4MaterialsCount: number
   batch4TasksCount: number
+  batch4VisitorsCount?: number
   selectedBatch: "all" | "batch-3" | "batch-4"
   onSelectBatch: (batch: "all" | "batch-3" | "batch-4") => void
   onFeedback: (type: "success" | "error", text: string) => void
@@ -36,9 +39,11 @@ export function MultiBatchControlHub({
   batch3SchedulesCount,
   batch3MaterialsCount,
   batch3TasksCount,
+  batch3VisitorsCount = 0,
   batch4SchedulesCount,
   batch4MaterialsCount,
   batch4TasksCount,
+  batch4VisitorsCount = 0,
   selectedBatch,
   onSelectBatch,
   onFeedback
@@ -198,13 +203,13 @@ export function MultiBatchControlHub({
             </div>
 
             {/* Batch 3 Metrics Grid */}
-            <div className="grid grid-cols-3 gap-2.5 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
               <div className="rounded-xl bg-slate-50 dark:bg-[#101726] p-3 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-bold text-slate-500 uppercase block">Jadwal</span>
                 <span className="text-lg sm:text-xl font-black text-sky-600 dark:text-sky-400">
                   {batch3SchedulesCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Sesi Perkuliahan</span>
+                <span className="text-[10px] text-slate-400 block">Sesi Kuliah</span>
               </div>
 
               <div className="rounded-xl bg-slate-50 dark:bg-[#101726] p-3 border border-slate-100 dark:border-slate-800">
@@ -212,7 +217,7 @@ export function MultiBatchControlHub({
                 <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400">
                   {batch3MaterialsCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Berkas 120 JP</span>
+                <span className="text-[10px] text-slate-400 block">120 JP PDF</span>
               </div>
 
               <div className="rounded-xl bg-slate-50 dark:bg-[#101726] p-3 border border-slate-100 dark:border-slate-800">
@@ -220,7 +225,15 @@ export function MultiBatchControlHub({
                 <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400">
                   {batch3TasksCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Tugas Batch 3</span>
+                <span className="text-[10px] text-slate-400 block">Penugasan</span>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 dark:bg-[#101726] p-3 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase block">Pengunjung</span>
+                <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">
+                  {batch3VisitorsCount}
+                </span>
+                <span className="text-[10px] text-slate-400 block">Akses B3</span>
               </div>
             </div>
 
@@ -345,13 +358,13 @@ export function MultiBatchControlHub({
             </div>
 
             {/* Batch 4 Metrics Grid */}
-            <div className="grid grid-cols-3 gap-2.5 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
               <div className="rounded-xl bg-slate-50 dark:bg-[#13112c] p-3 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-bold text-slate-500 uppercase block">Jadwal</span>
                 <span className="text-lg sm:text-xl font-black text-sky-600 dark:text-sky-400">
                   {batch4SchedulesCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Sesi Roadmap</span>
+                <span className="text-[10px] text-slate-400 block">Sesi Kuliah</span>
               </div>
 
               <div className="rounded-xl bg-slate-50 dark:bg-[#13112c] p-3 border border-slate-100 dark:border-slate-800">
@@ -359,7 +372,7 @@ export function MultiBatchControlHub({
                 <span className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400">
                   {batch4MaterialsCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Berkas 120 JP</span>
+                <span className="text-[10px] text-slate-400 block">120 JP PDF</span>
               </div>
 
               <div className="rounded-xl bg-slate-50 dark:bg-[#13112c] p-3 border border-slate-100 dark:border-slate-800">
@@ -367,7 +380,15 @@ export function MultiBatchControlHub({
                 <span className="text-lg sm:text-xl font-black text-amber-600 dark:text-amber-400">
                   {batch4TasksCount}
                 </span>
-                <span className="text-[10px] text-slate-400 block">Tugas Batch 4</span>
+                <span className="text-[10px] text-slate-400 block">Penugasan</span>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 dark:bg-[#13112c] p-3 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase block">Pengunjung</span>
+                <span className="text-lg sm:text-xl font-black text-purple-600 dark:text-purple-400">
+                  {batch4VisitorsCount}
+                </span>
+                <span className="text-[10px] text-slate-400 block">Akses B4</span>
               </div>
             </div>
 

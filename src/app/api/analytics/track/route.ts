@@ -99,6 +99,20 @@ export async function POST(request: NextRequest) {
     const visitorName = sanitizeInput(bodyData.visitorName || '', 150)
     const visitorNip = sanitizeInput(bodyData.visitorNip || '', 50)
     const visitorSatker = sanitizeInput(bodyData.visitorSatker || '', 150)
+    const batch = sanitizeInput(bodyData.batch || (path.startsWith('/batch-4') ? 'batch-4' : 'batch-3'), 20)
+
+    // Format identitas satker dan path dengan penanda angkatan agar tersimpan jelas di visitor_logs
+    let formattedSatker = visitorSatker
+    if (formattedSatker && !formattedSatker.toLowerCase().includes('batch') && !formattedSatker.toLowerCase().includes('agrasena')) {
+      formattedSatker = `${formattedSatker} [${batch === 'batch-4' ? 'Agrasena 4' : 'Agrasena 3'}]`
+    } else if (!formattedSatker) {
+      formattedSatker = batch === 'batch-4' ? 'Pengunjung Umum (Batch 4)' : 'Pengunjung Umum (Batch 3)'
+    }
+
+    let recordedPath = path
+    if (batch === 'batch-4' && recordedPath === '/') {
+      recordedPath = '/batch-4'
+    }
 
     const host = request.headers.get('host') || ''
     const isLocalhostIp =
@@ -135,7 +149,7 @@ export async function POST(request: NextRequest) {
         success: true,
         skipped: true,
         reason: 'Akses dari localhost / IP lokal dilewati dan tidak disimpan ke visitor_logs.',
-        data: { ip, deviceId, localIp, visitorName, visitorNip, device, os, browser, path },
+        data: { ip, deviceId, localIp, visitorName, visitorNip, device, os, browser, path: recordedPath, batch },
       })
     }
 
@@ -152,7 +166,7 @@ export async function POST(request: NextRequest) {
           device,
           os,
           browser,
-          path,
+          path: recordedPath,
           referrer,
           screen,
           language,
@@ -164,7 +178,7 @@ export async function POST(request: NextRequest) {
           local_ip: localIp || null,
           visitor_name: visitorName || null,
           visitor_nip: visitorNip || null,
-          visitor_satker: visitorSatker || null,
+          visitor_satker: formattedSatker || null,
         }
 
         // Try inserting full payload with extended device & identity columns

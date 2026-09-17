@@ -71,9 +71,13 @@ export function TaskBoard({ tasks = [] }: { tasks?: TaskRecord[] }) {
       {filtered.length === 0 ? (
         <div className="rounded-[12px] bg-white dark:bg-[#141b27] p-10 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 space-y-2.5">
           <BookOpen className="h-9 w-9 text-[#94a3b8] mx-auto" strokeWidth={2} />
-          <h4 className="font-bold text-base text-[#000000] dark:text-white">Belum Ada Tugas</h4>
-          <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto">
-            Tidak ada tugas yang sesuai untuk filter status ini.
+          <h4 className="font-bold text-base text-[#000000] dark:text-white">
+            {tasks.length === 0 ? "Belum Ada Penugasan Aktif" : "Belum Ada Tugas"}
+          </h4>
+          <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+            {tasks.length === 0
+              ? "Daftar tugas mandiri, lembar kerja praktikum, dan batas waktu pengumpulan akan diumumkan secara berkala oleh Tim Pengajar."
+              : "Tidak ada tugas yang sesuai untuk filter status ini."}
           </p>
         </div>
       ) : (

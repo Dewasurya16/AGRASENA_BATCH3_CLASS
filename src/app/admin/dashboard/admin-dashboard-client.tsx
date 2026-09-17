@@ -246,6 +246,25 @@ export function getItemBatch(item: any): "batch-3" | "batch-4" {
   return "batch-3"
 }
 
+export function getVisitorBatch(v: any): "batch-3" | "batch-4" {
+  if (!v) return "batch-3"
+  if (v.batch === 4 || v.batch === "batch-4") return "batch-4"
+  if (v.batch === 3 || v.batch === "batch-3") return "batch-3"
+  const text = `${v.path || ""} ${v.visitor_satker || ""} ${v.visitor_name || ""} ${v.referrer || ""}`.toLowerCase()
+  if (
+    text.includes("/batch-4") ||
+    text.includes("batch 4") ||
+    text.includes("batch-4") ||
+    text.includes("agrasena 4") ||
+    text.includes("agrasena batch 4") ||
+    text.includes("angkatan 06") ||
+    text.includes("angkatan 6")
+  ) {
+    return "batch-4"
+  }
+  return "batch-3"
+}
+
 export function AdminDashboardClient({
   initialMaterials,
   initialSchedules,
@@ -1103,6 +1122,15 @@ export function AdminDashboardClient({
   const b3TasksCount = React.useMemo(() => allCombinedTasks.filter((t) => getItemBatch(t) === "batch-3").length, [allCombinedTasks])
   const b4TasksCount = React.useMemo(() => allCombinedTasks.filter((t) => getItemBatch(t) === "batch-4").length, [allCombinedTasks])
 
+  // Multi-Batch Visitor Counts
+  const b3VisitorsCount = React.useMemo(() => {
+    return initialVisitorLogs.filter((v) => getVisitorBatch(v) === "batch-3").length
+  }, [initialVisitorLogs])
+
+  const b4VisitorsCount = React.useMemo(() => {
+    return initialVisitorLogs.filter((v) => getVisitorBatch(v) === "batch-4").length
+  }, [initialVisitorLogs])
+
   const completedTasksCount = React.useMemo(() => {
     const targetTasks = selectedBatch === "all" ? allCombinedTasks : allCombinedTasks.filter((t) => getItemBatch(t) === selectedBatch)
     return targetTasks.filter((t) => isTaskEffectivelyCompleted(t)).length
@@ -1116,6 +1144,9 @@ export function AdminDashboardClient({
   // --- FILTERED & PAGINATED DATA LISTS (5 PER PAGE) ---
   const filteredVisitorLogs = React.useMemo(() => {
     return initialVisitorLogs.filter((log) => {
+      const matchesBatch = selectedBatch === "all" || getVisitorBatch(log) === selectedBatch
+      if (!matchesBatch) return false
+
       const q = visitorSearch.toLowerCase().trim()
       const matchesSearch =
         q === "" ||
@@ -1136,7 +1167,7 @@ export function AdminDashboardClient({
 
       return matchesSearch && matchesDevice
     })
-  }, [initialVisitorLogs, visitorSearch, visitorDeviceFilter])
+  }, [initialVisitorLogs, selectedBatch, visitorSearch, visitorDeviceFilter])
 
   const totalVisitorPages = Math.ceil(filteredVisitorLogs.length / ITEMS_PER_PAGE) || 1
   const paginatedVisitorLogs = React.useMemo(() => {
@@ -1426,6 +1457,7 @@ export function AdminDashboardClient({
     }
     const headers = [
       "Waktu Akses",
+      "Angkatan",
       "Nama Peserta",
       "NIP",
       "Satker Kejaksaan",
@@ -1441,6 +1473,7 @@ export function AdminDashboardClient({
     ]
     const rows = initialVisitorLogs.map((v) => [
       `"${formatWibDate(v.created_at)}"`,
+      `"${getVisitorBatch(v) === 'batch-4' ? 'Agrasena Batch 4' : 'Agrasena Batch 3'}"`,
       `"${(v.visitor_name || "-").replace(/"/g, '""')}"`,
       `"${(v.visitor_nip || "-").replace(/"/g, '""')}"`,
       `"${(v.visitor_satker || "-").replace(/"/g, '""')}"`,
@@ -2426,9 +2459,11 @@ export function AdminDashboardClient({
                       <Users className="h-4 w-4 text-emerald-200 group-hover:scale-110 transition-transform" />
                     </div>
                     <div>
-                      <div className="text-2xl sm:text-3xl font-black">{totalVisitors.toLocaleString('id-ID')}</div>
+                      <div className="text-2xl sm:text-3xl font-black">
+                        {selectedBatch === "all" ? totalVisitors.toLocaleString('id-ID') : (selectedBatch === "batch-4" ? b4VisitorsCount.toLocaleString('id-ID') : b3VisitorsCount.toLocaleString('id-ID'))}
+                      </div>
                       <div className="text-[11px] text-emerald-100 font-semibold mt-0.5 truncate">
-                        {uniqueIps} IP Unik • {todayVisitors} Hari Ini
+                        {selectedBatch === "batch-4" ? "Akses Portal Agrasena Batch 4" : selectedBatch === "batch-3" ? "Akses Portal Agrasena Batch 3" : `${b3VisitorsCount} Batch 3 • ${b4VisitorsCount} Batch 4`}
                       </div>
                     </div>
                     <div className="pt-2 border-t border-emerald-400/30 flex items-center justify-between text-[11px] font-bold text-emerald-200">
@@ -2579,9 +2614,11 @@ export function AdminDashboardClient({
                 batch3SchedulesCount={b3SchedulesCount}
                 batch3MaterialsCount={b3MaterialsCount}
                 batch3TasksCount={b3TasksCount}
+                batch3VisitorsCount={b3VisitorsCount}
                 batch4SchedulesCount={b4SchedulesCount}
                 batch4MaterialsCount={b4MaterialsCount}
                 batch4TasksCount={b4TasksCount}
+                batch4VisitorsCount={b4VisitorsCount}
                 selectedBatch={selectedBatch}
                 onSelectBatch={setSelectedBatch}
                 onFeedback={showFeedback}
@@ -2950,9 +2987,11 @@ export function AdminDashboardClient({
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Total Kunjungan</span>
                     <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{totalVisitors.toLocaleString('id-ID')}</div>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+                    {selectedBatch === "all" ? totalVisitors.toLocaleString('id-ID') : (selectedBatch === "batch-4" ? b4VisitorsCount.toLocaleString('id-ID') : b3VisitorsCount.toLocaleString('id-ID'))}
+                  </div>
                   <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {hasMoreData ? `${loadedCount.toLocaleString('id-ID')} ditampilkan` : 'Seluruh data termuat'}
+                    {selectedBatch === "all" ? `${b3VisitorsCount} Batch 3 • ${b4VisitorsCount} Batch 4` : selectedBatch === "batch-4" ? "Kunjungan Agrasena Batch 4" : "Kunjungan Agrasena Batch 3"}
                   </p>
                 </div>
 
@@ -3032,7 +3071,7 @@ export function AdminDashboardClient({
                 </div>
 
                 {/* Search & Device Filter Row */}
-                <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 pt-1">
                   <div className="relative flex-1 w-full">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input
@@ -3044,7 +3083,46 @@ export function AdminDashboardClient({
                     />
                   </div>
 
-                  <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                  {/* Batch Selector Pills */}
+                  <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-[#141b27] p-1 border border-slate-200 dark:border-[#2A3550] shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("all"); setVisitorPage(1); }}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "all"
+                          ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs"
+                          : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Semua ({initialVisitorLogs.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-3"); setVisitorPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-3"
+                          ? "bg-[#007aff] text-white shadow-2xs"
+                          : "text-slate-500 hover:text-[#007aff]"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+                      <span>Batch 3 ({b3VisitorsCount})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-4"); setVisitorPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-4"
+                          ? "bg-indigo-600 text-white shadow-2xs"
+                          : "text-slate-500 hover:text-indigo-400"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+                      <span>Batch 4 ({b4VisitorsCount})</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 shrink-0">
                     {[
                       { id: "all", label: "Semua Media" },
                       { id: "Desktop", label: "💻 Desktop" },
@@ -3053,8 +3131,8 @@ export function AdminDashboardClient({
                     ].map((filter) => (
                       <button
                         key={filter.id}
-                        onClick={() => setVisitorDeviceFilter(filter.id)}
-                        className={`whitespace-nowrap rounded-[8px] px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                        onClick={() => { setVisitorDeviceFilter(filter.id); setVisitorPage(1); }}
+                        className={`whitespace-nowrap rounded-[8px] px-2.5 py-1.5 text-xs font-bold transition cursor-pointer ${
                           visitorDeviceFilter === filter.id
                             ? "bg-slate-900 dark:bg-indigo-600 text-white"
                             : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
@@ -3099,6 +3177,7 @@ export function AdminDashboardClient({
                           <tr>
                             <th className="py-2.5 px-3.5">#</th>
                             <th className="py-2.5 px-3.5">Waktu Akses</th>
+                            <th className="py-2.5 px-3.5">Angkatan</th>
                             <th className="py-2.5 px-3.5">Identitas Peserta</th>
                             <th className="py-2.5 px-3.5">ID Perangkat</th>
                             <th className="py-2.5 px-3.5">Alamat IP</th>
@@ -3117,6 +3196,19 @@ export function AdminDashboardClient({
                                 <td className="py-3 px-3.5 font-bold text-slate-400">{globalIndex}</td>
                                 <td className="py-3 px-3.5 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                   {formatWibDate(log.created_at)}
+                                </td>
+                                <td className="py-3 px-3.5 whitespace-nowrap">
+                                  {getVisitorBatch(log) === "batch-4" ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/60 px-2 py-0.5 text-[10px] font-black text-purple-700 dark:text-purple-300 shadow-2xs">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                      <span>Agrasena 4</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 text-[10px] font-black text-sky-700 dark:text-sky-300 shadow-2xs">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
+                                      <span>Agrasena 3</span>
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-3 px-3.5">
                                   {log.visitor_name ? (

@@ -186,11 +186,13 @@ export function SchedulesListB4() {
       {/* 2. List of 35 Days Schedules */}
       <div className="space-y-3">
         {filteredSchedules.length === 0 ? (
-          <div className="rounded-[20px] bg-white dark:bg-[#151c28] border border-slate-200 dark:border-slate-800 p-12 text-center space-y-2">
-            <Calendar className="h-10 w-10 text-slate-300 dark:text-slate-600 mx-auto" />
-            <h3 className="text-base font-bold text-[#18181B] dark:text-white">Tidak Ada Jadwal Ditemukan</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Coba kata kunci pencarian lain atau pilih tab filter tahapan lainnya.
+          <div className="rounded-[20px] bg-white dark:bg-[#151c28] border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center space-y-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mx-auto border border-indigo-200 dark:border-indigo-800">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-[#18181B] dark:text-white">Belum Ada Sesi Jadwal Agrasena Batch 4</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+              Jadwal perkuliahan 35 hari untuk angkatan ini sedang dipersiapkan dan akan dipublikasikan oleh Panitia Diklat / Widyaiswara Badiklat Kejaksaan RI. Sesi tatap muka dan link Zoom akan tampil di sini setelah diinput oleh Admin.
             </p>
           </div>
         ) : (

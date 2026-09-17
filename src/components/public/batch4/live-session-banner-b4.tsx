@@ -42,8 +42,8 @@ export function LiveSessionBannerB4() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Hari aktif perdana Batch 4
-  const firstSchedule = DEFAULT_BATCH4_SCHEDULES[0]
+  // Hari aktif perdana Batch 4 (jika sudah diinput oleh admin)
+  const firstSchedule = DEFAULT_BATCH4_SCHEDULES[0] || null
 
   return (
     <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#0f172a] text-white p-5 sm:p-7 border border-indigo-500/30 shadow-xl shadow-indigo-950/40 transition-all">
@@ -105,7 +105,7 @@ export function LiveSessionBannerB4() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                   <Laptop className="h-4 w-4 text-indigo-400" />
-                  <span>Sesi Kuliah Perdana Agrasena Batch 4</span>
+                  <span>Sesi Tatap Muka Virtual Agrasena Batch 4</span>
                 </span>
                 <span className="text-[11px] font-mono text-indigo-300 font-bold bg-indigo-500/20 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
                   {BATCH4_ZOOM_CONFIG.sessionScheduleText}
@@ -114,11 +114,11 @@ export function LiveSessionBannerB4() {
 
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-white leading-snug">
-                  {firstSchedule.subject_name}
+                  {firstSchedule ? firstSchedule.subject_name : "Jadwal Sesi Perkuliahan Virtual Sedang Disiapkan"}
                 </h3>
                 <p className="text-xs text-slate-300 mt-1 flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>Narasumber: {firstSchedule.lecturer}</span>
+                  <span>{firstSchedule ? `Narasumber: ${firstSchedule.lecturer}` : "Narasumber: Tim Widyaiswara Badiklat Kejaksaan RI"}</span>
                 </p>
               </div>
 

@@ -871,18 +871,26 @@ export function ResourceHub({
       {filtered.length === 0 ? (
         <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-10 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 space-y-2.5">
           <FileText className="mx-auto h-10 w-10 text-[#615d59] dark:text-slate-500" strokeWidth={1.5} />
-          <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white">Tidak Ada Modul yang Sesuai</h4>
-          <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-sm mx-auto">
-            Coba ubah kata kunci pencarian atau reset filter tahapan diklat dan minggu pertemuan.
+          <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white">
+            {materials.length === 0
+              ? `Belum Ada Berkas Modul untuk ${batchTitle || "Angkatan Ini"}`
+              : "Tidak Ada Modul yang Sesuai"}
+          </h4>
+          <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto leading-relaxed">
+            {materials.length === 0
+              ? "Pustaka modul materi kurikulum 120 JP sedang dipersiapkan dan akan segera diunggah oleh Administrator Diklat Kejaksaan RI."
+              : "Coba ubah kata kunci pencarian atau reset filter tahapan diklat dan minggu pertemuan."}
           </p>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#1f283a] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#28354d] transition cursor-pointer"
-            onClick={resetFilters}
-          >
-            <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
-            <span>Reset Filter</span>
-          </button>
+          {materials.length > 0 && (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#1f283a] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#28354d] transition cursor-pointer"
+              onClick={resetFilters}
+            >
+              <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+              <span>Reset Filter</span>
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

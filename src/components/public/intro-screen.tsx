@@ -137,6 +137,16 @@ export function IntroScreen() {
       // Maka langsung tampilkan halaman yang dituju tanpa menghalangi dengan intro!
       const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
       const isDirectSpecificPage = currentPath !== "/" && currentPath !== "/batch-4"
+
+      // JIKA PENGGUNA TERDAFTAR SEBAGAI BATCH 4 DAN MEMBUKA ROOT / -> SEGERA ALIKHAN KE /batch-4
+      if (valid && savedBatch === "batch-4" && currentPath === "/") {
+        try {
+          sessionStorage.setItem("has_entered_portal_session", "true")
+        } catch {}
+        window.location.replace("/batch-4")
+        return
+      }
+
       if (valid && (hasEnteredSession || isDirectSpecificPage)) {
         try {
           sessionStorage.setItem("has_entered_portal_session", "true")
@@ -478,10 +488,20 @@ export function IntroScreen() {
       window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: selectedBatch } }))
     } catch {}
 
-    setIsExiting(true)
-
     const isBatch4 = selectedBatch === "batch-4"
     const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
+
+    // JIKA PERLU PINDAH HALAMAN (MISAL DARI / KE /batch-4):
+    // LANGSUNG PINDAH SEKETIKA TANPA ANIMASI TUTUP MODAL AGAR TIDAK TERLIHAT KEDIPAN HALAMAN SEBELUMNYA!
+    if (isBatch4 && !currentPath.startsWith("/batch-4")) {
+      window.location.replace("/batch-4")
+      return
+    } else if (!isBatch4 && currentPath.startsWith("/batch-4")) {
+      window.location.replace("/")
+      return
+    }
+
+    setIsExiting(true)
 
     const completeRedirectOrDismiss = () => {
       setShowIntro(false)
@@ -489,13 +509,6 @@ export function IntroScreen() {
       try {
         window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
       } catch {}
-
-      // Arahkan ke rute yang sesuai dengan angkatan:
-      if (isBatch4 && !currentPath.startsWith("/batch-4")) {
-        window.location.href = "/batch-4"
-      } else if (!isBatch4 && currentPath.startsWith("/batch-4")) {
-        window.location.href = "/"
-      }
     }
 
     if (modalRef.current) {
@@ -504,7 +517,7 @@ export function IntroScreen() {
         opacity: [1, 0],
         scale: [1, 1.03],
         translateY: [0, -20],
-        duration: 350,
+        duration: 300,
         easing: 'easeInOutCubic',
         complete: completeRedirectOrDismiss
       })
@@ -1090,8 +1103,14 @@ export function IntroScreen() {
                       setSelectedBatch("batch-3")
                       try {
                         localStorage.setItem("prakom_user_batch", "batch-3")
+                        sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-3" } }))
                       } catch {}
+                      if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
+                        window.location.replace("/")
+                      } else {
+                        executePortalEntry()
+                      }
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-3"
@@ -1108,8 +1127,14 @@ export function IntroScreen() {
                       setSelectedBatch("batch-4")
                       try {
                         localStorage.setItem("prakom_user_batch", "batch-4")
+                        sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-4" } }))
                       } catch {}
+                      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/batch-4")) {
+                        window.location.replace("/batch-4")
+                      } else {
+                        executePortalEntry()
+                      }
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-4"
