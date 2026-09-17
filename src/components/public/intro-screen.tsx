@@ -17,6 +17,8 @@ import {
   BookOpen,
   Calendar,
   RotateCcw,
+  CheckCircle2,
+  GraduationCap
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { Spinner } from "@/components/ui/spinner"
@@ -97,6 +99,7 @@ export function IntroScreen() {
   const [name, setName] = React.useState("")
   const [nip, setNip] = React.useState("")
   const [satker, setSatker] = React.useState("")
+  const [selectedBatch, setSelectedBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
   const [timeInfo, setTimeInfo] = React.useState({ greeting: "Selamat Datang", period: "hari ini", icon: "👋" })
 
   const modalRef = React.useRef<HTMLDivElement>(null)
@@ -111,12 +114,18 @@ export function IntroScreen() {
       const savedName = localStorage.getItem("prakom_user_name") || ""
       const savedNip = localStorage.getItem("prakom_user_nip") || ""
       const savedSatker = localStorage.getItem("prakom_user_satker") || ""
+      const savedBatch = localStorage.getItem("prakom_user_batch")
 
       const valid = isProfileValid(savedName, savedSatker, savedNip)
 
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
+      if (savedBatch === "batch-4" || savedBatch === "batch-3") {
+        setSelectedBatch(savedBatch)
+      } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
+        setSelectedBatch("batch-4")
+      }
       setHasExistingProfile(valid)
 
       // Cek apakah pengguna sudah menekan tombol "Masuk ke Portal Kelas" dalam sesi ini
@@ -126,7 +135,8 @@ export function IntroScreen() {
       // 1. Jika sudah pernah masuk di sesi ini, ATAU
       // 2. Jika mengakses langsung tautan spesifik (seperti /announcements, /tasks, /schedules dari WhatsApp):
       // Maka langsung tampilkan halaman yang dituju tanpa menghalangi dengan intro!
-      const isDirectSpecificPage = typeof window !== "undefined" && window.location.pathname !== "/"
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
+      const isDirectSpecificPage = currentPath !== "/" && currentPath !== "/batch-4"
       if (valid && (hasEnteredSession || isDirectSpecificPage)) {
         try {
           sessionStorage.setItem("has_entered_portal_session", "true")
@@ -164,11 +174,17 @@ export function IntroScreen() {
       const savedName = localStorage.getItem("prakom_user_name") || ""
       const savedNip = localStorage.getItem("prakom_user_nip") || ""
       const savedSatker = localStorage.getItem("prakom_user_satker") || ""
+      const savedBatch = (localStorage.getItem("prakom_user_batch") as "batch-3" | "batch-4") || "batch-3"
       const valid = isProfileValid(savedName, savedSatker, savedNip)
 
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
+      if (savedBatch === "batch-4" || savedBatch === "batch-3") {
+        setSelectedBatch(savedBatch)
+      } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
+        setSelectedBatch("batch-4")
+      }
       setHasExistingProfile(valid)
       setTimeInfo(getTimeGreeting())
 
@@ -454,13 +470,33 @@ export function IntroScreen() {
     }
   }
 
-  // Eksekusi animasi keluar dan pembukaan portal kelas
+  // Eksekusi animasi keluar dan pembukaan portal kelas sesuai angkatan terpilih
   const executePortalEntry = React.useCallback(() => {
     try {
       sessionStorage.setItem("has_entered_portal_session", "true")
+      localStorage.setItem("prakom_user_batch", selectedBatch)
+      window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: selectedBatch } }))
     } catch {}
 
     setIsExiting(true)
+
+    const isBatch4 = selectedBatch === "batch-4"
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
+
+    const completeRedirectOrDismiss = () => {
+      setShowIntro(false)
+      setIsExiting(false)
+      try {
+        window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
+      } catch {}
+
+      // Arahkan ke rute yang sesuai dengan angkatan:
+      if (isBatch4 && !currentPath.startsWith("/batch-4")) {
+        window.location.href = "/batch-4"
+      } else if (!isBatch4 && currentPath.startsWith("/batch-4")) {
+        window.location.href = "/"
+      }
+    }
 
     if (modalRef.current) {
       anime({
@@ -470,22 +506,12 @@ export function IntroScreen() {
         translateY: [0, -20],
         duration: 350,
         easing: 'easeInOutCubic',
-        complete: () => {
-          setShowIntro(false)
-          setIsExiting(false)
-          try {
-            window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
-          } catch {}
-        }
+        complete: completeRedirectOrDismiss
       })
     } else {
-      setShowIntro(false)
-      setIsExiting(false)
-      try {
-        window.dispatchEvent(new CustomEvent("prakom-portal-entered"))
-      } catch {}
+      completeRedirectOrDismiss()
     }
-  }, [])
+  }, [selectedBatch])
 
   // Masuk ke portal kelas dengan validasi ketat
   const handleEnterPortal = React.useCallback(() => {
@@ -535,10 +561,14 @@ export function IntroScreen() {
       localStorage.setItem("prakom_user_name", finalName)
       localStorage.setItem("prakom_user_nip", finalNip)
       localStorage.setItem("prakom_user_satker", finalSatker)
+      localStorage.setItem("prakom_user_batch", selectedBatch)
       localStorage.setItem("prakom_user_onboarded", "true")
 
       window.dispatchEvent(new CustomEvent("prakom-profile-updated", {
-        detail: { name: finalName, nip: finalNip, satker: finalSatker }
+        detail: { name: finalName, nip: finalNip, satker: finalSatker, batch: selectedBatch }
+      }))
+      window.dispatchEvent(new CustomEvent("prakom-batch-changed", {
+        detail: { batch: selectedBatch }
       }))
     } catch {}
 
@@ -694,8 +724,13 @@ export function IntroScreen() {
             <span className="hidden sm:inline">Putar Ulang</span>
           </button>
 
-          <span className="rounded-full bg-white dark:bg-[#141b27] px-3 py-1 text-[10px] font-black text-[#007aff] dark:text-[#60a5fa] border border-slate-200 dark:border-slate-800 shadow-2xs hidden xs:inline">
-            Batch 3 • 120 JP
+          {/* Batch Badge */}
+          <span className={`rounded-full px-3 py-1 text-[10px] font-black border shadow-2xs hidden xs:inline transition-colors ${
+            selectedBatch === "batch-4"
+              ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+              : "bg-white dark:bg-[#141b27] text-[#007aff] dark:text-[#60a5fa] border-slate-200 dark:border-slate-800"
+          }`}>
+            {selectedBatch === "batch-4" ? "Agrasena Batch 4 • 120 JP" : "Agrasena Batch 3 • 120 JP"}
           </span>
 
           {/* Dark / Light Toggle */}
@@ -942,11 +977,67 @@ export function IntroScreen() {
                   </div>
                 </div>
 
+                {/* Pilihan Angkatan Diklat (Batch Switcher Cards) */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="block text-[11px] font-bold text-[#18181B] dark:text-slate-200">
+                    Pilih Angkatan Diklat <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* Card Agrasena Batch 3 */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBatch("batch-3")}
+                      className={`relative flex flex-col p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        selectedBatch === "batch-3"
+                          ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30 ring-1 ring-emerald-500"
+                          : "border-slate-200 dark:border-slate-800 bg-[#f6f5f4] dark:bg-[#101520] hover:border-slate-300 dark:hover:border-slate-700 opacity-75 hover:opacity-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
+                          Batch 3
+                        </span>
+                        {selectedBatch === "batch-3" && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-[#18181B] dark:text-white">Agrasena Batch 3</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Jadwal & Modul Batch 3</span>
+                    </button>
+
+                    {/* Card Agrasena Batch 4 */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedBatch("batch-4")}
+                      className={`relative flex flex-col p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        selectedBatch === "batch-4"
+                          ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 ring-1 ring-indigo-500"
+                          : "border-slate-200 dark:border-slate-800 bg-[#f6f5f4] dark:bg-[#101520] hover:border-slate-300 dark:hover:border-slate-700 opacity-75 hover:opacity-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
+                          Batch 4
+                        </span>
+                        {selectedBatch === "batch-4" && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-[#18181B] dark:text-white">Agrasena Batch 4</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Jadwal & Zoom Batch 4</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="pt-2 flex items-center justify-end">
                   <button
                     type="submit"
                     disabled={isExiting}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md shadow-blue-500/20 transition cursor-pointer w-full disabled:opacity-75"
+                    className={`inline-flex items-center justify-center gap-2 rounded-full active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md transition cursor-pointer w-full disabled:opacity-75 ${
+                      selectedBatch === "batch-4"
+                        ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/25"
+                        : "bg-[#007aff] hover:bg-[#0062cc] shadow-blue-500/20"
+                    }`}
                   >
                     {isExiting ? (
                       <>
@@ -978,16 +1069,63 @@ export function IntroScreen() {
               <div className="space-y-1 text-center">
                 <h2 className="text-lg sm:text-xl font-black text-[#18181B] dark:text-white tracking-tight">
                   Selamat Datang,{" "}
-                  <span className="text-[#007aff] dark:text-[#60a5fa]">{name}</span>!
+                  <span className={selectedBatch === "batch-4" ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
+                    {name}
+                  </span>!
                 </h2>
                 <p className="text-xs text-[#6B7C93] dark:text-[#8FA3BC] max-w-sm">
                   Satuan Kerja: <strong className="text-[#18181B] dark:text-white">{satker}</strong>
                 </p>
               </div>
 
+              {/* Switcher Angkatan Interaktif */}
+              <div className="flex flex-col items-center gap-1.5 w-full max-w-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Pilih Angkatan Anda:
+                </span>
+                <div className="grid grid-cols-2 p-1 rounded-full bg-slate-200/70 dark:bg-slate-800/80 border border-slate-300/60 dark:border-slate-700/60 w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBatch("batch-3")
+                      try {
+                        localStorage.setItem("prakom_user_batch", "batch-3")
+                        window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-3" } }))
+                      } catch {}
+                    }}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      selectedBatch === "batch-3"
+                        ? "bg-white dark:bg-[#141b27] text-emerald-600 dark:text-emerald-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span>Agrasena 3</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBatch("batch-4")
+                      try {
+                        localStorage.setItem("prakom_user_batch", "batch-4")
+                        window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-4" } }))
+                      } catch {}
+                    }}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      selectedBatch === "batch-4"
+                        ? "bg-white dark:bg-[#141b27] text-indigo-600 dark:text-indigo-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                    <span>Agrasena 4</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Identity Tag & Edit Option */}
               <div className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#141b27] px-3.5 py-1.5 text-[11px] text-[#615d59] dark:text-[#94a3b8] border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <span className="truncate max-w-[220px] font-semibold text-[#000000] dark:text-white">
+                <span className="truncate max-w-[200px] font-semibold text-[#000000] dark:text-white">
                   👤 {name}
                 </span>
                 <span>•</span>
@@ -1007,16 +1145,20 @@ export function IntroScreen() {
                 type="button"
                 onClick={handleEnterPortal}
                 disabled={isExiting}
-                className="group relative flex items-center justify-center gap-2 rounded-full bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white px-7 py-3 text-xs sm:text-sm font-black text-white dark:text-[#18181B] shadow-lg shadow-black/20 cursor-pointer transition-all duration-200 mt-1 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 w-full sm:w-auto"
+                className={`group relative flex items-center justify-center gap-2 rounded-full px-7 py-3 text-xs sm:text-sm font-black shadow-lg cursor-pointer transition-all duration-200 mt-1 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 w-full sm:w-auto ${
+                  selectedBatch === "batch-4"
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/25"
+                    : "bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white text-white dark:text-[#18181B] shadow-black/20"
+                }`}
               >
                 {isExiting ? (
                   <>
-                    <Spinner size="xs" variant={isDark ? "primary" : "white"} />
+                    <Spinner size="xs" variant={isDark && selectedBatch !== "batch-4" ? "primary" : "white"} />
                     <span>Membuka Portal...</span>
                   </>
                 ) : (
                   <>
-                    <span>Masuk ke Portal Kelas</span>
+                    <span>Masuk ke Portal Agrasena {selectedBatch === "batch-4" ? "Batch 4" : "Batch 3"}</span>
                     <ArrowRight className="h-4 w-4 text-[#FFD280] dark:text-[#EA580C] group-hover:translate-x-1 transition-transform duration-200" />
                   </>
                 )}
@@ -1031,8 +1173,8 @@ export function IntroScreen() {
       {/* ── Bottom Info ── */}
       <div className="relative z-10 text-center text-[10px] text-[#8C9BAE] dark:text-[#5C7089] font-medium pb-4 sm:pb-6 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {viewState === 'recognized'
-          ? "Tekan tombol Enter atau spasi untuk langsung masuk • Sesi tersimpan otomatis"
-          : "Portal Resmi Diklat Fungsional Pranata Komputer Keahlian Batch 3 Kejaksaan RI 2026"}
+          ? `Tekan tombol Enter atau spasi untuk langsung masuk • Terpilih Agrasena ${selectedBatch === "batch-4" ? "Batch 4" : "Batch 3"}`
+          : `Portal Resmi Diklat Fungsional Pranata Komputer Keahlian Agrasena ${selectedBatch === "batch-4" ? "Batch 4" : "Batch 3"} Kejaksaan RI 2026`}
       </div>
 
     </div>
