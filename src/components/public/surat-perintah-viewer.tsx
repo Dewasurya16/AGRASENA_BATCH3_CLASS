@@ -204,7 +204,7 @@ KEJAKSAAN REPUBLIK INDONESIA
               <thead>
                 <tr className="bg-slate-100 text-[11px] font-bold text-slate-800">
                   <th className="border border-slate-700 px-2 py-1 text-center w-8">NO</th>
-                  <th className="border border-slate-700 px-2 py-1 text-left">NAMA & PANGKAT</th>
+                  <th className="border border-slate-700 px-2 py-1 text-left">NAMA LENGKAP</th>
                   <th className="border border-slate-700 px-2 py-1 text-left">JABATAN</th>
                   <th className="border border-slate-700 px-2 py-1 text-left">SATKER & TUGAS</th>
                 </tr>
@@ -214,8 +214,6 @@ KEJAKSAAN REPUBLIK INDONESIA
                   <td className="border border-slate-700 px-2 py-1 text-center font-bold">1.</td>
                   <td className="border border-slate-700 px-2 py-1">
                     <strong className="text-emerald-950 block">RISKY ANDINI, S.Kom.</strong>
-                    <span className="text-[10px] text-slate-600 block">NIP. 19960814 202203 2 004</span>
-                    <span className="text-[10px] text-slate-700 block">Penata Muda (III/a)</span>
                   </td>
                   <td className="border border-slate-700 px-2 py-1 font-semibold">
                     Pranata Komputer Ahli Pertama
@@ -231,8 +229,6 @@ KEJAKSAAN REPUBLIK INDONESIA
                   <td className="border border-slate-700 px-2 py-1 text-center font-bold">2.</td>
                   <td className="border border-slate-700 px-2 py-1">
                     <strong className="text-emerald-950 block">FEGGY RIPANI, S.Kom.</strong>
-                    <span className="text-[10px] text-slate-600 block">NIP. 19970221 202203 1 003</span>
-                    <span className="text-[10px] text-slate-700 block">Penata Muda (III/a)</span>
                   </td>
                   <td className="border border-slate-700 px-2 py-1 font-semibold">
                     Pranata Komputer Ahli Pertama
@@ -248,8 +244,6 @@ KEJAKSAAN REPUBLIK INDONESIA
                   <td className="border border-slate-700 px-2 py-1 text-center font-bold">3.</td>
                   <td className="border border-slate-700 px-2 py-1">
                     <strong className="text-emerald-950 block">KURNIA RAMADANI, S.Kom.</strong>
-                    <span className="text-[10px] text-slate-600 block">NIP. 19980112 202203 2 006</span>
-                    <span className="text-[10px] text-slate-700 block">Penata Muda (III/a)</span>
                   </td>
                   <td className="border border-slate-700 px-2 py-1 font-semibold">
                     Pranata Komputer Ahli Pertama

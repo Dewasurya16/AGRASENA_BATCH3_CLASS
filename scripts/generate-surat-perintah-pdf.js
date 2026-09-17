@@ -359,8 +359,8 @@ const htmlContent = `<!DOCTYPE html>
           <thead>
             <tr>
               <th style="width: 28px;">NO</th>
-              <th style="width: 175px;">NAMA & PANGKAT</th>
-              <th style="width: 145px;">JABATAN</th>
+              <th style="width: 175px;">NAMA LENGKAP</th>
+              <th style="width: 155px;">JABATAN</th>
               <th>SATUAN KERJA & PENUGASAN</th>
             </tr>
           </thead>
@@ -368,9 +368,7 @@ const htmlContent = `<!DOCTYPE html>
             <tr>
               <td class="text-center font-bold">1.</td>
               <td>
-                <span class="petugas-nama">RISKY ANDINI, S.Kom.</span><br />
-                <span style="font-size: 8.5pt; color: #475569;">NIP. 19960814 202203 2 004</span><br />
-                <span style="font-size: 8.5pt;">Penata Muda (III/a)</span>
+                <span class="petugas-nama">RISKY ANDINI, S.Kom.</span>
               </td>
               <td>
                 <strong>Pranata Komputer Ahli Pertama</strong>
@@ -383,9 +381,7 @@ const htmlContent = `<!DOCTYPE html>
             <tr>
               <td class="text-center font-bold">2.</td>
               <td>
-                <span class="petugas-nama">FEGGY RIPANI, S.Kom.</span><br />
-                <span style="font-size: 8.5pt; color: #475569;">NIP. 19970221 202203 1 003</span><br />
-                <span style="font-size: 8.5pt;">Penata Muda (III/a)</span>
+                <span class="petugas-nama">FEGGY RIPANI, S.Kom.</span>
               </td>
               <td>
                 <strong>Pranata Komputer Ahli Pertama</strong>
@@ -398,9 +394,7 @@ const htmlContent = `<!DOCTYPE html>
             <tr>
               <td class="text-center font-bold">3.</td>
               <td>
-                <span class="petugas-nama">KURNIA RAMADANI, S.Kom.</span><br />
-                <span style="font-size: 8.5pt; color: #475569;">NIP. 19980112 202203 2 006</span><br />
-                <span style="font-size: 8.5pt;">Penata Muda (III/a)</span>
+                <span class="petugas-nama">KURNIA RAMADANI, S.Kom.</span>
               </td>
               <td>
                 <strong>Pranata Komputer Ahli Pertama</strong>
