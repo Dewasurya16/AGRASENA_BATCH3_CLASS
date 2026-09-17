@@ -86,25 +86,62 @@ function formatRuns(text: string): string {
 }
 
 /**
- * Converts Markdown table lines into a well-formatted WordprocessingML table element.
+ * Converts Markdown table lines into WordprocessingML.
+ * Automatically detects whether the table is a data table (with borders)
+ * or a signature/identity block (borderless for authentic official layout).
  */
 function convertTableToWml(tableLines: string[]): string {
   if (tableLines.length === 0) return ''
 
   const isSeparator = (str: string) => /^\|[\s:\-]+(\|[\s:\-]+)*\|$/.test(str)
 
+  const combinedLower = tableLines.join(' ').toLowerCase()
+  const isSignatureTable =
+    combinedLower.includes('penguji') ||
+    combinedLower.includes('coach') ||
+    combinedLower.includes('mengetahui') ||
+    combinedLower.includes('tanda tangan') ||
+    combinedLower.includes('pejabat pranata komputer')
+  const isIdentityTable =
+    combinedLower.includes('identitas') ||
+    (combinedLower.includes('nama') &&
+      (combinedLower.includes('nip') || combinedLower.includes('unit kerja') || combinedLower.includes('jabatan') || combinedLower.includes('ppk')))
+  const isBorderless = isSignatureTable || isIdentityTable
+
   let wml = `
     <w:tbl>
       <w:tblPr>
-        <w:tblW w:w="0" w:type="auto"/>
+        <w:tblW w:w="5000" w:type="pct"/>
         <w:jc w:val="center"/>
+  `
+
+  if (isBorderless) {
+    wml += `
+        <w:tblBorders>
+          <w:top w:val="none"/>
+          <w:left w:val="none"/>
+          <w:bottom w:val="none"/>
+          <w:right w:val="none"/>
+          <w:insideH w:val="none"/>
+          <w:insideV w:val="none"/>
+        </w:tblBorders>
+        <w:tblCellMar>
+          <w:top w:w="80" w:type="dxa"/>
+          <w:left w:w="120" w:type="dxa"/>
+          <w:bottom w:w="80" w:type="dxa"/>
+          <w:right w:w="120" w:type="dxa"/>
+        </w:tblCellMar>
+      </w:tblPr>
+    `
+  } else {
+    wml += `
         <w:tblBorders>
           <w:top w:val="single" w:sz="6" w:space="0" w:color="333333"/>
           <w:left w:val="single" w:sz="6" w:space="0" w:color="333333"/>
           <w:bottom w:val="single" w:sz="6" w:space="0" w:color="333333"/>
           <w:right w:val="single" w:sz="6" w:space="0" w:color="333333"/>
-          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="BBBBBB"/>
-          <w:insideV w:val="single" w:sz="4" w:space="0" w:color="BBBBBB"/>
+          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
+          <w:insideV w:val="single" w:sz="4" w:space="0" w:color="CCCCCC"/>
         </w:tblBorders>
         <w:tblCellMar>
           <w:top w:w="120" w:type="dxa"/>
@@ -113,9 +150,10 @@ function convertTableToWml(tableLines: string[]): string {
           <w:right w:w="140" w:type="dxa"/>
         </w:tblCellMar>
       </w:tblPr>
-  `
+    `
+  }
 
-  let isHeaderRow = true
+  let isHeaderRow = !isBorderless
 
   for (let r = 0; r < tableLines.length; r++) {
     const rawRow = tableLines[r]
@@ -129,7 +167,7 @@ function convertTableToWml(tableLines: string[]): string {
 
     for (let c = 0; c < rawCells.length; c++) {
       const cellText = rawCells[c].trim()
-      const isHeader = isHeaderRow
+      const isHeader = isHeaderRow && !isBorderless
 
       wml += `
         <w:tc>
@@ -142,11 +180,18 @@ function convertTableToWml(tableLines: string[]): string {
       const paragraphs = cellText.split(/<br\s*\/?>/i)
       paragraphs.forEach((pText) => {
         const trimmedP = pText.trim()
+        const isCenter =
+          isSignatureTable ||
+          isHeader ||
+          trimmedP === '✔' ||
+          trimmedP === '✓' ||
+          /^[0-9]+(\.[0-9]+)*$/.test(trimmedP)
+
         wml += `
           <w:p>
             <w:pPr>
-              <w:spacing w:before="40" w:after="40" w:line="240" w:lineRule="auto"/>
-              ${isHeader ? '<w:jc w:val="center"/>' : '<w:jc w:val="left"/>'}
+              <w:spacing w:before="30" w:after="30" w:line="240" w:lineRule="auto"/>
+              ${isCenter ? '<w:jc w:val="center"/>' : '<w:jc w:val="left"/>'}
             </w:pPr>
             ${formatRuns(isHeader ? `**${trimmedP}**` : trimmedP)}
           </w:p>
@@ -170,6 +215,12 @@ function convertTableToWml(tableLines: string[]): string {
 
 /**
  * Parses markdown text into WordprocessingML elements.
+ * Adheres strictly to Indonesian Naskah Dinas formatting:
+ * - Times New Roman 12pt
+ * - 1.5 line spacing (360 dxa)
+ * - 1.27 cm (720 dxa) paragraph first-line indent
+ * - Centered headers & agency text
+ * - Clean page breaks
  */
 function convertMarkdownToWml(content: string): string {
   const lines = content.split('\n')
@@ -181,7 +232,7 @@ function convertMarkdownToWml(content: string): string {
     const line = rawLine.trim()
 
     if (!line) {
-      wml += '<w:p><w:pPr><w:spacing w:after="120" /></w:pPr></w:p>'
+      wml += '<w:p><w:pPr><w:spacing w:after="120" w:line="360" w:lineRule="auto" /></w:pPr></w:p>'
       i++
       continue
     }
@@ -219,7 +270,7 @@ function convertMarkdownToWml(content: string): string {
       continue
     }
 
-    // Heading 1 (# LAPORAN LABORATORIUM ...)
+    // Heading 1 (# LAPORAN LABORATORIUM ..., # BAB I ...)
     if (line.startsWith('# ')) {
       const text = escapeXml(line.replace(/^#\s+/, ''))
       wml += `
@@ -227,7 +278,7 @@ function convertMarkdownToWml(content: string): string {
           <w:pPr>
             <w:pStyle w:val="Heading1" />
             <w:jc w:val="center" />
-            <w:spacing w:before="320" w:after="160" />
+            <w:spacing w:before="360" w:after="160" w:line="360" w:lineRule="auto" />
           </w:pPr>
           <w:r>
             <w:rPr>
@@ -252,7 +303,7 @@ function convertMarkdownToWml(content: string): string {
           <w:pPr>
             <w:pStyle w:val="Heading2" />
             <w:jc w:val="center" />
-            <w:spacing w:before="240" w:after="120" />
+            <w:spacing w:before="240" w:after="120" w:line="360" w:lineRule="auto" />
           </w:pPr>
           <w:r>
             <w:rPr>
@@ -269,15 +320,19 @@ function convertMarkdownToWml(content: string): string {
       continue
     }
 
-    // Heading 3 (### ...)
+    // Heading 3 (### A. Latar Belakang, ### 1. ...)
     if (line.startsWith('### ')) {
       const text = escapeXml(line.replace(/^###\s+/, ''))
-      const isCenter = text.includes('PELATIHAN') || text.includes('KEJAKSAAN') || text.includes('BUKTI KEGIATAN')
+      const isCenter =
+        text.includes('PELATIHAN') ||
+        text.includes('KEJAKSAAN') ||
+        text.includes('BUKTI KEGIATAN') ||
+        text.includes('LEMBAR')
       wml += `
         <w:p>
           <w:pPr>
-            <w:spacing w:before="180" w:after="90" />
-            ${isCenter ? '<w:jc w:val="center" />' : ''}
+            <w:spacing w:before="180" w:after="80" w:line="360" w:lineRule="auto" />
+            ${isCenter ? '<w:jc w:val="center" />' : '<w:jc w:val="left" />'}
           </w:pPr>
           <w:r>
             <w:rPr>
@@ -294,13 +349,14 @@ function convertMarkdownToWml(content: string): string {
       continue
     }
 
-    // Heading 4 (#### ...)
+    // Heading 4 (#### 1. Tujuan Umum ...)
     if (line.startsWith('#### ')) {
       const text = escapeXml(line.replace(/^####\s+/, ''))
       wml += `
         <w:p>
           <w:pPr>
-            <w:spacing w:before="140" w:after="60" />
+            <w:spacing w:before="140" w:after="60" w:line="360" w:lineRule="auto" />
+            <w:jc w:val="left" />
           </w:pPr>
           <w:r>
             <w:rPr>
@@ -324,7 +380,7 @@ function convertMarkdownToWml(content: string): string {
         <w:p>
           <w:pPr>
             <w:ind w:left="720" w:hanging="360" />
-            <w:spacing w:after="80" w:line="300" w:lineRule="auto" />
+            <w:spacing w:before="40" w:after="80" w:line="360" w:lineRule="auto" />
             <w:jc w:val="both" />
           </w:pPr>
           <w:r>
@@ -341,7 +397,7 @@ function convertMarkdownToWml(content: string): string {
       continue
     }
 
-    // Center alignment detection for cover / agency lines
+    // Centered agency / cover / seminar notes
     const isCenterAligned =
       line.includes('Kejaksaan Agung, 2026') ||
       line.startsWith('**KEJAKSAAN AGUNG**') ||
@@ -350,14 +406,42 @@ function convertMarkdownToWml(content: string): string {
       line.startsWith('**KATEGORI KEAHLIAN') ||
       line.startsWith('**JAKARTA 2026**') ||
       line === '**Oleh:**' ||
+      line === 'Oleh:' ||
       line.startsWith('**NAMA') ||
+      line.includes('Telah diuji di depan Tim Penguji') ||
+      line.includes('Pada hari ') ||
+      line === '**Penulis**' ||
       (line.startsWith('NIP. ') && i < 35)
+
+    // Check if line is metadata / table title / list number which should not have firstLine paragraph indent
+    const isSpecialLine =
+      isCenterAligned ||
+      line.startsWith('Nama') ||
+      line.startsWith('NIP') ||
+      line.startsWith('Unit Kerja') ||
+      line.startsWith('Jabatan') ||
+      line.startsWith('Pangkat') ||
+      line.startsWith('Tanggal') ||
+      line.startsWith('Lokasi') ||
+      line.startsWith('Rencana') ||
+      line.startsWith('Indikator') ||
+      line.startsWith('Item') ||
+      line.startsWith('KETERANGAN') ||
+      line.startsWith('Tabel ') ||
+      line.startsWith('Gambar ') ||
+      line.startsWith('Lampiran ') ||
+      line.startsWith('Lembar ') ||
+      line.startsWith('Kata Pengantar') ||
+      line.startsWith('Daftar ') ||
+      line.startsWith('BAB ') ||
+      /^[0-9]+(\.[0-9]+)*\s+/.test(line) ||
+      /^[a-z]\.\s+/.test(line)
 
     wml += `
       <w:p>
         <w:pPr>
-          ${isCenterAligned ? '<w:jc w:val="center" />' : '<w:ind w:firstLine="560" /><w:jc w:val="both" />'}
-          <w:spacing w:after="120" w:line="300" w:lineRule="auto" />
+          ${isCenterAligned ? '<w:jc w:val="center" />' : isSpecialLine ? '<w:jc w:val="left" />' : '<w:ind w:firstLine="720" /><w:jc w:val="both" />'}
+          <w:spacing w:before="40" w:after="120" w:line="360" w:lineRule="auto" />
         </w:pPr>
         ${formatRuns(line)}
       </w:p>
@@ -370,7 +454,7 @@ function convertMarkdownToWml(content: string): string {
 
 /**
  * Generates and triggers download of a native .docx Microsoft Word document.
- * 100% compliant with standard Dinas Kejaksaan RI format (A4 margins 4-4-3-3 cm).
+ * 100% compliant with standard Naskah Dinas format (A4 margins 4-4-3-3 cm, 1.5 line spacing, Times New Roman 12pt).
  */
 export async function exportToDocx(options: DocxExportOptions): Promise<void> {
   const zip = new JSZip()
@@ -421,7 +505,7 @@ export async function exportToDocx(options: DocxExportOptions): Promise<void> {
     </w:rPrDefault>
     <w:pPrDefault>
       <w:pPr>
-        <w:spacing w:after="120" w:line="300" w:lineRule="auto"/>
+        <w:spacing w:after="120" w:line="360" w:lineRule="auto"/>
       </w:pPr>
     </w:pPrDefault>
   </w:docDefaults>
@@ -437,10 +521,10 @@ export async function exportToDocx(options: DocxExportOptions): Promise<void> {
     <!-- Document Body Converted from Markdown (Includes Cover, Lembar Pengesahan, Bab I-IV, and Tables) -->
     ${bodyWml}
 
-    <!-- Standar Naskah Dinas A4: Top 30mm (1701 dxa), Left 40mm (2268 dxa), Bottom 30mm (1701 dxa), Right 30mm (1701 dxa) -->
+    <!-- Standar Naskah Dinas A4: Margin 4-4-3-3 cm (Top: 4cm=2268 dxa, Left: 4cm=2268 dxa, Bottom: 3cm=1701 dxa, Right: 3cm=1701 dxa) -->
     <w:sectPr>
       <w:pgSz w:w="11906" w:h="16838"/>
-      <w:pgMar w:top="1701" w:right="1701" w:bottom="1701" w:left="2268" w:header="720" w:footer="720" w:gutter="0"/>
+      <w:pgMar w:top="2268" w:right="1701" w:bottom="1701" w:left="2268" w:header="720" w:footer="720" w:gutter="0"/>
     </w:sectPr>
   </w:body>
 </w:document>`
@@ -468,3 +552,4 @@ export async function exportToDocx(options: DocxExportOptions): Promise<void> {
   document.body.removeChild(anchor)
   URL.revokeObjectURL(url)
 }
+

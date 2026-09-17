@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   GraduationCap,
   Sparkles,
@@ -14,10 +14,26 @@ import {
   BookOpen,
   Loader2,
   Calendar,
-  UserCheck
+  UserCheck,
+  Zap,
+  Battery,
+  BatteryCharging,
+  BatteryFull,
+  BatteryMedium,
+  BatteryLow,
+  Sliders,
+  RefreshCw,
+  HelpCircle,
+  Presentation,
+  ShieldCheck,
+  FileCheck2,
+  Share2,
+  ChevronRight,
+  Info
 } from "lucide-react"
 import { Spinner } from "@/components/ui/spinner"
 import { MinimalistLoader } from "@/components/ui/minimalist-loader"
+import { Modal } from "@/components/ui/modal"
 import { exportToDocx } from "@/lib/export-docx"
 
 const PRESET_TOPICS = [
@@ -142,9 +158,76 @@ function RenderPaperDocument({ content }: { content: string }) {
       }
 
       const isSeparator = (str: string) => /^\|[\s:\-]+(\|[\s:\-]+)*\|$/.test(str)
+      const combinedLower = tableLines.join(" ").toLowerCase()
+      const isSignatureTable =
+        combinedLower.includes("penguji") ||
+        combinedLower.includes("coach") ||
+        combinedLower.includes("mengetahui") ||
+        combinedLower.includes("tanda tangan") ||
+        combinedLower.includes("pejabat pranata komputer")
+      const isIdentityTable =
+        combinedLower.includes("identitas") ||
+        (combinedLower.includes("nama") &&
+          (combinedLower.includes("nip") || combinedLower.includes("unit kerja") || combinedLower.includes("jabatan") || combinedLower.includes("ppk")))
+
+      if (isSignatureTable) {
+        // Render clean 2-column signature layout
+        const rows = tableLines.filter((r) => !isSeparator(r))
+        elements.push(
+          <div key={`sig-${startIdx}`} className="my-6 grid grid-cols-2 gap-6 text-center text-xs">
+            {rows.map((rowStr, rIdx) => {
+              const cells = rowStr.slice(1, -1).split("|").map((c) => c.trim())
+              return (
+                <React.Fragment key={rIdx}>
+                  {cells.map((cVal, cIdx) => (
+                    <div key={cIdx} className="space-y-1">
+                      {cVal.split(/<br\s*\/?>/i).map((part, pIdx) => (
+                        <div key={pIdx} className="leading-snug">
+                          {formatInline(part.trim())}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </React.Fragment>
+              )
+            })}
+          </div>
+        )
+        continue
+      }
+
+      if (isIdentityTable) {
+        // Render clean key-value identity block
+        const rows = tableLines.filter((r) => !isSeparator(r))
+        const contentRows = rows[0]?.toLowerCase().includes("identitas") ? rows.slice(1) : rows
+        elements.push(
+          <div
+            key={`ident-${startIdx}`}
+            className="my-4 rounded-[10px] bg-slate-50/70 dark:bg-[#121824] p-3.5 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5 text-xs"
+          >
+            {contentRows.map((rowStr, rIdx) => {
+              const cells = rowStr.slice(1, -1).split("|").map((c) => c.trim())
+              if (cells.length < 2) return null
+              return (
+                <div key={rIdx} className="grid grid-cols-12 gap-2">
+                  <div className="col-span-4 sm:col-span-3 font-semibold text-slate-700 dark:text-slate-300">
+                    {formatInline(cells[0])}
+                  </div>
+                  <div className="col-span-8 sm:col-span-9 text-slate-900 dark:text-white font-medium">
+                    {formatInline(cells[1].startsWith(":") ? cells[1] : `: ${cells[1]}`)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+        continue
+      }
+
+      // Regular Data Table
       const headerRow = tableLines[0]
       const hasSep = tableLines.length > 1 && isSeparator(tableLines[1])
-      const headerCells = headerRow.slice(1, -1).split("|").map(c => c.trim())
+      const headerCells = headerRow.slice(1, -1).split("|").map((c) => c.trim())
       const bodyLines = hasSep ? tableLines.slice(2) : tableLines.slice(1)
 
       elements.push(
@@ -162,16 +245,21 @@ function RenderPaperDocument({ content }: { content: string }) {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-[#151c28]">
               {bodyLines.map((rowStr, rIdx) => {
                 if (isSeparator(rowStr)) return null
-                const cells = rowStr.slice(1, -1).split("|").map(c => c.trim())
+                const cells = rowStr.slice(1, -1).split("|").map((c) => c.trim())
                 return (
                   <tr key={rIdx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                     {cells.map((cVal, cIdx) => {
                       const isCheck = cVal === "✔" || cVal === "✓"
+                      const isNumber = /^[0-9]+(\.[0-9]+)*$/.test(cVal)
                       return (
                         <td
                           key={cIdx}
                           className={`px-3 py-2 text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-700 last:border-r-0 ${
-                            isCheck ? "text-center font-bold text-emerald-600 dark:text-emerald-400 text-sm" : ""
+                            isCheck
+                              ? "text-center font-bold text-emerald-600 dark:text-emerald-400 text-sm"
+                              : isNumber
+                              ? "text-center font-medium"
+                              : ""
                           }`}
                         >
                           {cVal.split(/<br\s*\/?>/i).map((part, pIdx) => (
@@ -261,6 +349,21 @@ function RenderPaperDocument({ content }: { content: string }) {
       continue
     }
 
+    // Blockquote / Jawaban Taktis Sidang (> ...)
+    if (trimmed.startsWith("> ")) {
+      const quoteText = trimmed.replace(/^>\s*/, "")
+      elements.push(
+        <div
+          key={`quote-${i}`}
+          className="my-3 p-3.5 rounded-[12px] bg-emerald-500/10 dark:bg-emerald-500/15 border-l-4 border-emerald-600 dark:border-emerald-400 text-slate-800 dark:text-emerald-100 text-xs shadow-2xs leading-relaxed"
+        >
+          {formatInline(quoteText)}
+        </div>
+      )
+      i++
+      continue
+    }
+
     // Centered Agency / Cover Text
     const isCenter =
       trimmed.includes("Kejaksaan Agung, 2026") ||
@@ -270,7 +373,11 @@ function RenderPaperDocument({ content }: { content: string }) {
       trimmed.startsWith("**KATEGORI KEAHLIAN") ||
       trimmed.startsWith("**JAKARTA 2026**") ||
       trimmed === "**Oleh:**" ||
+      trimmed === "Oleh:" ||
       trimmed.startsWith("**NAMA") ||
+      trimmed.includes("Telah diuji di depan Tim Penguji") ||
+      trimmed.includes("Pada hari ") ||
+      trimmed === "**Penulis**" ||
       (trimmed.startsWith("NIP. ") && i < 35)
 
     elements.push(
@@ -303,6 +410,18 @@ export function PaperGeneratorHub() {
   const [generatedPaper, setGeneratedPaper] = React.useState<string | null>(null)
   const [copied, setCopied] = React.useState(false)
 
+  // AI Battery & Power System States
+  const [batteryLevel, setBatteryLevel] = React.useState<number>(100)
+  const [isCharging, setIsCharging] = React.useState<boolean>(false)
+  const [powerMode, setPowerMode] = React.useState<"turbo" | "eco">("turbo")
+  const [showBatteryModal, setShowBatteryModal] = React.useState<boolean>(false)
+
+  // Smart Summary States
+  const [activeViewTab, setActiveViewTab] = React.useState<"document" | "summary">("document")
+  const [isSummarizing, setIsSummarizing] = React.useState<boolean>(false)
+  const [generatedSummary, setGeneratedSummary] = React.useState<string | null>(null)
+  const [copiedSummary, setCopiedSummary] = React.useState<boolean>(false)
+
   // Load saved profile on mount
   React.useEffect(() => {
     try {
@@ -321,15 +440,163 @@ export function PaperGeneratorHub() {
           if (parsed.title) setTopicTitle(parsed.title)
         }
       }
+
+      const savedBattery = localStorage.getItem("prakom_ai_battery")
+      if (savedBattery) {
+        const parsed = parseInt(savedBattery, 10)
+        if (!isNaN(parsed) && parsed >= 15 && parsed <= 100) setBatteryLevel(parsed)
+      }
+
+      const savedPowerMode = localStorage.getItem("prakom_ai_power_mode")
+      if (savedPowerMode === "turbo" || savedPowerMode === "eco") setPowerMode(savedPowerMode)
+
+      const savedSummary = localStorage.getItem("prakom_paper_summary")
+      if (savedSummary) setGeneratedSummary(savedSummary)
     } catch {
       // Ignore
     }
   }, [])
 
+  // Battery Management Logic
+  const consumeBattery = (amount: number) => {
+    setBatteryLevel((prev) => {
+      const nextLevel = Math.max(15, prev - amount)
+      try {
+        localStorage.setItem("prakom_ai_battery", nextLevel.toString())
+      } catch {}
+      return nextLevel
+    })
+  }
+
+  const handleRecharge = () => {
+    if (isCharging) return
+    setIsCharging(true)
+    let current = batteryLevel
+    const interval = setInterval(() => {
+      current += 6
+      if (current >= 100) {
+        current = 100
+        clearInterval(interval)
+        setIsCharging(false)
+      }
+      setBatteryLevel(current)
+      try {
+        localStorage.setItem("prakom_ai_battery", current.toString())
+      } catch {}
+    }, 45)
+  }
+
+  const handleTogglePowerMode = (mode: "turbo" | "eco") => {
+    setPowerMode(mode)
+    try {
+      localStorage.setItem("prakom_ai_power_mode", mode)
+    } catch {}
+  }
+
   const handleSelectPreset = (preset: typeof PRESET_TOPICS[0]) => {
     setTopicTitle(preset.title)
     setProblemStatement(preset.problem)
     if (preset.satker) setAuthorSatker(preset.satker)
+  }
+
+  // AI Smart Summarization (Executive Summary & Defense Prep)
+  const handleSummarize = async () => {
+    if (!generatedPaper && !topicTitle.trim()) {
+      alert("Harap buat naskah laporan terlebih dahulu atau lengkapi judul inovasi.")
+      return
+    }
+
+    setIsSummarizing(true)
+    consumeBattery(powerMode === "turbo" ? 12 : 7)
+
+    try {
+      const res = await fetch("/api/ai/summarize-paper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paperContent: generatedPaper || "",
+          topicTitle,
+          authorName,
+          authorSatker,
+          problemStatement,
+          desiredOutcome,
+          powerMode,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.summary) {
+        setGeneratedSummary(data.summary)
+        setActiveViewTab("summary")
+        try {
+          localStorage.setItem("prakom_paper_summary", data.summary)
+        } catch {}
+      } else {
+        alert(data.error || "Gagal memproses rangkuman cerdas.")
+      }
+    } catch (err: any) {
+      alert("Kendala jaringan saat merangkum: " + err.message)
+    } finally {
+      setIsSummarizing(false)
+    }
+  }
+
+  const handleCopySummary = () => {
+    if (!generatedSummary) return
+    navigator.clipboard.writeText(generatedSummary)
+    setCopiedSummary(true)
+    setTimeout(() => setCopiedSummary(false), 2500)
+  }
+
+  const handleDownloadSummaryDoc = () => {
+    if (!generatedSummary) return
+    const lines = generatedSummary.split("\n")
+    let bodyHtml = ""
+    for (const rawLine of lines) {
+      const trimmed = rawLine.trim()
+      if (!trimmed) {
+        bodyHtml += "<p style='margin-bottom: 6pt;'></p>"
+        continue
+      }
+      if (trimmed.startsWith("# ")) {
+        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #0D3830; margin-top: 18pt; margin-bottom: 8pt;'>${trimmed.replace(/^#\s+/, "")}</h2>`
+        continue
+      }
+      if (trimmed.startsWith("## ")) {
+        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; color: #1e293b; margin-top: 14pt; margin-bottom: 6pt; border-bottom: 1px solid #cbd5e1; padding-bottom: 4pt;'>${trimmed.replace(/^##\s+/, "")}</h3>`
+        continue
+      }
+      if (trimmed.startsWith("### ")) {
+        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; color: #007aff; margin-top: 10pt; margin-bottom: 4pt;'>${trimmed.replace(/^###\s+/, "")}</h4>`
+        continue
+      }
+      if (trimmed.startsWith("> ")) {
+        bodyHtml += `<div style='background: #f0fdf4; border-left: 4px solid #16a34a; padding: 8pt; margin: 6pt 0; font-style: italic; color: #14532d;'>${trimmed.replace(/^>\s*/, "")}</div>`
+        continue
+      }
+      if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+        bodyHtml += `<p style='margin-left: 20pt; text-indent: -12pt; margin-bottom: 4pt;'>• ${trimmed.replace(/^([•\-\*]\s+)/, "")}</p>`
+        continue
+      }
+      bodyHtml += `<p style='text-align: justify; margin-bottom: 6pt; line-height: 1.5;'>${trimmed}</p>`
+    }
+
+    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>Ringkasan Eksekutif & Kisi-kisi Seminar - ${topicTitle}</title>
+    <style>
+      @page { size: A4 portrait; margin: 25mm 25mm 25mm 25mm; }
+      body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; }
+    </style></head><body>`
+    const footer = `</body></html>`
+    const blob = new Blob(['\ufeff' + header + bodyHtml + footer], { type: 'application/msword' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Ringkasan_Eksekutif_Seminar_${authorSatker.toUpperCase().replace(/\s+/g, '_')}_${Date.now()}.doc`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -341,6 +608,7 @@ export function PaperGeneratorHub() {
 
     setIsGenerating(true)
     setGeneratedPaper(null)
+    consumeBattery(powerMode === "turbo" ? 18 : 10)
 
     try {
       const res = await fetch("/api/ai/generate-paper", {
@@ -364,6 +632,7 @@ export function PaperGeneratorHub() {
       const data = await res.json()
       if (data.paper) {
         setGeneratedPaper(data.paper)
+        setActiveViewTab("document")
         try {
           localStorage.setItem("prakom_paper_draft", JSON.stringify({
             title: topicTitle,
@@ -440,7 +709,7 @@ export function PaperGeneratorHub() {
 
       // Divider / Page break
       if (trimmed === "---" || trimmed === "━━━" || trimmed === "***") {
-        bodyHtml += "<div style='page-break-after: always;'></div><hr style='border: 0; border-top: 1pt solid #ccc; margin: 16pt 0;'/>"
+        bodyHtml += "<div style='page-break-after: always;'></div>"
         i++
         continue
       }
@@ -454,36 +723,76 @@ export function PaperGeneratorHub() {
         }
 
         const isSeparator = (str: string) => /^\|[\s:\-]+(\|[\s:\-]+)*\|$/.test(str)
+        const combinedLower = tableLines.join(' ').toLowerCase()
+        const isSignatureTable =
+          combinedLower.includes('penguji') ||
+          combinedLower.includes('coach') ||
+          combinedLower.includes('mengetahui') ||
+          combinedLower.includes('tanda tangan') ||
+          combinedLower.includes('pejabat pranata komputer')
+        const isIdentityTable =
+          combinedLower.includes('identitas') ||
+          (combinedLower.includes('nama') &&
+            (combinedLower.includes('nip') || combinedLower.includes('unit kerja') || combinedLower.includes('jabatan') || combinedLower.includes('ppk')))
+        const isBorderless = isSignatureTable || isIdentityTable
+
         const headerRow = tableLines[0]
         const hasSep = tableLines.length > 1 && isSeparator(tableLines[1])
         const headerCells = headerRow.slice(1, -1).split("|").map(c => c.trim())
         const bodyRows = hasSep ? tableLines.slice(2) : tableLines.slice(1)
 
-        bodyHtml += "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse: collapse; width: 100%; margin: 12pt 0; font-family: \"Times New Roman\", serif; font-size: 11pt; border: 1pt solid #000;'>"
-        bodyHtml += "<thead><tr style='background-color: #f2f4f7; font-weight: bold; text-align: center;'>"
-        headerCells.forEach(hc => {
-          bodyHtml += `<th style='border: 1pt solid #000; padding: 6pt;'>${hc}</th>`
-        })
-        bodyHtml += "</tr></thead><tbody>"
-
-        bodyRows.forEach(br => {
-          if (isSeparator(br)) return
-          const cells = br.slice(1, -1).split("|").map(c => c.trim())
-          bodyHtml += "<tr>"
-          cells.forEach(c => {
-            const isCenter = c === "✔" || c === "✓" || c.length <= 4
-            bodyHtml += `<td style='border: 1pt solid #000; padding: 5pt; text-align: ${isCenter ? "center" : "left"};'>${c}</td>`
+        if (isBorderless) {
+          bodyHtml += "<table border='0' cellpadding='4' cellspacing='0' style='border-collapse: collapse; width: 100%; margin: 12pt 0; font-family: \"Times New Roman\", serif; font-size: 12pt; border: none;'>"
+          bodyRows.forEach(br => {
+            if (isSeparator(br)) return
+            const cells = br.slice(1, -1).split("|").map(c => c.trim())
+            bodyHtml += "<tr>"
+            cells.forEach(c => {
+              const align = isSignatureTable ? "center" : "left"
+              const width = isSignatureTable ? "50%" : cells.length === 2 ? "30%" : "auto"
+              const formattedCell = c.split(/<br\s*\/?>/i).map(part => 
+                part.trim()
+                  .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+                  .replace(/\*(.*?)\*/g, "<i>$1</i>")
+              ).join("<br/>")
+              bodyHtml += `<td style='border: none; padding: 4pt 8pt; text-align: ${align}; vertical-align: top; width: ${width};'>${formattedCell}</td>`
+            })
+            bodyHtml += "</tr>"
           })
-          bodyHtml += "</tr>"
-        })
-        bodyHtml += "</tbody></table>"
+          bodyHtml += "</table>"
+        } else {
+          bodyHtml += "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse: collapse; width: 100%; margin: 12pt 0; font-family: \"Times New Roman\", serif; font-size: 11pt; border: 1pt solid #333;'>"
+          bodyHtml += "<thead><tr style='background-color: #f2f4f7; font-weight: bold; text-align: center;'>"
+          headerCells.forEach(hc => {
+            const formattedHc = hc.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/\*(.*?)\*/g, "<i>$1</i>")
+            bodyHtml += `<th style='border: 1pt solid #333; padding: 6pt;'>${formattedHc}</th>`
+          })
+          bodyHtml += "</tr></thead><tbody>"
+
+          bodyRows.forEach(br => {
+            if (isSeparator(br)) return
+            const cells = br.slice(1, -1).split("|").map(c => c.trim())
+            bodyHtml += "<tr>"
+            cells.forEach(c => {
+              const isCenter = c === "✔" || c === "✓" || /^[0-9]+(\.[0-9]+)*$/.test(c)
+              const formattedCell = c.split(/<br\s*\/?>/i).map(part => 
+                part.trim()
+                  .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+                  .replace(/\*(.*?)\*/g, "<i>$1</i>")
+              ).join("<br/>")
+              bodyHtml += `<td style='border: 1pt solid #bbb; padding: 5pt; text-align: ${isCenter ? "center" : "left"};'>${formattedCell}</td>`
+            })
+            bodyHtml += "</tr>"
+          })
+          bodyHtml += "</tbody></table>"
+        }
         continue
       }
 
       // Heading 1
       if (trimmed.startsWith("# ")) {
         const text = trimmed.replace(/^#\s+/, "")
-        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #000; margin-top: 18pt; margin-bottom: 8pt; text-transform: uppercase;'>${text}</h2>`
+        bodyHtml += `<h2 style='font-size: 14pt; font-weight: bold; text-align: center; color: #000; margin-top: 20pt; margin-bottom: 10pt; text-transform: uppercase;'>${text}</h2>`
         i++
         continue
       }
@@ -491,7 +800,7 @@ export function PaperGeneratorHub() {
       // Heading 2
       if (trimmed.startsWith("## ")) {
         const text = trimmed.replace(/^##\s+/, "")
-        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; text-align: center; color: #000; margin-top: 12pt; margin-bottom: 6pt; text-transform: uppercase;'>${text}</h3>`
+        bodyHtml += `<h3 style='font-size: 13pt; font-weight: bold; text-align: center; color: #000; margin-top: 14pt; margin-bottom: 8pt; text-transform: uppercase;'>${text}</h3>`
         i++
         continue
       }
@@ -499,7 +808,7 @@ export function PaperGeneratorHub() {
       // Heading 3
       if (trimmed.startsWith("### ")) {
         const text = trimmed.replace(/^###\s+/, "")
-        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; margin-top: 10pt; margin-bottom: 4pt; color: #000;'>${text}</h4>`
+        bodyHtml += `<h4 style='font-size: 12pt; font-weight: bold; margin-top: 12pt; margin-bottom: 6pt; color: #000;'>${text}</h4>`
         i++
         continue
       }
@@ -507,7 +816,7 @@ export function PaperGeneratorHub() {
       // Heading 4
       if (trimmed.startsWith("#### ")) {
         const text = trimmed.replace(/^####\s+/, "")
-        bodyHtml += `<h5 style='font-size: 12pt; font-weight: bold; margin-top: 8pt; margin-bottom: 3pt; color: #333;'>${text}</h5>`
+        bodyHtml += `<h5 style='font-size: 12pt; font-weight: bold; margin-top: 10pt; margin-bottom: 4pt; color: #222;'>${text}</h5>`
         i++
         continue
       }
@@ -531,13 +840,36 @@ export function PaperGeneratorHub() {
         trimmed.startsWith("**KATEGORI KEAHLIAN") ||
         trimmed.startsWith("**JAKARTA 2026**") ||
         trimmed === "**Oleh:**" ||
-        trimmed.startsWith("**NAMA")
+        trimmed === "Oleh:" ||
+        trimmed.startsWith("**NAMA") ||
+        trimmed.includes("Telah diuji di depan Tim Penguji") ||
+        trimmed.includes("Pada hari ") ||
+        trimmed === "**Penulis**"
+
+      const isSpecialNoIndent =
+        isCenter ||
+        trimmed.startsWith("Nama") ||
+        trimmed.startsWith("NIP") ||
+        trimmed.startsWith("Unit Kerja") ||
+        trimmed.startsWith("Jabatan") ||
+        trimmed.startsWith("Pangkat") ||
+        trimmed.startsWith("Tanggal") ||
+        trimmed.startsWith("Lokasi") ||
+        trimmed.startsWith("Rencana") ||
+        trimmed.startsWith("Indikator") ||
+        trimmed.startsWith("Item") ||
+        trimmed.startsWith("KETERANGAN") ||
+        trimmed.startsWith("Tabel ") ||
+        trimmed.startsWith("Gambar ") ||
+        trimmed.startsWith("Lampiran ") ||
+        /^[0-9]+(\.[0-9]+)*\s+/.test(trimmed) ||
+        /^[a-z]\.\s+/.test(trimmed)
 
       const formatted = trimmed
         .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
         .replace(/\*(.*?)\*/g, "<i>$1</i>")
 
-      bodyHtml += `<p style='text-align: ${isCenter ? "center" : "justify"}; margin-bottom: 6pt; line-height: 1.5; ${isCenter ? "" : "text-indent: 28pt;"}'>${formatted}</p>`
+      bodyHtml += `<p style='text-align: ${isCenter ? "center" : "justify"}; margin-bottom: 6pt; line-height: 1.5; ${isSpecialNoIndent ? "" : "text-indent: 28pt;"}'>${formatted}</p>`
       i++
     }
 
@@ -546,7 +878,7 @@ export function PaperGeneratorHub() {
     <style>
       @page {
         size: A4 portrait;
-        margin: 30mm 30mm 30mm 40mm; /* Atas 3cm, Kanan 3cm, Bawah 3cm, Kiri 4cm (Standar Naskah Dinas) */
+        margin: 40mm 30mm 30mm 40mm; /* Atas 4cm, Kanan 3cm, Bawah 3cm, Kiri 4cm (Standar Naskah Dinas 4-4-3-3) */
       }
       body {
         font-family: 'Times New Roman', Times, serif;
@@ -587,14 +919,86 @@ export function PaperGeneratorHub() {
         transition={{ duration: 0.3 }}
         className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 rounded-full bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe] border border-[#af52de]/30 px-3 py-0.5 text-xs font-semibold">
-            <GraduationCap className="h-3.5 w-3.5 text-[#af52de]" strokeWidth={2} />
-            <span>Format Resmi Diklat BPS & Kejaksaan RI</span>
-          </span>
-          <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
-            Standar Laporan Laboratorium 4 BAB & Bukti Fisik
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Official Badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1.5 rounded-full bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe] border border-[#af52de]/30 px-3 py-0.5 text-xs font-semibold">
+              <GraduationCap className="h-3.5 w-3.5 text-[#af52de]" strokeWidth={2} />
+              <span>Format Resmi Diklat BPS & Kejaksaan RI</span>
+            </span>
+            <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
+              Standar Laporan Laboratorium 4 BAB & Bukti Fisik
+            </span>
+          </div>
+
+          {/* AI Battery & Power Widget */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowBatteryModal(true)}
+              className="group flex items-center gap-2.5 rounded-full bg-slate-100 dark:bg-[#101622] hover:bg-slate-200/80 dark:hover:bg-[#182133] border border-slate-200 dark:border-white/10 px-3 py-1.5 transition-all shadow-2xs cursor-pointer text-left"
+              title="Klik untuk diagnosa daya dan kapasitas baterai AI"
+            >
+              {/* Battery Silhouette */}
+              <div className="relative flex items-center">
+                <div className="relative w-8 h-4 rounded-[3.5px] border-[1.5px] border-slate-400 dark:border-slate-500 p-[1px] bg-slate-200/80 dark:bg-slate-800 overflow-hidden flex items-center">
+                  <motion.div
+                    className={`h-full rounded-[1.5px] transition-all duration-300 ${
+                      batteryLevel > 50
+                        ? "bg-gradient-to-r from-emerald-500 to-green-400"
+                        : batteryLevel > 25
+                        ? "bg-gradient-to-r from-amber-500 to-yellow-400"
+                        : "bg-gradient-to-r from-rose-500 to-red-400"
+                    }`}
+                    style={{ width: `${batteryLevel}%` }}
+                    animate={isCharging ? { opacity: [0.5, 1, 0.5] } : { opacity: 1 }}
+                    transition={isCharging ? { repeat: Infinity, duration: 0.7 } : undefined}
+                  />
+                  {isCharging && (
+                    <Zap className="absolute inset-0 m-auto h-2.5 w-2.5 text-white drop-shadow animate-pulse" />
+                  )}
+                </div>
+                {/* Positive terminal nipple */}
+                <div className="w-[2px] h-[5px] bg-slate-400 dark:border-slate-500 rounded-r-[1px] -ml-[0.5px]" />
+              </div>
+
+              {/* Battery Metrics */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 font-mono">
+                  {batteryLevel}%
+                </span>
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full border ${
+                    powerMode === "turbo"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                      : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                  }`}
+                >
+                  {powerMode === "turbo" ? "⚡ Turbo" : "🟢 Eco"}
+                </span>
+              </div>
+
+              <Sliders className="h-3 w-3 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition" />
+            </button>
+
+            {/* Quick Recharge Button when battery drained */}
+            {batteryLevel < 100 && (
+              <button
+                type="button"
+                onClick={handleRecharge}
+                disabled={isCharging}
+                className="flex items-center gap-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 text-[11px] font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-60"
+                title="Isi daya baterai AI kembali ke 100%"
+              >
+                {isCharging ? (
+                  <RefreshCw className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Zap className="h-3 w-3" />
+                )}
+                <span>{isCharging ? "Mengisi..." : "Isi Baterai"}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
@@ -829,21 +1233,103 @@ export function PaperGeneratorHub() {
           <div className="rounded-[14px] bg-white dark:bg-[#151c28] border border-[#e6e6e6] dark:border-white/10 shadow-xs flex flex-col h-full min-h-[550px] overflow-hidden">
             {/* Output Header Controls */}
             <div className="flex flex-col gap-2.5 border-b border-[#e6e6e6] dark:border-white/10 p-4 bg-[#f6f5f4] dark:bg-[#141b27] shrink-0">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              
+              {/* Tab Switcher: Naskah Lengkap vs Rangkuman Eksekutif */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 dark:border-white/10 pb-3">
+                <div className="flex items-center gap-1.5 p-1 rounded-full bg-slate-200/70 dark:bg-[#101520] border border-slate-300/60 dark:border-white/10 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab("document")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all cursor-pointer ${
+                      activeViewTab === "document"
+                        ? "bg-white dark:bg-[#1f283a] text-[#007aff] dark:text-sky-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <span>Naskah Lengkap (.docx)</span>
+                    {generatedPaper && (
+                      <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-sky-400">
+                        {generatedPaper.length.toLocaleString("id-ID")} Karakter
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveViewTab("summary")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all cursor-pointer ${
+                      activeViewTab === "summary"
+                        ? "bg-white dark:bg-[#1f283a] text-emerald-600 dark:text-emerald-400 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>⚡ Rangkuman Eksekutif & Sidang</span>
+                    {generatedSummary && (
+                      <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        Siap Ujian
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Tombol Rangkum Cerdas Utama */}
+                <button
+                  type="button"
+                  onClick={handleSummarize}
+                  disabled={isSummarizing || isGenerating || (!generatedPaper && !topicTitle.trim())}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs transition cursor-pointer disabled:opacity-50"
+                  title="Ekstrak naskah menjadi ringkasan eksekutif 1-halaman, slide presentasi 7 menit, dan kisi-kisi pertanyaan penguji"
+                >
+                  {isSummarizing ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Merangkum Naskah...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-3.5 w-3.5 text-amber-300" />
+                      <span>{generatedSummary ? "⚡ Perbarui Rangkuman" : "⚡ Rangkum Cerdas (Bahan Sidang)"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Sub-bar: Title & Specific Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-[#007aff]" strokeWidth={2} />
-                  <span className="text-xs font-bold text-[#000000] dark:text-white">
-                    Laporan Laboratorium Pranata Komputer Keahlian
-                  </span>
-                  {generatedPaper && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-2.5 py-0.5 rounded-full border border-[#34c759]/30">
-                      <Check className="h-3 w-3" strokeWidth={2} />
-                      Format Resmi Lengkap ({generatedPaper.length.toLocaleString("id-ID")} Karakter)
-                    </span>
+                  {activeViewTab === "document" ? (
+                    <>
+                      <BookOpen className="h-4 w-4 text-[#007aff]" strokeWidth={2} />
+                      <span className="text-xs font-bold text-[#000000] dark:text-white">
+                        Laporan Laboratorium Pranata Komputer Keahlian
+                      </span>
+                      {generatedPaper && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] px-2 py-0.5 rounded-full border border-[#34c759]/30">
+                          <Check className="h-3 w-3" strokeWidth={2} />
+                          Format Resmi Lengkap
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Presentation className="h-4 w-4 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                      <span className="text-xs font-bold text-[#000000] dark:text-white">
+                        Ringkasan Eksekutif, Slide Paparan & Kisi-Kisi Sidang
+                      </span>
+                      {generatedSummary && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                          <Check className="h-3 w-3" strokeWidth={2} />
+                          Defense Kit Aktif
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 
-                {generatedPaper && (
+                {/* Action Buttons for Document View */}
+                {activeViewTab === "document" && generatedPaper && (
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
@@ -852,6 +1338,16 @@ export function PaperGeneratorHub() {
                     >
                       {copied ? <Check className="h-3.5 w-3.5 text-[#16a34a]" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5" strokeWidth={2} />}
                       <span>{copied ? "Tersalin!" : "Salin"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadDoc}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] text-[#000000] dark:text-white px-3 py-1.5 text-xs font-semibold border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
+                      title="Unduh format Word 97-2003 .doc (Standar Margin Dinas 4-4-3-3)"
+                    >
+                      <Download className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
+                      <span>Unduh (.doc)</span>
                     </button>
 
                     <button
@@ -870,10 +1366,34 @@ export function PaperGeneratorHub() {
                     </button>
                   </div>
                 )}
+
+                {/* Action Buttons for Summary View */}
+                {activeViewTab === "summary" && generatedSummary && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopySummary}
+                      className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-[#1f283a] text-[#000000] dark:text-white px-3 py-1.5 text-xs font-semibold border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
+                    >
+                      {copiedSummary ? <Check className="h-3.5 w-3.5 text-[#16a34a]" strokeWidth={2} /> : <Copy className="h-3.5 w-3.5" strokeWidth={2} />}
+                      <span>{copiedSummary ? "Tersalin!" : "Salin Rangkuman"}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadSummaryDoc}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-semibold shadow-xs transition cursor-pointer"
+                      title="Unduh format Ringkasan Eksekutif & Kisi-Kisi Seminar (.doc)"
+                    >
+                      <Download className="h-3.5 w-3.5" strokeWidth={2} />
+                      <span>Unduh Ringkasan (.doc)</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Chapter Jump Pills when paper is generated */}
-              {generatedPaper && (
+              {/* Navigation Jump Pills */}
+              {activeViewTab === "document" && generatedPaper && (
                 <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none text-[11px]">
                   <span className="text-[10px] font-semibold text-[#615d59] dark:text-[#94a3b8] shrink-0">Navigasi Bagian:</span>
                   {[
@@ -919,6 +1439,74 @@ export function PaperGeneratorHub() {
                     className="shadow-none border-0 bg-transparent dark:bg-transparent"
                   />
                 </div>
+              ) : isSummarizing ? (
+                <div className="flex items-center justify-center h-full min-h-[380px] p-4">
+                  <MinimalistLoader
+                    title="Merangkum Cerdas Naskah Laboratorium"
+                    subtitle={`Menyusun Bahan Ujian Seminar untuk ${authorName}`}
+                    steps={[
+                      'Mengekstrak Akar Masalah & Solusi Inovasi Utama...',
+                      'Menyusun Ringkasan Eksekutif 1-Halaman & Poin Penting...',
+                      'Menyusun Rancangan Slide Presentasi Seminar 7 Menit...',
+                      'Merumuskan Prediksi Pertanyaan Kritis Tim Penguji Diklat...',
+                      'Menyusun Rekomendasi Jawaban Taktis & Berbasis Data...',
+                    ]}
+                    delayMs={0}
+                    className="shadow-none border-0 bg-transparent dark:bg-transparent"
+                  />
+                </div>
+              ) : activeViewTab === "summary" ? (
+                generatedSummary ? (
+                  <div className="space-y-4">
+                    <div className="rounded-[12px] bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent p-3.5 border border-emerald-500/20 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-emerald-600 text-white">
+                          <Zap className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                            Ringkasan Eksekutif & Kisi-Kisi Seminar Evaluasi Akhir
+                          </h4>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            Disusun secara cerdas oleh AI berstandar Penguji Diklat Fungsional Prakom Kejaksaan RI.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopySummary}
+                        className="shrink-0 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-white dark:bg-[#121824] px-3 py-1.5 rounded-full border border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition cursor-pointer"
+                      >
+                        {copiedSummary ? "Tersalin!" : "Salin Teks"}
+                      </button>
+                    </div>
+
+                    <RenderPaperDocument content={generatedSummary} />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full min-h-[350px] text-center text-slate-400 dark:text-slate-500 space-y-3.5 p-6">
+                    <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Presentation className="h-10 w-10" />
+                    </div>
+                    <div className="space-y-1 max-w-sm">
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                        Belum Ada Rangkuman Eksekutif
+                      </h4>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Ekstrak intisari naskah 30.000 karakter ini menjadi Ringkasan Eksekutif 1-Halaman, Outline Slide Presentasi 7 Menit, dan Kisi-kisi Pertanyaan Penguji beserta Jawaban Taktis.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSummarize}
+                      disabled={isSummarizing || isGenerating || (!generatedPaper && !topicTitle.trim())}
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
+                    >
+                      <Zap className="h-4 w-4 text-amber-300" />
+                      <span>⚡ Ekstrak & Rangkum Cerdas Sekarang</span>
+                    </button>
+                  </div>
+                )
               ) : generatedPaper ? (
                 <RenderPaperDocument content={generatedPaper} />
               ) : (
@@ -934,6 +1522,142 @@ export function PaperGeneratorHub() {
           </div>
         </div>
       </div>
+
+      {/* Modal Diagnostik & Manajemen Daya Baterai AI */}
+      <Modal
+        isOpen={showBatteryModal}
+        onClose={() => setShowBatteryModal(false)}
+        title="🔋 Status Daya & Kapasitas Baterai AI"
+        description="Pantau konsumsi daya komputasi dan optimalkan kinerja AI untuk penyusunan laporan"
+        className="max-w-md"
+      >
+        <div className="space-y-5 text-xs">
+          {/* Visual Battery Gauge */}
+          <div className="p-4 rounded-[16px] bg-slate-50 dark:bg-[#101622] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center space-y-3 text-center">
+            {/* Battery Box Large */}
+            <div className="relative flex items-center">
+              <div className="relative w-24 h-11 rounded-[8px] border-2 border-slate-400 dark:border-slate-500 p-[2.5px] bg-slate-200/90 dark:bg-slate-800 overflow-hidden flex items-center shadow-inner">
+                <motion.div
+                  className={`h-full rounded-[4px] transition-all duration-300 ${
+                    batteryLevel > 50
+                      ? "bg-gradient-to-r from-emerald-500 via-green-400 to-teal-400"
+                      : batteryLevel > 25
+                      ? "bg-gradient-to-r from-amber-500 to-yellow-400"
+                      : "bg-gradient-to-r from-rose-500 to-red-400"
+                  }`}
+                  style={{ width: `${batteryLevel}%` }}
+                  animate={isCharging ? { opacity: [0.6, 1, 0.6] } : { opacity: 1 }}
+                  transition={isCharging ? { repeat: Infinity, duration: 0.8 } : undefined}
+                />
+                {isCharging && (
+                  <Zap className="absolute inset-0 m-auto h-5 w-5 text-white drop-shadow animate-pulse" />
+                )}
+              </div>
+              <div className="w-[4px] h-[14px] bg-slate-400 dark:border-slate-500 rounded-r-[2px] -ml-[1px]" />
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+                {batteryLevel}%
+              </div>
+              <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                {isCharging ? "⚡ Sedang Mengisi Daya Cepat..." : batteryLevel === 100 ? "Baterai 100% Supercharged (Prima)" : "Kapasitas Operasional Siap Tempur"}
+              </p>
+            </div>
+
+            {/* Quick Recharge Action */}
+            <button
+              type="button"
+              onClick={handleRecharge}
+              disabled={isCharging || batteryLevel === 100}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white py-2 text-xs font-bold shadow-xs transition active:scale-98 cursor-pointer"
+            >
+              {isCharging ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  <span>Mengisi Baterai ke 100%...</span>
+                </>
+              ) : batteryLevel === 100 ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Baterai Sudah 100% Penuh</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-3.5 w-3.5 text-amber-300" />
+                  <span>⚡ Isi Ulang Baterai Sekarang (Instant Recharge)</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Mode Daya Selector */}
+          <div className="space-y-2">
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Pilihan Mode Performa AI:
+            </label>
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleTogglePowerMode("turbo")}
+                className={`flex flex-col p-3 rounded-[12px] border text-left transition cursor-pointer ${
+                  powerMode === "turbo"
+                    ? "bg-amber-500/10 border-amber-500/60 ring-1 ring-amber-500 shadow-xs"
+                    : "bg-slate-50 dark:bg-[#101622] border-slate-200 dark:border-white/10 hover:border-amber-400"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                    <Zap className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Mode Turbo</span>
+                  </span>
+                  {powerMode === "turbo" && <Check className="h-3.5 w-3.5 text-amber-500" />}
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Naskah lengkap 100% 4 BAB, butir BPS mendalam & kisi-kisi terperinci.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTogglePowerMode("eco")}
+                className={`flex flex-col p-3 rounded-[12px] border text-left transition cursor-pointer ${
+                  powerMode === "eco"
+                    ? "bg-emerald-500/10 border-emerald-500/60 ring-1 ring-emerald-500 shadow-xs"
+                    : "bg-slate-50 dark:bg-[#101622] border-slate-200 dark:border-white/10 hover:border-emerald-400"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Mode Hemat (Eco)</span>
+                  </span>
+                  {powerMode === "eco" && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                  Generasi super kilat, hemat daya komputasi, dan langsung pada poin esensial.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Engine Specs */}
+          <div className="rounded-[12px] bg-slate-100/80 dark:bg-[#121824] p-3 border border-slate-200/80 dark:border-white/5 space-y-1 text-[11px] text-slate-600 dark:text-slate-400">
+            <div className="flex justify-between">
+              <span>Model Komputasi:</span>
+              <strong className="text-slate-800 dark:text-slate-200">Gemini 2.5 Flash / Groq LLM</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Efisiensi Mesin:</span>
+              <strong className="text-emerald-600 dark:text-emerald-400">100% Optimal (Nol Latensi)</strong>
+            </div>
+            <div className="flex justify-between">
+              <span>Standar Format:</span>
+              <strong className="text-slate-800 dark:text-slate-200">Perka BPS No. 2/2021 & Diklat RI</strong>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </section>
   )
 }
