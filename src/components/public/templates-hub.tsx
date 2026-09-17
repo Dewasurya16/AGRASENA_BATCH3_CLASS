@@ -41,6 +41,63 @@ export interface DocumentTemplate {
 
 export const TEMPLATES_DATA: DocumentTemplate[] = [
   {
+    id: "sprint-admin-agrasena",
+    title: "Surat Perintah (Sprint) Penunjukan Administrator Portal Kelas Agrasena",
+    category: "Administrasi & SPT",
+    format: "PDF (S1 1 Lembar)",
+    description: "Surat Perintah Tugas resmi penunjukan 3 aparatur Pranata Komputer Ahli Pertama (Kejari Palu, Kejari Bangka Selatan, dan Kejari Lampung Timur) sebagai Administrator Resmi Portal Kelas Virtual Agrasena Kejaksaan RI.",
+    legalReference: "Pedoman Tata Naskah Dinas Kejaksaan RI & PermenPAN-RB No. 32 Tahun 2020",
+    tags: ["Surat Perintah Sah", "Admin Kelas", "Format S1 PDF", "Tata Naskah Kejaksaan"],
+    contentDoc: `KEJAKSAAN REPUBLIK INDONESIA
+BADAN PENDIDIKAN DAN PELATIHAN
+KOMUNITAS BELAJAR PRANATA KOMPUTER KEAHLIAN "AGRASENA"
+Jl. Pusdiklat Kejaksaan RI No. 1, Ragunan, Pasar Minggu, Jakarta Selatan
+
+SURAT PERINTAH TUGAS
+NOMOR: PRINT-001/L.1/Prakom.Agrasena/Admin/09/2026
+
+DASAR:
+1. Undang-Undang Nomor 11 Tahun 2021 tentang Perubahan atas Undang-Undang Nomor 16 Tahun 2004 tentang Kejaksaan Republik Indonesia;
+2. Peraturan Presiden Republik Indonesia Nomor 95 Tahun 2018 tentang Sistem Pemerintahan Berbasis Elektronik (SPBE);
+3. Peraturan Menteri Pendayagunaan Aparatur Negara dan Reformasi Birokrasi Nomor 32 Tahun 2020 tentang Jabatan Fungsional Pranata Komputer;
+4. Program Penyelenggaraan Pelatihan Fungsional Pranata Komputer Keahlian Agrasena (Batch 3 & Batch 4) Kejaksaan RI Tahun Anggaran 2026;
+5. Kebutuhan operasional tata kelola portal kelas virtual, monitoring perkuliahan Zoom, moderasi forum diskusi, dan pengarsipan modul kurikulum 120 JP.
+
+MEMERINTAHKAN:
+
+Kepada:
+1. Nama         : RISKY ANDINI, S.Kom.
+   Jabatan      : Pranata Komputer Ahli Pertama
+   Satuan Kerja : Kejaksaan Negeri Palu
+   Penugasan    : Administrator Sesi Kelas Virtual & Presensi Pembelajaran (Admin 1)
+
+2. Nama         : FEGGY RIPANI, S.Kom.
+   Jabatan      : Pranata Komputer Ahli Pertama
+   Satuan Kerja : Kejaksaan Negeri Bangka Selatan
+   Penugasan    : Administrator Teknis Zoom & Moderasi Forum Diskusi (Admin 2)
+
+3. Nama         : KURNIA RAMADANI, S.Kom.
+   Jabatan      : Pranata Komputer Ahli Pertama
+   Satuan Kerja : Kejaksaan Negeri Lampung Timur
+   Penugasan    : Administrator Pustaka Modul 120 JP & Rekapitulasi Tugas (Admin 3)
+
+Untuk:
+1. Menjadi Administrator Resmi Portal Kelas Virtual Diklat Fungsional Pranata Komputer Keahlian Agrasena (Batch 3 & Batch 4) Kejaksaan Republik Indonesia;
+2. Mengelola kelancaran operasional kelas virtual, mendampingi peserta diklat, serta mengawasi ketertiban tata tertib perkuliahan daring;
+3. Mendokumentasikan dan menyinkronkan bahan ajar modul 120 JP, serta memfasilitasi komunikasi teknis antara widyaiswara/pengampu materi dengan peserta diklat;
+4. Melaksanakan tugas kedinasan ini dengan sebaik-baiknya, menjunjung tinggi nilai-nilai Trapsila Adhyaksa, berintegritas, cermat, dan penuh rasa tanggung jawab;
+5. Melaporkan pelaksanaan penugasan secara berkala kepada Super Admin dan Tim Penyelenggara Diklat Kejaksaan RI.
+
+Ditetapkan di : Jakarta
+Pada tanggal   : 17 September 2026
+
+SUPER ADMIN PORTAL KELAS DIKLAT
+PRANATA KOMPUTER KEAHLIAN AGRASENA
+KEJAKSAAN REPUBLIK INDONESIA
+
+( SUPER ADMIN )`
+  },
+  {
     id: "spt-ti",
     title: "Surat Perintah Tugas (SPT) Pemeliharaan & Troubleshooting TIK Satker",
     category: "Administrasi & SPT",
@@ -514,6 +571,17 @@ export function TemplatesHub() {
 
   // Download template as clean Word document (.doc) or direct uploaded file
   const handleDownload = (template: DocumentTemplate) => {
+    if (template.id === "sprint-admin-agrasena") {
+      const a = document.createElement("a")
+      a.href = "/documents/SURAT_PERINTAH_PENUNJUKAN_ADMIN_AGRASENA_2026.pdf"
+      a.target = "_blank"
+      a.download = "SURAT_PERINTAH_PENUNJUKAN_ADMIN_AGRASENA_2026.pdf"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     if (template.file_url) {
       const a = document.createElement("a")
       a.href = template.file_url
@@ -784,14 +852,25 @@ export function TemplatesHub() {
               <span className="text-xs text-slate-400 font-mono">
                 Format resmi BPS & Kejaksaan RI — Siap diedit di {previewTemplate.format}
               </span>
-              <button
-                type="button"
-                onClick={() => handleDownload(previewTemplate)}
-                className="flex items-center gap-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white px-4 py-2 rounded-[8px] text-xs font-black shadow-xs transition cursor-pointer w-full sm:w-auto justify-center"
-              >
-                <Download className="h-3.5 w-3.5" />
-                <span>Unduh File ({previewTemplate.format})</span>
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {previewTemplate.id === "sprint-admin-agrasena" && (
+                  <a
+                    href="/surat-perintah-admin"
+                    className="flex items-center justify-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 px-3.5 py-2 rounded-[8px] text-xs font-bold border border-indigo-200 dark:border-indigo-800 transition cursor-pointer w-full sm:w-auto"
+                  >
+                    <span>Preview & Cetak S1</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleDownload(previewTemplate)}
+                  className="flex items-center gap-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 text-white px-4 py-2 rounded-[8px] text-xs font-black shadow-xs transition cursor-pointer w-full sm:w-auto justify-center"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Unduh File ({previewTemplate.format})</span>
+                </button>
+              </div>
             </div>
           </div>
         </Modal>

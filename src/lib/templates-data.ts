@@ -16,6 +16,15 @@ export interface DocumentTemplate {
 
 export const TEMPLATES_DATA: DocumentTemplate[] = [
   {
+    id: "sprint-admin-agrasena",
+    title: "Surat Perintah (Sprint) Penunjukan Administrator Portal Kelas Agrasena",
+    category: "Administrasi & SPT",
+    format: "PDF (S1 1 Lembar)",
+    description: "Surat Perintah Tugas resmi penunjukan 3 aparatur Pranata Komputer Ahli Pertama (Kejari Palu, Kejari Bangka Selatan, dan Kejari Lampung Timur) sebagai Administrator Resmi Portal Kelas Virtual Agrasena Kejaksaan RI.",
+    legalReference: "Pedoman Tata Naskah Dinas Kejaksaan RI & PermenPAN-RB No. 32 Tahun 2020",
+    tags: ["Surat Perintah Sah", "Admin Kelas", "Format S1 PDF", "Tata Naskah Kejaksaan"],
+  },
+  {
     id: "spt-ti",
     title: "Surat Perintah Tugas (SPT) Pemeliharaan & Troubleshooting TIK Satker",
     category: "Administrasi & SPT",
