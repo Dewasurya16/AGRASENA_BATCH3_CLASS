@@ -90,6 +90,12 @@ import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
 import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
+import { MultiBatchControlHub } from "@/components/admin/multi-batch-control-hub"
+import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
+import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
+import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
+import { BATCH3_ZOOM_CONFIG } from "@/data/batch3/zoom-config"
+import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
 
 interface VisitorLog {
   id: string
@@ -222,6 +228,24 @@ function PaginationControls({
   )
 }
 
+export function getItemBatch(item: any): "batch-3" | "batch-4" {
+  if (!item) return "batch-3"
+  if (item.batch === 4 || item.batch === "batch-4") return "batch-4"
+  if (item.batch === 3 || item.batch === "batch-3") return "batch-3"
+  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""}`.toLowerCase()
+  if (
+    text.includes("batch 4") ||
+    text.includes("batch-4") ||
+    text.includes("b4-") ||
+    text.includes("angkatan 06") ||
+    text.includes("84420264444") ||
+    text.includes("prakom-batch4")
+  ) {
+    return "batch-4"
+  }
+  return "batch-3"
+}
+
 export function AdminDashboardClient({
   initialMaterials,
   initialSchedules,
@@ -259,6 +283,12 @@ export function AdminDashboardClient({
     }
     return false
   }, [])
+
+  // Multi-Batch Control State
+  const [selectedBatch, setSelectedBatch] = React.useState<"all" | "batch-3" | "batch-4">("all")
+  const [createScheduleBatch, setCreateScheduleBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
+  const [createTaskBatch, setCreateTaskBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
+  const [uploadMaterialBatch, setUploadMaterialBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
 
   // Audit Log State for Super Admin
   const [auditSearch, setAuditSearch] = React.useState("")
@@ -1044,10 +1074,44 @@ export function AdminDashboardClient({
     }
   }, [initialVisitorLogs])
 
+  // --- COMBINED MULTI-BATCH DATASETS ---
+  const allCombinedSchedules = React.useMemo(() => {
+    const dbHasB4 = initialSchedules.some((s) => getItemBatch(s) === "batch-4")
+    if (dbHasB4) return initialSchedules
+    return [...initialSchedules, ...DEFAULT_BATCH4_SCHEDULES]
+  }, [initialSchedules])
+
+  const allCombinedMaterials = React.useMemo(() => {
+    const dbHasB4 = initialMaterials.some((m) => getItemBatch(m) === "batch-4")
+    if (dbHasB4) return initialMaterials
+    return [...initialMaterials, ...DEFAULT_BATCH4_MATERIALS]
+  }, [initialMaterials])
+
+  const allCombinedTasks = React.useMemo(() => {
+    const dbHasB4 = initialTasks.some((t) => getItemBatch(t) === "batch-4")
+    if (dbHasB4) return initialTasks
+    return [...initialTasks, ...DEFAULT_BATCH4_TASKS]
+  }, [initialTasks])
+
+  // Multi-Batch Item Counts
+  const b3SchedulesCount = React.useMemo(() => allCombinedSchedules.filter((s) => getItemBatch(s) === "batch-3").length, [allCombinedSchedules])
+  const b4SchedulesCount = React.useMemo(() => allCombinedSchedules.filter((s) => getItemBatch(s) === "batch-4").length, [allCombinedSchedules])
+
+  const b3MaterialsCount = React.useMemo(() => allCombinedMaterials.filter((m) => getItemBatch(m) === "batch-3").length, [allCombinedMaterials])
+  const b4MaterialsCount = React.useMemo(() => allCombinedMaterials.filter((m) => getItemBatch(m) === "batch-4").length, [allCombinedMaterials])
+
+  const b3TasksCount = React.useMemo(() => allCombinedTasks.filter((t) => getItemBatch(t) === "batch-3").length, [allCombinedTasks])
+  const b4TasksCount = React.useMemo(() => allCombinedTasks.filter((t) => getItemBatch(t) === "batch-4").length, [allCombinedTasks])
+
   const completedTasksCount = React.useMemo(() => {
-    return initialTasks.filter((t) => isTaskEffectivelyCompleted(t)).length
-  }, [initialTasks, isTaskEffectivelyCompleted])
-  const totalMaterialSizeMB = initialMaterials.reduce((acc, m) => acc + (m.file_size || 0), 0) / (1024 * 1024)
+    const targetTasks = selectedBatch === "all" ? allCombinedTasks : allCombinedTasks.filter((t) => getItemBatch(t) === selectedBatch)
+    return targetTasks.filter((t) => isTaskEffectivelyCompleted(t)).length
+  }, [allCombinedTasks, selectedBatch, isTaskEffectivelyCompleted])
+
+  const totalMaterialSizeMB = React.useMemo(() => {
+    const targetMaterials = selectedBatch === "all" ? allCombinedMaterials : allCombinedMaterials.filter((m) => getItemBatch(m) === selectedBatch)
+    return targetMaterials.reduce((acc, m) => acc + (m.file_size || 0), 0) / (1024 * 1024)
+  }, [allCombinedMaterials, selectedBatch])
 
   // --- FILTERED & PAGINATED DATA LISTS (5 PER PAGE) ---
   const filteredVisitorLogs = React.useMemo(() => {
@@ -1074,7 +1138,6 @@ export function AdminDashboardClient({
     })
   }, [initialVisitorLogs, visitorSearch, visitorDeviceFilter])
 
-
   const totalVisitorPages = Math.ceil(filteredVisitorLogs.length / ITEMS_PER_PAGE) || 1
   const paginatedVisitorLogs = React.useMemo(() => {
     const start = (visitorPage - 1) * ITEMS_PER_PAGE
@@ -1082,7 +1145,8 @@ export function AdminDashboardClient({
   }, [filteredVisitorLogs, visitorPage])
 
   const filteredMaterials = React.useMemo(() => {
-    return initialMaterials.filter((m) => {
+    return allCombinedMaterials.filter((m) => {
+      const matchesBatch = selectedBatch === "all" || getItemBatch(m) === selectedBatch
       const matchesSearch =
         materialSearch === "" ||
         (m.title || "").toLowerCase().includes(materialSearch.toLowerCase()) ||
@@ -1091,9 +1155,9 @@ export function AdminDashboardClient({
       const matchesTahap =
         materialTahapFilter === "all" ||
         (m.subject_name || "").toLowerCase().includes(materialTahapFilter.toLowerCase())
-      return matchesSearch && matchesTahap
+      return matchesBatch && matchesSearch && matchesTahap
     })
-  }, [initialMaterials, materialSearch, materialTahapFilter])
+  }, [allCombinedMaterials, selectedBatch, materialSearch, materialTahapFilter])
 
   const totalMaterialPages = Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE) || 1
   const paginatedMaterials = React.useMemo(() => {
@@ -1102,16 +1166,17 @@ export function AdminDashboardClient({
   }, [filteredMaterials, materialPage])
 
   const filteredSchedules = React.useMemo(() => {
-    return initialSchedules.filter((s) => {
-      return (
+    return allCombinedSchedules.filter((s) => {
+      const matchesBatch = selectedBatch === "all" || getItemBatch(s) === selectedBatch
+      const matchesSearch =
         scheduleSearch === "" ||
         (s.subject_name || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
         (s.lecturer || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
         (s.day || "").toLowerCase().includes(scheduleSearch.toLowerCase()) ||
         (s.room || "").toLowerCase().includes(scheduleSearch.toLowerCase())
-      )
+      return matchesBatch && matchesSearch
     })
-  }, [initialSchedules, scheduleSearch])
+  }, [allCombinedSchedules, selectedBatch, scheduleSearch])
 
   const totalSchedulePages = Math.ceil(filteredSchedules.length / ITEMS_PER_PAGE) || 1
   const paginatedSchedules = React.useMemo(() => {
@@ -1120,13 +1185,14 @@ export function AdminDashboardClient({
   }, [filteredSchedules, schedulePage])
 
   const filteredTasks = React.useMemo(() => {
-    return initialTasks.filter((t) => {
+    return allCombinedTasks.filter((t) => {
+      const matchesBatch = selectedBatch === "all" || getItemBatch(t) === selectedBatch
       const isCompleted = isTaskEffectivelyCompleted(t)
-      if (taskFilter === "completed") return isCompleted
-      if (taskFilter === "pending") return !isCompleted
-      return true
+      if (taskFilter === "completed") return matchesBatch && isCompleted
+      if (taskFilter === "pending") return matchesBatch && !isCompleted
+      return matchesBatch
     })
-  }, [initialTasks, taskFilter, isTaskEffectivelyCompleted])
+  }, [allCombinedTasks, selectedBatch, taskFilter, isTaskEffectivelyCompleted])
 
   const totalTaskPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE) || 1
   const paginatedTasks = React.useMemo(() => {
@@ -1481,14 +1547,21 @@ export function AdminDashboardClient({
 
     const formElement = e.currentTarget
     const formData = new FormData(formElement)
-    const title = (formData.get("title") as string)?.trim()
-    const subject_name = (formData.get("subject_name") as string)?.trim()
+    let title = (formData.get("title") as string)?.trim()
+    let subject_name = (formData.get("subject_name") as string)?.trim()
+    const batchSelection = (formData.get("batch_selection") as string) || uploadMaterialBatch
     const week_number = Number(formData.get("week_number")) || 1
     const description = (formData.get("description") as string)?.trim()
 
     if (!title || !subject_name) {
       setUploadModalError("Judul modul dan tahapan diklat wajib diisi.")
       return
+    }
+
+    if (batchSelection === "batch-4") {
+      if (!title.toLowerCase().includes("batch 4") && !subject_name.toLowerCase().includes("batch 4")) {
+        subject_name = `${subject_name} (Batch 4)`
+      }
     }
 
     setIsLoading(true)
@@ -1703,6 +1776,13 @@ export function AdminDashboardClient({
     setIsLoading(true)
     try {
       const formData = new FormData(e.currentTarget)
+      const batchSelection = (formData.get("batch_selection") as string) || createScheduleBatch
+      if (batchSelection === "batch-4") {
+        const sub = (formData.get("subject_name") as string) || ""
+        if (!sub.toLowerCase().includes("batch 4")) {
+          formData.set("subject_name", `[Batch 4] ${sub}`)
+        }
+      }
       const res = await createSchedule(formData)
 
       if (res?.error) {
@@ -1769,6 +1849,13 @@ export function AdminDashboardClient({
     setIsLoading(true)
     try {
       const formData = new FormData(e.currentTarget)
+      const batchSelection = (formData.get("batch_selection") as string) || createTaskBatch
+      if (batchSelection === "batch-4") {
+        const currentTitle = (formData.get("title") as string) || ""
+        if (!currentTitle.toLowerCase().includes("batch 4")) {
+          formData.set("title", `[Batch 4] ${currentTitle}`)
+        }
+      }
       const res = await createTask(formData)
 
       if (res?.error) {
@@ -2209,9 +2296,48 @@ export function AdminDashboardClient({
                 </h2>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-                Portal Manajemen Diklat Prakom Kejaksaan RI Batch 3
+                Portal Manajemen Diklat Prakom Kejaksaan RI (Batch 3 & Batch 4)
               </p>
             </div>
+          </div>
+
+          {/* Center: Multi-Batch Switcher Segmented Control */}
+          <div className="hidden md:flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-[#141b27] p-1 border border-slate-200 dark:border-[#2A3550]">
+            <button
+              type="button"
+              onClick={() => setSelectedBatch("all")}
+              className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                selectedBatch === "all"
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              Semua Angkatan
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBatch("batch-3")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                selectedBatch === "batch-3"
+                  ? "bg-[#007aff] text-white shadow-2xs"
+                  : "text-slate-500 hover:text-[#007aff]"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+              <span>Agrasena 3</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedBatch("batch-4")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                selectedBatch === "batch-4"
+                  ? "bg-indigo-600 text-white shadow-2xs"
+                  : "text-slate-500 hover:text-indigo-400"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+              <span>Agrasena 4</span>
+            </button>
           </div>
 
           {/* Top Actions */}
@@ -2219,19 +2345,38 @@ export function AdminDashboardClient({
             <button
               onClick={handleManualRefresh}
               disabled={isRefreshing}
-              className="flex items-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-[#2A3550]"
+              className="flex items-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer border border-slate-200/60 dark:border-[#2A3550]"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-indigo-500 ${isRefreshing ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">Sinkron Data</span>
             </button>
 
-            <Link href="/" target="_blank">
-              <button className="flex items-center gap-1.5 rounded-[8px] bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 px-3.5 py-1.5 text-xs font-black text-white transition shadow-2xs cursor-pointer">
-                <Globe className="h-3.5 w-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Web Publik</span>
-                <ExternalLink className="h-3 w-3 opacity-70" />
-              </button>
-            </Link>
+            {/* Quick Web View Buttons */}
+            <div className="flex items-center gap-1">
+              <Link href="/" target="_blank">
+                <button
+                  type="button"
+                  title="Buka Web Publik Agrasena Batch 3"
+                  className="flex items-center gap-1 rounded-[8px] bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-2.5 py-1.5 text-xs font-bold transition cursor-pointer"
+                >
+                  <Globe className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+                  <span className="hidden sm:inline">Web B3</span>
+                  <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                </button>
+              </Link>
+
+              <Link href="/batch-4" target="_blank">
+                <button
+                  type="button"
+                  title="Buka Web Publik Agrasena Batch 4"
+                  className="flex items-center gap-1 rounded-[8px] bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1.5 text-xs font-bold transition cursor-pointer"
+                >
+                  <Sparkles className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+                  <span className="hidden sm:inline">Web B4</span>
+                  <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                </button>
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -2348,7 +2493,9 @@ export function AdminDashboardClient({
                     <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{initialMaterials.length}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+                      {selectedBatch === "all" ? allCombinedMaterials.length : (selectedBatch === "batch-4" ? b4MaterialsCount : b3MaterialsCount)}
+                    </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
                       {totalMaterialSizeMB.toFixed(1)} MB di Storage
                     </div>
@@ -2369,9 +2516,11 @@ export function AdminDashboardClient({
                     <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-400 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{initialSchedules.length}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+                      {selectedBatch === "all" ? allCombinedSchedules.length : (selectedBatch === "batch-4" ? b4SchedulesCount : b3SchedulesCount)}
+                    </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
-                      Total 35 Hari Sesi
+                      {selectedBatch === "batch-4" ? "35 Hari Batch 4" : selectedBatch === "batch-3" ? "35 Hari Batch 3" : "Total Seluruh Sesi"}
                     </div>
                   </div>
                   <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-[11px] font-bold text-sky-600 dark:text-sky-400">
@@ -2390,9 +2539,11 @@ export function AdminDashboardClient({
                     <BookOpen className="h-4 w-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{initialTasks.length}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+                      {selectedBatch === "all" ? allCombinedTasks.length : (selectedBatch === "batch-4" ? b4TasksCount : b3TasksCount)}
+                    </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
-                      {completedTasksCount} Selesai • {initialTasks.length - completedTasksCount} Pending
+                      {completedTasksCount} Selesai • {(selectedBatch === "all" ? allCombinedTasks.length : (selectedBatch === "batch-4" ? b4TasksCount : b3TasksCount)) - completedTasksCount} Pending
                     </div>
                   </div>
                   <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-[11px] font-bold text-amber-600 dark:text-amber-400">
@@ -2422,6 +2573,19 @@ export function AdminDashboardClient({
                   </div>
                 </div>
               </div>
+
+              {/* Multi-Batch Control Hub: Zoom Links & Batch Separation */}
+              <MultiBatchControlHub
+                batch3SchedulesCount={b3SchedulesCount}
+                batch3MaterialsCount={b3MaterialsCount}
+                batch3TasksCount={b3TasksCount}
+                batch4SchedulesCount={b4SchedulesCount}
+                batch4MaterialsCount={b4MaterialsCount}
+                batch4TasksCount={b4TasksCount}
+                selectedBatch={selectedBatch}
+                onSelectBatch={setSelectedBatch}
+                onFeedback={showFeedback}
+              />
 
               {/* Extended Row for Discussions, Templates, Exam Prep, AI Generator */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -3632,39 +3796,81 @@ export function AdminDashboardClient({
                 </button>
               </div>
 
-              {/* Search & Tahap Filter */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={materialSearch}
-                    onChange={(e) => setMaterialSearch(e.target.value)}
-                    placeholder="Cari judul modul atau mata kuliah..."
-                    className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
-                  />
-                </div>
-
-                <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                  {[
-                    { id: "all", label: "Semua Tahap" },
-                    { id: "Tahap 1", label: "Tahap 1 MOOC" },
-                    { id: "Tahap 2", label: "Tahap 2 TMO" },
-                    { id: "Tahap 3", label: "Tahap 3 Lab" },
-                    { id: "Tahap 4", label: "Tahap 4 Seminar" },
-                  ].map((filter) => (
+              {/* Filter Batch & Search & Tahap Filter */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#1A2234] border border-slate-200 dark:border-[#2A3550]">
                     <button
-                      key={filter.id}
-                      onClick={() => setMaterialTahapFilter(filter.id)}
-                      className={`whitespace-nowrap rounded-[8px] px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                        materialTahapFilter === filter.id
-                          ? "bg-slate-900 dark:bg-indigo-600 text-white"
-                          : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
+                      type="button"
+                      onClick={() => { setSelectedBatch("all"); setMaterialPage(1); }}
+                      className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "all"
+                          ? "bg-white dark:bg-[#253045] text-slate-900 dark:text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
-                      {filter.label}
+                      Semua Angkatan ({allCombinedMaterials.length})
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-3"); setMaterialPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-3"
+                          ? "bg-sky-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-sky-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+                      <span>Agrasena 3 ({b3MaterialsCount})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-4"); setMaterialPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-4"
+                          ? "bg-indigo-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-indigo-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+                      <span>Agrasena 4 ({b4MaterialsCount})</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="relative flex-1 w-full">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={materialSearch}
+                      onChange={(e) => { setMaterialSearch(e.target.value); setMaterialPage(1); }}
+                      placeholder="Cari judul modul atau mata kuliah..."
+                      className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                      { id: "all", label: "Semua Tahap" },
+                      { id: "Tahap 1", label: "Tahap 1 MOOC" },
+                      { id: "Tahap 2", label: "Tahap 2 TMO" },
+                      { id: "Tahap 3", label: "Tahap 3 Lab" },
+                      { id: "Tahap 4", label: "Tahap 4 Seminar" },
+                    ].map((filter) => (
+                      <button
+                        key={filter.id}
+                        onClick={() => { setMaterialTahapFilter(filter.id); setMaterialPage(1); }}
+                        className={`whitespace-nowrap rounded-[8px] px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                          materialTahapFilter === filter.id
+                            ? "bg-slate-900 dark:bg-indigo-600 text-white"
+                            : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -3687,23 +3893,36 @@ export function AdminDashboardClient({
                 <div className="rounded-[10px] border border-slate-200 dark:border-[#2A3550] p-6 text-center space-y-2">
                   <Search className="h-6 w-6 text-slate-400 mx-auto" />
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Tidak ditemukan modul yang sesuai dengan pencarian Anda.
+                    Tidak ditemukan modul yang sesuai dengan pencarian atau filter angkatan Anda.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {/* Responsive Grid View */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                    {paginatedMaterials.map((m) => (
+                    {paginatedMaterials.map((m) => {
+                      const isBatch4 = getItemBatch(m) === "batch-4"
+                      return (
                       <div
                         key={m.id}
                         className="flex flex-col justify-between rounded-[12px] bg-slate-50/80 dark:bg-[#161B26] p-4 border border-slate-200/90 dark:border-[#2A3550] gap-3 hover:bg-white dark:hover:bg-[#1A2234] hover:shadow-xs transition"
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/70 dark:border-indigo-800/50 px-2 py-0.5 text-[10px] font-black text-indigo-700 dark:text-indigo-300">
-                              {m.subject_name || "Materi Diklat"}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/70 dark:border-indigo-800/50 px-2 py-0.5 text-[10px] font-black text-indigo-700 dark:text-indigo-300">
+                                {m.subject_name || "Materi Diklat"}
+                              </span>
+                              {isBatch4 ? (
+                                <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700 px-2 py-0.5 text-[9px] font-black text-purple-700 dark:text-purple-300">
+                                  Agrasena 4
+                                </span>
+                              ) : (
+                                <span className="rounded-full bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-700 px-2 py-0.5 text-[9px] font-black text-sky-700 dark:text-sky-300">
+                                  Agrasena 3
+                                </span>
+                              )}
+                            </div>
                             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                               Minggu {m.week_number} • {m.file_size ? `${(m.file_size / 1024 / 1024).toFixed(1)} MB` : "PDF"}
                             </span>
@@ -3752,7 +3971,7 @@ export function AdminDashboardClient({
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
 
                   {/* Pagination Controls */}
@@ -3788,16 +4007,58 @@ export function AdminDashboardClient({
                 </button>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={scheduleSearch}
-                  onChange={(e) => setScheduleSearch(e.target.value)}
-                  placeholder="Cari topik jadwal, tahap diklat, pengampu, hari, atau ruang..."
-                  className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
-                />
+              {/* Filter Batch & Search Bar */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#1A2234] border border-slate-200 dark:border-[#2A3550]">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("all"); setSchedulePage(1); }}
+                      className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "all"
+                          ? "bg-white dark:bg-[#253045] text-slate-900 dark:text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Semua Angkatan ({allCombinedSchedules.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-3"); setSchedulePage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-3"
+                          ? "bg-sky-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-sky-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+                      <span>Agrasena 3 ({b3SchedulesCount})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-4"); setSchedulePage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-4"
+                          ? "bg-indigo-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-indigo-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+                      <span>Agrasena 4 ({b4SchedulesCount})</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative w-full">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={scheduleSearch}
+                    onChange={(e) => { setScheduleSearch(e.target.value); setSchedulePage(1); }}
+                    placeholder="Cari topik jadwal, tahap diklat, pengampu, hari, atau ruang..."
+                    className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-slate-50/70 dark:bg-[#161B26] pl-9 pr-3.5 text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white dark:focus:bg-[#1B2130] focus:outline-none transition"
+                  />
+                </div>
               </div>
 
               {initialSchedules.length === 0 ? (
@@ -3822,6 +4083,7 @@ export function AdminDashboardClient({
                     {paginatedSchedules.map((s) => {
                       const resolvedDayNum = getScheduleDayNumber(s)
                       const displayDayTag = resolvedDayNum ? `Hari ${resolvedDayNum}` : s.day
+                      const isBatch4 = getItemBatch(s) === "batch-4"
 
                       return (
                         <div
@@ -3830,9 +4092,20 @@ export function AdminDashboardClient({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="rounded-[4px] bg-slate-900 dark:bg-indigo-600 px-2 py-0.5 text-[10px] font-black text-white">
-                                {displayDayTag}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="rounded-[4px] bg-slate-900 dark:bg-indigo-600 px-2 py-0.5 text-[10px] font-black text-white">
+                                  {displayDayTag}
+                                </span>
+                                {isBatch4 ? (
+                                  <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700 px-2 py-0.5 text-[9px] font-black text-purple-700 dark:text-purple-300">
+                                    Agrasena 4
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-700 px-2 py-0.5 text-[9px] font-black text-sky-700 dark:text-sky-300">
+                                    Agrasena 3
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                                 {s.start_time} - {s.end_time} WIB
                               </span>
@@ -3903,25 +4176,67 @@ export function AdminDashboardClient({
                 </button>
               </div>
 
-              {/* Status Filter */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {[
-                  { id: "all", label: "Semua Tugas" },
-                  { id: "pending", label: "⏳ Belum Selesai (Pending)" },
-                  { id: "completed", label: "✅ Sudah Selesai" },
-                ].map((filter) => (
-                  <button
-                    key={filter.id}
-                    onClick={() => setTaskFilter(filter.id as any)}
-                    className={`rounded-[8px] px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
-                      taskFilter === filter.id
-                        ? "bg-slate-900 dark:bg-indigo-600 text-white"
-                        : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
+              {/* Status & Batch Filter */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-[#1A2234] border border-slate-200 dark:border-[#2A3550]">
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("all"); setTaskPage(1); }}
+                      className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "all"
+                          ? "bg-white dark:bg-[#253045] text-slate-900 dark:text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Semua Angkatan ({allCombinedTasks.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-3"); setTaskPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-3"
+                          ? "bg-sky-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-sky-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+                      <span>Agrasena 3 ({b3TasksCount})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedBatch("batch-4"); setTaskPage(1); }}
+                      className={`flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
+                        selectedBatch === "batch-4"
+                          ? "bg-indigo-600 text-white shadow-2xs"
+                          : "text-slate-600 dark:text-slate-400 hover:text-indigo-600"
+                      }`}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+                      <span>Agrasena 4 ({b4TasksCount})</span>
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {[
+                      { id: "all", label: "Semua Status" },
+                      { id: "pending", label: "⏳ Belum Selesai" },
+                      { id: "completed", label: "✅ Sudah Selesai" },
+                    ].map((filter) => (
+                      <button
+                        key={filter.id}
+                        onClick={() => { setTaskFilter(filter.id as any); setTaskPage(1); }}
+                        className={`rounded-[8px] px-3 py-1.5 text-xs font-bold transition cursor-pointer ${
+                          taskFilter === filter.id
+                            ? "bg-slate-900 dark:bg-indigo-600 text-white"
+                            : "bg-slate-100 dark:bg-[#253045] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-[#2D3A52]"
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {initialTasks.length === 0 ? (
@@ -3948,6 +4263,7 @@ export function AdminDashboardClient({
                       const isAutoCompleted = isCompleted && t.status !== "completed"
                       const isStatusLoading = Boolean(actionLoadingMap[`task-status-${t.id}`])
                       const isDeleteLoading = Boolean(actionLoadingMap[`task-delete-${t.id}`])
+                      const isBatch4 = getItemBatch(t) === "batch-4"
 
                       return (
                         <div
@@ -3956,15 +4272,26 @@ export function AdminDashboardClient({
                         >
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between gap-2">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
-                                  isCompleted
-                                    ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
-                                    : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                                }`}
-                              >
-                                {isCompleted ? (isAutoCompleted ? "Selesai (Deadline Lewat)" : "Selesai") : "Pending"}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                                    isCompleted
+                                      ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
+                                      : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                                  }`}
+                                >
+                                  {isCompleted ? (isAutoCompleted ? "Selesai (Deadline Lewat)" : "Selesai") : "Pending"}
+                                </span>
+                                {isBatch4 ? (
+                                  <span className="rounded-full bg-purple-100 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700 px-2 py-0.5 text-[9px] font-black text-purple-700 dark:text-purple-300">
+                                    Agrasena 4
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-sky-100 dark:bg-sky-950/60 border border-sky-300 dark:border-sky-700 px-2 py-0.5 text-[9px] font-black text-sky-700 dark:text-sky-300">
+                                    Agrasena 3
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                                 Deadline: {new Date(t.due_date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", year: "numeric" })}
                               </span>
@@ -4857,6 +5184,24 @@ export function AdminDashboardClient({
             )}
           </div>
 
+          <div className="space-y-1.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3 border border-slate-200 dark:border-[#2A3550]">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Target Angkatan Modul *</label>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${uploadMaterialBatch === "batch-4" ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"}`}>
+                {uploadMaterialBatch === "batch-4" ? "Halaman /batch-4/materials" : "Halaman /materials"}
+              </span>
+            </div>
+            <select
+              name="batch_selection"
+              value={uploadMaterialBatch}
+              onChange={(e) => setUploadMaterialBatch(e.target.value as any)}
+              className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1C2433] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="batch-3">Agrasena Batch 3 (Web Utama)</option>
+              <option value="batch-4">Agrasena Batch 4 (Web Batch 4)</option>
+            </select>
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-900 dark:text-slate-100">Judul Modul / Materi *</label>
             <Input
@@ -4966,6 +5311,25 @@ export function AdminDashboardClient({
         title="Tambah Sesi Jadwal Perkuliahan 35 Hari"
       >
         <form onSubmit={handleCreateScheduleSubmit} className="space-y-4 pt-2">
+          {/* Batch Selector */}
+          <div className="space-y-1.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3 border border-slate-200 dark:border-[#2A3550]">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Pilih Angkatan (Batch Diklat) *</label>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${createScheduleBatch === "batch-4" ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"}`}>
+                {createScheduleBatch === "batch-4" ? "Zoom ID: 844 2026 4444" : "Zoom ID: 833 2026 3333"}
+              </span>
+            </div>
+            <select
+              name="batch_selection"
+              value={createScheduleBatch}
+              onChange={(e) => setCreateScheduleBatch(e.target.value as any)}
+              className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1C2433] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="batch-3">Agrasena Batch 3 (Sesi Utama)</option>
+              <option value="batch-4">Agrasena Batch 4 (Angkatan Baru)</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-black text-slate-900 dark:text-slate-100">Pilih Hari / Sesi *</label>
@@ -5068,6 +5432,25 @@ export function AdminDashboardClient({
         title="Buat Tugas Mandiri & Uji Praktek"
       >
         <form onSubmit={handleCreateTaskSubmit} className="space-y-4 pt-2">
+          {/* Batch Selector */}
+          <div className="space-y-1.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3 border border-slate-200 dark:border-[#2A3550]">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Target Angkatan Penugasan *</label>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${createTaskBatch === "batch-4" ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"}`}>
+                {createTaskBatch === "batch-4" ? "Halaman /batch-4/tasks" : "Halaman /tasks"}
+              </span>
+            </div>
+            <select
+              name="batch_selection"
+              value={createTaskBatch}
+              onChange={(e) => setCreateTaskBatch(e.target.value as any)}
+              className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1C2433] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+            >
+              <option value="batch-3">Agrasena Batch 3 (Web Utama)</option>
+              <option value="batch-4">Agrasena Batch 4 (Web Batch 4)</option>
+            </select>
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-900 dark:text-slate-100">Judul Penugasan *</label>
             <Input

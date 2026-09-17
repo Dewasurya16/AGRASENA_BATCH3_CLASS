@@ -328,7 +328,7 @@ export default function Batch4Page() {
             </Link>
 
             {/* Card 3: Tugas */}
-            <Link href="/tasks" className="group block">
+            <Link href="/batch-4/tasks" className="group block">
               <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">

@@ -60,7 +60,7 @@ export function ModernNavbar() {
         { label: "Overview", href: "/batch-4" },
         { label: "Roadmap", href: "/batch-4/schedules" },
         { label: "Materi PDF", href: "/batch-4/materials" },
-        { label: "Tugas", href: "/tasks" },
+        { label: "Tugas", href: "/batch-4/tasks" },
         { label: "Kuis MOOC", href: "/quiz" },
         { label: "Snippet Lab", href: "/snippets" },
       ]
