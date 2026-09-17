@@ -53,14 +53,25 @@ export function ModernNavbar() {
     setMoreDropdownOpen(false)
   }, [pathname])
 
-  const primaryLinks = [
-    { label: "Overview", href: "/" },
-    { label: "Roadmap", href: "/schedules" },
-    { label: "Materi PDF", href: "/materials" },
-    { label: "Tugas", href: "/tasks" },
-    { label: "Kuis MOOC", href: "/quiz" },
-    { label: "Snippet Lab", href: "/snippets" },
-  ]
+  const isBatch4 = pathname.startsWith("/batch-4")
+
+  const primaryLinks = isBatch4
+    ? [
+        { label: "Overview", href: "/batch-4" },
+        { label: "Roadmap", href: "/batch-4/schedules" },
+        { label: "Materi PDF", href: "/batch-4/materials" },
+        { label: "Tugas", href: "/tasks" },
+        { label: "Kuis MOOC", href: "/quiz" },
+        { label: "Snippet Lab", href: "/snippets" },
+      ]
+    : [
+        { label: "Overview", href: "/" },
+        { label: "Roadmap", href: "/schedules" },
+        { label: "Materi PDF", href: "/materials" },
+        { label: "Tugas", href: "/tasks" },
+        { label: "Kuis MOOC", href: "/quiz" },
+        { label: "Snippet Lab", href: "/snippets" },
+      ]
 
   const moreLinks = [
     { label: "AI Laporan Lab Prakom", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun laporan laboratorium satker" },
@@ -74,13 +85,15 @@ export function ModernNavbar() {
 
   const isMoreActive = moreLinks.some((l) => pathname.startsWith(l.href))
 
+  const activeAccentColor = isBatch4 ? "bg-indigo-600" : "bg-[#007aff]"
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#e6e6e6] dark:border-white/10 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md transition-colors duration-200 pt-[env(safe-area-inset-top,0px)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-15 items-center justify-between gap-3">
           
           {/* 1. Left Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <Link href={isBatch4 ? "/batch-4" : "/"} className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center transition-transform group-hover:scale-105 shrink-0">
               <img
                 src="/Logo.webp"
@@ -91,10 +104,16 @@ export function ModernNavbar() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-sm sm:text-base font-bold tracking-tight text-[#000000] dark:text-white whitespace-nowrap">
-                  Prakom <span className="text-[#007aff] dark:text-[#60a5fa]">Batch 3</span>
+                  Prakom <span className={isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
+                    {isBatch4 ? "Batch 4" : "Batch 3"}
+                  </span>
                 </span>
-                <span className="hidden xl:inline-flex items-center rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 px-2 py-0.2 text-[9px] font-semibold">
-                  120 JP
+                <span className={`hidden xl:inline-flex items-center rounded-full px-2 py-0.2 text-[9px] font-bold border ${
+                  isBatch4
+                    ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                    : "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                }`}>
+                  {isBatch4 ? "Agrasena 4 • 120 JP" : "Agrasena 3 • 120 JP"}
                 </span>
               </div>
               <span className="text-[10px] text-[#615d59] dark:text-[#94a3b8] font-normal hidden sm:inline-block whitespace-nowrap">
@@ -107,8 +126,8 @@ export function ModernNavbar() {
           <nav className="hidden lg:flex items-center gap-0.5 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] p-1 border border-[#e6e6e6] dark:border-white/10 shrink-0">
             {primaryLinks.map((link) => {
               const isActive =
-                link.href === "/"
-                  ? pathname === "/"
+                link.href === "/" || link.href === "/batch-4"
+                  ? pathname === link.href
                   : pathname.startsWith(link.href)
 
               return (
@@ -124,7 +143,7 @@ export function ModernNavbar() {
                   {isActive && (
                     <motion.div
                       layoutId="activePillNav"
-                      className="absolute inset-0 rounded-full bg-[#007aff] shadow-xs"
+                      className={`absolute inset-0 rounded-full shadow-xs ${activeAccentColor}`}
                       transition={{ type: "spring", stiffness: 600, damping: 38, mass: 0.6 }}
                     />
                   )}
@@ -140,7 +159,7 @@ export function ModernNavbar() {
                 onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
                 className={`relative flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                   isMoreActive
-                    ? "bg-[#007aff] text-white font-semibold shadow-xs"
+                    ? `${activeAccentColor} text-white font-semibold shadow-xs`
                     : moreDropdownOpen
                     ? "bg-white dark:bg-[#141b27] text-[#000000] dark:text-white shadow-2xs"
                     : "text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white hover:bg-white/70 dark:hover:bg-[#141b27]/80"
@@ -207,6 +226,21 @@ export function ModernNavbar() {
               </kbd>
             </button>
 
+            {/* Batch Switcher Badge Button */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('prakom-open-intro'))}
+              title={`Sedang di Agrasena ${isBatch4 ? "Batch 4" : "Batch 3"}. Klik untuk ganti angkatan atau data peserta.`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border transition cursor-pointer active:scale-95 shadow-2xs ${
+                isBatch4
+                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full animate-pulse ${isBatch4 ? "bg-indigo-500" : "bg-emerald-500"}`} />
+              <span>{isBatch4 ? "Batch 4" : "Batch 3"}</span>
+            </button>
+
             {/* Dark Mode Toggle Button */}
             <button
               type="button"
@@ -227,20 +261,40 @@ export function ModernNavbar() {
               <span>Bagikan</span>
             </button>
 
-            {/* LMS Diklat Notion Blue Button */}
+            {/* LMS Diklat Notion Blue / Indigo Button */}
             <a
-              href="https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3"
+              href={
+                isBatch4
+                  ? "https://pengembangan.kejaksaan.go.id/"
+                  : "https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3"
+              }
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white active:scale-[0.98] px-3.5 py-1 text-xs font-semibold transition cursor-pointer shadow-2xs"
+              className={`inline-flex items-center gap-1.5 rounded-full text-white active:scale-[0.98] px-3.5 py-1 text-xs font-semibold transition cursor-pointer shadow-2xs ${
+                isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+              }`}
             >
               <span>LMS Diklat</span>
               <ExternalLink className="h-3 w-3 opacity-90" />
             </a>
           </div>
 
-          {/* Mobile Actions: Search + Dark Mode + Profile + Hamburger */}
+          {/* Mobile Actions: Search + Dark Mode + Profile/Batch + Hamburger */}
           <div className="flex lg:hidden items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('prakom-open-intro'))}
+              title="Ganti Angkatan"
+              className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black border transition cursor-pointer ${
+                isBatch4
+                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${isBatch4 ? "bg-indigo-500" : "bg-emerald-500"}`} />
+              <span>{isBatch4 ? "B4" : "B3"}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
@@ -282,13 +336,18 @@ export function ModernNavbar() {
             className="lg:hidden border-t border-[#e6e6e6] dark:border-white/10 bg-white/95 dark:bg-[#101520]/95 backdrop-blur-xl px-4 py-3.5 shadow-xl space-y-3"
           >
             <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#615d59] dark:text-[#94a3b8] px-3 mb-1">
-                Menu & Modul Diklat
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#615d59] dark:text-[#94a3b8] px-3 mb-1">
+                <span>Menu {isBatch4 ? "Agrasena Batch 4" : "Agrasena Batch 3"}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] ${
+                  isBatch4 ? "bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300" : "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
+                }`}>
+                  {isBatch4 ? "Batch 4 Aktif" : "Batch 3 Aktif"}
+                </span>
               </div>
               {[...primaryLinks, ...moreLinks].map((link) => {
                 const isActive =
-                  link.href === "/"
-                    ? pathname === "/"
+                  link.href === "/" || link.href === "/batch-4"
+                    ? pathname === link.href
                     : pathname.startsWith(link.href)
 
                 return (
@@ -297,7 +356,7 @@ export function ModernNavbar() {
                     href={link.href}
                     className={`flex items-center justify-between rounded-[8px] px-3 py-2 text-xs font-semibold transition-all ${
                       isActive
-                        ? "bg-[#007aff] text-white shadow-xs"
+                        ? `${activeAccentColor} text-white shadow-xs`
                         : "text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] hover:text-[#000000] dark:hover:text-white"
                     }`}
                   >
@@ -312,6 +371,16 @@ export function ModernNavbar() {
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false)
+                  window.dispatchEvent(new CustomEvent('prakom-open-intro'))
+                }}
+                className="flex items-center justify-center gap-2 rounded-[8px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-2.5 text-xs font-semibold text-[#000000] dark:text-white hover:bg-[#e6e6e6] transition cursor-pointer"
+              >
+                <span>Ganti Angkatan / Edit Profil</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false)
                   setIsWAModalOpen(true)
                 }}
                 className="flex items-center justify-center gap-2 rounded-[8px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-2.5 text-xs font-semibold text-[#000000] dark:text-white hover:bg-[#e6e6e6] transition cursor-pointer"
@@ -320,10 +389,16 @@ export function ModernNavbar() {
                 <span>Salin Rekap Harian ke WhatsApp</span>
               </button>
               <a
-                href="https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3"
+                href={
+                  isBatch4
+                    ? "https://pengembangan.kejaksaan.go.id/"
+                    : "https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 rounded-[8px] bg-[#007aff] hover:bg-[#0062cc] p-2.5 text-xs font-semibold text-white shadow-xs transition"
+                className={`flex items-center justify-center gap-1.5 rounded-[8px] p-2.5 text-xs font-semibold text-white shadow-xs transition ${
+                  isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+                }`}
               >
                 <span>Buka Portal LMS Kejaksaan</span>
                 <ExternalLink className="h-3.5 w-3.5" />
