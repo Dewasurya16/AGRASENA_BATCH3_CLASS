@@ -17,10 +17,12 @@ import {
   Check
 } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Modal } from '@/components/ui/modal'
 
 interface LearningProgressWidgetProps {
   totalMaterialsCount?: number
+  isBatch4?: boolean
 }
 
 const CHECKLIST_ITEMS_PREVIEW = [
@@ -36,7 +38,11 @@ const CHECKLIST_ITEMS_PREVIEW = [
   { id: "pdh_lengkap", label: "Seragam PDH & Kelengkapan Atribut", stage: "Tahap 4 • Seminar" },
 ]
 
-export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningProgressWidgetProps) {
+export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: propIsBatch4 }: LearningProgressWidgetProps) {
+  const pathname = usePathname() || ""
+  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : (pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4"))
+  const storagePrefix = isBatch4 ? "prakom_b4_" : "prakom_"
+
   const [mounted, setMounted] = React.useState(false)
   const [dynamicTotalCount, setDynamicTotalCount] = React.useState(totalMaterialsCount)
   const [readMaterialsCount, setReadMaterialsCount] = React.useState(0)
@@ -48,7 +54,8 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
 
   React.useEffect(() => {
     try {
-      const cached = localStorage.getItem("prakom_materials_cache")
+      const cacheKey = isBatch4 ? "prakom_b4_materials_cache" : "prakom_materials_cache"
+      const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const parsed = JSON.parse(cached)
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -56,12 +63,13 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
         }
       }
     } catch {}
-  }, [totalMaterialsCount])
+  }, [totalMaterialsCount, isBatch4])
 
   React.useEffect(() => {
     const handleUpdate = () => {
       try {
-        const cached = localStorage.getItem("prakom_materials_cache")
+        const cacheKey = isBatch4 ? "prakom_b4_materials_cache" : "prakom_materials_cache"
+        const cached = localStorage.getItem(cacheKey)
         if (cached) {
           const parsed = JSON.parse(cached)
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -72,7 +80,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
     }
     window.addEventListener("prakom-materials-updated", handleUpdate)
     return () => window.removeEventListener("prakom-materials-updated", handleUpdate)
-  }, [totalMaterialsCount])
+  }, [totalMaterialsCount, isBatch4])
 
   // Total targets
   const TOTAL_MATERIALS = Math.max(1, dynamicTotalCount)
@@ -82,7 +90,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
   const loadProgress = React.useCallback(() => {
     try {
       // 1. Materials read
-      const savedMaterials = localStorage.getItem('prakom_materials_read')
+      const savedMaterials = localStorage.getItem(`${storagePrefix}materials_read`)
       if (savedMaterials) {
         const parsed = JSON.parse(savedMaterials)
         setReadMaterialsCount(Array.isArray(parsed) ? parsed.length : 0)
@@ -91,14 +99,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
       }
 
       // 2. Quizzes completed (from completed packages or history)
-      const savedPacks = localStorage.getItem('prakom_completed_quiz_packs')
+      const savedPacks = localStorage.getItem(`${storagePrefix}completed_quiz_packs`)
       if (savedPacks) {
         const parsed = JSON.parse(savedPacks)
         if (Array.isArray(parsed)) {
           setCompletedQuizCount(Math.min(5, parsed.length))
         }
       } else {
-        const savedQuiz = localStorage.getItem('prakom_quiz_history') || localStorage.getItem('prakom_quiz_completed')
+        const savedQuiz = localStorage.getItem(`${storagePrefix}quiz_history`) || localStorage.getItem(`${storagePrefix}quiz_completed`)
         if (savedQuiz) {
           const parsed = JSON.parse(savedQuiz)
           if (Array.isArray(parsed)) {
@@ -112,7 +120,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
       }
 
       // 3. Exam checklist (handles both Array and Object format)
-      const savedChecklist = localStorage.getItem('prakom_exam_checklist')
+      const savedChecklist = localStorage.getItem(`${storagePrefix}exam_checklist`)
       if (savedChecklist) {
         const parsed = JSON.parse(savedChecklist)
         if (Array.isArray(parsed)) {
@@ -131,12 +139,12 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
       }
 
       // 4. Paper generated
-      const savedPaper = localStorage.getItem('prakom_paper_draft')
+      const savedPaper = localStorage.getItem(`${storagePrefix}paper_draft`)
       setHasGeneratedPaper(!!savedPaper)
     } catch {
       // Ignore local storage parse errors
     }
-  }, [])
+  }, [storagePrefix])
 
   React.useEffect(() => {
     setMounted(true)
@@ -167,7 +175,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
       const nextState = !rawChecklist[id]
       const updated = { ...rawChecklist, [id]: nextState }
       setRawChecklist(updated)
-      localStorage.setItem('prakom_exam_checklist', JSON.stringify(updated))
+      localStorage.setItem(`${storagePrefix}exam_checklist`, JSON.stringify(updated))
       window.dispatchEvent(new Event('storage'))
       window.dispatchEvent(new Event('prakom-progress-updated'))
       loadProgress()
@@ -179,13 +187,13 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
   const handleReset = () => {
     if (confirm('Reset seluruh riwayat & progres belajar lokal Anda?')) {
       try {
-        localStorage.removeItem('prakom_materials_read')
-        localStorage.removeItem('prakom_completed_quiz_packs')
-        localStorage.removeItem('prakom_quiz_pack_scores')
-        localStorage.removeItem('prakom_quiz_history')
-        localStorage.removeItem('prakom_quiz_completed')
-        localStorage.removeItem('prakom_exam_checklist')
-        localStorage.removeItem('prakom_paper_draft')
+        localStorage.removeItem(`${storagePrefix}materials_read`)
+        localStorage.removeItem(`${storagePrefix}completed_quiz_packs`)
+        localStorage.removeItem(`${storagePrefix}quiz_pack_scores`)
+        localStorage.removeItem(`${storagePrefix}quiz_history`)
+        localStorage.removeItem(`${storagePrefix}quiz_completed`)
+        localStorage.removeItem(`${storagePrefix}exam_checklist`)
+        localStorage.removeItem(`${storagePrefix}paper_draft`)
         window.dispatchEvent(new Event('storage'))
         window.dispatchEvent(new Event('prakom-progress-updated'))
         loadProgress()
@@ -194,6 +202,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
       }
     }
   }
+
+  const materialsHref = isBatch4 ? "/batch-4/materials" : "/materials"
+  const quizHref = isBatch4 ? "/batch-4/quiz" : "/quiz"
+  const examPrepHref = isBatch4 ? "/batch-4/exam-prep" : "/exam-prep"
+  const paperGenHref = isBatch4 ? "/batch-4/paper-generator" : "/paper-generator"
 
   if (!mounted) return null
 
@@ -209,7 +222,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e6e6e6] dark:border-white/10 pb-3.5">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-[#007aff]/15 text-[#007aff] dark:bg-[#007aff]/25 dark:text-[#60a5fa]">
+              <span className={`flex h-6 w-6 items-center justify-center rounded-[6px] ${
+                isBatch4
+                  ? "bg-indigo-500/15 text-indigo-600 dark:bg-indigo-500/25 dark:text-indigo-400"
+                  : "bg-[#007aff]/15 text-[#007aff] dark:bg-[#007aff]/25 dark:text-[#60a5fa]"
+              }`}>
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2} />
               </span>
               <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white tracking-tight">
@@ -226,7 +243,9 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right">
-              <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-[#007aff] dark:text-[#60a5fa]">
+              <span className={`text-xl sm:text-2xl font-black font-mono tracking-tight ${
+                isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+              }`}>
                 {overallPercentage}%
               </span>
               <span className="block text-[10px] font-semibold text-[#615d59] dark:text-[#94a3b8] uppercase tracking-wider">
@@ -237,7 +256,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
             <button
               type="button"
               onClick={() => setIsDetailModalOpen(true)}
-              className="inline-flex items-center gap-1 rounded-full bg-[#007aff]/10 hover:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] px-3 py-1.5 text-xs font-bold transition cursor-pointer border border-[#007aff]/20"
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition cursor-pointer border ${
+                isBatch4
+                  ? "bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+                  : "bg-[#007aff]/10 hover:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/20"
+              }`}
               title="Buka checklist & rincian kesiapan"
             >
               <span>Checklist</span>
@@ -261,7 +284,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
               initial={{ width: 0 }}
               animate={{ width: `${Math.max(4, overallPercentage)}%` }}
               transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-              className="h-full rounded-full bg-[#007aff]"
+              className={`h-full rounded-full ${isBatch4 ? "bg-indigo-600" : "bg-[#007aff]"}`}
             />
           </div>
         </div>
@@ -269,10 +292,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
         {/* 4 Pillars Stat Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
           {/* Stat 1: Modul PDF */}
-          <Link href="/materials" className="group block">
-            <div className="h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 hover:border-[#007aff]/40 transition shadow-2xs">
+          <Link href={materialsHref} className="group block">
+            <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
+              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+            }`}>
               <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] text-[#007aff] dark:text-[#60a5fa]">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
+                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                }`}>
                   <FileText className="h-4 w-4" strokeWidth={2} />
                 </div>
                 <span className="font-mono text-xs font-bold text-[#000000] dark:text-white">
@@ -280,7 +307,9 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
                 </span>
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
+                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                }`}>
                   Pustaka Modul
                 </h4>
                 <p className="text-[10px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">
@@ -291,10 +320,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
           </Link>
 
           {/* Stat 2: Kuis MOOC */}
-          <Link href="/quiz" className="group block">
-            <div className="h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 hover:border-[#007aff]/40 transition shadow-2xs">
+          <Link href={quizHref} className="group block">
+            <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
+              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+            }`}>
               <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] text-[#007aff] dark:text-[#60a5fa]">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
+                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                }`}>
                   <Sparkles className="h-4 w-4" strokeWidth={2} />
                 </div>
                 <span className="font-mono text-xs font-bold text-[#000000] dark:text-white">
@@ -302,7 +335,9 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
                 </span>
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
+                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                }`}>
                   Simulasi Kuis
                 </h4>
                 <p className="text-[10px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">
@@ -313,10 +348,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
           </Link>
 
           {/* Stat 3: Checklist Ujian */}
-          <Link href="/exam-prep" className="group block">
-            <div className="h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 hover:border-[#007aff]/40 transition shadow-2xs">
+          <Link href={examPrepHref} className="group block">
+            <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
+              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+            }`}>
               <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] text-[#007aff] dark:text-[#60a5fa]">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
+                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                }`}>
                   <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
                 </div>
                 <span className="font-mono text-xs font-bold text-[#000000] dark:text-white">
@@ -324,7 +363,9 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
                 </span>
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
+                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                }`}>
                   Checklist Ujian
                 </h4>
                 <p className="text-[10px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">
@@ -335,10 +376,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
           </Link>
 
           {/* Stat 4: AI Makalah */}
-          <Link href="/paper-generator" className="group block">
-            <div className="h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 hover:border-[#007aff]/40 transition shadow-2xs">
+          <Link href={paperGenHref} className="group block">
+            <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
+              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+            }`}>
               <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] text-[#007aff] dark:text-[#60a5fa]">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
+                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                }`}>
                   <GraduationCap className="h-4 w-4" strokeWidth={2} />
                 </div>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
@@ -350,7 +395,9 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
                 </span>
               </div>
               <div>
-                <h4 className="font-bold text-xs text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
+                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                }`}>
                   Proposal 5 Bab
                 </h4>
                 <p className="text-[10px] text-[#615d59] dark:text-[#94a3b8] mt-0.5">
@@ -368,7 +415,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
           title="Rincian Status Belajar & Checklist Kelulusan"
-          description="Pantau dan tandai kesiapan mandiri 4 pilar kelulusan Diklat Fungsional Prakom Batch 3."
+          description={isBatch4 ? "Pantau dan tandai kesiapan mandiri 4 pilar kelulusan Diklat Fungsional Prakom Batch 4." : "Pantau dan tandai kesiapan mandiri 4 pilar kelulusan Diklat Fungsional Prakom Batch 3."}
           className="max-w-2xl"
         >
           <div className="space-y-4 pt-2">
@@ -430,14 +477,14 @@ export function LearningProgressWidget({ totalMaterialsCount = 24 }: LearningPro
 
             {/* Links to Full Features */}
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 dark:border-[#2A3550]">
-              <Link href="/materials" onClick={() => setIsDetailModalOpen(false)}>
+              <Link href={materialsHref} onClick={() => setIsDetailModalOpen(false)}>
                 <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] p-2 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
                   <FileText className="h-3.5 w-3.5" />
                   <span>Buka Pustaka Modul</span>
                 </button>
               </Link>
 
-              <Link href="/quiz" onClick={() => setIsDetailModalOpen(false)}>
+              <Link href={quizHref} onClick={() => setIsDetailModalOpen(false)}>
                 <button className="w-full flex items-center justify-center gap-1.5 rounded-[8px] bg-slate-100 dark:bg-[#253045] hover:bg-slate-200 dark:hover:bg-[#2D3A52] p-2 text-xs font-bold text-slate-700 dark:text-slate-300 transition cursor-pointer">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Mulai Kuis MOOC</span>

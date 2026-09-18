@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Sparkles, Bot, RefreshCw, MessageSquareHeart, Zap, Bell, CheckCircle2, Clock, Calendar, AlertCircle } from "lucide-react"
 import { RoadmapProgressSummary } from "@/lib/roadmap-utils"
+import { usePathname } from "next/navigation"
 
 interface AiCompanionCardProps {
   summary?: RoadmapProgressSummary
@@ -12,6 +13,8 @@ interface AiCompanionCardProps {
 }
 
 export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: AiCompanionCardProps) {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const [tipIndex, setTipIndex] = React.useState(0)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [userName, setUserName] = React.useState("")
@@ -118,11 +121,11 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
 
     return {
       isWeekend: false,
-      greeting: `${timeGreeting}, Sobat Prakom 625! ${timeIcon}`,
+      greeting: `${timeGreeting}, ${isBatch4 ? "Sobat Prakom Batch 4" : "Sobat Prakom 625"}! ${timeIcon}`,
       mainMessage: mainMsg,
       tipsList: weekdayTips,
     }
-  }, [summary, todaySchedules, closestTask])
+  }, [summary, todaySchedules, closestTask, isBatch4])
 
   const activeTip = dynamicContext.tipsList[tipIndex % dynamicContext.tipsList.length]
 
@@ -152,7 +155,9 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
       <div
         className="absolute -top-12 -right-12 w-44 h-44 rounded-full pointer-events-none opacity-40 dark:opacity-30"
         style={{
-          background: 'radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, transparent 70%)',
+          background: isBatch4
+            ? 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, transparent 70%)',
         }}
       />
 
@@ -163,7 +168,11 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
           <motion.div
             whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
             transition={{ duration: 0.3 }}
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20 shadow-2xs mt-0.5 cursor-pointer"
+            className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border shadow-2xs mt-0.5 cursor-pointer ${
+              isBatch4
+                ? "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+                : "bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/20"
+            }`}
           >
             <Bot className="h-5 w-5" strokeWidth={2} />
             <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-[#34c759] ring-2 ring-white dark:ring-[#141b27]">
@@ -173,8 +182,12 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
 
           <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#007aff]/10 dark:bg-[#007aff]/20 px-2.5 py-0.5 text-[10px] font-semibold text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/20">
-                <Sparkles className="h-3 w-3 text-[#007aff] dark:text-[#60a5fa]" strokeWidth={2} />
+              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
+                isBatch4
+                  ? "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+                  : "bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/20"
+              }`}>
+                <Sparkles className={`h-3 w-3 ${isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}`} strokeWidth={2} />
                 <span>AI Asisten Kelas</span>
               </span>
               <span className="text-[11px] font-normal text-[#615d59] dark:text-[#94a3b8]">

@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { Clock, ArrowRight, Flame, CheckCircle2, Sparkles, Coffee } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 
@@ -17,7 +18,9 @@ export interface TaskItem {
   status?: string
 }
 
-export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem | null }) {
+export function HomeTaskReminder({ targetTask, isBatch4: propIsBatch4 }: { targetTask?: TaskItem | null; isBatch4?: boolean }) {
+  const pathname = usePathname() || ""
+  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : (pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4"))
   const [mounted, setMounted] = React.useState(false)
 
   const [timeLeft, setTimeLeft] = React.useState({
@@ -93,8 +96,10 @@ export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem | null 
               <span>Waktu Santai</span>
             </div>
 
-            <Link href="/tasks">
-              <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
+            <Link href={isBatch4 ? "/batch-4/tasks" : "/tasks"}>
+              <button className={`inline-flex items-center gap-1.5 rounded-full ${
+                isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+              } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}>
                 <span>Daftar Tugas</span>
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
@@ -155,8 +160,10 @@ export function HomeTaskReminder({ targetTask }: { targetTask?: TaskItem | null 
             </div>
           )}
 
-          <Link href="/tasks">
-            <button className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer">
+          <Link href={isBatch4 ? "/batch-4/tasks" : "/tasks"}>
+            <button className={`inline-flex items-center gap-1.5 rounded-full ${
+              isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+            } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}>
               <span>Buka Tugas</span>
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
             </button>

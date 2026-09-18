@@ -1,7 +1,17 @@
+import { createClient } from "@/lib/supabase/server"
 import { PublicShell } from "@/components/public/public-shell"
+import { UrgentAnnouncement } from "@/components/public/urgent-announcement"
 import { LiveSessionBannerB4 } from "@/components/public/batch4/live-session-banner-b4"
-import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
+import { TwinkleHeroB4 } from "@/components/public/batch4/twinkle-hero-b4"
+import { AiCompanionCard } from "@/components/public/ai-companion-card"
+import { HomeTaskReminder } from "@/components/public/home-task-reminder"
+import { LearningProgressWidget } from "@/components/public/learning-progress-widget"
+import { SupabaseStatus } from "@/components/supabase-status"
+import { getAutoRoadmapData } from "@/lib/roadmap-utils"
+import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
+import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
+import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
 import {
   Calendar,
   FileText,
@@ -9,31 +19,85 @@ import {
   Award,
   ArrowRight,
   Sparkles,
-  Layers,
   GraduationCap,
-  Clock,
-  ExternalLink,
   ChevronRight,
+  HelpCircle,
+  Code2,
   Laptop,
   Building2,
-  CheckCircle2,
-  Bot
 } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata = {
-  title: "Agrasena Batch 4 - Portal Diklat Pranata Komputer Kejaksaan RI",
-  description: "Pusat jadwal 35 hari, pustaka modul 120 JP, tautan Zoom resmi, dan asisten AI pembelajaran peserta Diklat Fungsional Pranata Komputer Keahlian Agrasena Batch 4 Kejaksaan RI.",
+  title: "Agrasena Batch 4 - Pusat Materi & Roadmap Pranata Komputer Kejaksaan RI",
+  description:
+    "Hub terpadu perkuliahan fungsional keahlian Agrasena Batch 4. 120 JP modul bahan ajar resmi PDF, rundown harian 35 hari, bank kuis MOOC, dan asisten AI generator makalah inovasi.",
 }
 
-export default function Batch4Page() {
-  const totalDays = 35
+export default async function Batch4Page() {
+  let announcements: any[] = []
+  let tasks: any[] = DEFAULT_BATCH4_TASKS
+  let schedules: any[] = DEFAULT_BATCH4_SCHEDULES
   const totalMaterials = DEFAULT_BATCH4_MATERIALS.length
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
+    try {
+      const supabase = await createClient()
+      const [annRes, taskRes, schedRes] = await Promise.all([
+        supabase.from("announcements").select("*").eq("is_active", true),
+        supabase.from("tasks").select("*").order("due_date", { ascending: true }),
+        supabase.from("schedules").select("*").order("start_time", { ascending: true }),
+      ])
+
+      const allAnnouncements = annRes.data || []
+      announcements = allAnnouncements.filter(
+        (a: any) =>
+          !a.batch ||
+          a.batch === "batch-4" ||
+          a.batch === 4 ||
+          a.batch === "all" ||
+          (a.title && a.title.toLowerCase().includes("batch 4"))
+      )
+
+      const allTasks = taskRes.data || []
+      const b4Tasks = allTasks.filter(
+        (t: any) =>
+          (t.title && t.title.toLowerCase().includes("batch 4")) ||
+          (t.subject_name && t.subject_name.toLowerCase().includes("batch 4")) ||
+          t.batch === 4 ||
+          t.batch === "batch-4"
+      )
+      if (b4Tasks.length > 0) tasks = b4Tasks
+
+      const allScheds = schedRes.data || []
+      const b4Scheds = allScheds.filter(
+        (s: any) =>
+          (s.title && s.title.toLowerCase().includes("batch 4")) ||
+          (s.subject_name && s.subject_name.toLowerCase().includes("batch 4")) ||
+          s.batch === 4 ||
+          s.batch === "batch-4"
+      )
+      if (b4Scheds.length > 0) schedules = b4Scheds
+    } catch {
+      // Offline fallback
+    }
+  }
+
+  const now = new Date().getTime()
+  const activeTasks = tasks.filter((t) => t.status !== "completed")
+  const futureTasks = activeTasks.filter((t) => getTaskDeadlineTimestamp(t.due_date) > now)
+  const closestTask = futureTasks.length > 0 ? futureTasks[0] : null
+  const { summary } = getAutoRoadmapData(undefined, schedules)
 
   return (
     <PublicShell>
       <div className="space-y-8 sm:space-y-12">
-        
         {/* 1. Quick Batch Switcher Notice */}
         <div className="rounded-[16px] bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5">
@@ -42,7 +106,7 @@ export default function Batch4Page() {
             </span>
             <div className="text-xs">
               <span className="font-bold text-indigo-950 dark:text-indigo-200">
-                Anda berada di halaman khusus Agrasena Batch 4.
+                Anda berada di portal Agrasena Batch 4.
               </span>{" "}
               <span className="text-indigo-800/80 dark:text-indigo-300/80">
                 Jadwal, tautan Zoom, dan modul di halaman ini terisolasi untuk peserta Batch 4.
@@ -58,120 +122,30 @@ export default function Batch4Page() {
           </Link>
         </div>
 
-        {/* 2. Hero Banner Agrasena Batch 4 */}
-        <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e1b4b] text-white p-6 sm:p-10 border border-indigo-500/20 shadow-xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* 2. Pengumuman Mendesak (Jika Ada) */}
+        {announcements.length > 0 && <UrgentAnnouncement announcements={announcements} />}
 
-          <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/30 border border-indigo-400/40 px-3 py-1 text-xs font-bold text-indigo-200 shadow-2xs">
-                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                <span>Portal Angkatan Resmi</span>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200 border border-white/10">
-                Agrasena Batch 4 • 120 JP
-              </span>
-              <span className="rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-xs font-bold text-emerald-300">
-                Tahun Anggaran 2026
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-              Diklat Fungsional <br />
-              <span className="bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
-                Pranata Komputer Keahlian
-              </span>{" "}
-              Batch 4
-            </h1>
-
-            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed max-w-2xl">
-              Pusat perkuliahan virtual, kalender 35 hari roadmap, perpustakaan kurikulum 120 JP, simulasi evaluasi MOOC, dan asisten AI penyusunan naskah proposal proyek prakom bagi aparatur Kejaksaan RI.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <Link
-                href="/batch-4/schedules"
-                className="inline-flex items-center gap-2 rounded-full bg-white text-indigo-950 hover:bg-indigo-50 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md transition active:scale-95 cursor-pointer"
-              >
-                <Calendar className="h-4 w-4 text-indigo-600" />
-                <span>Lihat Jadwal 35 Hari</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/batch-4/materials"
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/15 px-5 py-2.5 text-xs sm:text-sm font-bold transition active:scale-95 cursor-pointer"
-              >
-                <BookOpen className="h-4 w-4 text-indigo-300" />
-                <span>Katalog Modul PDF</span>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Live Session Banner Khusus Batch 4 */}
+        {/* 3. Live Session Banner & Quick Zoom Launcher Khusus Batch 4 */}
         <LiveSessionBannerB4 />
 
-        {/* 4. AI Companion Card Batch 4 */}
-        <section className="rounded-[20px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
-                <Bot className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-[#18181B] dark:text-white">
-                    Asisten AI Agrasena Batch 4
-                  </h3>
-                  <span className="rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold px-2 py-0.5">
-                    Aktif
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Pendamping cerdas untuk telaah butir angka kredit, resume modul, dan simulasi soal MOOC.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/batch-4/paper-generator"
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-            >
-              <span>Buka Generator Makalah</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+        {/* 4. Hero Banner Batch 4 (Konsep Identik Apple / Notion Card dengan Anime Character) */}
+        <TwinkleHeroB4 />
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <div className="rounded-xl bg-slate-50 dark:bg-[#101520] p-3.5 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-bold text-[#18181B] dark:text-white block mb-1">
-                📝 Draf Laporan Lab Satker
-              </span>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Buat outline makalah dan laporan implementasi TI di satuan kerja Anda dalam hitungan detik.
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-[#101520] p-3.5 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-bold text-[#18181B] dark:text-white block mb-1">
-                🎯 Bank Soal Kuis MOOC
-              </span>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Latihan 50+ soal prediksi ujian MOOC Tahap 1 dengan pembahasan dan rujukan modul.
-              </p>
-            </div>
-            <div className="rounded-xl bg-slate-50 dark:bg-[#101520] p-3.5 border border-slate-200 dark:border-slate-800">
-              <span className="text-[11px] font-bold text-[#18181B] dark:text-white block mb-1">
-                📑 Butir Angka Kredit (AK)
-              </span>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Cek matriks butir kegiatan Prakom Keahlian sesuai PermenPAN-RB No. 32 Tahun 2020.
-              </p>
-            </div>
-          </div>
-        </section>
+        {/* 5. AI Asisten Kelas (Sapaan Santai, Motivasi Harian & Peringatan Tugas) */}
+        <AiCompanionCard
+          summary={summary}
+          todaySchedules={schedules}
+          closestTask={closestTask}
+        />
 
-        {/* 5. Roadmap 4 Tahap Diklat Batch 4 */}
-        <section className="rounded-[20px] bg-white dark:bg-[#151c28] p-6 sm:p-8 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-6">
+        {/* 6. Live Reminder Deadline Terdekat */}
+        <HomeTaskReminder targetTask={closestTask} isBatch4={true} />
+
+        {/* 6.5 Status Belajar & Kesiapan Diklat Peserta (Local Storage Private Progress) */}
+        <LearningProgressWidget totalMaterialsCount={totalMaterials} isBatch4={true} />
+
+        {/* 7. Roadmap 4 Tahap Story Block Batch 4 */}
+        <section className="rounded-[16px] bg-white dark:bg-[#151c28] p-6 sm:p-8 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-6 transition-colors duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
@@ -180,27 +154,31 @@ export default function Batch4Page() {
                   <span>Roadmap 35 Hari Batch 4</span>
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/15 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-500/30 px-2.5 py-0.5 text-[11px] font-semibold">
-                  Total 120 JP
+                  <span>Total 120 JP</span>
+                </span>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Hari {summary.currentDayNumber} / {summary.totalDays} ({summary.progressPercentage}%)
                 </span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-[#000000] dark:text-white tracking-tight">
                 Alur 4 Tahapan Perkuliahan Batch 4
               </h3>
               <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8]">
-                Runtutan perkuliahan terstruktur dari pembelajaran mandiri, kuliah virtual Zoom, hingga evaluasi akhir.
+                Alur perkuliahan dari belajar mandiri MOOC, tatap muka online TMO, lab kerja di satker, hingga seminar!
               </p>
             </div>
 
             <Link href="/batch-4/schedules">
               <button className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white active:scale-[0.98] px-4.5 py-2 text-xs sm:text-sm font-semibold transition shadow-xs cursor-pointer shrink-0">
-                <span>Buka Jadwal Batch 4</span>
+                <span>Buka Jadwal 35 Hari</span>
                 <ArrowRight className="h-4 w-4" strokeWidth={2} />
               </button>
             </Link>
           </div>
 
-          {/* 4 Stage Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 4 Stage Cards Grid with Apple SF Symbol Identity */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
             {[
               {
                 num: 1,
@@ -208,8 +186,17 @@ export default function Batch4Page() {
                 sub: "Pembelajaran Mandiri",
                 days: "Hari 1 s.d. 5",
                 dates: "Oktober 2026",
-                desc: "Mempelajari modul dasar & mengerjakan kuis formatif di portal LMS.",
-                icon: <BookOpen className="h-4 w-4 text-indigo-500" />
+                status:
+                  summary.currentDayNumber > 5
+                    ? "Selesai"
+                    : summary.isTodayActive && summary.currentDayNumber >= 1
+                    ? "Sedang Berjalan"
+                    : "Jadwal Mendatang",
+                isCurrent:
+                  summary.isTodayActive &&
+                  summary.currentDayNumber >= 1 &&
+                  summary.currentDayNumber <= 5,
+                icon: <BookOpen className="h-3.5 w-3.5" strokeWidth={2} />,
               },
               {
                 num: 2,
@@ -217,111 +204,177 @@ export default function Batch4Page() {
                 sub: "Tatap Muka Online",
                 days: "Hari 6 s.d. 15",
                 dates: "Oktober – November 2026",
-                desc: "Perkuliahan interaktif via Zoom bersama narasumber BPS & Kejaksaan.",
-                icon: <Laptop className="h-4 w-4 text-indigo-500" />
+                status:
+                  summary.currentDayNumber > 15
+                    ? "Selesai"
+                    : summary.isTodayActive && summary.currentDayNumber >= 6
+                    ? "Sedang Berjalan"
+                    : "Jadwal Mendatang",
+                isCurrent:
+                  summary.isTodayActive &&
+                  summary.currentDayNumber >= 6 &&
+                  summary.currentDayNumber <= 15,
+                icon: <Laptop className="h-3.5 w-3.5" strokeWidth={2} />,
               },
               {
                 num: 3,
                 title: "Tahap 3 • Lab Prakom",
-                sub: "Implementasi di Satker",
+                sub: "Laboratorium di Satker",
                 days: "Hari 16 s.d. 30",
                 dates: "November 2026",
-                desc: "Penyusunan proyek sistem/layanan TI pada satuan kerja masing-masing.",
-                icon: <Building2 className="h-4 w-4 text-indigo-500" />
+                status:
+                  summary.currentDayNumber > 30
+                    ? "Selesai"
+                    : summary.isTodayActive && summary.currentDayNumber >= 16
+                    ? "Sedang Berjalan"
+                    : "Jadwal Mendatang",
+                isCurrent:
+                  summary.isTodayActive &&
+                  summary.currentDayNumber >= 16 &&
+                  summary.currentDayNumber <= 30,
+                icon: <Building2 className="h-3.5 w-3.5" strokeWidth={2} />,
               },
               {
                 num: 4,
                 title: "Tahap 4 • Seminar",
-                sub: "Evaluasi & Klasikal",
+                sub: "Seminar Klasikal",
                 days: "Hari 31 s.d. 35",
                 dates: "Desember 2026",
-                desc: "Ujian komprehensif, pemaparan makalah laboratorium, dan kelulusan.",
-                icon: <Award className="h-4 w-4 text-indigo-500" />
-              }
-            ].map((stg) => (
-              <Link href="/batch-4/schedules" key={stg.num} className="group block">
-                <div className="h-full rounded-[16px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#141b27] p-4 flex flex-col justify-between gap-3 hover:border-indigo-500 transition-all hover:-translate-y-1 hover:shadow-md">
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-[#18181B] dark:text-white">
-                      {stg.icon}
-                      <span>{stg.title}</span>
-                    </span>
-                    <span className="font-mono text-xs font-bold text-slate-400">0{stg.num}</span>
-                  </div>
+                status:
+                  summary.currentDayNumber > 35
+                    ? "Selesai"
+                    : summary.isTodayActive && summary.currentDayNumber >= 31
+                    ? "Sedang Berjalan"
+                    : "Jadwal Mendatang",
+                isCurrent:
+                  summary.isTodayActive &&
+                  summary.currentDayNumber >= 31 &&
+                  summary.currentDayNumber <= 35,
+                icon: <Award className="h-3.5 w-3.5" strokeWidth={2} />,
+              },
+            ].map((stg) => {
+              return (
+                <Link href="/batch-4/schedules" key={stg.num} className="group block">
+                  <div
+                    className={`h-full rounded-[14px] border overflow-hidden flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 hover:shadow-md ${
+                      stg.isCurrent
+                        ? "bg-white dark:bg-[#141b27] border-indigo-600 shadow-xs ring-2 ring-indigo-600/30"
+                        : "bg-white dark:bg-[#141b27] border-[#e6e6e6] dark:border-white/10 shadow-2xs hover:border-indigo-500/60 dark:hover:border-indigo-400/60"
+                    }`}
+                  >
+                    {/* Stage Header Tab */}
+                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-[#f6f5f4] dark:bg-[#1a2332] border-b border-[#e6e6e6] dark:border-white/10">
+                      <span className="text-xs font-semibold text-[#000000] dark:text-white flex items-center gap-1.5">
+                        <span className="text-indigo-600 dark:text-indigo-400 transition-transform group-hover:scale-110">
+                          {stg.icon}
+                        </span>
+                        {stg.title}
+                      </span>
+                      <span className="font-mono text-xs font-bold text-[#615d59] dark:text-[#94a3b8]">
+                        0{stg.num}
+                      </span>
+                    </div>
 
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full">
-                      {stg.days}
-                    </span>
-                    <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors mt-1">
-                      {stg.sub}
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                      {stg.desc}
-                    </p>
-                  </div>
+                    <div className="p-3.5 space-y-2.5">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-0.5 rounded-full border shadow-2xs shrink-0 ${
+                            stg.isCurrent
+                              ? "bg-indigo-600 text-white border-transparent"
+                              : "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
+                          }`}
+                        >
+                          {stg.isCurrent && (
+                            <span className="relative flex h-2 w-2 mr-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-300 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
+                            </span>
+                          )}
+                          {stg.status}
+                        </span>
+                        <span className="font-mono text-xs font-medium text-[#615d59] dark:text-[#94a3b8] shrink-0">
+                          {stg.days}
+                        </span>
+                      </div>
 
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-medium text-slate-500 group-hover:text-indigo-600">
-                    <span>Lihat Rincian Sesi</span>
-                    <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                      <div>
+                        <h4 className="font-bold text-sm text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {stg.sub}
+                        </h4>
+                        <p className="text-xs text-[#615d59] dark:text-[#94a3b8] mt-0.5">
+                          {stg.dates}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-[#e6e6e6] dark:border-white/10 flex items-center justify-between text-xs font-medium text-[#615d59] dark:text-[#94a3b8] group-hover:text-[#000000] dark:group-hover:text-white transition-colors">
+                        <span>Rincian Modul</span>
+                        <ChevronRight
+                          className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform"
+                          strokeWidth={2}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </section>
 
-        {/* 6. Enam Pusat Eksplorasi Fitur Batch 4 */}
-        <section className="space-y-4">
+        {/* 8. 6 Modul Navigasi Utama (Apple SF Database Tiles) */}
+        <section className="space-y-5">
           <div>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-              Akses Cepat Batch 4
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              Eksplorasi Fitur
             </span>
-            <h3 className="text-xl sm:text-2xl font-bold text-[#18181B] dark:text-white tracking-tight mt-0.5">
-              Pusat Materi & Perangkat Diklat
+            <h3 className="text-xl sm:text-2xl font-bold text-[#000000] dark:text-white tracking-tight mt-0.5">
+              Pusat Pembelajaran & Alat Kerja Batch 4
             </h3>
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8]">
+              Akses cepat seluruh materi 120 JP, jadwal live, bank kuis MOOC, snippet praktikum, dan generator AI makalah.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Card 1: Jadwal */}
+            {/* Card 1: Roadmap */}
             <Link href="/batch-4/schedules" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Calendar className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <Calendar className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     35 HARI
                   </span>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
-                    Jadwal 35 Hari Batch 4
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    Jadwal & Roadmap Sesi
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Rundown komprehensif, jam JP, pemateri, dan tautan sesi virtual harian.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Cek rundown harian, pembagian jam JP, dan tautan sesi Zoom perkuliahan.
                   </p>
                 </div>
               </div>
             </Link>
 
-            {/* Card 2: Pustaka Modul */}
+            {/* Card 2: Materi */}
             <Link href="/batch-4/materials" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <FileText className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <FileText className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                    120 JP
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    120 JP PDF
                   </span>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
-                    Pustaka Modul PDF Batch 4
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    Pustaka Modul PDF
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Unduh modul resmi kurikulum Diklat Fungsional Prakom Keahlian.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Unduh modul resmi & baca langsung via reader interaktif dengan catatan belajar.
                   </p>
                 </div>
               </div>
@@ -329,21 +382,21 @@ export default function Batch4Page() {
 
             {/* Card 3: Tugas */}
             <Link href="/batch-4/tasks" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <BookOpen className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <BookOpen className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                    TUGAS & LAB
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    DEADLINE
                   </span>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
-                    Tugas & Penugasan Satker
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    Tugas & Lembar Kerja
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Daftar tenggat pengumpulan tugas, instruksi penyusunan, dan panduan upload.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Pantau tugas individu, checklist lembar kerja, dan panduan upload portal LMS.
                   </p>
                 </div>
               </div>
@@ -351,72 +404,108 @@ export default function Batch4Page() {
 
             {/* Card 4: Kuis MOOC */}
             <Link href="/batch-4/quiz" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Sparkles className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <Sparkles className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
                     SIMULASI
                   </span>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Simulasi Kuis MOOC
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Uji pemahaman modul mandiri dengan bank soal interaktif dan timer ujian.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Kuis interaktif pilihan ganda seputar SPBE, Database & Angka Kredit dengan skor instan.
                   </p>
                 </div>
               </div>
             </Link>
 
-            {/* Card 5: Generator Makalah */}
+            {/* Card 5: Snippets */}
+            <Link href="/batch-4/snippets" className="group block">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <Code2 className="h-5 w-5" strokeWidth={2} />
+                  </div>
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    LAB PRAKOM
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    Code & Query Vault
+                  </h4>
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Koleksi template SQL query, backup automation Linux, dan script konfigurasi server.
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 6: AI Makalah */}
             <Link href="/batch-4/paper-generator" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1.5 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between p-5 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <GraduationCap className="h-5 w-5" />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-200">
+                    <GraduationCap className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full">
-                    AI POWERED
+                  <span className="rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 group-hover:border-indigo-500/40 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 px-2.5 py-0.5 text-[10px] font-semibold transition-colors">
+                    AI GENERATOR
                   </span>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
-                    AI Laporan Lab Prakom
+                <div className="space-y-1">
+                  <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    AI Makalah Inovasi
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Generator proposal proyek perubahan dan makalah laboratorium satker.
+                  <p className="text-xs text-[#615d59] dark:text-[#94a3b8] line-clamp-2 leading-relaxed">
+                    Generator proposal 5 Bab otomatis untuk seminar laboratorium satker.
                   </p>
                 </div>
               </div>
             </Link>
 
-            {/* Card 6: Template & DUPAK */}
-            <Link href="/batch-4/templates" className="group block">
-              <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Layers className="h-5 w-5" />
+            {/* Card 7: FAQ Sunset Section */}
+            <Link href="/batch-4/faq" className="group block sm:col-span-2 lg:col-span-3">
+              <div className="h-full rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-indigo-500/60 dark:hover:border-indigo-400/60 hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col sm:flex-row items-center justify-between p-5 gap-4 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] text-indigo-600 dark:text-indigo-400">
+                    <HelpCircle className="h-5 w-5" strokeWidth={2} />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                    STANDAR
-                  </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-semibold">
+                        Pusat Bantuan
+                      </span>
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hidden sm:inline">
+                        • Respon Cepat Admin Kelas
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-base text-[#000000] dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
+                      Tanya Jawab (FAQ) & Formulir Aduan Kendala
+                    </h4>
+                    <p className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                      Panduan lengkap kendala jadwal, sinkronisasi materi LMS, dan kontak langsung ke admin kelas.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#18181B] dark:text-white group-hover:text-indigo-600 transition-colors">
-                    Template & Matriks DUPAK
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Format surat penugasan (SPT), butir angka kredit, dan rubrik seminar.
-                  </p>
+
+                <div className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-4.5 py-2 text-xs font-semibold shrink-0 transition shadow-xs">
+                  <span>Buka Pusat Bantuan</span>
+                  <ArrowRight className="h-4 w-4" strokeWidth={2} />
                 </div>
               </div>
             </Link>
           </div>
         </section>
 
+        {/* 9. Supabase Status Indicator */}
+        <div className="pt-2">
+          <SupabaseStatus />
+        </div>
       </div>
     </PublicShell>
   )
