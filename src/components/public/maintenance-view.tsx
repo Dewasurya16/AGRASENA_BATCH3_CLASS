@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   CheckCircle,
   Wrench,
+  Heart,
 } from "lucide-react"
 import { MaintenanceConfig } from "@/lib/maintenance"
 
@@ -33,247 +34,228 @@ export function MaintenanceView({
     isEnded: boolean
   } | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [typedText, setTypedText] = useState("")
+  const [consoleLines, setConsoleLines] = useState<string[]>([])
 
   // ============================================================
-  // TYPEWRITER EFFECT for subtitle
+  // FAKE TERMINAL — cute "loading tasks" effect
   // ============================================================
   useEffect(() => {
-    const msg = config.message?.slice(0, 80) || "Kami sedang meningkatkan layanan untuk Anda."
-    let i = 0
-    const interval = setInterval(() => {
-      if (i < msg.length) {
-        setTypedText(msg.slice(0, i + 1))
-        i++
+    const lines = [
+      "$ ssh agrasena-server-625...",
+      "✓ Terhubung ke infrastruktur",
+      "$ systemctl check --all",
+      "⟳ Memperbarui kurikulum batch 4...",
+      "⟳ Optimasi database...",
+      "⟳ Memberi makan kucing server... 🐱",
+      "✓ Kucing senang! Lanjut kerja...",
+      "⟳ Upgrade keamanan portal...",
+      "✓ 85% selesai — hampir siap!",
+      "⏳ Mohon bersabar ya... 🙏",
+    ]
+    let lineIdx = 0
+    const timer = setInterval(() => {
+      if (lineIdx < lines.length) {
+        setConsoleLines((prev) => [...prev, lines[lineIdx]])
+        lineIdx++
       } else {
-        clearInterval(interval)
+        clearInterval(timer)
       }
-    }, 22)
-    return () => clearInterval(interval)
-  }, [config.message])
+    }, 800)
+    return () => clearInterval(timer)
+  }, [])
 
   // ============================================================
-  // ANIME.JS — FULL RICH ANIMATION SUITE
+  // ANIME.JS — 20+ rich animations
   // ============================================================
   useEffect(() => {
-    // 1. Logo spring drop
+    // 1. Background emoji scatter — fade in with playful physics
     anime({
-      targets: "#logo-mark",
-      translateY: [-30, 0],
-      opacity: [0, 1],
-      duration: 800,
-      delay: 100,
+      targets: ".bg-emoji",
+      opacity: () => [0, anime.random(0.08, 0.25)],
+      scale: () => [0, anime.random(0.8, 1.5)],
+      rotate: () => [anime.random(-45, 45), anime.random(-10, 10)],
+      duration: () => anime.random(600, 1200),
+      delay: anime.stagger(60, { start: 0 }),
       easing: "spring(1, 80, 10, 0)",
     })
 
-    // 2. Left panel (image side) slides in from left
-    anime({
-      targets: "#panel-left",
-      translateX: [-60, 0],
-      opacity: [0, 1],
-      duration: 1000,
-      delay: 200,
-      easing: "cubicBezier(0.22, 1, 0.36, 1)",
-    })
-
-    // 3. Right panel (content side) slides in from right
-    anime({
-      targets: "#panel-right",
-      translateX: [60, 0],
-      opacity: [0, 1],
-      duration: 1000,
-      delay: 300,
-      easing: "cubicBezier(0.22, 1, 0.36, 1)",
-    })
-
-    // 4. Eyebrow tag pops in
-    anime({
-      targets: "#eyebrow-tag",
-      scale: [0.5, 1],
-      opacity: [0, 1],
-      duration: 600,
-      delay: 800,
-      easing: "spring(1, 80, 10, 0)",
-    })
-
-    // 5. Title words cascade in
-    anime({
-      targets: ".title-word",
-      translateY: [20, 0],
-      opacity: [0, 1],
-      duration: 600,
-      delay: anime.stagger(80, { start: 900 }),
-      easing: "cubicBezier(0.22, 1, 0.36, 1)",
-    })
-
-    // 6. Action buttons stagger up
-    anime({
-      targets: ".action-btn",
-      translateY: [24, 0],
-      opacity: [0, 1],
-      duration: 700,
-      delay: anime.stagger(120, { start: 1100 }),
-      easing: "cubicBezier(0.22, 1, 0.36, 1)",
-    })
-
-    // 7. Info cards cascade
-    anime({
-      targets: ".info-card",
-      scale: [0.85, 1],
-      opacity: [0, 1],
-      duration: 500,
-      delay: anime.stagger(100, { start: 1300 }),
-      easing: "spring(1, 80, 12, 0)",
-    })
-
-    // 8. GEAR — continuous fast spin
-    anime({
-      targets: "#gear-anim",
-      rotate: [0, 360],
-      duration: 4000,
-      loop: true,
-      easing: "linear",
-    })
-
-    // 9. WRENCH — swinging like hammering
-    anime({
-      targets: "#wrench-anim",
-      rotate: [-25, 25],
-      duration: 600,
-      direction: "alternate",
-      loop: true,
-      easing: "easeInOutQuad",
-    })
-
-    // 10. Hero image — idle float up/down
+    // 2. Hero image pops in with bounce
     anime({
       targets: "#hero-img",
-      translateY: [-8, 8],
-      duration: 3500,
-      direction: "alternate",
-      loop: true,
-      easing: "easeInOutSine",
+      scale: [0, 1],
+      opacity: [0, 1],
+      duration: 1200,
+      delay: 200,
+      easing: "spring(1, 60, 8, 0)",
     })
 
-    // 11. "Sedang diperbaiki" badge — float
+    // 3. Hero idle bobbing
     anime({
-      targets: "#badge-tool",
-      translateY: [-5, 5],
-      rotate: [-1, 1],
-      duration: 2500,
-      direction: "alternate",
-      loop: true,
-      easing: "easeInOutSine",
-    })
-
-    // 12. "Mohon bersabar" badge — float opposite
-    anime({
-      targets: "#badge-patience",
-      translateY: [5, -5],
-      rotate: [1, -1],
+      targets: "#hero-img",
+      translateY: [-6, 6],
       duration: 3000,
       direction: "alternate",
       loop: true,
       easing: "easeInOutSine",
+      delay: 1500,
     })
 
-    // 13. Floating construction icons (decorative)
+    // 4. Title drops in
     anime({
-      targets: ".float-icon",
-      translateY: () => [anime.random(-12, 0), anime.random(0, 12)],
-      translateX: () => [anime.random(-6, 0), anime.random(0, 6)],
-      rotate: () => [anime.random(-15, 0), anime.random(0, 15)],
-      opacity: [0.15, 0.8],
-      duration: () => anime.random(2000, 4000),
+      targets: "#main-title",
+      translateY: [-40, 0],
+      opacity: [0, 1],
+      duration: 900,
+      delay: 500,
+      easing: "spring(1, 80, 10, 0)",
+    })
+
+    // 5. Subtitle slides up
+    anime({
+      targets: "#sub-title",
+      translateY: [20, 0],
+      opacity: [0, 1],
+      duration: 700,
+      delay: 700,
+      easing: "cubicBezier(0.22, 1, 0.36, 1)",
+    })
+
+    // 6. Cards fan out
+    anime({
+      targets: ".maint-card",
+      translateY: [30, 0],
+      opacity: [0, 1],
+      scale: [0.9, 1],
+      duration: 600,
+      delay: anime.stagger(100, { start: 900 }),
+      easing: "spring(1, 80, 10, 0)",
+    })
+
+    // 7. Terminal fades in
+    anime({
+      targets: "#terminal-box",
+      translateX: [40, 0],
+      opacity: [0, 1],
+      duration: 800,
+      delay: 1200,
+      easing: "cubicBezier(0.22, 1, 0.36, 1)",
+    })
+
+    // 8. Badge wobble on left
+    anime({
+      targets: "#badge-fixing",
+      rotate: [-3, 3],
+      translateY: [-4, 4],
+      duration: 2000,
       direction: "alternate",
       loop: true,
-      delay: anime.stagger(300),
       easing: "easeInOutSine",
     })
 
-    // 14. Spark dots twinkle
+    // 9. Badge wobble on right
     anime({
-      targets: ".spark-dot",
-      opacity: () => [0.1, anime.random(0.5, 1)],
-      scale: () => [0.6, anime.random(1.4, 2)],
-      duration: () => anime.random(800, 2000),
+      targets: "#badge-patience",
+      rotate: [2, -2],
+      translateY: [3, -5],
+      duration: 2400,
       direction: "alternate",
       loop: true,
-      delay: anime.stagger(180),
       easing: "easeInOutSine",
     })
 
-    // 15. Progress dots — wave
+    // 10. Traffic cone bounce
     anime({
-      targets: ".wave-dot",
-      translateY: [-8, 0],
-      opacity: [0.3, 1],
-      duration: 450,
+      targets: ".cone-bounce",
+      translateY: [0, -8],
+      duration: 600,
       direction: "alternate",
       loop: true,
-      delay: anime.stagger(150),
+      delay: anime.stagger(200),
       easing: "easeInOutQuad",
     })
 
-    // 16. WhatsApp button — gentle pulse glow
+    // 11. Heart float up
+    anime({
+      targets: ".float-heart",
+      translateY: [0, -30],
+      opacity: [0.8, 0],
+      scale: [0.8, 1.2],
+      duration: 2000,
+      loop: true,
+      delay: anime.stagger(600),
+      easing: "easeOutCubic",
+    })
+
+    // 12. Countdown number pop
+    anime({
+      targets: ".cd-num",
+      scale: [1.4, 1],
+      opacity: [0, 1],
+      duration: 400,
+      delay: anime.stagger(80, { start: 1000 }),
+      easing: "spring(1, 80, 10, 0)",
+    })
+
+    // 13. WhatsApp button glow pulse
     anime({
       targets: "#wa-btn",
       boxShadow: [
-        "0 6px 24px rgba(34,197,94,0.30)",
-        "0 8px 40px rgba(34,197,94,0.60)",
-        "0 6px 24px rgba(34,197,94,0.30)",
+        "0 4px 20px rgba(34,197,94,0.3)",
+        "0 6px 36px rgba(34,197,94,0.6)",
+        "0 4px 20px rgba(34,197,94,0.3)",
       ],
-      duration: 1800,
+      duration: 2000,
       loop: true,
       easing: "easeInOutSine",
     })
 
-    // 17. Status amber dot — pulse
+    // 14. Refresh button subtle bounce
+    anime({
+      targets: "#refresh-btn",
+      translateY: [0, -2, 0],
+      duration: 2500,
+      loop: true,
+      easing: "easeInOutSine",
+    })
+
+    // 15. Status dot pulse
     anime({
       targets: "#status-dot",
-      scale: [1, 1.4, 1],
+      scale: [1, 1.5, 1],
       opacity: [1, 0.4, 1],
       duration: 1200,
       loop: true,
       easing: "easeInOutSine",
     })
 
-    // 18. Particles drift up from bottom
+    // 16. Footer wave
     anime({
-      targets: ".particle",
-      translateY: [0, -120],
-      translateX: () => [0, anime.random(-30, 30)],
-      opacity: [0, 0.6, 0],
-      scale: () => [0.5, anime.random(1, 1.5), 0],
-      duration: () => anime.random(2000, 4000),
+      targets: "#footer-wave path",
+      d: [
+        "M0,8 Q120,0 240,8 T480,8 T720,8 T960,8 V40 H0 Z",
+        "M0,4 Q120,12 240,4 T480,4 T720,4 T960,4 V40 H0 Z",
+      ],
+      duration: 3000,
+      direction: "alternate",
       loop: true,
-      delay: anime.stagger(400),
-      easing: "easeOutCubic",
+      easing: "easeInOutSine",
     })
 
-    // 19. Separator line draw-in
+    // 17. Sparkle stars twinkle
     anime({
-      targets: "#sep-line",
-      scaleX: [0, 1],
-      opacity: [0, 1],
-      duration: 800,
-      delay: 1000,
-      easing: "cubicBezier(0.22, 1, 0.36, 1)",
-    })
-
-    // 20. Countdown number reveal
-    anime({
-      targets: ".countdown-num",
-      scale: [1.3, 1],
-      opacity: [0, 1],
-      duration: 500,
-      delay: anime.stagger(80, { start: 1400 }),
-      easing: "spring(1, 80, 10, 0)",
+      targets: ".sparkle-star",
+      opacity: () => [0, anime.random(0.5, 1)],
+      scale: () => [0.5, anime.random(1, 2)],
+      duration: () => anime.random(800, 2000),
+      direction: "alternate",
+      loop: true,
+      delay: anime.stagger(200),
+      easing: "easeInOutSine",
     })
   }, [])
 
   // ============================================================
-  // COUNTDOWN TIMER
+  // COUNTDOWN
   // ============================================================
   useEffect(() => {
     if (!config.estimatedEnd) { setTimeLeft(null); return }
@@ -300,13 +282,13 @@ export function MaintenanceView({
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    anime({ targets: "#refresh-icon", rotate: [0, 360], duration: 600, easing: "easeInOutQuad" })
-    setTimeout(() => window.location.reload(), 700)
+    anime({ targets: "#refresh-icon", rotate: [0, 720], duration: 800, easing: "easeInOutQuad" })
+    setTimeout(() => window.location.reload(), 800)
   }
 
   const waNumber = (config.emergencyContact || "6281234567890").replace(/\D/g, "")
   const waUrl = `https://wa.me/${waNumber}?text=` +
-    encodeURIComponent("Halo Tim Diklat Prakom Kejaksaan RI, saya ingin menanyakan status pemeliharaan Web Kelas Agrasena.")
+    encodeURIComponent("Halo Admin Agrasena, saya ingin menanyakan status pemeliharaan Web Kelas Agrasena 625.")
 
   const countdownEnd = config.estimatedEnd
     ? new Date(config.estimatedEnd).toLocaleString("id-ID", {
@@ -316,15 +298,25 @@ export function MaintenanceView({
       }) + " WITA"
     : "Segera"
 
-  // Split title into words for cascade animation
-  const titleWords = (config.title || "Portal Sedang Dalam Pemeliharaan Sistem").split(" ")
+  // Background emojis — scattered playfully
+  const bgEmojis = [
+    { e: "🔧", t: "3%", l: "5%" }, { e: "⚙️", t: "8%", l: "88%" },
+    { e: "🐱", t: "14%", l: "15%" }, { e: "💻", t: "12%", l: "75%" },
+    { e: "🚧", t: "25%", l: "3%" }, { e: "⚡", t: "30%", l: "92%" },
+    { e: "☕", t: "45%", l: "5%" }, { e: "🎯", t: "50%", l: "95%" },
+    { e: "🔩", t: "65%", l: "8%" }, { e: "📡", t: "60%", l: "90%" },
+    { e: "🛠️", t: "78%", l: "12%" }, { e: "✨", t: "75%", l: "88%" },
+    { e: "🧰", t: "88%", l: "6%" }, { e: "🖥️", t: "85%", l: "92%" },
+    { e: "💾", t: "35%", l: "10%" }, { e: "🔌", t: "40%", l: "85%" },
+    { e: "🏗️", t: "55%", l: "2%" }, { e: "🎉", t: "20%", l: "50%" },
+  ]
 
   return (
     <div
       style={{
         height: "100dvh",
         width: "100%",
-        background: "#FAFAF8",
+        background: "linear-gradient(170deg, #FFF9ED 0%, #FFFDF6 30%, #FFF4D9 100%)",
         fontFamily: "'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif",
         display: "flex",
         flexDirection: "column",
@@ -332,459 +324,424 @@ export function MaintenanceView({
         position: "relative",
       }}
     >
-      {/* ============================================================
-          BACKGROUND LAYER — Animated particles + dashes + glows
-          ============================================================ */}
+      {/* ════════════════════════════════════════════════════════
+          BACKGROUND — Scattered emoji + sparkle stars + dots
+          ════════════════════════════════════════════════════════ */}
       <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-        {/* Diagonal dashes */}
-        <svg style={{ position: "absolute", top: 0, right: 0, opacity: 0.05 }} width="300" height="220" viewBox="0 0 300 220">
-          <line x1="300" y1="0" x2="0" y2="220" stroke="#1A2340" strokeWidth="1" strokeDasharray="8 6" />
-          <line x1="300" y1="40" x2="40" y2="220" stroke="#1A2340" strokeWidth="1" strokeDasharray="8 6" />
-          <line x1="300" y1="80" x2="80" y2="220" stroke="#1A2340" strokeWidth="1" strokeDasharray="8 6" />
-        </svg>
-        <svg style={{ position: "absolute", bottom: 0, left: 0, opacity: 0.04 }} width="260" height="180" viewBox="0 0 260 180">
-          <line x1="0" y1="180" x2="260" y2="0" stroke="#1A2340" strokeWidth="1" strokeDasharray="8 6" />
-          <line x1="0" y1="130" x2="260" y2="0" stroke="#1A2340" strokeWidth="1" strokeDasharray="6 8" />
-        </svg>
-
-        {/* Radial glows */}
-        <div style={{ position: "absolute", top: "5%", right: "5%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "5%", left: "5%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translateX(-50%)", width: 400, height: 200, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(245,158,11,0.03) 0%, transparent 70%)" }} />
-
-        {/* Spark dots */}
-        {[
-          { top: "6%", left: "8%", s: 5, c: "#F59E0B" },
-          { top: "12%", left: "72%", s: 4, c: "#F97316" },
-          { top: "25%", left: "90%", s: 5, c: "#F59E0B" },
-          { top: "55%", left: "93%", s: 4, c: "#F59E0B" },
-          { top: "78%", left: "85%", s: 5, c: "#F97316" },
-          { top: "88%", left: "14%", s: 4, c: "#F59E0B" },
-          { top: "65%", left: "4%", s: 5, c: "#F97316" },
-          { top: "38%", left: "2%", s: 4, c: "#F59E0B" },
-        ].map((d, i) => (
-          <span key={i} className="spark-dot" style={{ position: "absolute", top: d.top, left: d.left, width: d.s, height: d.s, borderRadius: "50%", background: d.c, opacity: 0.35 }} />
+        {/* Emoji scatter */}
+        {bgEmojis.map((em, i) => (
+          <span
+            key={i}
+            className="bg-emoji"
+            style={{ position: "absolute", top: em.t, left: em.l, fontSize: "clamp(1rem, 2vw, 1.6rem)", opacity: 0, userSelect: "none" }}
+          >
+            {em.e}
+          </span>
         ))}
 
-        {/* Rising particles (bottom center) */}
+        {/* Sparkle stars */}
         {[
-          { left: "47%", c: "#F59E0B", s: 5 },
-          { left: "49%", c: "#F97316", s: 4 },
-          { left: "51%", c: "#FCD34D", s: 6 },
-          { left: "53%", c: "#F59E0B", s: 4 },
-          { left: "45%", c: "#F97316", s: 5 },
-        ].map((p, i) => (
-          <div
+          { t: "6%", l: "30%" }, { t: "10%", l: "65%" }, { t: "20%", l: "40%" },
+          { t: "35%", l: "70%" }, { t: "50%", l: "20%" }, { t: "70%", l: "60%" },
+          { t: "80%", l: "35%" }, { t: "90%", l: "80%" },
+        ].map((s, i) => (
+          <svg key={i} className="sparkle-star" style={{ position: "absolute", top: s.t, left: s.l, opacity: 0 }} width="12" height="12" viewBox="0 0 12 12">
+            <path d="M6 0 L7 4.5 L12 6 L7 7.5 L6 12 L5 7.5 L0 6 L5 4.5 Z" fill="#FCD34D" />
+          </svg>
+        ))}
+
+        {/* Traffic cone bouncing decorations */}
+        <span className="cone-bounce" style={{ position: "absolute", bottom: "8%", left: "6%", fontSize: "1.5rem", opacity: 0.2 }}>🚦</span>
+        <span className="cone-bounce" style={{ position: "absolute", bottom: "8%", right: "6%", fontSize: "1.3rem", opacity: 0.2 }}>🚧</span>
+
+        {/* Floating hearts from hero area */}
+        {[0, 1, 2].map((i) => (
+          <Heart
             key={i}
-            className="particle"
+            className="float-heart"
             style={{
               position: "absolute",
-              bottom: "2%",
-              left: p.left,
-              width: p.s,
-              height: p.s,
-              borderRadius: "50%",
-              background: p.c,
+              top: "35%",
+              left: `${47 + i * 3}%`,
+              width: 14,
+              height: 14,
+              color: i === 1 ? "#FB923C" : "#F59E0B",
+              fill: i === 1 ? "#FB923C" : "#F59E0B",
               opacity: 0,
             }}
           />
         ))}
-
-        {/* Floating decorative icons */}
-        {[
-          { icon: "⚙️", top: "8%", left: "30%", size: "1.4rem" },
-          { icon: "🔧", top: "7%", left: "65%", size: "1.2rem" },
-          { icon: "💻", top: "85%", left: "28%", size: "1.2rem" },
-          { icon: "🔩", top: "82%", left: "70%", size: "1rem" },
-          { icon: "⚡", top: "45%", left: "96%", size: "1.1rem" },
-        ].map((fi, i) => (
-          <span
-            key={i}
-            className="float-icon"
-            style={{
-              position: "absolute",
-              top: fi.top,
-              left: fi.left,
-              fontSize: fi.size,
-              opacity: 0.15,
-              userSelect: "none",
-            }}
-          >
-            {fi.icon}
-          </span>
-        ))}
       </div>
 
-      {/* ============================================================
-          HEADER — Logo + Banners (compact)
-          ============================================================ */}
-      <header style={{ position: "relative", zIndex: 20, padding: "12px 24px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <div id="logo-mark" style={{ opacity: 0, display: "flex", alignItems: "center", gap: 9 }}>
-          <Image src="/Logo.png" alt="Kejaksaan RI" width={32} height={32} style={{ objectFit: "contain" }} />
+      {/* ════════════════════════════════════════════════════════
+          HEADER — compact
+          ════════════════════════════════════════════════════════ */}
+      <header style={{ position: "relative", zIndex: 20, padding: "10px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Image src="/Logo.png" alt="Agrasena 625" width={28} height={28} style={{ objectFit: "contain" }} />
           <div>
-            <div style={{ fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.18em", color: "#64748B", textTransform: "uppercase" }}>Badiklat Kejaksaan RI</div>
-            <div style={{ fontSize: "0.76rem", fontWeight: 800, color: "#1A2340", lineHeight: 1.1 }}>Portal Web Kelas Agrasena</div>
+            <div style={{ fontSize: "0.78rem", fontWeight: 900, color: "#1A2340", lineHeight: 1.1 }}>Agrasena 625</div>
+            <div style={{ fontSize: "0.55rem", fontWeight: 600, color: "#94A3B8", letterSpacing: "0.1em" }}>Portal Web Kelas</div>
           </div>
         </div>
 
         {isAdmin && (
-          <div style={{ width: "100%", maxWidth: 760, background: "rgba(245,158,11,0.10)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 14, padding: "7px 14px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <ShieldCheck style={{ width: 15, height: 15, color: "#D97706", flexShrink: 0 }} />
-              <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#92400E", margin: 0 }}>
-                Sesi Admin Aktif — Pengunjung melihat layar ini.
-              </p>
+          <div style={{ width: "100%", maxWidth: 680, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 14, padding: "6px 12px", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <ShieldCheck style={{ width: 14, height: 14, color: "#D97706" }} />
+              <p style={{ fontSize: "0.62rem", fontWeight: 700, color: "#92400E", margin: 0 }}>Admin Session — Pengunjung melihat layar ini.</p>
             </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              <a href="/?bypass=1" style={{ padding: "4px 10px", borderRadius: 8, fontSize: "0.62rem", fontWeight: 700, background: "rgba(245,158,11,0.15)", color: "#92400E", border: "1px solid rgba(245,158,11,0.4)", textDecoration: "none" }}>Bypass ↗</a>
-              <Link href="/admin/dashboard" style={{ padding: "4px 10px", borderRadius: 8, fontSize: "0.62rem", fontWeight: 800, background: "#D97706", color: "#fff", textDecoration: "none" }}>Dashboard</Link>
+            <div style={{ display: "flex", gap: 5 }}>
+              <a href="/?bypass=1" style={{ padding: "3px 10px", borderRadius: 8, fontSize: "0.58rem", fontWeight: 700, background: "rgba(245,158,11,0.15)", color: "#92400E", border: "1px solid rgba(245,158,11,0.4)", textDecoration: "none" }}>Bypass ↗</a>
+              <Link href="/admin/dashboard" style={{ padding: "3px 10px", borderRadius: 8, fontSize: "0.58rem", fontWeight: 800, background: "#D97706", color: "#fff", textDecoration: "none" }}>Dashboard</Link>
             </div>
           </div>
         )}
 
         {isPreview && !isAdmin && (
-          <div style={{ padding: "3px 12px", borderRadius: 999, fontSize: "0.62rem", fontWeight: 700, background: "rgba(100,116,139,0.10)", color: "#64748B", border: "1px solid rgba(30,41,59,0.08)" }}>
+          <div style={{ padding: "3px 10px", borderRadius: 999, fontSize: "0.58rem", fontWeight: 700, background: "rgba(100,116,139,0.10)", color: "#64748B" }}>
             👁️ Mode Pratinjau
           </div>
         )}
       </header>
 
-      {/* ============================================================
-          MAIN — 2-COLUMN SPLIT LAYOUT (fits 1 screen)
-          LEFT: Illustration  |  RIGHT: Content + Buttons
-          ============================================================ */}
-      <main style={{ flex: 1, position: "relative", zIndex: 10, display: "flex", alignItems: "center", padding: "8px 24px 8px", gap: "clamp(16px, 3vw, 40px)", overflow: "hidden", minHeight: 0 }}>
+      {/* ════════════════════════════════════════════════════════
+          MAIN — CENTER HERO + BENTO GRID BELOW
+          Fun, playful, single-screen layout
+          ════════════════════════════════════════════════════════ */}
+      <main style={{ flex: 1, position: "relative", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", padding: "0 16px", overflow: "hidden", minHeight: 0 }}>
 
-        {/* ══════ LEFT PANEL — ILLUSTRATION ══════ */}
-        <div
-          id="panel-left"
-          style={{
-            opacity: 0,
-            flex: "0 0 auto",
-            width: "clamp(240px, 42%, 480px)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 10,
-            position: "relative",
-          }}
-        >
-          {/* Top badge — Sedang diperbaiki */}
-          <div
-            id="badge-tool"
-            style={{
-              background: "#FFFFFF",
-              borderRadius: 12,
-              padding: "6px 12px",
-              boxShadow: "0 4px 20px rgba(26,35,64,0.10)",
-              border: "1px solid rgba(30,41,59,0.08)",
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              alignSelf: "flex-start",
-              marginLeft: "8%",
-            }}
-          >
-            <div id="wrench-anim" style={{ display: "flex" }}>
-              <Wrench style={{ width: 14, height: 14, color: "#F97316" }} />
-            </div>
-            <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1A2340", whiteSpace: "nowrap" }}>Sedang diperbaiki</span>
-            <div style={{ display: "flex", gap: 3 }}>
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="wave-dot" style={{ width: 4, height: 4, borderRadius: "50%", background: "#F97316", display: "inline-block", opacity: 0.3 }} />
-              ))}
-            </div>
-          </div>
+        {/* ─── HERO SECTION — Image centered with badges ─── */}
+        <div style={{ position: "relative", width: "100%", maxWidth: 800, display: "flex", flexDirection: "column", alignItems: "center" }}>
 
-          {/* Hero Image */}
+          {/* Hero image */}
           <div
             id="hero-img"
-            style={{ width: "100%", position: "relative" }}
+            style={{
+              width: "clamp(280px, 55vw, 480px)",
+              position: "relative",
+              opacity: 0,
+              transform: "scale(0)",
+            }}
           >
             <Image
               src="/Maintenance.webp"
-              alt="Tim Pranata Komputer Kejaksaan RI sedang melakukan pemeliharaan sistem"
-              width={520}
-              height={364}
+              alt="Tim Agrasena 625 sedang melakukan pemeliharaan sistem"
+              width={480}
+              height={336}
               priority
               style={{
                 width: "100%",
                 height: "auto",
                 objectFit: "contain",
-                filter: "drop-shadow(0 16px 40px rgba(26,35,64,0.13))",
-                maxHeight: "clamp(200px, 40vh, 340px)",
+                filter: "drop-shadow(0 12px 32px rgba(26,35,64,0.14))",
+                maxHeight: "clamp(160px, 28vh, 280px)",
               }}
             />
           </div>
 
-          {/* Bottom badge — Mohon bersabar (MOVED TO BOTTOM) */}
+          {/* Badge left — "Sedang diperbaiki" */}
+          <div
+            id="badge-fixing"
+            style={{
+              position: "absolute",
+              top: "10%",
+              left: "clamp(0px, 5%, 60px)",
+              background: "#FFFFFF",
+              borderRadius: 14,
+              padding: "6px 12px",
+              boxShadow: "0 4px 20px rgba(26,35,64,0.12)",
+              border: "2px solid #FCD34D",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span style={{ fontSize: "1rem" }}>🔧</span>
+            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#92400E" }}>Lagi di-fix nih!</span>
+          </div>
+
+          {/* Badge right — patience */}
           <div
             id="badge-patience"
             style={{
+              position: "absolute",
+              bottom: "5%",
+              right: "clamp(0px, 5%, 60px)",
               background: "#FEF3C7",
-              borderRadius: 12,
+              borderRadius: 14,
               padding: "6px 14px",
-              boxShadow: "0 4px 20px rgba(245,158,11,0.22)",
-              border: "1px solid #FCD34D",
+              boxShadow: "0 4px 20px rgba(245,158,11,0.25)",
+              border: "2px solid #FBBF24",
               display: "flex",
               alignItems: "center",
-              gap: 7,
-              alignSelf: "center",
+              gap: 6,
             }}
           >
-            <span style={{ fontSize: "1rem" }}>🙏</span>
-            <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#92400E", whiteSpace: "nowrap" }}>
-              Mohon bersabar, kami segera kembali!
-            </span>
+            <span style={{ fontSize: "1rem" }}>😺</span>
+            <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#92400E" }}>Sabar ya, bentar lagi!</span>
             <span style={{ fontSize: "0.9rem" }}>✨</span>
           </div>
         </div>
 
-        {/* ══════ DIVIDER ══════ */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0, alignSelf: "stretch", justifyContent: "center" }}>
-          <div id="sep-line" style={{ width: 1.5, flex: 1, maxHeight: "60%", background: "linear-gradient(to bottom, transparent, rgba(245,158,11,0.35), transparent)", transformOrigin: "center" }} />
-          {/* Spinning gear divider accent */}
-          <div id="gear-anim" style={{ padding: 4 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </div>
-          <div style={{ width: 1.5, flex: 1, maxHeight: "60%", background: "linear-gradient(to bottom, transparent, rgba(245,158,11,0.35), transparent)" }} />
-        </div>
-
-        {/* ══════ RIGHT PANEL — CONTENT ══════ */}
-        <div
-          id="panel-right"
+        {/* ─── TITLE ─── */}
+        <h1
+          id="main-title"
           style={{
+            textAlign: "center",
+            fontSize: "clamp(1.2rem, 3.5vw, 2rem)",
+            fontWeight: 900,
+            color: "#1A2340",
+            lineHeight: 1.15,
+            margin: "4px 0 2px",
             opacity: 0,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: "clamp(8px, 1.5vh, 16px)",
-            minWidth: 0,
+            letterSpacing: "-0.02em",
           }}
         >
-          {/* Eyebrow tag */}
-          <div
-            id="eyebrow-tag"
-            style={{
-              opacity: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              background: "#FEF3C7",
-              border: "1px solid #FCD34D",
-              borderRadius: 999,
-              padding: "5px 14px",
-              alignSelf: "flex-start",
-            }}
-          >
-            <span style={{ fontSize: "0.9rem" }}>🚧</span>
-            <span style={{ fontSize: "0.65rem", fontWeight: 800, color: "#92400E", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-              Maintenance in Progress
-            </span>
-          </div>
-
-          {/* Title — word-by-word cascade */}
-          <h1
-            style={{
-              fontSize: "clamp(1.2rem, 2.8vw, 2rem)",
-              fontWeight: 900,
-              color: "#1A2340",
-              lineHeight: 1.2,
-              margin: 0,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {titleWords.map((word, i) => (
-              <span
-                key={i}
-                className="title-word"
-                style={{ display: "inline-block", marginRight: "0.25em", opacity: 0 }}
-              >
-                {word}
-              </span>
-            ))}
-          </h1>
-
-          {/* Typewriter message */}
-          <p style={{
-            fontSize: "clamp(0.72rem, 1.5vw, 0.82rem)",
+          {config.title || "Oops! Kami Sedang Upgrade 🛠️"}
+        </h1>
+        <p
+          id="sub-title"
+          style={{
+            textAlign: "center",
+            fontSize: "clamp(0.68rem, 1.5vw, 0.82rem)",
             color: "#64748B",
-            lineHeight: 1.6,
-            margin: 0,
-            minHeight: "2.8em",
-          }}>
-            {typedText}
-            <span style={{ display: "inline-block", width: 2, height: "1em", background: "#F59E0B", marginLeft: 2, animation: "cursor-blink 0.8s step-end infinite", verticalAlign: "text-bottom" }} />
-          </p>
+            lineHeight: 1.5,
+            margin: "0 auto 6px",
+            maxWidth: 440,
+            opacity: 0,
+          }}
+        >
+          {config.message || "Kami sedang meningkatkan sistem untuk pengalaman belajar yang lebih baik. Silakan kembali sebentar lagi!"}
+        </p>
 
-          {/* ── COUNTDOWN ───────────────── */}
-          {timeLeft && !timeLeft.isEnded && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                <Clock style={{ width: 12, height: 12, color: "#F59E0B" }} />
-                <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#94A3B8", letterSpacing: "0.1em", textTransform: "uppercase" }}>Estimasi selesai dalam</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+        {/* ─── BENTO GRID — countdown, terminal, buttons ─── */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 720,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gridTemplateRows: "auto auto",
+            gap: 8,
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          {/* ═══ CARD 1 — COUNTDOWN (spans left) ═══ */}
+          <div
+            className="maint-card"
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 18,
+              padding: "clamp(10px, 1.5vh, 16px) clamp(12px, 2vw, 18px)",
+              border: "2px solid rgba(252,211,77,0.5)",
+              boxShadow: "0 4px 20px rgba(245,158,11,0.10)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 6,
+              opacity: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: "1rem" }}>⏱️</span>
+              <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#92400E", letterSpacing: "0.1em", textTransform: "uppercase" }}>Estimasi Selesai</span>
+            </div>
+
+            {timeLeft && !timeLeft.isEnded ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
                 {[
-                  { val: timeLeft.days, label: "Hari", accent: "#1A2340" },
-                  { val: timeLeft.hours, label: "Jam", accent: "#F59E0B" },
-                  { val: timeLeft.minutes, label: "Menit", accent: "#F97316" },
-                  { val: timeLeft.seconds, label: "Detik", accent: "#EF4444" },
-                ].map(({ val, label, accent }) => (
-                  <div
-                    key={label}
-                    className="countdown-num"
-                    style={{
-                      textAlign: "center",
-                      background: "#FFFFFF",
-                      borderRadius: 12,
-                      padding: "8px 4px 6px",
-                      border: "1px solid rgba(30,41,59,0.08)",
-                      boxShadow: "0 1px 3px rgba(26,35,64,0.05)",
-                      opacity: 0,
-                    }}
-                  >
-                    <div style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.7rem)", fontWeight: 900, color: accent, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                  { val: timeLeft.days, label: "Hari", accent: "#1A2340", bg: "#F1F5F9" },
+                  { val: timeLeft.hours, label: "Jam", accent: "#F59E0B", bg: "#FFFBEB" },
+                  { val: timeLeft.minutes, label: "Mnt", accent: "#F97316", bg: "#FFF7ED" },
+                  { val: timeLeft.seconds, label: "Dtk", accent: "#EF4444", bg: "#FEF2F2" },
+                ].map(({ val, label, accent, bg }) => (
+                  <div key={label} className="cd-num" style={{ textAlign: "center", background: bg, borderRadius: 12, padding: "6px 2px 4px", opacity: 0 }}>
+                    <div style={{ fontSize: "clamp(1rem, 2.5vw, 1.6rem)", fontWeight: 900, color: accent, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
                       {String(val).padStart(2, "0")}
                     </div>
-                    <div style={{ fontSize: "0.55rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 3 }}>{label}</div>
+                    <div style={{ fontSize: "0.5rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", marginTop: 2 }}>{label}</div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : timeLeft?.isEnded ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", background: "rgba(16,185,129,0.08)", borderRadius: 12 }}>
+                <CheckCircle style={{ width: 14, height: 14, color: "#10B981" }} />
+                <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#065F46" }}>Seharusnya sudah selesai!</span>
+              </div>
+            ) : (
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1A2340" }}>Segera kembali! 🎉</div>
+            )}
 
-          {timeLeft?.isEnded && (
-            <div style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid rgba(16,185,129,0.3)", borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-              <CheckCircle style={{ width: 16, height: 16, color: "#10B981", flexShrink: 0 }} />
-              <p style={{ fontSize: "0.78rem", color: "#065F46", fontWeight: 600, margin: 0 }}>
-                Estimasi selesai! Silakan <strong>Periksa Status</strong>.
-              </p>
-            </div>
-          )}
-
-          {/* ── INFO MINI-CARDS ───────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-            {/* Status */}
-            <div className="info-card" style={{ background: "#FFFFFF", borderRadius: 12, padding: "8px 10px", border: "1px solid rgba(30,41,59,0.08)", opacity: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                <div id="status-dot" style={{ width: 7, height: 7, borderRadius: "50%", background: "#F59E0B", flexShrink: 0 }} />
-                <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em" }}>Status</span>
+            {/* Mini info row */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "#FEF3C7", borderRadius: 8, border: "1px solid #FDE68A" }}>
+                <div id="status-dot" style={{ width: 6, height: 6, borderRadius: "50%", background: "#F59E0B" }} />
+                <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#92400E" }}>Maintenance</span>
               </div>
-              <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#92400E" }}>Pemeliharaan</div>
-            </div>
-            {/* Scope */}
-            <div className="info-card" style={{ background: "#FFFFFF", borderRadius: 12, padding: "8px 10px", border: "1px solid rgba(30,41,59,0.08)", opacity: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                <Wrench style={{ width: 9, height: 9, color: "#94A3B8" }} />
-                <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em" }}>Pekerjaan</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", background: "#F1F5F9", borderRadius: 8 }}>
+                <Clock style={{ width: 10, height: 10, color: "#94A3B8" }} />
+                <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#64748B" }}>{countdownEnd}</span>
               </div>
-              <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#1A2340" }}>Infrastruktur</div>
-            </div>
-            {/* ETA */}
-            <div className="info-card" style={{ background: "#FFFFFF", borderRadius: 12, padding: "8px 10px", border: "1px solid rgba(30,41,59,0.08)", opacity: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
-                <Clock style={{ width: 9, height: 9, color: "#94A3B8" }} />
-                <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em" }}>Selesai</span>
-              </div>
-              <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#1A2340" }}>{countdownEnd}</div>
             </div>
           </div>
 
-          {/* ── ACTION BUTTONS ─────────────── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {/* ═══ CARD 2 — FAKE TERMINAL (right) ═══ */}
+          <div
+            id="terminal-box"
+            className="maint-card"
+            style={{
+              background: "#1A2340",
+              borderRadius: 18,
+              padding: 0,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              opacity: 0,
+              border: "2px solid rgba(30,41,59,0.3)",
+            }}
+          >
+            {/* Terminal title bar */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", background: "rgba(255,255,255,0.06)" }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444" }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#F59E0B" }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E" }} />
+              <span style={{ fontSize: "0.55rem", color: "#64748B", marginLeft: 6, fontWeight: 600 }}>agrasena-625@server</span>
+            </div>
+            {/* Terminal content */}
+            <div style={{ flex: 1, padding: "6px 10px", overflowY: "auto", fontFamily: "'Fira Code', 'Consolas', monospace", fontSize: "clamp(0.52rem, 0.9vw, 0.62rem)", lineHeight: 1.6, color: "#94A3B8", minHeight: 0 }}>
+              {consoleLines.map((line, i) => (
+                <div key={i} style={{ color: line.startsWith("✓") ? "#22C55E" : line.startsWith("⟳") ? "#F59E0B" : line.startsWith("⏳") ? "#A78BFA" : "#94A3B8" }}>
+                  {line}
+                </div>
+              ))}
+              <span style={{ display: "inline-block", width: 7, height: 12, background: "#F59E0B", animation: "cursor-blink 0.8s step-end infinite" }} />
+            </div>
+          </div>
+
+          {/* ═══ CARD 3 — CTA BUTTONS (bottom-left) ═══ */}
+          <div
+            className="maint-card"
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 18,
+              padding: "clamp(8px, 1.2vh, 14px) clamp(10px, 1.5vw, 16px)",
+              border: "2px solid rgba(34,197,94,0.3)",
+              boxShadow: "0 4px 20px rgba(34,197,94,0.08)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              justifyContent: "center",
+              opacity: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: "0.9rem" }}>📞</span>
+              <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#1A2340", letterSpacing: "0.08em", textTransform: "uppercase" }}>Butuh Bantuan?</span>
+            </div>
+
             <a
               id="wa-btn"
-              className="action-btn"
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-                padding: "11px 20px",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                padding: "9px 14px",
                 background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-                borderRadius: 14, color: "#fff", fontWeight: 800,
-                fontSize: "0.82rem", textDecoration: "none",
-                boxShadow: "0 6px 24px rgba(34,197,94,0.30)",
-                opacity: 0,
+                borderRadius: 12, color: "#fff", fontWeight: 800,
+                fontSize: "0.75rem", textDecoration: "none",
+                boxShadow: "0 4px 20px rgba(34,197,94,0.3)",
               }}
             >
-              <MessageCircle style={{ width: 16, height: 16 }} />
-              Hubungi PIC Diklat via WhatsApp
-              <span style={{ marginLeft: 4, width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem" }}>↗</span>
+              <MessageCircle style={{ width: 14, height: 14 }} />
+              Chat Admin Agrasena
+              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem" }}>↗</span>
             </a>
 
             <button
               type="button"
-              className="action-btn"
+              id="refresh-btn"
               onClick={handleRefresh}
               disabled={isRefreshing}
               style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-                padding: "9px 20px",
-                background: "#FFFFFF", borderRadius: 14, color: "#1A2340",
-                fontWeight: 700, fontSize: "0.82rem",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                padding: "7px 14px",
+                background: "#F8FAFC", borderRadius: 12, color: "#1A2340",
+                fontWeight: 700, fontSize: "0.72rem",
                 cursor: isRefreshing ? "not-allowed" : "pointer",
-                border: "1.5px solid rgba(30,41,59,0.14)",
-                boxShadow: "0 2px 8px rgba(26,35,64,0.06)",
-                opacity: 0, fontFamily: "inherit",
+                border: "1.5px solid rgba(30,41,59,0.12)",
+                opacity: isRefreshing ? 0.6 : 1, fontFamily: "inherit",
               }}
             >
-              <RefreshCw id="refresh-icon" style={{ width: 14, height: 14, color: isRefreshing ? "#F59E0B" : "#64748B" }} />
-              {isRefreshing ? "Sedang memeriksa..." : "Periksa Status"}
+              <RefreshCw id="refresh-icon" style={{ width: 12, height: 12, color: isRefreshing ? "#F59E0B" : "#64748B" }} />
+              {isRefreshing ? "Checking..." : "Periksa Status"}
             </button>
           </div>
 
-          {/* ── EMERGENCY CONTACT ─────────── */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "7px 12px", background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(30,41,59,0.08)", flexWrap: "wrap", gap: 6 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <MessageCircle style={{ width: 12, height: 12, color: "#22C55E", flexShrink: 0 }} />
-              <span style={{ fontSize: "0.65rem", color: "#64748B", fontWeight: 600 }}>Kontak Darurat PIC Diklat</span>
+          {/* ═══ CARD 4 — FUN FACTS (bottom-right) ═══ */}
+          <div
+            className="maint-card"
+            style={{
+              background: "linear-gradient(135deg, #FFFBEB, #FEF3C7)",
+              borderRadius: 18,
+              padding: "clamp(8px, 1.2vh, 14px) clamp(10px, 1.5vw, 16px)",
+              border: "2px solid #FBBF24",
+              display: "flex",
+              flexDirection: "column",
+              gap: 5,
+              justifyContent: "center",
+              opacity: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: "0.9rem" }}>🐱</span>
+              <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#92400E", letterSpacing: "0.08em", textTransform: "uppercase" }}>Fun Facts</span>
             </div>
-            <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.65rem", fontWeight: 800, color: "#16A34A", textDecoration: "none" }}>+{waNumber}</a>
+
+            {[
+              { emoji: "🧑‍💻", text: "Tim Agrasena 625 sedang kerja keras!" },
+              { emoji: "🐈", text: "Kucing server sudah diberi makan ✓" },
+              { emoji: "☕", text: "Kopi ke-3 sudah disiapkan" },
+              { emoji: "🚀", text: "Sistemnya bakal lebih kenceng!" },
+            ].map(({ emoji, text }, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: "rgba(255,255,255,0.7)", borderRadius: 10 }}>
+                <span style={{ fontSize: "0.8rem" }}>{emoji}</span>
+                <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#78350F" }}>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </main>
 
-      {/* ============================================================
-          FOOTER — compact
-          ============================================================ */}
-      <footer style={{ position: "relative", zIndex: 10, textAlign: "center", padding: "8px 20px", borderTop: "1px solid rgba(30,41,59,0.07)", background: "#FFFFFF", flexShrink: 0 }}>
-        <span style={{ fontSize: "0.58rem", color: "#CBD5E1" }}>
-          © 2025 Badiklat Kejaksaan RI — Web Kelas Agrasena · Diklat Fungsional Pranata Komputer
-        </span>
+      {/* ════════════════════════════════════════════════════════
+          FOOTER — wavy + compact
+          ════════════════════════════════════════════════════════ */}
+      <footer style={{ position: "relative", zIndex: 10, flexShrink: 0 }}>
+        <svg id="footer-wave" style={{ display: "block", width: "100%", height: 12 }} viewBox="0 0 960 40" preserveAspectRatio="none">
+          <path d="M0,8 Q120,0 240,8 T480,8 T720,8 T960,8 V40 H0 Z" fill="#FFFFFF" />
+        </svg>
+        <div style={{ background: "#FFFFFF", textAlign: "center", padding: "0 20px 8px" }}>
+          <span style={{ fontSize: "0.55rem", color: "#CBD5E1" }}>
+            © 2025 Agrasena 625 — Web Kelas Diklat Fungsional Pranata Komputer Kejaksaan RI
+          </span>
+        </div>
       </footer>
 
-      {/* ── MOBILE FALLBACK ─────────────────────────────────────── */}
+      {/* KEYFRAMES */}
       <style>{`
         @keyframes cursor-blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
-        @keyframes maint-dot-pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.4; transform: scale(1.4); }
-        }
-        @media (max-width: 640px) {
-          main {
-            flex-direction: column !important;
+        @media (max-width: 580px) {
+          main > div:last-child {
+            grid-template-columns: 1fr !important;
             overflow-y: auto !important;
-            height: auto !important;
           }
-          #panel-left {
-            width: 100% !important;
-          }
-          #panel-right {
-            width: 100% !important;
-          }
-          /* Divider hidden on mobile */
-          main > div:nth-child(2) {
-            display: none !important;
-          }
+          #badge-fixing, #badge-patience { display: none !important; }
         }
       `}</style>
     </div>
