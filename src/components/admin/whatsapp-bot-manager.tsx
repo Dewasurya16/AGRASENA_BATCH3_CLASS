@@ -58,6 +58,24 @@ export function WhatsAppBotManager() {
   const [broadcastTo, setBroadcastTo] = React.useState("")
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
 
+  // Fetch QR Code
+  const fetchQr = React.useCallback(async () => {
+    setQrLoading(true)
+    try {
+      const res = await fetch("/api/wa-bot?action=qr")
+      const data = await res.json()
+      if (data.qrImage) {
+        setQrImage(data.qrImage)
+      } else if (data.connected) {
+        setQrImage(null)
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setQrLoading(false)
+    }
+  }, [])
+
   // Fetch Bot Status
   const fetchStatus = React.useCallback(async () => {
     setLoading(true)
@@ -84,25 +102,7 @@ export function WhatsAppBotManager() {
     } finally {
       setLoading(false)
     }
-  }, [])
-
-  // Fetch QR Code
-  const fetchQr = async () => {
-    setQrLoading(true)
-    try {
-      const res = await fetch("/api/wa-bot?action=qr")
-      const data = await res.json()
-      if (data.qrImage) {
-        setQrImage(data.qrImage)
-      } else if (data.connected) {
-        setQrImage(null)
-      }
-    } catch {
-      // Ignored
-    } finally {
-      setQrLoading(false)
-    }
-  };
+  }, [fetchQr])
 
   // Fetch Available Groups
   const fetchGroups = async () => {

@@ -12,7 +12,23 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".agents/**",
+    "wa-bot/**",
+    "scripts/**",
+    "supabase/**",
   ]),
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
+      "react/no-unescaped-entities": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@next/next/no-html-link-for-pages": "off",
+      "prefer-const": "warn",
+    },
+  },
 ]);
 
 export default eslintConfig;

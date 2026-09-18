@@ -246,7 +246,6 @@ export function QuizPlayer() {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(interval)
-          handleSubmitQuiz()
           return 0
         }
         return prev - 1
@@ -254,6 +253,12 @@ export function QuizPlayer() {
     }, 1000)
     return () => clearInterval(interval)
   }, [isQuizActive, isSubmitted])
+
+  React.useEffect(() => {
+    if (isQuizActive && !isSubmitted && timerSeconds === 0) {
+      handleSubmitQuiz()
+    }
+  }, [timerSeconds, isQuizActive, isSubmitted])
 
   const handleSelectOption = (optionIndex: number) => {
     if (isSubmitted) return
