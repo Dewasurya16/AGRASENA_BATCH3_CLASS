@@ -210,11 +210,78 @@ export function parseTimeToMins(timeStr?: string | null): number {
  */
 export function getAutoRoadmapData(
   overrideDay?: number,
-  supabaseSchedules: any[] = []
+  supabaseSchedules: any[] = [],
+  batch: "batch-3" | "batch-4" = "batch-3"
 ): {
   days: RoadmapDayDetail[]
   summary: RoadmapProgressSummary
 } {
+  // KHUSUS AGRASENA BATCH 4: Jika belum memiliki jadwal diinput, set status Periode Persiapan (0% progress)
+  if (batch === "batch-4") {
+    const hasSchedules = supabaseSchedules && supabaseSchedules.length > 0
+    const totalDays = 35
+
+    if (!hasSchedules) {
+      const days: RoadmapDayDetail[] = Array.from({ length: 35 }).map((_, i) => {
+        const dayNum = i + 1
+        let stageNum = 1
+        let stageName = "Tahap 1 • MOOC"
+        let stageSubtitle = "Pembelajaran Mandiri"
+        let dateStr = "Oktober 2026"
+        let dots = 4
+
+        if (dayNum > 30) {
+          stageNum = 4
+          stageName = "Tahap 4 • Seminar"
+          stageSubtitle = "Seminar Klasikal"
+          dateStr = "Desember 2026"
+          dots = 1
+        } else if (dayNum > 15) {
+          stageNum = 3
+          stageName = "Tahap 3 • Lab Prakom"
+          stageSubtitle = "Laboratorium di Satker"
+          dateStr = "November 2026"
+          dots = 1
+        } else if (dayNum > 5) {
+          stageNum = 2
+          stageName = "Tahap 2 • TMO"
+          stageSubtitle = "Tatap Muka Online"
+          dateStr = "Oktober – November 2026"
+          dots = 3
+        }
+
+        return {
+          dayNumber: dayNum,
+          stageNumber: stageNum,
+          stageName,
+          stageSubtitle,
+          dateStr,
+          dayOfWeek: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][(dayNum - 1) % 5],
+          dotsCount: dots,
+          status: "upcoming",
+          isTodayExact: false,
+          isNextUpcoming: dayNum === 1,
+          badgeLabel1: "BELUM MULAI",
+          badgeLabel2: "JADWAL MENDATANG",
+          sessions: [],
+        }
+      })
+
+      return {
+        days,
+        summary: {
+          currentDayNumber: 0,
+          totalDays,
+          progressPercentage: 0,
+          completedDays: 0,
+          currentStageName: "Periode Persiapan (Mulai Oktober 2026)",
+          isDiklatFinished: false,
+          isTodayActive: false,
+        },
+      }
+    }
+  }
+
   const autoDay = getCurrentDiklatDay()
   const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : autoDay
   const totalDays = 35
@@ -227,7 +294,7 @@ export function getAutoRoadmapData(
   const effectiveSchedules =
     supabaseSchedules && supabaseSchedules.length > 0
       ? supabaseSchedules
-      : DEFAULT_SCHEDULES_DATA
+      : (batch === "batch-4" ? [] : DEFAULT_SCHEDULES_DATA)
 
   const now = new Date()
   const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)

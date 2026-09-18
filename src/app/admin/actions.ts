@@ -519,13 +519,32 @@ export async function deleteTask(id: string) {
 
 // 5. ANNOUNCEMENT ACTIONS (CREATE, UPDATE, DELETE)
 export async function createAnnouncement(formData: FormData) {
-  const title = (formData.get('title') as string)?.trim()
+  let title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
   const is_urgent = formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true'
-  const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
+  const batch_selection = ((formData.get('batch_selection') || formData.get('batch')) as string)?.trim() || 'batch-3'
+  let author = (formData.get('author') as string)?.trim()
 
   if (!title || !content) {
     return { error: 'Judul dan isi pengumuman wajib diisi.' }
+  }
+
+  // Tag Batch 4 cleanly so it routes to Agrasena Batch 4
+  if (batch_selection === 'batch-4') {
+    if (!title.toLowerCase().includes('batch 4') && !title.toLowerCase().includes('batch-4')) {
+      title = `[Batch 4] ${title}`
+    }
+    if (!author || author.includes('Batch 3')) {
+      author = 'Panitia Diklat Batch 4'
+    }
+  } else if (batch_selection === 'batch-3') {
+    // If user mistakenly had [Batch 4] in title, remove it
+    title = title.replace(/^\[batch\s*4\]\s*/i, '')
+    if (!author || author.includes('Batch 4')) {
+      author = 'Pengurus Diklat Batch 3'
+    }
+  } else if (!author) {
+    author = 'Pengurus Diklat'
   }
 
   const supabase = await createClient()
@@ -542,6 +561,8 @@ export async function createAnnouncement(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4', 'layout')
   revalidatePath('/announcements')
   revalidatePath('/admin/dashboard')
   return { success: 'Pengumuman berhasil dipublikasikan ke database!' }
@@ -549,13 +570,30 @@ export async function createAnnouncement(formData: FormData) {
 
 export async function updateAnnouncement(formData: FormData) {
   const id = formData.get('id') as string
-  const title = (formData.get('title') as string)?.trim()
+  let title = (formData.get('title') as string)?.trim()
   const content = (formData.get('content') as string)?.trim()
   const is_urgent = formData.get('is_urgent') === 'on' || formData.get('is_urgent') === 'true'
-  const author = (formData.get('author') as string)?.trim() || 'Pengurus Diklat'
+  const batch_selection = ((formData.get('batch_selection') || formData.get('batch')) as string)?.trim()
+  let author = (formData.get('author') as string)?.trim()
 
   if (!id || !title || !content) {
     return { error: 'ID, judul, dan isi pengumuman wajib diisi.' }
+  }
+
+  if (batch_selection === 'batch-4') {
+    if (!title.toLowerCase().includes('batch 4') && !title.toLowerCase().includes('batch-4')) {
+      title = `[Batch 4] ${title}`
+    }
+    if (!author || author.includes('Batch 3')) {
+      author = 'Panitia Diklat Batch 4'
+    }
+  } else if (batch_selection === 'batch-3') {
+    title = title.replace(/^\[batch\s*4\]\s*/i, '')
+    if (!author || author.includes('Batch 4')) {
+      author = 'Pengurus Diklat Batch 3'
+    }
+  } else if (!author) {
+    author = 'Pengurus Diklat'
   }
 
   const supabase = await createClient()
@@ -574,6 +612,8 @@ export async function updateAnnouncement(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4', 'layout')
   revalidatePath('/announcements')
   revalidatePath('/admin/dashboard')
   return { success: 'Pengumuman berhasil diperbarui!' }
@@ -584,6 +624,8 @@ export async function deleteAnnouncement(id: string) {
   const { error } = await supabase.from('announcements').delete().eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/', 'layout')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4', 'layout')
   revalidatePath('/announcements')
   revalidatePath('/admin/dashboard')
   return { success: 'Pengumuman berhasil dihapus.' }

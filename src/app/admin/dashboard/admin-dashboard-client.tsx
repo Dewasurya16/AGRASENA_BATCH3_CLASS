@@ -232,7 +232,7 @@ export function getItemBatch(item: any): "batch-3" | "batch-4" {
   if (!item) return "batch-3"
   if (item.batch === 4 || item.batch === "batch-4") return "batch-4"
   if (item.batch === 3 || item.batch === "batch-3") return "batch-3"
-  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""}`.toLowerCase()
+  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
   if (
     text.includes("batch 4") ||
     text.includes("batch-4") ||
@@ -308,6 +308,9 @@ export function AdminDashboardClient({
   const [createScheduleBatch, setCreateScheduleBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
   const [createTaskBatch, setCreateTaskBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
   const [uploadMaterialBatch, setUploadMaterialBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
+  const [createAnnouncementBatch, setCreateAnnouncementBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
+  const [announcementSearch, setAnnouncementSearch] = React.useState("")
+  const [announcementBatchFilter, setAnnouncementBatchFilter] = React.useState<"all" | "batch-3" | "batch-4">("all")
 
   // Audit Log State for Super Admin
   const [auditSearch, setAuditSearch] = React.useState("")
@@ -1231,11 +1234,37 @@ export function AdminDashboardClient({
     return filteredTasks.slice(start, start + ITEMS_PER_PAGE)
   }, [filteredTasks, taskPage])
 
-  const totalAnnouncementPages = Math.ceil(initialAnnouncements.length / ITEMS_PER_PAGE) || 1
+  // --- ANNOUNCEMENTS BATCH & SEARCH FILTER ---
+  const b3AnnouncementsCount = React.useMemo(() => {
+    return initialAnnouncements.filter((a) => getItemBatch(a) === "batch-3").length
+  }, [initialAnnouncements])
+
+  const b4AnnouncementsCount = React.useMemo(() => {
+    return initialAnnouncements.filter((a) => getItemBatch(a) === "batch-4").length
+  }, [initialAnnouncements])
+
+  const effectiveAnnouncementBatchFilter = announcementBatchFilter !== "all" ? announcementBatchFilter : selectedBatch
+
+  const filteredAnnouncements = React.useMemo(() => {
+    return initialAnnouncements.filter((a) => {
+      const b = getItemBatch(a)
+      const matchesBatch =
+        effectiveAnnouncementBatchFilter === "all" || b === effectiveAnnouncementBatchFilter
+      const q = announcementSearch.toLowerCase().trim()
+      const matchesSearch =
+        q === "" ||
+        (a.title || "").toLowerCase().includes(q) ||
+        (a.content || "").toLowerCase().includes(q) ||
+        (a.author || "").toLowerCase().includes(q)
+      return matchesBatch && matchesSearch
+    })
+  }, [initialAnnouncements, effectiveAnnouncementBatchFilter, announcementSearch])
+
+  const totalAnnouncementPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE) || 1
   const paginatedAnnouncements = React.useMemo(() => {
     const start = (announcementPage - 1) * ITEMS_PER_PAGE
-    return initialAnnouncements.slice(start, start + ITEMS_PER_PAGE)
-  }, [initialAnnouncements, announcementPage])
+    return filteredAnnouncements.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredAnnouncements, announcementPage])
 
   // --- REPORTS FILTER & METRICS ---
   const pendingReportsCount = React.useMemo(() => {
@@ -1975,6 +2004,8 @@ export function AdminDashboardClient({
     setIsLoading(true)
     try {
       const formData = new FormData(e.currentTarget)
+      const batchSelection = (formData.get("batch_selection") as string) || createAnnouncementBatch
+      formData.set("batch_selection", batchSelection)
       const res = await createAnnouncement(formData)
 
       if (res?.error) {
@@ -2597,9 +2628,15 @@ export function AdminDashboardClient({
                     <Sparkles className="h-4 w-4 text-rose-600 dark:text-rose-400 group-hover:scale-110 transition-transform" />
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{initialAnnouncements.length}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">
+                      {selectedBatch === "all"
+                        ? initialAnnouncements.length
+                        : selectedBatch === "batch-4"
+                        ? b4AnnouncementsCount
+                        : b3AnnouncementsCount}
+                    </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5 truncate">
-                      {initialAnnouncements.filter((a) => a.is_urgent).length} Mendesak / Urgent
+                      {filteredAnnouncements.filter((a) => a.is_urgent).length} Mendesak / Urgent
                     </div>
                   </div>
                   <div className="pt-2 border-t border-slate-100 dark:border-[#2A3550] flex items-center justify-between text-[11px] font-bold text-rose-600 dark:text-rose-400">
@@ -2615,10 +2652,12 @@ export function AdminDashboardClient({
                 batch3MaterialsCount={b3MaterialsCount}
                 batch3TasksCount={b3TasksCount}
                 batch3VisitorsCount={b3VisitorsCount}
+                batch3AnnouncementsCount={b3AnnouncementsCount}
                 batch4SchedulesCount={b4SchedulesCount}
                 batch4MaterialsCount={b4MaterialsCount}
                 batch4TasksCount={b4TasksCount}
                 batch4VisitorsCount={b4VisitorsCount}
+                batch4AnnouncementsCount={b4AnnouncementsCount}
                 selectedBatch={selectedBatch}
                 onSelectBatch={setSelectedBatch}
                 onFeedback={showFeedback}
@@ -4471,12 +4510,93 @@ export function AdminDashboardClient({
                 </button>
               </div>
 
-              {initialAnnouncements.length === 0 ? (
+              {/* Search and Batch Filter Controls */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-[#2A3550]">
+                {/* Search input */}
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={announcementSearch}
+                    onChange={(e) => {
+                      setAnnouncementSearch(e.target.value)
+                      setAnnouncementPage(1)
+                    }}
+                    placeholder="Cari pengumuman..."
+                    className="w-full pl-9 pr-3 py-1.5 text-xs rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none"
+                  />
+                  {announcementSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setAnnouncementSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Batch Selector Pills */}
+                <div className="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-[#141b27] p-1 border border-slate-200 dark:border-[#2A3550] self-start sm:self-auto shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAnnouncementBatchFilter("all")
+                      setAnnouncementPage(1)
+                    }}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                      announcementBatchFilter === "all"
+                        ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-2xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Semua ({initialAnnouncements.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAnnouncementBatchFilter("batch-3")
+                      setAnnouncementPage(1)
+                    }}
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                      announcementBatchFilter === "batch-3"
+                        ? "bg-[#007aff] text-white shadow-2xs"
+                        : "text-slate-500 hover:text-[#007aff]"
+                    }`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-300"></span>
+                    <span>Batch 3 ({b3AnnouncementsCount})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAnnouncementBatchFilter("batch-4")
+                      setAnnouncementPage(1)
+                    }}
+                    className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                      announcementBatchFilter === "batch-4"
+                        ? "bg-indigo-600 text-white shadow-2xs"
+                        : "text-slate-500 hover:text-indigo-400"
+                    }`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-purple-300"></span>
+                    <span>Batch 4 ({b4AnnouncementsCount})</span>
+                  </button>
+                </div>
+              </div>
+
+              {filteredAnnouncements.length === 0 ? (
                 <div className="rounded-[10px] border border-dashed border-slate-200 dark:border-[#2A3550] p-8 text-center space-y-2">
                   <Sparkles className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto" />
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">Belum Ada Pengumuman di Database</h4>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                    {initialAnnouncements.length === 0
+                      ? "Belum Ada Pengumuman di Database"
+                      : "Tidak Ada Pengumuman yang Cocok"}
+                  </h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                    Klik tombol di bawah untuk membuat pengumuman kelas pertama Anda.
+                    {initialAnnouncements.length === 0
+                      ? "Klik tombol di bawah untuk membuat pengumuman kelas pertama Anda."
+                      : "Coba ubah filter angkatan atau kata kunci pencarian pengumuman."}
                   </p>
                   <button
                     onClick={() => setIsAnnouncementModalOpen(true)}
@@ -4492,6 +4612,7 @@ export function AdminDashboardClient({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                     {paginatedAnnouncements.map((a) => {
                       const primaryLink = getPrimaryLink(a.content)
+                      const itemBatch = getItemBatch(a)
                       return (
                         <div
                           key={a.id}
@@ -4499,16 +4620,30 @@ export function AdminDashboardClient({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center justify-between gap-2">
-                              {a.is_urgent ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 px-2 py-0.5 text-[10px] font-black text-rose-700 dark:text-rose-300">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                  Mendesak / Urgent
-                                </span>
-                              ) : (
-                                <span className="rounded-full bg-slate-200/80 dark:bg-[#253045] px-2 py-0.5 text-[10px] font-black text-slate-700 dark:text-slate-300">
-                                  Info Kelas
-                                </span>
-                              )}
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {itemBatch === "batch-4" ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-black text-indigo-700 dark:text-indigo-300">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                                    Agrasena Batch 4
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 dark:bg-sky-950/70 border border-sky-200 dark:border-sky-800 px-2 py-0.5 text-[10px] font-black text-sky-700 dark:text-sky-300">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                                    Agrasena Batch 3
+                                  </span>
+                                )}
+
+                                {a.is_urgent ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 px-2 py-0.5 text-[10px] font-black text-rose-700 dark:text-rose-300">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                    Mendesak / Urgent
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-slate-200/80 dark:bg-[#253045] px-2 py-0.5 text-[10px] font-black text-slate-700 dark:text-slate-300">
+                                    Info Kelas
+                                  </span>
+                                )}
+                              </div>
                               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate max-w-[120px]">
                                 {a.author}
                               </span>
@@ -4580,7 +4715,7 @@ export function AdminDashboardClient({
                   <PaginationControls
                     currentPage={announcementPage}
                     totalPages={totalAnnouncementPages}
-                    totalItems={initialAnnouncements.length}
+                    totalItems={filteredAnnouncements.length}
                     onPageChange={setAnnouncementPage}
                   />
                 </div>
@@ -5610,12 +5745,51 @@ export function AdminDashboardClient({
         title="Buat Pengumuman Kelas"
       >
         <form onSubmit={handleCreateAnnouncementSubmit} className="space-y-4 pt-2">
+          {/* Target Angkatan / Batch */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900 dark:text-slate-100">
+              Target Angkatan / Batch Pengumuman *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setCreateAnnouncementBatch("batch-3")}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] text-xs font-bold border transition cursor-pointer ${
+                  createAnnouncementBatch === "batch-3"
+                    ? "bg-sky-50 dark:bg-sky-950/60 border-sky-500 text-sky-700 dark:text-sky-300 shadow-2xs"
+                    : "border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] text-slate-600 dark:text-slate-400 hover:bg-slate-50"
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full bg-sky-500" />
+                <span>Agrasena Batch 3</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreateAnnouncementBatch("batch-4")}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] text-xs font-bold border transition cursor-pointer ${
+                  createAnnouncementBatch === "batch-4"
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-500 text-indigo-700 dark:text-indigo-300 shadow-2xs"
+                    : "border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] text-slate-600 dark:text-slate-400 hover:bg-slate-50"
+                }`}
+              >
+                <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                <span>Agrasena Batch 4</span>
+              </button>
+            </div>
+            <input type="hidden" name="batch_selection" value={createAnnouncementBatch} />
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-900 dark:text-slate-100">Judul Pengumuman *</label>
             <Input
               name="title"
               required
-              placeholder="Contoh: [PENTING] Jadwal Gladi Bersih Ujian MOOC 120 JP"
+              placeholder={
+                createAnnouncementBatch === "batch-4"
+                  ? "Contoh: [Batch 4] Informasi Masa Persiapan Diklat Mandiri MOOC 120 JP"
+                  : "Contoh: [PENTING] Jadwal Gladi Bersih Ujian MOOC 120 JP"
+              }
               className="text-xs rounded-[8px]"
             />
           </div>
@@ -5623,8 +5797,13 @@ export function AdminDashboardClient({
           <div className="space-y-1.5">
             <label className="text-xs font-black text-slate-900 dark:text-slate-100">Nama Pembuat / Pengirim</label>
             <Input
+              key={createAnnouncementBatch}
               name="author"
-              defaultValue="Pengurus Diklat Prakom Batch 3"
+              defaultValue={
+                createAnnouncementBatch === "batch-4"
+                  ? "Panitia Diklat Prakom Batch 4"
+                  : "Pengurus Diklat Prakom Batch 3"
+              }
               className="text-xs rounded-[8px]"
             />
           </div>
@@ -5956,6 +6135,21 @@ export function AdminDashboardClient({
           <form onSubmit={handleUpdateAnnouncementSubmit} className="space-y-4 pt-2">
             <input type="hidden" name="id" value={editingAnnouncement.id} />
             
+            {/* Target Angkatan / Batch */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">
+                Target Angkatan / Batch *
+              </label>
+              <select
+                name="batch_selection"
+                defaultValue={getItemBatch(editingAnnouncement)}
+                className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-medium text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none"
+              >
+                <option value="batch-3">Agrasena Batch 3</option>
+                <option value="batch-4">Agrasena Batch 4</option>
+              </select>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-black text-slate-900 dark:text-slate-100">Judul Pengumuman *</label>
               <Input

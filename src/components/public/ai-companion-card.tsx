@@ -86,6 +86,23 @@ export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: A
     const dayNum = summary?.currentDayNumber || 6
     const stageName = summary?.currentStageName || "Tahap 2 • Tatap Muka Online (TMO)"
 
+    // Batch 4: Status Masa Persiapan (Mulai Oktober 2026 / Jadwal Kosong)
+    if (isBatch4 && (!summary?.isTodayActive || summary?.currentDayNumber === 0)) {
+      return {
+        isWeekend: false,
+        greeting: `${timeGreeting}, Sobat Prakom Batch 4! ✨`,
+        mainMessage: `Selamat datang di portal Agrasena Batch 4! Kelas saat ini berada dalam periode persiapan administrasi perkuliahan mandiri MOOC 120 JP. Silakan unduh modul bahan ajar resmi dan pastikan akun LMS Pusdiklat Anda sudah siap digunakan.`,
+        tipsList: [
+          `💡 Tips Persiapan: Unduh seluruh modul bahan ajar 120 JP di menu Bahan Ajar untuk dipelajari lebih awal.`,
+          `🖥️ Info Zoom: Tautan Live Virtual Zoom akan diperbarui oleh Admin menjelang pembukaan sesi perkuliahan.`,
+          `🎯 Tips Kuis: Jelajahi Bank Kuis MOOC untuk gambaran umum materi kompetensi Pranata Komputer.`,
+          `📝 Template & Inovasi: Cek Bank Template & Generator Makalah AI untuk rancangan aksi perubahan satker.`,
+          `🤖 Tanya Asisten: Butuh panduan materi atau ringkasan teknis? Klik widget Asisten AI di kanan bawah.`,
+          `🌟 Semangat: Selamat bergabung di keluarga besar Diklat Fungsional Pranata Komputer Kejaksaan RI!`,
+        ],
+      }
+    }
+
     if (isWeekend) {
       return {
         isWeekend: true,

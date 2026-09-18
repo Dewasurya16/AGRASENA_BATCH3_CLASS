@@ -55,7 +55,14 @@ export default async function HomePage() {
         supabase.from("schedules").select("*").order("start_time", { ascending: true }),
         supabase.from("materials").select("id"),
       ])
-      announcements = annRes.data || []
+      const allAnn = annRes.data || []
+      // Isolasi pengumuman Batch 3: Jangan tampilkan pengumuman khusus Batch 4
+      announcements = allAnn.filter((a: any) => {
+        if (a.batch === 4 || a.batch === "batch-4") return false
+        const fullText = `${a.title || ""} ${a.content || ""}`.toLowerCase()
+        if (fullText.startsWith("[batch 4]") || fullText.includes("agrasena batch 4")) return false
+        return true
+      })
       tasks = taskRes.data || []
       schedules = schedRes.data || []
       materials = matRes.data || []

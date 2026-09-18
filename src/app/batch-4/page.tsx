@@ -12,6 +12,7 @@ import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
 import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
+import { DEFAULT_BATCH4_ANNOUNCEMENTS } from "@/data/batch4/announcements-data"
 import {
   Calendar,
   FileText,
@@ -38,7 +39,7 @@ export const metadata = {
 }
 
 export default async function Batch4Page() {
-  let announcements: any[] = []
+  let announcements: any[] = DEFAULT_BATCH4_ANNOUNCEMENTS
   let tasks: any[] = DEFAULT_BATCH4_TASKS
   let schedules: any[] = DEFAULT_BATCH4_SCHEDULES
   const totalMaterials = DEFAULT_BATCH4_MATERIALS.length
@@ -56,14 +57,37 @@ export default async function Batch4Page() {
       ])
 
       const allAnnouncements = annRes.data || []
-      announcements = allAnnouncements.filter(
-        (a: any) =>
-          !a.batch ||
-          a.batch === "batch-4" ||
-          a.batch === 4 ||
-          a.batch === "all" ||
-          (a.title && a.title.toLowerCase().includes("batch 4"))
-      )
+      // Isolasi pengumuman: Hanya tampilkan pengumuman yang memang ditujukan untuk Batch 4
+      const b4Announcements = allAnnouncements.filter((a: any) => {
+        if (a.batch === 4 || a.batch === "batch-4") return true
+        if (a.batch === 3 || a.batch === "batch-3") return false
+
+        const fullText = `${a.title || ""} ${a.content || ""} ${a.author || ""}`.toLowerCase()
+        if (fullText.includes("batch 4") || fullText.includes("batch-4") || fullText.includes("angkatan 4")) {
+          return true
+        }
+
+        // Singkirkan pengumuman khusus Batch 3 / Angkatan 5 / Kelas 6
+        if (
+          fullText.includes("batch 3") ||
+          fullText.includes("batch-3") ||
+          fullText.includes("angkatan 5") ||
+          fullText.includes("kelas 6") ||
+          fullText.includes("sobat prakom 625")
+        ) {
+          return false
+        }
+
+        if (a.batch === "all" || fullText.includes("semua batch") || fullText.includes("seluruh peserta")) {
+          return true
+        }
+
+        return false
+      })
+
+      if (b4Announcements.length > 0) {
+        announcements = b4Announcements
+      }
 
       const allTasks = taskRes.data || []
       const b4Tasks = allTasks.filter(
@@ -93,7 +117,7 @@ export default async function Batch4Page() {
   const activeTasks = tasks.filter((t) => t.status !== "completed")
   const futureTasks = activeTasks.filter((t) => getTaskDeadlineTimestamp(t.due_date) > now)
   const closestTask = futureTasks.length > 0 ? futureTasks[0] : null
-  const { summary } = getAutoRoadmapData(undefined, schedules)
+  const { summary } = getAutoRoadmapData(undefined, schedules, "batch-4")
 
   return (
     <PublicShell>
@@ -156,10 +180,17 @@ export default async function Batch4Page() {
                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/15 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-500/30 px-2.5 py-0.5 text-[11px] font-semibold">
                   <span>Total 120 JP</span>
                 </span>
-                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Hari {summary.currentDayNumber} / {summary.totalDays} ({summary.progressPercentage}%)
-                </span>
+                {summary.currentDayNumber === 0 ? (
+                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                    Masa Persiapan • Hari 0 / {summary.totalDays} (0%)
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Hari {summary.currentDayNumber} / {summary.totalDays} ({summary.progressPercentage}%)
+                  </span>
+                )}
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-[#000000] dark:text-white tracking-tight">
                 Alur 4 Tahapan Perkuliahan Batch 4
