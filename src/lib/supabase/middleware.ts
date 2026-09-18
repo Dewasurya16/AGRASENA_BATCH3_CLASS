@@ -15,10 +15,11 @@ export async function updateSession(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   let user = null
+  let supabase: any = null
 
   if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project-id')) {
     try {
-      const supabase = createServerClient(
+      supabase = createServerClient(
         supabaseUrl,
         supabaseKey,
         {
@@ -72,6 +73,65 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // =========================================================================
+  // MAINTENANCE MODE ENFORCEMENT & ADMIN BYPASS
+  // =========================================================================
+  const isMaintenanceRoute = request.nextUrl.pathname === '/maintenance'
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+  const isExemptApiRoute =
+    request.nextUrl.pathname.startsWith('/api/maintenance') ||
+    request.nextUrl.pathname.startsWith('/api/auth')
+
+  // Fast-path cookie check (0ms overhead)
+  const maintCookieValue = request.cookies.get('prakom_maint_active')?.value
+  let isMaintenanceActive = maintCookieValue === '1'
+
+  // If cookie is absent and not on an exempt route, check database once
+  if (maintCookieValue === undefined && supabase && !isAdminRoute && !isExemptApiRoute) {
+    try {
+      const { data: maintRecord } = await supabase
+        .from('wa_bot_config')
+        .select('value')
+        .eq('key', 'maintenance_config')
+        .maybeSingle()
+
+      if (maintRecord && maintRecord.value) {
+        const val = typeof maintRecord.value === 'string' ? JSON.parse(maintRecord.value) : maintRecord.value
+        isMaintenanceActive = Boolean(val.enabled)
+        supabaseResponse.cookies.set('prakom_maint_active', isMaintenanceActive ? '1' : '0', {
+          path: '/',
+          sameSite: 'lax',
+          httpOnly: true,
+          maxAge: 86400 * 30,
+        })
+      }
+    } catch {
+      // Ignore fallback
+    }
+  }
+
+  // If maintenance is active
+  if (isMaintenanceActive) {
+    // Admin has full bypass to test fixes
+    const hasAdminBypass = hasValidAdminSession
+
+    if (!hasAdminBypass && !isAdminRoute && !isExemptApiRoute && !isMaintenanceRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/maintenance'
+      return NextResponse.redirect(url)
+    }
+  } else if (isMaintenanceRoute) {
+    // If maintenance is inactive and user visits /maintenance without preview, redirect to home
+    const isPreview =
+      request.nextUrl.searchParams.get('preview') === 'true' ||
+      request.nextUrl.searchParams.get('preview') === '1'
+    if (!isPreview) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

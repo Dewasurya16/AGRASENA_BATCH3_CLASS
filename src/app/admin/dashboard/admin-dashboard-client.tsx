@@ -85,6 +85,7 @@ import {
   Lock,
   ShieldCheck,
   Video,
+  Wrench,
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
@@ -93,6 +94,7 @@ import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 import { MultiBatchControlHub } from "@/components/admin/multi-batch-control-hub"
 import { ZoomManager } from "@/components/admin/zoom-manager"
+import { MaintenanceManager } from "@/components/admin/maintenance-manager"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
 import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
 import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
@@ -279,7 +281,7 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen" | "wa_bot" | "zoom"
+    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen" | "wa_bot" | "zoom" | "maintenance"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -2142,6 +2144,7 @@ export function AdminDashboardClient({
     { id: "materials", label: "Pustaka Modul PDF (120 JP)", icon: FileText, count: initialMaterials.length, color: "text-indigo-600" },
     { id: "schedules", label: "Jadwal 35 Hari", icon: Calendar, count: initialSchedules.length, color: "text-sky-600" },
     { id: "zoom", label: "Kelola Link Zoom", icon: Video, count: null, color: "text-sky-600" },
+    { id: "maintenance", label: "Mode Maintenance", icon: Wrench, count: null, color: "text-amber-500" },
     { id: "tasks", label: "Penugasan & Ujian", icon: BookOpen, count: initialTasks.length, color: "text-amber-600" },
     { id: "announcements", label: "Pengumuman Kelas", icon: Sparkles, count: initialAnnouncements.length, color: "text-rose-600" },
     { id: "discussions", label: "Moderasi Forum Diskusi", icon: MessageSquare, count: adminDiscussions.length, color: "text-purple-600" },
@@ -2361,6 +2364,7 @@ export function AdminDashboardClient({
                   {activeTab === "exam_prep" && "Checklist Kelulusan & Ujian"}
                   {activeTab === "paper_gen" && "AI Makalah Inovasi Satker"}
                   {activeTab === "wa_bot" && "Gateway Bot WhatsApp (Agrasena RI)"}
+                  {activeTab === "maintenance" && "Kontrol Pemeliharaan Sistem (Mode Maintenance)"}
                 </h2>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
@@ -5368,6 +5372,13 @@ export function AdminDashboardClient({
               onFeedback={showFeedback}
               selectedBatchFilter={selectedBatch}
             />
+          )}
+
+          {/* ========================================================================= */}
+          {/* 15. MAINTENANCE MODE TAB (KONTROL PEMELIHARAAN SISTEM)                     */}
+          {/* ========================================================================= */}
+          {activeTab === "maintenance" && (
+            <MaintenanceManager onFeedback={showFeedback} />
           )}
         </div>
       </main>
