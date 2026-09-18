@@ -817,7 +817,7 @@ export function MaintenanceView({
               )}
             </div>
 
-            {/* 3. Cute Live Terminal Log Widget — INFINITE LOOPING */}
+            {/* 3. Cute Live Terminal Log Widget — INFINITE LOOPING (Enlarged) */}
             <div
               className="deck-pop-item"
               id="cute-terminal-widget"
@@ -826,17 +826,17 @@ export function MaintenanceView({
                 borderRadius: 18,
                 border: "2px solid #334155",
                 overflow: "hidden",
-                boxShadow: "0 8px 20px rgba(15, 23, 42, 0.2)",
+                boxShadow: "0 10px 25px rgba(15, 23, 42, 0.25)",
                 display: "flex",
                 flexDirection: "column",
-                maxHeight: "clamp(85px, 14vh, 120px)",
+                height: "clamp(120px, 19vh, 160px)",
               }}
             >
               {/* Terminal Title Bar */}
               <div
                 style={{
                   background: "#1E293B",
-                  padding: "4px 10px",
+                  padding: "6px 12px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -844,13 +844,13 @@ export function MaintenanceView({
                   flexShrink: 0,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#EF4444" }} />
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#F59E0B" }} />
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#EF4444" }} />
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#F59E0B" }} />
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#10B981" }} />
                   <span
                     style={{
-                      fontSize: "0.54rem",
+                      fontSize: "0.62rem",
                       fontWeight: 700,
                       color: "#94A3B8",
                       marginLeft: 4,
@@ -860,10 +860,10 @@ export function MaintenanceView({
                     cat-prompt@agrasena:~
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <Cat size={11} color="#FCD34D" />
-                  <span style={{ fontSize: "0.52rem", color: "#FCD34D", fontWeight: 700 }}>
-                    Live Loop
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <Cat size={13} color="#FCD34D" />
+                  <span style={{ fontSize: "0.58rem", color: "#FCD34D", fontWeight: 800 }}>
+                    Live Loop 🐾
                   </span>
                 </div>
               </div>
@@ -873,11 +873,11 @@ export function MaintenanceView({
                 ref={termScrollRef}
                 style={{
                   flex: 1,
-                  padding: "6px 10px",
+                  padding: "8px 12px",
                   overflowY: "auto",
                   fontFamily: "'Fira Code', 'Consolas', monospace",
-                  fontSize: "clamp(0.52rem, 0.85vw, 0.62rem)",
-                  lineHeight: 1.45,
+                  fontSize: "clamp(0.62rem, 0.95vw, 0.74rem)",
+                  lineHeight: 1.55,
                   color: "#E2E8F0",
                 }}
               >
@@ -908,11 +908,11 @@ export function MaintenanceView({
                 <span
                   style={{
                     display: "inline-block",
-                    width: 5,
-                    height: 11,
+                    width: 7,
+                    height: 13,
                     background: "#F59E0B",
                     verticalAlign: "middle",
-                    marginLeft: 2,
+                    marginLeft: 3,
                     animation: "cuteBlink 0.8s step-end infinite",
                   }}
                 />
@@ -1101,7 +1101,7 @@ export function MaintenanceView({
             display: none !important;
           }
           #cute-terminal-widget {
-            max-height: 55px !important;
+            height: 75px !important;
           }
         }
         @media (min-width: 821px) and (max-height: 640px) {
