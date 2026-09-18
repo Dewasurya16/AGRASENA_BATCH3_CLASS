@@ -26,12 +26,13 @@ export function SchedulesListB4() {
   const [selectedStage, setSelectedStage] = React.useState<number>(0) // 0 = Semua, 1 = MOOC, 2 = TMO, 3 = Lab, 4 = Seminar
   const { timezone, setTimezone, convertWibTimeToCurrent } = useTimezone()
 
+  const totalCount = DEFAULT_BATCH4_SCHEDULES.length
   const stages = [
-    { id: 0, label: "Semua Sesi", count: 35 },
-    { id: 1, label: "Tahap 1: MOOC (H1-H5)", count: 5 },
-    { id: 2, label: "Tahap 2: TMO (H6-H15)", count: 10 },
-    { id: 3, label: "Tahap 3: Lab Satker (H16-H30)", count: 15 },
-    { id: 4, label: "Tahap 4: Seminar (H31-H35)", count: 5 },
+    { id: 0, label: "Semua Sesi", count: totalCount },
+    { id: 1, label: "Tahap 1: MOOC (H1-H5)", count: DEFAULT_BATCH4_SCHEDULES.filter((_, i) => i + 1 <= 5).length },
+    { id: 2, label: "Tahap 2: TMO (H6-H15)", count: DEFAULT_BATCH4_SCHEDULES.filter((_, i) => i + 1 >= 6 && i + 1 <= 15).length },
+    { id: 3, label: "Tahap 3: Lab Satker (H16-H30)", count: DEFAULT_BATCH4_SCHEDULES.filter((_, i) => i + 1 >= 16 && i + 1 <= 30).length },
+    { id: 4, label: "Tahap 4: Seminar (H31-H35)", count: DEFAULT_BATCH4_SCHEDULES.filter((_, i) => i + 1 >= 31).length },
   ]
 
   // Filter schedules berdasarkan stage dan search

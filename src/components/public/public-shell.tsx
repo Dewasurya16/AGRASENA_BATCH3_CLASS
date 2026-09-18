@@ -45,7 +45,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
     <div
       className={`relative min-h-screen flex flex-col text-[#131E29] dark:text-[#D8E0EC] antialiased ${
         isBatch4
-          ? "selection:bg-indigo-700 selection:text-white"
+          ? "selection:bg-emerald-700 selection:text-white"
           : "selection:bg-[#0D3830] selection:text-white"
       }`}
     >
@@ -73,7 +73,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <footer
         className={`mt-auto border-t py-6 sm:py-7 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] backdrop-blur-md transition-colors duration-200 ${
           isBatch4
-            ? "border-indigo-200/90 dark:border-indigo-900/50 bg-white/85 dark:bg-[#0e111a]/95 shadow-[0_-4px_20px_rgba(99,102,241,0.06)]"
+            ? "border-emerald-200/90 dark:border-emerald-900/50 bg-white/85 dark:bg-[#0b1218]/95 shadow-[0_-4px_20px_rgba(16,185,129,0.06)]"
             : "border-slate-200/90 dark:border-[#2A3550] bg-white/80 dark:bg-[#14181F]/90"
         }`}
       >
@@ -81,7 +81,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 text-center sm:text-left">
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-[8px] overflow-hidden shrink-0 ${
-                isBatch4 ? "ring-1 ring-indigo-400/40" : ""
+                isBatch4 ? "ring-1 ring-emerald-400/40" : ""
               }`}
             >
               <img src="/Logo.webp" alt="Logo Prakom" className="h-full w-full object-contain" />
@@ -97,7 +97,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
                 <span
                   className={`font-bold ${
                     isBatch4
-                      ? "text-indigo-900 dark:text-indigo-200"
+                      ? "text-emerald-900 dark:text-emerald-200"
                       : "text-slate-800 dark:text-slate-200"
                   }`}
                 >
@@ -115,7 +115,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               rel="noopener noreferrer"
               className={`transition flex items-center gap-1 ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -127,7 +127,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/schedules" : "/schedules"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -138,7 +138,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/materials" : "/materials"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -149,7 +149,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/tasks" : "/tasks"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -160,7 +160,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/paper-generator" : "/paper-generator"}
               className={`transition font-bold ${
                 isBatch4
-                  ? "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
+                  ? "text-emerald-600 dark:text-emerald-400 hover:text-emerald-700"
                   : "text-[#0D824B] dark:text-emerald-400 hover:text-[#0D3830]"
               }`}
             >
@@ -171,7 +171,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/templates" : "/templates"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -182,7 +182,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/exam-prep" : "/exam-prep"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -193,7 +193,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/discussions" : "/discussions"}
               className={`transition ${
                 isBatch4
-                  ? "hover:text-indigo-600 dark:hover:text-indigo-400"
+                  ? "hover:text-emerald-600 dark:hover:text-emerald-400"
                   : "hover:text-[#0D3830] dark:hover:text-emerald-400"
               }`}
             >
@@ -204,7 +204,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               href={isBatch4 ? "/batch-4/faq" : "/faq"}
               className={`transition font-bold ${
                 isBatch4
-                  ? "text-purple-600 dark:text-purple-400 hover:text-purple-700"
+                  ? "text-teal-600 dark:text-teal-400 hover:text-teal-700"
                   : "text-[#FF7643] dark:text-amber-400 hover:text-[#0D3830]"
               }`}
             >

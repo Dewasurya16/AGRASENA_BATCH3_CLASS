@@ -224,7 +224,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
             <div className="flex items-center gap-2">
               <span className={`flex h-6 w-6 items-center justify-center rounded-[6px] ${
                 isBatch4
-                  ? "bg-indigo-500/15 text-indigo-600 dark:bg-indigo-500/25 dark:text-indigo-400"
+                  ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/25 dark:text-emerald-400"
                   : "bg-[#007aff]/15 text-[#007aff] dark:bg-[#007aff]/25 dark:text-[#60a5fa]"
               }`}>
                 <TrendingUp className="h-3.5 w-3.5" strokeWidth={2} />
@@ -244,7 +244,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
           <div className="flex items-center gap-3 shrink-0">
             <div className="text-right">
               <span className={`text-xl sm:text-2xl font-black font-mono tracking-tight ${
-                isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
               }`}>
                 {overallPercentage}%
               </span>
@@ -258,7 +258,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               onClick={() => setIsDetailModalOpen(true)}
               className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition cursor-pointer border ${
                 isBatch4
-                  ? "bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                   : "bg-[#007aff]/10 hover:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/20"
               }`}
               title="Buka checklist & rincian kesiapan"
@@ -284,7 +284,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               initial={{ width: 0 }}
               animate={{ width: `${Math.max(4, overallPercentage)}%` }}
               transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-              className={`h-full rounded-full ${isBatch4 ? "bg-indigo-600" : "bg-[#007aff]"}`}
+              className={`h-full rounded-full ${isBatch4 ? "bg-emerald-600 shadow-emerald-900/20" : "bg-[#007aff]"}`}
             />
           </div>
         </div>
@@ -294,11 +294,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
           {/* Stat 1: Modul PDF */}
           <Link href={materialsHref} className="group block">
             <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
-              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+              isBatch4 ? "hover:border-emerald-500/40" : "hover:border-[#007aff]/40"
             }`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
-                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                  isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
                 }`}>
                   <FileText className="h-4 w-4" strokeWidth={2} />
                 </div>
@@ -308,7 +308,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               </div>
               <div>
                 <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
-                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                  isBatch4 ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
                 }`}>
                   Pustaka Modul
                 </h4>
@@ -322,11 +322,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
           {/* Stat 2: Kuis MOOC */}
           <Link href={quizHref} className="group block">
             <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
-              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+              isBatch4 ? "hover:border-emerald-500/40" : "hover:border-[#007aff]/40"
             }`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
-                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                  isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
                 }`}>
                   <Sparkles className="h-4 w-4" strokeWidth={2} />
                 </div>
@@ -336,7 +336,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               </div>
               <div>
                 <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
-                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                  isBatch4 ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
                 }`}>
                   Simulasi Kuis
                 </h4>
@@ -350,11 +350,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
           {/* Stat 3: Checklist Ujian */}
           <Link href={examPrepHref} className="group block">
             <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
-              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+              isBatch4 ? "hover:border-emerald-500/40" : "hover:border-[#007aff]/40"
             }`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
-                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                  isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
                 }`}>
                   <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
                 </div>
@@ -364,7 +364,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               </div>
               <div>
                 <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
-                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                  isBatch4 ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
                 }`}>
                   Checklist Ujian
                 </h4>
@@ -378,11 +378,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
           {/* Stat 4: AI Makalah */}
           <Link href={paperGenHref} className="group block">
             <div className={`h-full rounded-[10px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-3 flex flex-col justify-between space-y-2 transition shadow-2xs ${
-              isBatch4 ? "hover:border-indigo-500/40" : "hover:border-[#007aff]/40"
+              isBatch4 ? "hover:border-emerald-500/40" : "hover:border-[#007aff]/40"
             }`}>
               <div className="flex items-center justify-between">
                 <div className={`flex h-7 w-7 items-center justify-center rounded-[6px] bg-white dark:bg-[#141b27] ${
-                  isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"
+                  isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
                 }`}>
                   <GraduationCap className="h-4 w-4" strokeWidth={2} />
                 </div>
@@ -396,7 +396,7 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
               </div>
               <div>
                 <h4 className={`font-bold text-xs text-[#000000] dark:text-white transition ${
-                  isBatch4 ? "group-hover:text-indigo-600 dark:group-hover:text-indigo-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
+                  isBatch4 ? "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" : "group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa]"
                 }`}>
                   Proposal 5 Bab
                 </h4>
@@ -423,11 +423,11 @@ export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: pro
             <div className="rounded-[12px] bg-slate-50 dark:bg-[#161B26] p-4 border border-slate-200 dark:border-[#2A3550] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Total Kesiapan Kelulusan</span>
-                <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 font-mono">{overallPercentage}%</span>
+                <span className={`text-sm font-black font-mono ${isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"}`}>{overallPercentage}%</span>
               </div>
               <div className="h-2 w-full bg-slate-200 dark:bg-[#253045] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+                  className={`h-full rounded-full transition-all duration-300 ${isBatch4 ? "bg-emerald-600" : "bg-[#007aff]"}`}
                   style={{ width: `${overallPercentage}%` }}
                 />
               </div>

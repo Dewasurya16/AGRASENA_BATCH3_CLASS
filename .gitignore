@@ -40,6 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+scratch/
 
 # WhatsApp Bot engine local files
 wa-bot/auth_info_baileys/

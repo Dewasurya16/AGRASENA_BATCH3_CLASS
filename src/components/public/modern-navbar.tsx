@@ -120,7 +120,7 @@ export function ModernNavbar() {
 
   const isMoreActive = moreLinks.some((l) => pathname === l.href || (l.href !== "/" && l.href !== "/batch-4" && pathname.startsWith(l.href)))
 
-  const activeAccentColor = isBatch4 ? "bg-indigo-600" : "bg-[#007aff]"
+  const activeAccentColor = isBatch4 ? "bg-emerald-600 shadow-emerald-900/20" : "bg-[#007aff]"
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#e6e6e6] dark:border-white/10 bg-white/90 dark:bg-[#101520]/90 backdrop-blur-md transition-colors duration-200 pt-[env(safe-area-inset-top,0px)]">
@@ -139,20 +139,20 @@ export function ModernNavbar() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-sm sm:text-base font-bold tracking-tight text-[#000000] dark:text-white whitespace-nowrap">
-                  Prakom <span className={isBatch4 ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
+                  Prakom <span className={isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
                     {isBatch4 ? "Batch 4" : "Batch 3"}
                   </span>
                 </span>
                 <span className={`hidden xl:inline-flex items-center rounded-full px-2 py-0.2 text-[9px] font-bold border ${
                   isBatch4
-                    ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                     : "bg-[#f6f5f4] dark:bg-[#1a2332] text-[#615d59] dark:text-[#94a3b8] border-[#e6e6e6] dark:border-white/10"
                 }`}>
                   {isBatch4 ? "Agrasena 4 • 120 JP" : "Agrasena 3 • 120 JP"}
                 </span>
               </div>
               <span className="text-[10px] text-[#615d59] dark:text-[#94a3b8] font-normal hidden sm:inline-block whitespace-nowrap">
-                Kejaksaan RI × Agrasena 625
+                {isBatch4 ? "Kejaksaan RI × Agrasena 4" : "Kejaksaan RI × Agrasena 625"}
               </span>
             </div>
           </Link>
@@ -169,7 +169,11 @@ export function ModernNavbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 ${
+                  onClick={() => {
+                    setMoreDropdownOpen(false)
+                    setMobileMenuOpen(false)
+                  }}
+                  className={`relative flex items-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? "text-white font-semibold"
                       : "text-[#615d59] dark:text-[#94a3b8] hover:text-[#000000] dark:hover:text-white hover:bg-white/70 dark:hover:bg-[#141b27]/80"
@@ -178,7 +182,7 @@ export function ModernNavbar() {
                   {isActive && (
                     <motion.div
                       layoutId="activePillNav"
-                      className={`absolute inset-0 rounded-full shadow-xs ${activeAccentColor}`}
+                      className={`absolute inset-0 rounded-full shadow-xs ${activeAccentColor} pointer-events-none`}
                       transition={{ type: "spring", stiffness: 600, damping: 38, mass: 0.6 }}
                     />
                   )}
@@ -225,11 +229,17 @@ export function ModernNavbar() {
                           onClick={() => setMoreDropdownOpen(false)}
                           className={`group flex items-start gap-2.5 rounded-[10px] p-2 transition-colors duration-150 ${
                             isItemActive
-                              ? "bg-[#007aff]/10 text-[#007aff] font-semibold dark:bg-[#007aff]/20"
+                              ? isBatch4
+                                ? "bg-emerald-600/10 text-emerald-700 font-semibold dark:bg-emerald-600/20 dark:text-emerald-300"
+                                : "bg-[#007aff]/10 text-[#007aff] font-semibold dark:bg-[#007aff]/20"
                               : "text-[#31302e] dark:text-[#cbd5e1] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] hover:text-[#000000] dark:hover:text-white"
                           }`}
                         >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#f6f5f4] dark:bg-[#1a2332] text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white transition-colors border border-[#e6e6e6] dark:border-white/10">
+                          <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#f6f5f4] dark:bg-[#1a2332] transition-colors border border-[#e6e6e6] dark:border-white/10 ${
+                            isBatch4
+                              ? "text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white"
+                              : "text-[#007aff] dark:text-[#60a5fa] group-hover:bg-[#007aff] group-hover:text-white"
+                          }`}>
                             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
                           </div>
                           <div>
@@ -252,9 +262,11 @@ export function ModernNavbar() {
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
               title="Pencarian Cepat (Ctrl + K)"
-              className="inline-flex items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 px-2.5 py-1 text-xs text-[#615d59] dark:text-[#94a3b8] hover:border-[#007aff]/40 hover:text-[#000000] dark:hover:text-white transition cursor-pointer shadow-2xs"
+              className={`inline-flex items-center gap-2 rounded-full bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 px-2.5 py-1 text-xs text-[#615d59] dark:text-[#94a3b8] transition cursor-pointer shadow-2xs ${
+                isBatch4 ? "hover:border-emerald-500/40" : "hover:border-[#007aff]/40"
+              }`}
             >
-              <Search className="h-3.5 w-3.5 text-[#007aff] dark:text-[#60a5fa]" strokeWidth={2} />
+              <Search className={`h-3.5 w-3.5 ${isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"}`} strokeWidth={2} />
               <span className="hidden xl:inline text-[11px] font-medium">Cari...</span>
               <kbd className="hidden sm:inline-flex items-center rounded bg-white dark:bg-[#141b27] px-1.5 py-0.2 text-[9px] font-mono font-semibold text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10">
                 Ctrl K
@@ -268,11 +280,11 @@ export function ModernNavbar() {
               title={`Sedang di Agrasena ${isBatch4 ? "Batch 4" : "Batch 3"}. Klik untuk ganti angkatan atau data peserta.`}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border transition cursor-pointer active:scale-95 shadow-2xs ${
                 isBatch4
-                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
                   : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100"
               }`}
             >
-              <span className={`h-2 w-2 rounded-full animate-pulse ${isBatch4 ? "bg-indigo-500" : "bg-emerald-500"}`} />
+              <span className="h-2 w-2 rounded-full animate-pulse bg-emerald-500" />
               <span>{isBatch4 ? "Batch 4" : "Batch 3"}</span>
             </button>
 
@@ -292,11 +304,11 @@ export function ModernNavbar() {
               onClick={() => setIsWAModalOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 px-3 py-1 text-xs font-medium text-[#31302e] dark:text-[#e0e0e0] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] active:scale-[0.98] transition cursor-pointer shadow-2xs"
             >
-              <Sparkles className="h-3 w-3 text-[#007aff]" strokeWidth={2} />
+              <Sparkles className={`h-3 w-3 ${isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff]"}`} strokeWidth={2} />
               <span>Bagikan</span>
             </button>
 
-            {/* LMS Diklat Notion Blue / Indigo Button */}
+            {/* LMS Diklat Notion Blue / Emerald Button */}
             <a
               href={
                 isBatch4
@@ -306,7 +318,7 @@ export function ModernNavbar() {
               target="_blank"
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-1.5 rounded-full text-white active:scale-[0.98] px-3.5 py-1 text-xs font-semibold transition cursor-pointer shadow-2xs ${
-                isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+                isBatch4 ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20" : "bg-[#007aff] hover:bg-[#0062cc]"
               }`}
             >
               <span>LMS Diklat</span>
@@ -322,11 +334,11 @@ export function ModernNavbar() {
               title="Ganti Angkatan"
               className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black border transition cursor-pointer ${
                 isBatch4
-                  ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                   : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
               }`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${isBatch4 ? "bg-indigo-500" : "bg-emerald-500"}`} />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               <span>{isBatch4 ? "B4" : "B3"}</span>
             </button>
 
@@ -334,7 +346,9 @@ export function ModernNavbar() {
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
               aria-label="Buka Pencarian Cepat"
-              className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 text-[#007aff] dark:text-[#60a5fa] hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] transition cursor-pointer shadow-2xs"
+              className={`flex h-8 w-8 items-center justify-center rounded-[8px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 ${
+                isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"
+              } hover:bg-[#f6f5f4] dark:hover:bg-[#1a2332] transition cursor-pointer shadow-2xs`}
             >
               <Search className="h-3.5 w-3.5" strokeWidth={2} />
             </button>
@@ -373,9 +387,7 @@ export function ModernNavbar() {
             <div className="space-y-1">
               <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#615d59] dark:text-[#94a3b8] px-3 mb-1">
                 <span>Menu {isBatch4 ? "Agrasena Batch 4" : "Agrasena Batch 3"}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[9px] ${
-                  isBatch4 ? "bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300" : "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300"
-                }`}>
+                <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-bold">
                   {isBatch4 ? "Batch 4 Aktif" : "Batch 3 Aktif"}
                 </span>
               </div>
@@ -389,6 +401,7 @@ export function ModernNavbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between rounded-[8px] px-3 py-2 text-xs font-semibold transition-all ${
                       isActive
                         ? `${activeAccentColor} text-white shadow-xs`
@@ -420,7 +433,7 @@ export function ModernNavbar() {
                 }}
                 className="flex items-center justify-center gap-2 rounded-[8px] bg-[#f6f5f4] dark:bg-[#1a2332] border border-[#e6e6e6] dark:border-white/10 p-2.5 text-xs font-semibold text-[#000000] dark:text-white hover:bg-[#e6e6e6] transition cursor-pointer"
               >
-                <Sparkles className="h-3.5 w-3.5 text-[#007aff]" />
+                <Sparkles className={`h-3.5 w-3.5 ${isBatch4 ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff]"}`} />
                 <span>Salin Rekap Harian ke WhatsApp</span>
               </button>
               <a
@@ -432,7 +445,7 @@ export function ModernNavbar() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`flex items-center justify-center gap-1.5 rounded-[8px] p-2.5 text-xs font-semibold text-white shadow-xs transition ${
-                  isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
+                  isBatch4 ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20" : "bg-[#007aff] hover:bg-[#0062cc]"
                 }`}
               >
                 <span>Buka Portal LMS Kejaksaan</span>

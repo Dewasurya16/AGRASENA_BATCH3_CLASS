@@ -96,13 +96,14 @@ export function HomeTaskReminder({ targetTask, isBatch4: propIsBatch4 }: { targe
               <span>Waktu Santai</span>
             </div>
 
-            <Link href={isBatch4 ? "/batch-4/tasks" : "/tasks"}>
-              <button className={`inline-flex items-center gap-1.5 rounded-full ${
-                isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
-              } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}>
-                <span>Daftar Tugas</span>
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-              </button>
+            <Link
+              href={isBatch4 ? "/batch-4/tasks" : "/tasks"}
+              className={`inline-flex items-center gap-1.5 rounded-full ${
+                isBatch4 ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20" : "bg-[#007aff] hover:bg-[#0062cc]"
+              } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}
+            >
+              <span>Daftar Tugas</span>
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
             </Link>
           </div>
         </div>
@@ -160,13 +161,14 @@ export function HomeTaskReminder({ targetTask, isBatch4: propIsBatch4 }: { targe
             </div>
           )}
 
-          <Link href={isBatch4 ? "/batch-4/tasks" : "/tasks"}>
-            <button className={`inline-flex items-center gap-1.5 rounded-full ${
-              isBatch4 ? "bg-indigo-600 hover:bg-indigo-700" : "bg-[#007aff] hover:bg-[#0062cc]"
-            } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}>
-              <span>Buka Tugas</span>
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
+          <Link
+            href={isBatch4 ? "/batch-4/tasks" : "/tasks"}
+            className={`inline-flex items-center gap-1.5 rounded-full ${
+              isBatch4 ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-900/20" : "bg-[#007aff] hover:bg-[#0062cc]"
+            } active:scale-[0.98] text-white px-4 py-1.5 text-xs font-semibold transition shadow-xs cursor-pointer`}
+          >
+            <span>Buka Tugas</span>
+            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
           </Link>
         </div>
       </div>

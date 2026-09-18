@@ -17,11 +17,11 @@ export default function Batch4MaterialsPage() {
         {/* Switcher notice to Batch 3 */}
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Katalog Modul: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong> • Kurikulum 120 JP
+            Katalog Modul: <strong className="text-emerald-600 dark:text-emerald-400">Agrasena Batch 4</strong> • Kurikulum 120 JP
           </span>
           <Link
             href="/materials?batch=batch-3"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
           >
             <span>Lihat Modul Batch 3</span>
             <ArrowRight className="h-3 w-3" />

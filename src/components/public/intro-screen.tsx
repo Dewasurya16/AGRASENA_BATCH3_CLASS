@@ -1029,16 +1029,16 @@ export function IntroScreen() {
                       onClick={() => setSelectedBatch("batch-4")}
                       className={`relative flex flex-col p-2.5 rounded-xl border text-left transition cursor-pointer ${
                         selectedBatch === "batch-4"
-                          ? "border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/30 ring-1 ring-indigo-500"
+                          ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30 ring-1 ring-emerald-500"
                           : "border-slate-200 dark:border-slate-800 bg-[#f6f5f4] dark:bg-[#101520] hover:border-slate-300 dark:hover:border-slate-700 opacity-75 hover:opacity-100"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">
                           Batch 4
                         </span>
                         {selectedBatch === "batch-4" && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                         )}
                       </div>
                       <span className="text-xs font-bold text-[#18181B] dark:text-white">Agrasena Batch 4</span>
@@ -1053,7 +1053,7 @@ export function IntroScreen() {
                     disabled={isExiting}
                     className={`inline-flex items-center justify-center gap-2 rounded-full active:scale-[0.98] text-white py-2.5 px-6 text-xs font-bold shadow-md transition cursor-pointer w-full disabled:opacity-75 ${
                       selectedBatch === "batch-4"
-                        ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/25"
+                        ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25"
                         : "bg-[#007aff] hover:bg-[#0062cc] shadow-blue-500/20"
                     }`}
                   >
@@ -1087,7 +1087,7 @@ export function IntroScreen() {
               <div className="space-y-1 text-center">
                 <h2 className="text-lg sm:text-xl font-black text-[#18181B] dark:text-white tracking-tight">
                   Selamat Datang,{" "}
-                  <span className={selectedBatch === "batch-4" ? "text-indigo-600 dark:text-indigo-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
+                  <span className={selectedBatch === "batch-4" ? "text-emerald-600 dark:text-emerald-400" : "text-[#007aff] dark:text-[#60a5fa]"}>
                     {name}
                   </span>!
                 </h2>
@@ -1131,11 +1131,11 @@ export function IntroScreen() {
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-4"
-                        ? "bg-white dark:bg-[#141b27] text-indigo-600 dark:text-indigo-400 shadow-xs"
+                        ? "bg-white dark:bg-[#141b27] text-emerald-600 dark:text-emerald-400 shadow-xs"
                         : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
-                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
                     <span>Agrasena 4</span>
                   </button>
                 </div>
@@ -1165,7 +1165,7 @@ export function IntroScreen() {
                 disabled={isExiting}
                 className={`group relative flex items-center justify-center gap-2 rounded-full px-7 py-3 text-xs sm:text-sm font-black shadow-lg cursor-pointer transition-all duration-200 mt-1 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 w-full sm:w-auto ${
                   selectedBatch === "batch-4"
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/25"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25"
                     : "bg-[#18181B] dark:bg-[#E2E8F0] hover:bg-[#27272A] dark:hover:bg-white text-white dark:text-[#18181B] shadow-black/20"
                 }`}
               >

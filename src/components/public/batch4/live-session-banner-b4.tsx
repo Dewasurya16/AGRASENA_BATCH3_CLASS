@@ -51,7 +51,7 @@ export interface LiveSessionBannerB4Props {
   variant?: 'home' | 'schedule'
 }
 
-export type DailyPhaseB4 = 'in_class' | 'in_break' | 'task_time' | 'prep_time' | 'weekend'
+export type DailyPhaseB4 = 'in_class' | 'in_break' | 'task_time' | 'prep_time' | 'weekend' | 'standby'
 
 function parseTimeToMinutes(timeStr?: string | null): number | null {
   if (!timeStr) return null
@@ -87,13 +87,14 @@ export function LiveSessionBannerB4({
 }: LiveSessionBannerB4Props) {
   const [mounted, setMounted] = React.useState(false)
   const [currentTimeStr, setCurrentTimeStr] = React.useState("")
-  const [phase, setPhase] = React.useState<DailyPhaseB4>('in_class')
-  const [countdownText, setCountdownText] = React.useState("")
+  const hasAnyBatch4Schedules = (todaySchedules && todaySchedules.length > 0) || (DEFAULT_BATCH4_SCHEDULES && DEFAULT_BATCH4_SCHEDULES.length > 0)
+  const [phase, setPhase] = React.useState<DailyPhaseB4>(hasAnyBatch4Schedules ? 'in_class' : 'standby')
+  const [countdownText, setCountdownText] = React.useState(hasAnyBatch4Schedules ? "" : "Masa Persiapan")
   const { timezone, setTimezone, convertWibTimeToCurrent, formatCurrentTime, getNowInCurrentZone } = useTimezone()
 
   const activeDayNum = currentDayNumber || getCurrentDiklatDay()
   const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[0]
-  const displayDayName = currentDayName || `Hari ${activeDayNum} • ${todayCurriculum.stageName}`
+  const displayDayName = currentDayName || (hasAnyBatch4Schedules ? `Hari ${activeDayNum} • ${todayCurriculum.stageName}` : `Masa Persiapan • Agrasena Batch 4`)
 
   const daysSchedules = React.useMemo(() => {
     const sourceSchedules =
@@ -201,6 +202,13 @@ export function LiveSessionBannerB4({
       const wibMinutes = wibTime.getMinutes()
       const totalMins = wibHours * 60 + wibMinutes
       const wibDayOfWeek = wibTime.getDay() // 0 = Minggu, 6 = Sabtu
+
+      // 0. Standby Mode Check (Batch 4 schedules have not been inputted yet)
+      if (!hasAnyBatch4Schedules) {
+        setPhase('standby')
+        setCountdownText("Menunggu Rilis Jadwal Resmi")
+        return
+      }
 
       // 1. Weekend Check
       if (wibDayOfWeek === 0 || wibDayOfWeek === 6) {
@@ -384,6 +392,14 @@ export function LiveSessionBannerB4({
           {/* Top Pill Badges Row */}
           <div className="flex flex-wrap items-center gap-2">
             
+            {/* 0. Standby Mode */}
+            {phase === 'standby' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Masa Persiapan Diklat
+              </span>
+            )}
+
             {/* 1. Sesi Aktif */}
             {phase === 'in_class' && (
               <span className="flex items-center gap-1.5 rounded-full bg-rose-500 text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
@@ -426,7 +442,7 @@ export function LiveSessionBannerB4({
 
             {/* Day & Stage Tag */}
             <span className="rounded-full bg-white/10 text-slate-200 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold">
-              {phase === 'weekend' ? `Rehat • Menuju Hari ${upcomingDayNum} (${upcomingCurriculum.dayOfWeek}, ${upcomingCurriculum.date})` : displayDayName}
+              {phase === 'standby' ? 'Agrasena Batch 4 • Menunggu Rilis Jadwal' : phase === 'weekend' ? `Rehat • Menuju Hari ${upcomingDayNum} (${upcomingCurriculum.dayOfWeek}, ${upcomingCurriculum.date})` : displayDayName}
             </span>
 
             {/* Batch 4 Badge */}
@@ -558,6 +574,38 @@ export function LiveSessionBannerB4({
               </>
             )}
 
+            {/* Standby Mode */}
+            {phase === 'standby' && (
+              <div className="space-y-2">
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug flex items-center gap-1.5">
+                    <span>Selamat Datang & Selamat Belajar, Rekan Agrasena Batch 4! ✨</span>
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-300/80 leading-relaxed">
+                    Jadwal harian perkuliahan (35 hari) sedang dipersiapkan oleh Panitia Badiklat Kejaksaan RI. Sesi tatap muka online dan tautan Zoom tiap angkatan dapat diakses langsung pada ruang kelas online di bawah.
+                  </p>
+                </div>
+
+                <div className="p-2.5 sm:px-3.5 sm:py-2 rounded-[10px] bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 shrink-0">
+                      <Calendar className="h-3 w-3 text-emerald-400" />
+                      Status Jadwal:
+                    </span>
+                    <span className="font-semibold text-slate-200 text-[11px] sm:text-xs">
+                      Belum ada jadwal yang di-input ke sistem. Silakan pelajari Modul Bahan Ajar dan akses Zoom Angkatan 1 s.d. 6 di bawah.
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 shrink-0">
+                    <span className="rounded-full bg-emerald-950/80 text-emerald-300 px-2.5 py-0.5 font-bold border border-emerald-800/60">
+                      Masa Persiapan
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Weekend Mode */}
             {phase === 'weekend' && (
               <div className="space-y-2">
@@ -605,21 +653,44 @@ export function LiveSessionBannerB4({
         {/* Right Dynamic Action Buttons (Focus on Roadmap Zoom & Academic Links) */}
         <div className="flex flex-col sm:flex-row lg:flex-col items-stretch gap-2 shrink-0 w-full lg:w-48">
           
+          {/* Action on Standby Mode */}
+          {phase === 'standby' && (
+            <>
+              <a
+                href="#zoom-access"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Zoom di Roadmap</span>
+                <ArrowRight className="h-3 w-3" />
+              </a>
+              <Link
+                href="/batch-4/materials"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Modul 120 JP</span>
+              </Link>
+            </>
+          )}
+
           {/* Action on Active Class or Break */}
           {(phase === 'in_class' || phase === 'in_break') && (
             <>
-              <Link href="/batch-4/schedules#zoom-access" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer">
-                  <Video className="h-3.5 w-3.5" />
-                  <span>Zoom di Roadmap</span>
-                  <ExternalLink className="h-3 w-3 opacity-80" />
-                </button>
-              </Link>
-              <Link href="/batch-4/materials" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>Bahan Ajar</span>
-                </button>
+              <a
+                href="#zoom-access"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Zoom di Roadmap</span>
+                <ExternalLink className="h-3 w-3 opacity-80" />
+              </a>
+              <Link
+                href="/batch-4/materials"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Bahan Ajar</span>
               </Link>
             </>
           )}
@@ -627,18 +698,20 @@ export function LiveSessionBannerB4({
           {/* Action on Task Time */}
           {phase === 'task_time' && (
             <>
-              <Link href="/batch-4/tasks" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer">
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>Kumpulkan Tugas</span>
-                  <ArrowRight className="h-3 w-3" />
-                </button>
+              <Link
+                href="/batch-4/tasks"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>Kumpulkan Tugas</span>
+                <ArrowRight className="h-3 w-3" />
               </Link>
-              <Link href="/batch-4/materials" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>Bahan Ajar</span>
-                </button>
+              <Link
+                href="/batch-4/materials"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Bahan Ajar</span>
               </Link>
             </>
           )}
@@ -646,18 +719,20 @@ export function LiveSessionBannerB4({
           {/* Action on Prep Time */}
           {phase === 'prep_time' && (
             <>
-              <Link href="/batch-4/materials" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>Pelajari Modul</span>
-                  <ArrowRight className="h-3 w-3" />
-                </button>
+              <Link
+                href="/batch-4/materials"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Pelajari Modul</span>
+                <ArrowRight className="h-3 w-3" />
               </Link>
-              <Link href="/batch-4/schedules" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Jadwal Sesi</span>
-                </button>
+              <Link
+                href="/batch-4/schedules"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Jadwal Sesi</span>
               </Link>
             </>
           )}
@@ -665,18 +740,20 @@ export function LiveSessionBannerB4({
           {/* Action on Weekend */}
           {phase === 'weekend' && (
             <>
-              <Link href="/batch-4/schedules" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>Jadwal {upcomingCurriculum.dayOfWeek}</span>
-                  <ArrowRight className="h-3 w-3" />
-                </button>
-              </Link>
-              <Link href="/batch-4/materials" className="w-full">
-                <button className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>Modul 120 JP</span>
-                </button>
+              <a
+                href="#zoom-access"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Zoom di Roadmap</span>
+                <ArrowRight className="h-3 w-3" />
+              </a>
+              <Link
+                href="/batch-4/materials"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Modul 120 JP</span>
               </Link>
             </>
           )}
