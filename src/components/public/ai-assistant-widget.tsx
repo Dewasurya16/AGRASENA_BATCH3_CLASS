@@ -260,7 +260,7 @@ function renderInlineFormatted(text: string) {
 
 export function AIAssistantWidget() {
   const pathname = usePathname() || ''
-  const isBatch4 = pathname.startsWith('/batch-4') || (typeof window !== 'undefined' && localStorage.getItem('prakom_user_batch') === 'batch-4')
+  const isBatch4 = pathname.startsWith('/batch-4')
   const [isOpen, setIsOpen] = React.useState(false)
   const [messages, setMessages] = React.useState<Message[]>([])
   const [input, setInput] = React.useState('')

@@ -62,16 +62,12 @@ export function ModernNavbar() {
         try {
           localStorage.setItem("prakom_user_batch", "batch-4")
         } catch {}
-        return
+      } else if (!pathname.startsWith("/admin") && !pathname.startsWith("/api") && !pathname.startsWith("/auth")) {
+        setUserBatch("batch-3")
+        try {
+          localStorage.setItem("prakom_user_batch", "batch-3")
+        } catch {}
       }
-      try {
-        const saved = localStorage.getItem("prakom_user_batch")
-        if (saved === "batch-4") {
-          setUserBatch("batch-4")
-          return
-        }
-      } catch {}
-      setUserBatch("batch-3")
     }
     updateBatch()
     window.addEventListener("storage", updateBatch)
@@ -82,7 +78,7 @@ export function ModernNavbar() {
     }
   }, [pathname])
 
-  const isBatch4 = pathname.startsWith("/batch-4") || userBatch === "batch-4"
+  const isBatch4 = pathname.startsWith("/batch-4")
 
   const primaryLinks = isBatch4
     ? [

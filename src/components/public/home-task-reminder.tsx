@@ -20,7 +20,7 @@ export interface TaskItem {
 
 export function HomeTaskReminder({ targetTask, isBatch4: propIsBatch4 }: { targetTask?: TaskItem | null; isBatch4?: boolean }) {
   const pathname = usePathname() || ""
-  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : (pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4"))
+  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : pathname.startsWith("/batch-4")
   const [mounted, setMounted] = React.useState(false)
 
   const [timeLeft, setTimeLeft] = React.useState({

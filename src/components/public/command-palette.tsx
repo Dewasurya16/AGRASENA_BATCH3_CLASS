@@ -340,7 +340,7 @@ export function CommandPalette() {
       window.open(item.href, '_blank', 'noopener,noreferrer')
     } else {
       let targetHref = item.href
-      const isBatch4 = pathname.startsWith('/batch-4') || (typeof window !== 'undefined' && localStorage.getItem('prakom_user_batch') === 'batch-4')
+      const isBatch4 = pathname.startsWith('/batch-4')
       if (isBatch4 && targetHref.startsWith('/')) {
         if (targetHref === '/') {
           targetHref = '/batch-4'

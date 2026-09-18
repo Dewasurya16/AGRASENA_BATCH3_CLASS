@@ -33,10 +33,6 @@ export function BatchAutoRedirect() {
         return
       }
 
-      const savedBatch = localStorage.getItem('prakom_user_batch')
-      if (savedBatch === 'batch-4' && pathname === '/') {
-        router.replace('/batch-4')
-      }
     } catch {
       // Ignore localStorage errors
     }

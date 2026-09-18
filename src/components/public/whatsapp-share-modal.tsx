@@ -26,7 +26,7 @@ export function WhatsAppShareModal({
   activeTaskDueDate = "Hari Ini, 23:59 WIB",
 }: WhatsAppShareModalProps) {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const [copied, setCopied] = React.useState(false)
 
   const now = new Date()

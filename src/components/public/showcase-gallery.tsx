@@ -45,7 +45,7 @@ const DEFAULT_SHOWCASES: ShowcaseItem[] = [
 
 export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const list = showcases && showcases.length > 0 ? showcases : DEFAULT_SHOWCASES
 
   return (

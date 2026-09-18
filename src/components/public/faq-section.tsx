@@ -235,7 +235,7 @@ const FAQ_DATABASE: FAQItem[] = [
 
 export function FaqSection() {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("Semua")
   const [expandedId, setExpandedId] = React.useState<string | null>("jadwal-1")

@@ -121,11 +121,24 @@ export function IntroScreen() {
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
-      if (savedBatch === "batch-4" || savedBatch === "batch-3") {
-        setSelectedBatch(savedBatch)
-      } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
-        setSelectedBatch("batch-4")
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
+      const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
+      const requestedBatch = urlParams?.get("batch") || urlParams?.get("b")
+
+      let initialBatch: "batch-3" | "batch-4" = "batch-3"
+      if (requestedBatch === "batch-4" || requestedBatch === "4") {
+        initialBatch = "batch-4"
+      } else if (requestedBatch === "batch-3" || requestedBatch === "3") {
+        initialBatch = "batch-3"
+      } else if (currentPath.startsWith("/batch-4")) {
+        initialBatch = "batch-4"
+      } else if (currentPath === "/") {
+        // Jika membuka rute root /, default adalah batch-3 (Agrasena 3)
+        initialBatch = "batch-3"
+      } else if (savedBatch === "batch-4" || savedBatch === "batch-3") {
+        initialBatch = savedBatch
       }
+      setSelectedBatch(initialBatch)
       setHasExistingProfile(valid)
 
       // Cek apakah pengguna sudah menekan tombol "Masuk ke Portal Kelas" dalam sesi ini
@@ -135,17 +148,7 @@ export function IntroScreen() {
       // 1. Jika sudah pernah masuk di sesi ini, ATAU
       // 2. Jika mengakses langsung tautan spesifik (seperti /announcements, /tasks, /schedules dari WhatsApp):
       // Maka langsung tampilkan halaman yang dituju tanpa menghalangi dengan intro!
-      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
       const isDirectSpecificPage = currentPath !== "/" && currentPath !== "/batch-4"
-
-      // JIKA PENGGUNA TERDAFTAR SEBAGAI BATCH 4 DAN MEMBUKA ROOT / -> SEGERA ALIKHAN KE /batch-4
-      if (valid && savedBatch === "batch-4" && currentPath === "/") {
-        try {
-          sessionStorage.setItem("has_entered_portal_session", "true")
-        } catch {}
-        window.location.replace("/batch-4")
-        return
-      }
 
       if (valid && (hasEnteredSession || isDirectSpecificPage)) {
         try {
@@ -190,10 +193,11 @@ export function IntroScreen() {
       if (savedName) setName(savedName)
       if (savedNip) setNip(savedNip)
       if (savedSatker) setSatker(savedSatker)
-      if (savedBatch === "batch-4" || savedBatch === "batch-3") {
-        setSelectedBatch(savedBatch)
-      } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
+      if (currentPath.startsWith("/batch-4")) {
         setSelectedBatch("batch-4")
+      } else {
+        setSelectedBatch("batch-3")
       }
       setHasExistingProfile(valid)
       setTimeInfo(getTimeGreeting())
@@ -481,17 +485,18 @@ export function IntroScreen() {
   }
 
   // Eksekusi animasi keluar dan pembukaan portal kelas sesuai angkatan terpilih
-  const executePortalEntry = React.useCallback(() => {
+  const executePortalEntry = React.useCallback((targetBatch?: "batch-3" | "batch-4") => {
+    const effectiveBatch = targetBatch || selectedBatch
     try {
       sessionStorage.setItem("has_entered_portal_session", "true")
-      localStorage.setItem("prakom_user_batch", selectedBatch)
-      window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: selectedBatch } }))
+      localStorage.setItem("prakom_user_batch", effectiveBatch)
+      window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: effectiveBatch } }))
     } catch {}
 
-    const isBatch4 = selectedBatch === "batch-4"
+    const isBatch4 = effectiveBatch === "batch-4"
     const currentPath = typeof window !== "undefined" ? window.location.pathname : "/"
 
-    // JIKA PERLU PINDAH HALAMAN (MISAL DARI / KE /batch-4):
+    // JIKA PERLU PINDAH HALAMAN (MISAL DARI / KE /batch-4 atau sebaliknya):
     // LANGSUNG PINDAH SEKETIKA TANPA ANIMASI TUTUP MODAL AGAR TIDAK TERLIHAT KEDIPAN HALAMAN SEBELUMNYA!
     if (isBatch4 && !currentPath.startsWith("/batch-4")) {
       window.location.replace("/batch-4")
@@ -540,8 +545,8 @@ export function IntroScreen() {
       return
     }
 
-    executePortalEntry()
-  }, [name, satker, nip, isExiting, executePortalEntry])
+    executePortalEntry(selectedBatch)
+  }, [name, satker, nip, isExiting, executePortalEntry, selectedBatch])
 
   // Simpan data profil peserta ke LocalStorage & langsung otomatis masuk portal
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -550,6 +555,7 @@ export function IntroScreen() {
     const finalName = name.trim()
     const finalNip = nip.trim()
     const finalSatker = satker.trim()
+    const finalBatch = selectedBatch
 
     if (!finalName) {
       setErrorMessage("Nama lengkap dan gelar wajib diisi.")
@@ -574,14 +580,14 @@ export function IntroScreen() {
       localStorage.setItem("prakom_user_name", finalName)
       localStorage.setItem("prakom_user_nip", finalNip)
       localStorage.setItem("prakom_user_satker", finalSatker)
-      localStorage.setItem("prakom_user_batch", selectedBatch)
+      localStorage.setItem("prakom_user_batch", finalBatch)
       localStorage.setItem("prakom_user_onboarded", "true")
 
       window.dispatchEvent(new CustomEvent("prakom-profile-updated", {
-        detail: { name: finalName, nip: finalNip, satker: finalSatker, batch: selectedBatch }
+        detail: { name: finalName, nip: finalNip, satker: finalSatker, batch: finalBatch }
       }))
       window.dispatchEvent(new CustomEvent("prakom-batch-changed", {
-        detail: { batch: selectedBatch }
+        detail: { batch: finalBatch }
       }))
     } catch {}
 
@@ -591,7 +597,7 @@ export function IntroScreen() {
     setHasExistingProfile(true)
 
     // Pengguna yang sudah mengisi data langsung otomatis masuk portal!
-    executePortalEntry()
+    executePortalEntry(finalBatch)
   }
 
   // Interaksi klik huruf: membal elastis (Squash & Bounce)
@@ -1106,11 +1112,7 @@ export function IntroScreen() {
                         sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-3" } }))
                       } catch {}
-                      if (typeof window !== "undefined" && window.location.pathname.startsWith("/batch-4")) {
-                        window.location.replace("/")
-                      } else {
-                        executePortalEntry()
-                      }
+                      executePortalEntry("batch-3")
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-3"
@@ -1130,11 +1132,7 @@ export function IntroScreen() {
                         sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-4" } }))
                       } catch {}
-                      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/batch-4")) {
-                        window.location.replace("/batch-4")
-                      } else {
-                        executePortalEntry()
-                      }
+                      executePortalEntry("batch-4")
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-4"

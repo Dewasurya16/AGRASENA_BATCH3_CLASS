@@ -14,7 +14,7 @@ interface AiCompanionCardProps {
 
 export function AiCompanionCard({ summary, todaySchedules = [], closestTask }: AiCompanionCardProps) {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const [tipIndex, setTipIndex] = React.useState(0)
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [userName, setUserName] = React.useState("")

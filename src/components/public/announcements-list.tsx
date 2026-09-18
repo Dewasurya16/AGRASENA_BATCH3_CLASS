@@ -33,7 +33,7 @@ interface AnnouncementsListProps {
 
 export function AnnouncementsList({ announcements }: AnnouncementsListProps) {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [filterType, setFilterType] = React.useState<"all" | "urgent" | "general">("all")
   const [copiedId, setCopiedId] = React.useState<string | null>(null)

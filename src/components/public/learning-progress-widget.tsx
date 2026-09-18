@@ -40,7 +40,7 @@ const CHECKLIST_ITEMS_PREVIEW = [
 
 export function LearningProgressWidget({ totalMaterialsCount = 24, isBatch4: propIsBatch4 }: LearningProgressWidgetProps) {
   const pathname = usePathname() || ""
-  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : (pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4"))
+  const isBatch4 = propIsBatch4 !== undefined ? propIsBatch4 : pathname.startsWith("/batch-4")
   const storagePrefix = isBatch4 ? "prakom_b4_" : "prakom_"
 
   const [mounted, setMounted] = React.useState(false)

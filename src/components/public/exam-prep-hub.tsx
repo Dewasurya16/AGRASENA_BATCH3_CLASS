@@ -96,7 +96,7 @@ const CHECKLIST_ITEMS = [
 
 export function ExamPrepHub() {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
   const [checkedIds, setCheckedIds] = React.useState<Record<string, boolean>>({})
 
   // Target Dates

@@ -38,7 +38,7 @@ import { usePathname } from "next/navigation"
 
 export function QuizPlayer() {
   const pathname = usePathname() || ""
-  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+  const isBatch4 = pathname.startsWith("/batch-4")
 
   // Navigation & Mode States
   const [activeTab, setActiveTab] = React.useState<"packages" | "flash" | "category">("packages")
