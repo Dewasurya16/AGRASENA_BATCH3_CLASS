@@ -65,5 +65,11 @@ export default async function MaintenancePage({ searchParams }: MaintenancePageP
     redirect("/")
   }
 
-  return <MaintenanceView config={config} isPreview={isPreview} />
+  const { cookies } = await import("next/headers")
+  const { verifyAdminSessionToken } = await import("@/lib/security")
+  const cookieStore = await cookies()
+  const adminCookie = cookieStore.get("prakom_admin_session")?.value
+  const isAdmin = Boolean(verifyAdminSessionToken(adminCookie))
+
+  return <MaintenanceView config={config} isPreview={isPreview} isAdmin={isAdmin} />
 }

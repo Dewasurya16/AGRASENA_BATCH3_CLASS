@@ -157,6 +157,9 @@ export async function POST(req: NextRequest) {
       { headers: NO_CACHE_HEADERS }
     )
 
+    // Clear any previous bypass cookie so admin immediately experiences the live maintenance state
+    res.cookies.delete("admin_maint_bypass")
+
     // Update the edge cookie
     res.cookies.set({
       name: MAINTENANCE_COOKIE_NAME,

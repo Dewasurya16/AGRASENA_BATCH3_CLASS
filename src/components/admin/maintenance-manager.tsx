@@ -296,6 +296,58 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
         </div>
 
         <div className="space-y-4">
+          {/* Pilihan Status Operasional Utama */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Pilih Status Operasional Portal:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Option 1: Normal */}
+              <button
+                type="button"
+                onClick={() => setEnabled(false)}
+                className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                  !enabled
+                    ? "border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
+                    : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#141b27] hover:border-slate-300 opacity-70 hover:opacity-100"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    <span>🟢 Mode Normal (Portal Dibuka)</span>
+                  </span>
+                  {!enabled && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />}
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Layanan aktif penuh. Peserta dapat mengakses beranda, jadwal, materi PDF, dan kuis.
+                </p>
+              </button>
+
+              {/* Option 2: Maintenance */}
+              <button
+                type="button"
+                onClick={() => setEnabled(true)}
+                className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
+                  enabled
+                    ? "border-amber-500 bg-amber-50/80 dark:bg-amber-950/40 ring-1 ring-amber-500"
+                    : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#141b27] hover:border-slate-300 opacity-70 hover:opacity-100"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span>🔴 Mode Maintenance (Portal Ditutup)</span>
+                  </span>
+                  {enabled && <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0" />}
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Portal ditutup sementara. Pengunjung publik otomatis diarahkan ke layar Anime.js.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Judul Pengumuman Maintenance */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">

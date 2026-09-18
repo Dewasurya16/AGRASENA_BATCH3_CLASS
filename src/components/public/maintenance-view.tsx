@@ -21,9 +21,10 @@ import { MaintenanceConfig } from "@/lib/maintenance"
 interface MaintenanceViewProps {
   config: MaintenanceConfig
   isPreview?: boolean
+  isAdmin?: boolean
 }
 
-export function MaintenanceView({ config, isPreview = false }: MaintenanceViewProps) {
+export function MaintenanceView({ config, isPreview = false, isAdmin = false }: MaintenanceViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [timeLeft, setTimeLeft] = useState<{
     days: number
@@ -255,6 +256,39 @@ export function MaintenanceView({ config, isPreview = false }: MaintenanceViewPr
 
       {/* Main Hero Card Container */}
       <main className="relative z-10 w-full max-w-2xl my-auto py-8 sm:py-12 flex flex-col items-center text-center">
+        {/* Admin Session Control Alert */}
+        {isAdmin && (
+          <div className="anime-enter w-full max-w-xl mb-6 p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs font-black text-amber-300">
+                  Sesi Administrator Terdeteksi Aktif
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  Pengunjung umum melihat layar ini. Anda dapat menguji portal via bypass atau kembali ke dashboard.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <a
+                href="/?bypass=1"
+                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold border border-amber-500/40 transition cursor-pointer"
+              >
+                Buka Portal (Bypass)
+              </a>
+              <Link
+                href="/admin/dashboard"
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-black shadow-sm transition cursor-pointer"
+              >
+                Dashboard Admin
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* ===================================================================== */}
         {/* Anime.js Mechanical Gears & Circuit SVG Illustration                  */}
         {/* ===================================================================== */}

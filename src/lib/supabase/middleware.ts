@@ -76,20 +76,19 @@ export async function updateSession(request: NextRequest) {
   }
 
   // =========================================================================
-  // MAINTENANCE MODE ENFORCEMENT & ADMIN BYPASS
+  // MAINTENANCE MODE ENFORCEMENT & REALTIME CHECK
   // =========================================================================
   const isMaintenanceRoute = request.nextUrl.pathname === '/maintenance'
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
   const isExemptApiRoute =
     request.nextUrl.pathname.startsWith('/api/maintenance') ||
-    request.nextUrl.pathname.startsWith('/api/auth')
+    request.nextUrl.pathname.startsWith('/api/auth') ||
+    request.nextUrl.pathname.startsWith('/api/admin')
 
-  // Fast-path cookie check (0ms overhead)
-  const maintCookieValue = request.cookies.get('prakom_maint_active')?.value
-  let isMaintenanceActive = maintCookieValue === '1'
+  let isMaintenanceActive = false
 
-  // If cookie is absent and not on an exempt route, check database once
-  if (maintCookieValue === undefined && supabase && !isAdminRoute && !isExemptApiRoute) {
+  // Query realtime maintenance status from Supabase (never rely on stale 30-day cookie)
+  if (supabase && !isAdminRoute && !isExemptApiRoute) {
     try {
       const { data: maintRecord } = await supabase
         .from('wa_bot_config')
@@ -100,23 +99,30 @@ export async function updateSession(request: NextRequest) {
       if (maintRecord && maintRecord.value) {
         const val = typeof maintRecord.value === 'string' ? JSON.parse(maintRecord.value) : maintRecord.value
         isMaintenanceActive = Boolean(val.enabled)
-        supabaseResponse.cookies.set('prakom_maint_active', isMaintenanceActive ? '1' : '0', {
-          path: '/',
-          sameSite: 'lax',
-          httpOnly: true,
-          maxAge: 86400 * 30,
-        })
       }
     } catch {
       // Ignore fallback
     }
   }
 
+  // Explicit Admin Bypass handling (only active if admin explicitly requests it via ?bypass=1 or bypass cookie)
+  const wantsBypass = request.nextUrl.searchParams.get('bypass') === '1'
+  const wantsResetBypass = request.nextUrl.searchParams.get('bypass') === '0'
+  const hasBypassCookie = !wantsResetBypass && request.cookies.get('admin_maint_bypass')?.value === '1'
+  const hasAdminBypass = hasValidAdminSession && (wantsBypass || hasBypassCookie)
+
+  if (wantsResetBypass) {
+    supabaseResponse.cookies.delete('admin_maint_bypass')
+  } else if (wantsBypass && hasValidAdminSession) {
+    supabaseResponse.cookies.set('admin_maint_bypass', '1', {
+      path: '/',
+      sameSite: 'lax',
+      httpOnly: true,
+    })
+  }
+
   // If maintenance is active
   if (isMaintenanceActive) {
-    // Admin has full bypass to test fixes
-    const hasAdminBypass = hasValidAdminSession
-
     if (!hasAdminBypass && !isAdminRoute && !isExemptApiRoute && !isMaintenanceRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/maintenance'
