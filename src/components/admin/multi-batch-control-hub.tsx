@@ -18,7 +18,10 @@ import {
   Laptop,
   Users,
   Settings,
-  X
+  X,
+  Trash2,
+  PlusCircle,
+  Edit3
 } from "lucide-react"
 import { BATCH3_ZOOM_CONFIG } from "@/data/batch3/zoom-config"
 import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
@@ -118,45 +121,44 @@ export function MultiBatchControlHub({
     }
   }
 
-  const handleClearZoom = async () => {
-    if (!confirm(`Yakin ingin mengosongkan link Zoom Batch ${editingBatchNum}?`)) return
+  const handleDirectDelete = async (batchNum: 3 | 4) => {
+    const batchName = batchNum === 4 ? "Agrasena Batch 4" : "Agrasena Batch 3"
+    if (!confirm(`Yakin ingin menghapus dan mengosongkan link Zoom untuk ${batchName}?`)) return
     setIsSavingZoom(true)
     try {
-      const emptyData = {
-        zoomUrl: "",
-        meetingId: "",
-        passcode: "",
-        sessionScheduleText: zoomForm.sessionScheduleText,
-        hostName: zoomForm.hostName,
-      }
-      const res = await fetch("/api/zoom-config", {
-        method: "POST",
+      const res = await fetch(`/api/zoom-config?batch=${batchNum}`, {
+        method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          batch: editingBatchNum,
-          ...emptyData,
-        }),
       })
       const data = await res.json()
       if (data.success) {
-        const cacheKey = editingBatchNum === 3 ? "prakom_zoom_config_b3" : "prakom_zoom_config_b4"
-        localStorage.setItem(cacheKey, JSON.stringify(data.config))
+        const cacheKey = batchNum === 3 ? "prakom_zoom_config_b3" : "prakom_zoom_config_b4"
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(data.config))
+        } catch {}
         window.dispatchEvent(
           new CustomEvent("prakom-zoom-updated", {
-            detail: { batch: editingBatchNum, config: data.config },
+            detail: { batch: batchNum, config: data.config },
           })
         )
-        if (editingBatchNum === 4) refetchB4()
+        if (batchNum === 4) refetchB4()
         else refetchB3()
-        setZoomForm((prev) => ({ ...prev, zoomUrl: "", meetingId: "", passcode: "" }))
-        onFeedback("success", `Kredensial Zoom Batch ${editingBatchNum} dikosongkan.`)
-        setIsEditingZoomModalOpen(false)
+        onFeedback("success", `Kredensial link Zoom ${batchName} berhasil dihapus.`)
+        if (isEditingZoomModalOpen && editingBatchNum === batchNum) {
+          setIsEditingZoomModalOpen(false)
+        }
+      } else {
+        onFeedback("error", data.error || "Gagal menghapus kredensial Zoom.")
       }
     } catch (err: any) {
-      onFeedback("error", err.message || "Gagal mengosongkan kredensial Zoom.")
+      onFeedback("error", err.message || "Gagal menghapus kredensial Zoom.")
     } finally {
       setIsSavingZoom(false)
     }
+  }
+
+  const handleClearZoom = async () => {
+    await handleDirectDelete(editingBatchNum)
   }
 
   const handleCopyZoomCredentials = (batchNum: 3 | 4) => {
@@ -272,7 +274,7 @@ export function MultiBatchControlHub({
                   <span>Ruang Zoom Batch 3</span>
                 </span>
                 <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                  08:00 – 15:30 WIB
+                  {b3Zoom.sessionScheduleText || "08:00 – 15:30 WIB"}
                 </span>
               </div>
 
@@ -280,38 +282,74 @@ export function MultiBatchControlHub({
                 <div className="rounded-lg bg-slate-50 dark:bg-[#141d30] p-2.5 border border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] font-semibold text-slate-400 block">Meeting ID</span>
                   <span className="font-mono font-black text-slate-900 dark:text-slate-100 text-sm">
-                    {BATCH3_ZOOM_CONFIG.meetingId}
+                    {b3Zoom.meetingId ? b3Zoom.meetingId : <span className="text-amber-500 text-xs font-bold">Belum Diisi Admin</span>}
                   </span>
                 </div>
                 <div className="rounded-lg bg-slate-50 dark:bg-[#141d30] p-2.5 border border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] font-semibold text-slate-400 block">Passcode</span>
                   <span className="font-mono font-black text-slate-900 dark:text-slate-100 text-sm">
-                    {BATCH3_ZOOM_CONFIG.passcode}
+                    {b3Zoom.passcode ? b3Zoom.passcode : <span className="text-amber-500 text-xs font-bold">Belum Diisi Admin</span>}
                   </span>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-1">
+              {/* Action Buttons: Input, Edit, Hapus, Salin, Tes */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => openEditZoomModal(3)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white py-2 px-3 text-xs font-bold transition cursor-pointer shadow-xs"
+                >
+                  {b3Zoom.zoomUrl ? <Settings className="h-3.5 w-3.5" /> : <PlusCircle className="h-3.5 w-3.5" />}
+                  <span>{b3Zoom.zoomUrl ? "Atur Link Zoom B3" : "Input Link Zoom B3"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDirectDelete(3)}
+                  disabled={!b3Zoom.meetingId && !b3Zoom.zoomUrl}
+                  className={`flex items-center justify-center gap-1 rounded-lg py-2 px-2.5 text-xs font-bold transition ${
+                    !b3Zoom.meetingId && !b3Zoom.zoomUrl
+                      ? "bg-slate-100 dark:bg-[#1e293b] text-slate-400 cursor-not-allowed opacity-40"
+                      : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200/80 dark:border-rose-900/60 cursor-pointer"
+                  }`}
+                  title="Hapus / Kosongkan Link Zoom Batch 3"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Hapus</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleCopyZoomCredentials(3)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 dark:bg-[#1e293b] hover:bg-slate-200 dark:hover:bg-[#334155] text-slate-700 dark:text-slate-200 py-2 text-xs font-bold transition cursor-pointer"
+                  disabled={!b3Zoom.meetingId && !b3Zoom.zoomUrl}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 px-3 text-xs font-bold transition ${
+                    !b3Zoom.meetingId && !b3Zoom.zoomUrl
+                      ? "bg-slate-100 dark:bg-[#1e293b] text-slate-400 cursor-not-allowed opacity-50"
+                      : "bg-slate-100 dark:bg-[#1e293b] hover:bg-slate-200 dark:hover:bg-[#334155] text-slate-700 dark:text-slate-200 cursor-pointer"
+                  }`}
+                  title="Salin Kredensial Zoom Batch 3"
                 >
                   {copiedBatch === 3 ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedBatch === 3 ? "Tersalin!" : "Salin Kredensial Zoom"}</span>
+                  <span>{copiedBatch === 3 ? "Tersalin!" : "Salin"}</span>
                 </button>
 
-                <a
-                  href={BATCH3_ZOOM_CONFIG.zoomUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-[#007aff] hover:bg-[#0062cc] text-white px-3.5 py-2 text-xs font-bold transition cursor-pointer shrink-0 shadow-2xs"
-                >
-                  <Video className="h-3.5 w-3.5" />
-                  <span>Buka Zoom</span>
-                  <ExternalLink className="h-3 w-3 opacity-70" />
-                </a>
+                {b3Zoom.zoomUrl ? (
+                  <a
+                    href={b3Zoom.zoomUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-700 dark:text-sky-300 border border-sky-400/40 px-3 py-2 text-xs font-bold transition cursor-pointer shrink-0"
+                  >
+                    <Video className="h-3.5 w-3.5" />
+                    <span>Tes Link</span>
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-amber-500 font-semibold italic">
+                    (Link Kosong)
+                  </span>
+                )}
               </div>
             </div>
 
@@ -461,8 +499,23 @@ export function MultiBatchControlHub({
                   onClick={() => openEditZoomModal(4)}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-bold transition cursor-pointer shadow-xs"
                 >
-                  <Settings className="h-3.5 w-3.5" />
-                  <span>Atur Link Zoom Batch 4</span>
+                  {b4Zoom.zoomUrl ? <Settings className="h-3.5 w-3.5" /> : <PlusCircle className="h-3.5 w-3.5" />}
+                  <span>{b4Zoom.zoomUrl ? "Atur Link Zoom B4" : "Input Link Zoom B4"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDirectDelete(4)}
+                  disabled={!b4Zoom.meetingId && !b4Zoom.zoomUrl}
+                  className={`flex items-center justify-center gap-1 rounded-lg py-2 px-2.5 text-xs font-bold transition ${
+                    !b4Zoom.meetingId && !b4Zoom.zoomUrl
+                      ? "bg-slate-100 dark:bg-[#1c1a3a] text-slate-400 cursor-not-allowed opacity-40"
+                      : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200/80 dark:border-rose-900/60 cursor-pointer"
+                  }`}
+                  title="Hapus / Kosongkan Link Zoom Batch 4"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Hapus</span>
                 </button>
 
                 <button
@@ -590,12 +643,12 @@ export function MultiBatchControlHub({
           <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#2A3550] shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-xl text-white ${editingBatchNum === 4 ? "bg-indigo-600" : "bg-[#007aff]"}`}>
                   <Video className="h-4 w-4" />
                 </span>
                 <div>
                   <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
-                    Pengaturan Zoom {editingBatchNum === 4 ? "Agrasena Batch 4" : "Agrasena Batch 3"}
+                    {zoomForm.zoomUrl ? "Edit Link Zoom" : "Input Link Zoom Baru"} — {editingBatchNum === 4 ? "Agrasena Batch 4" : "Agrasena Batch 3"}
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Kredensial ini akan langsung tampil di portal ruang virtual diklat peserta.
@@ -608,6 +661,32 @@ export function MultiBatchControlHub({
                 className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Batch Switcher dalam Modal */}
+            <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+              <button
+                type="button"
+                onClick={() => openEditZoomModal(3)}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  editingBatchNum === 3
+                    ? "bg-white dark:bg-slate-800 text-[#007aff] shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Batch 3 (Angkatan 05)
+              </button>
+              <button
+                type="button"
+                onClick={() => openEditZoomModal(4)}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  editingBatchNum === 4
+                    ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-2xs"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                Batch 4 (Angkatan 06)
               </button>
             </div>
 
@@ -687,9 +766,10 @@ export function MultiBatchControlHub({
                   type="button"
                   onClick={handleClearZoom}
                   disabled={isSavingZoom}
-                  className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/40 rounded-lg transition cursor-pointer"
                 >
-                  Kosongkan Kredensial
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Hapus Link Zoom</span>
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -704,7 +784,11 @@ export function MultiBatchControlHub({
                   <button
                     type="submit"
                     disabled={isSavingZoom}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer ${
+                      editingBatchNum === 4
+                        ? "bg-indigo-600 hover:bg-indigo-700"
+                        : "bg-[#007aff] hover:bg-[#0062cc]"
+                    }`}
                   >
                     {isSavingZoom ? "Menyimpan..." : "Simpan Kredensial"}
                   </button>

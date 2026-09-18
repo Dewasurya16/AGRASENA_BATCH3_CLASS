@@ -84,6 +84,7 @@ import {
   History,
   Lock,
   ShieldCheck,
+  Video,
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
@@ -91,6 +92,7 @@ import { getScheduleDayNumber } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 import { MultiBatchControlHub } from "@/components/admin/multi-batch-control-hub"
+import { ZoomManager } from "@/components/admin/zoom-manager"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
 import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
 import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
@@ -277,7 +279,7 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = React.useState<
-    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen" | "wa_bot"
+    "overview" | "visitors" | "audit_log" | "reports" | "materials" | "schedules" | "tasks" | "announcements" | "discussions" | "templates" | "exam_prep" | "paper_gen" | "wa_bot" | "zoom"
   >("overview")
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(false)
@@ -2139,6 +2141,7 @@ export function AdminDashboardClient({
     },
     { id: "materials", label: "Pustaka Modul PDF (120 JP)", icon: FileText, count: initialMaterials.length, color: "text-indigo-600" },
     { id: "schedules", label: "Jadwal 35 Hari", icon: Calendar, count: initialSchedules.length, color: "text-sky-600" },
+    { id: "zoom", label: "Kelola Link Zoom", icon: Video, count: null, color: "text-sky-600" },
     { id: "tasks", label: "Penugasan & Ujian", icon: BookOpen, count: initialTasks.length, color: "text-amber-600" },
     { id: "announcements", label: "Pengumuman Kelas", icon: Sparkles, count: initialAnnouncements.length, color: "text-rose-600" },
     { id: "discussions", label: "Moderasi Forum Diskusi", icon: MessageSquare, count: adminDiscussions.length, color: "text-purple-600" },
@@ -2350,6 +2353,7 @@ export function AdminDashboardClient({
                   {activeTab === "reports" && "Laporan Kendala & Kotak Saran"}
                   {activeTab === "materials" && "Pustaka Modul PDF (120 JP)"}
                   {activeTab === "schedules" && "Jadwal Perkuliahan 35 Hari"}
+                  {activeTab === "zoom" && "Pengelolaan Ruang Virtual Zoom (Batch 3 & Batch 4)"}
                   {activeTab === "tasks" && "Penugasan & Uji Praktek"}
                   {activeTab === "announcements" && "Pengumuman Kelas"}
                   {activeTab === "discussions" && "Moderasi Forum Diskusi"}
@@ -2785,7 +2789,7 @@ export function AdminDashboardClient({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <button
                     onClick={() => setIsUploadModalOpen(true)}
                     className="flex items-center justify-center gap-2 rounded-[10px] bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 p-3.5 text-xs font-black text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 transition cursor-pointer shadow-2xs"
@@ -2800,6 +2804,14 @@ export function AdminDashboardClient({
                   >
                     <Plus className="h-4 w-4" />
                     <span>Tambah Sesi Jadwal</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("zoom")}
+                    className="flex items-center justify-center gap-2 rounded-[10px] bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950/70 p-3.5 text-xs font-black text-blue-800 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60 transition cursor-pointer shadow-2xs"
+                  >
+                    <Video className="h-4 w-4" />
+                    <span>Kelola Link Zoom</span>
                   </button>
 
                   <button
@@ -5346,6 +5358,16 @@ export function AdminDashboardClient({
           {/* ========================================================================= */}
           {activeTab === "wa_bot" && isSuperAdmin && (
             <WhatsAppBotManager />
+          )}
+
+          {/* ========================================================================= */}
+          {/* 14. ZOOM LINK MANAGER TAB (INPUT, EDIT, HAPUS LINK ZOOM)                  */}
+          {/* ========================================================================= */}
+          {activeTab === "zoom" && (
+            <ZoomManager
+              onFeedback={showFeedback}
+              selectedBatchFilter={selectedBatch}
+            />
           )}
         </div>
       </main>

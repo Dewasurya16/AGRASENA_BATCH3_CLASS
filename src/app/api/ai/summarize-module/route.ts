@@ -44,6 +44,7 @@ async function extractTextFromPdf(pdfUrl: string): Promise<string> {
     const res = await fetch(pdfUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
       cache: "no-store",
+      redirect: "error", // Prevent SSRF redirect chaining to loopback or cloud metadata
     })
     if (!res.ok) return ""
     const arrayBuffer = await res.arrayBuffer()

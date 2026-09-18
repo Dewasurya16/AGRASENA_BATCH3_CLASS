@@ -1,0 +1,22 @@
+# Perseus Engagement Profile
+
+- **Target Codebase:** Web Kelas (Agrasena Batch 3 & Batch 4)
+- **Framework:** Perseus Security Assessment Suite (v1.0)
+- **Engagement Mode:** `PRODUCTION_SAFE`
+- **Assessment Type:** White-Box Defensive Security Audit & SAST Vulnerability Analysis
+- **Execution Date:** 2026-09-19
+- **Scope:**
+  - `In-Scope`:
+    - All Next.js App Router API endpoints (`src/app/api/**`)
+    - Server Actions and Auth handlers (`src/app/auth/**`)
+    - Client components and render sinks (`src/components/**`)
+    - Security middleware, token signing, and session management (`src/lib/security.ts`)
+    - WhatsApp Bot microservice endpoints (`wa-bot/**`)
+    - Configuration and environment boundaries (`next.config.ts`, `render.yaml`, `.env.local.example`)
+  - `Out-of-Scope`:
+    - Third-party SaaS providers (Supabase cloud infrastructure, Google Gemini API servers)
+    - Upstream npm packages codebases (audited via dependency scanning only)
+- **Rules of Engagement:**
+  - Passive-first analysis and safe non-destructive verification only.
+  - Zero disruption to production data or database records.
+  - Evidence-based findings with exact file and line references.

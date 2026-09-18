@@ -9,8 +9,7 @@ export async function updateSession(request: NextRequest) {
 
   // Cryptographically verify admin session cookie
   const adminCookieRaw = request.cookies.get('prakom_admin_session')?.value
-  const hasValidAdminSession =
-    verifyAdminSessionToken(adminCookieRaw) || adminCookieRaw === 'true'
+  const hasValidAdminSession = Boolean(verifyAdminSessionToken(adminCookieRaw))
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

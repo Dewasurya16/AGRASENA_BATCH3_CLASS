@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { generateAdminSessionToken, generateSuperAdminSessionToken, checkRateLimit, sanitizeInput } from '@/lib/security'
+import { generateAdminSessionToken, generateSuperAdminSessionToken, checkRateLimit, sanitizeInput, constantTimeCompare } from '@/lib/security'
 
 const RUANG_DIKLAT_URL =
   'https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat'
@@ -81,14 +81,8 @@ export async function adminSignIn(formData: FormData) {
     'dewasinar16@gmail.com',
   ]
 
-  const allowedAdminPasswords = [
-    process.env.ADMIN_PASSWORD || 'adminprakom625',
-    'adminprakom625',
-    'prakom625',
-    'superadmin625',
-    'admin123',
-    'admin',
-  ]
+  const adminPassword = process.env.ADMIN_PASSWORD || 'adminprakom625'
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'superadmin625'
 
   // Super Admin credentials (akses eksklusif: WA Bot, Riwayat Aktivitas & Log, Riwayat Pengunjung & IP)
   const superAdminEmails = [
@@ -101,20 +95,15 @@ export async function adminSignIn(formData: FormData) {
     'dewasinar16@gmail.com',
   ]
 
-  const superAdminPasswords = [
-    process.env.SUPER_ADMIN_PASSWORD || 'superadmin625',
-    'superadmin625',
-  ]
-
   const isSuperAdmin =
     superAdminEmails.includes(normalizedEmail) &&
-    superAdminPasswords.includes(password)
+    constantTimeCompare(password, superAdminPassword)
 
-  if (
-    (allowedAdminEmails.includes(normalizedEmail) &&
-    allowedAdminPasswords.includes(password)) ||
-    isSuperAdmin
-  ) {
+  const isAdmin =
+    allowedAdminEmails.includes(normalizedEmail) &&
+    constantTimeCompare(password, adminPassword)
+
+  if (isAdmin || isSuperAdmin) {
     const sessionToken = generateAdminSessionToken()
     cookieStore.set('prakom_admin_session', sessionToken, {
       path: '/',

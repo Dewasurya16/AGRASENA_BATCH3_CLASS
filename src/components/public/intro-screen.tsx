@@ -132,11 +132,10 @@ export function IntroScreen() {
         initialBatch = "batch-3"
       } else if (currentPath.startsWith("/batch-4")) {
         initialBatch = "batch-4"
-      } else if (currentPath === "/") {
-        // Jika membuka rute root /, default adalah batch-3 (Agrasena 3)
-        initialBatch = "batch-3"
       } else if (savedBatch === "batch-4" || savedBatch === "batch-3") {
         initialBatch = savedBatch
+      } else {
+        initialBatch = "batch-3"
       }
       setSelectedBatch(initialBatch)
       setHasExistingProfile(valid)
@@ -1109,10 +1108,8 @@ export function IntroScreen() {
                       setSelectedBatch("batch-3")
                       try {
                         localStorage.setItem("prakom_user_batch", "batch-3")
-                        sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-3" } }))
                       } catch {}
-                      executePortalEntry("batch-3")
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-3"
@@ -1129,10 +1126,8 @@ export function IntroScreen() {
                       setSelectedBatch("batch-4")
                       try {
                         localStorage.setItem("prakom_user_batch", "batch-4")
-                        sessionStorage.setItem("has_entered_portal_session", "true")
                         window.dispatchEvent(new CustomEvent("prakom-batch-changed", { detail: { batch: "batch-4" } }))
                       } catch {}
-                      executePortalEntry("batch-4")
                     }}
                     className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all cursor-pointer ${
                       selectedBatch === "batch-4"

@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server'
 
 // Secret key for HMAC signing (consistent between Node.js server action and Edge Middleware)
+// Never fallback to public/client-exposed keys like NEXT_PUBLIC_*
 const SECRET_KEY =
   process.env.SESSION_SECRET ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'prakom-batch-3-default-crypto-salt-secure-kejaksaan-2026'
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  'prakom-batch-3-internal-secure-session-salt-2026'
 
 // In-memory sliding window rate limiter
 interface RateLimitRecord {
@@ -138,7 +139,6 @@ export function generateSuperAdminSessionToken(): string {
  */
 export function verifyAdminSessionToken(token: string | undefined | null): boolean {
   if (!token || typeof token !== 'string') return false
-  if (token === 'true') return true // Graceful legacy fallback
   const parts = token.split('.')
   if (parts.length !== 2) return false
 
@@ -163,7 +163,6 @@ export function verifyAdminSessionToken(token: string | undefined | null): boole
  */
 export function verifySuperAdminSessionToken(token: string | undefined | null): boolean {
   if (!token || typeof token !== 'string') return false
-  if (token === 'true') return true
   const parts = token.split('.')
   if (parts.length !== 2) return false
 
@@ -203,7 +202,7 @@ export function verifyCsrfOrigin(req: NextRequest): boolean {
  */
 export function isRequestAdminAuthenticated(req: NextRequest): boolean {
   const cookieToken = req.cookies.get('prakom_admin_session')?.value
-  return verifyAdminSessionToken(cookieToken) || cookieToken === 'true'
+  return Boolean(verifyAdminSessionToken(cookieToken))
 }
 
 /**
