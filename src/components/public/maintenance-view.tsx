@@ -11,8 +11,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   Cat,
-  Sparkles,
-  Heart,
 } from "lucide-react"
 import { MaintenanceConfig } from "@/lib/maintenance"
 
@@ -69,7 +67,7 @@ export function MaintenanceView({
         }
         setTimeout(step, 1100)
       } else {
-        // Jeda 2.2 detik setelah baris terakhir selesai, lalu reset & ulangi lagi (LOOPING)
+        // Jeda 2.2 detik setelah baris terakhir selesai, lalu ulangi siklus (LOOPING)
         setTimeout(() => {
           if (!active) return
           setTermLines([])
@@ -93,10 +91,10 @@ export function MaintenanceView({
     // 1. Hero illustration elastic bounce entry
     anime({
       targets: "#chibi-hero-box",
-      scale: [0.75, 1],
+      scale: [0.8, 1],
       opacity: [0, 1],
-      duration: 850,
-      easing: "spring(1, 80, 8, 0)",
+      duration: 900,
+      easing: "spring(1, 75, 8, 0)",
     })
 
     // 2. Speech bubble pop-in
@@ -135,18 +133,18 @@ export function MaintenanceView({
     anime({
       targets: e.currentTarget,
       translateY: [
-        { value: -18, duration: 140, easing: "easeOutQuad" },
+        { value: -20, duration: 140, easing: "easeOutQuad" },
         { value: 4, duration: 110, easing: "easeInQuad" },
         { value: 0, duration: 160, easing: "easeOutBounce" },
       ],
       scaleX: [
-        { value: 0.92, duration: 140 },
-        { value: 1.1, duration: 110 },
+        { value: 0.9, duration: 140 },
+        { value: 1.12, duration: 110 },
         { value: 1, duration: 160 },
       ],
       scaleY: [
         { value: 1.12, duration: 140 },
-        { value: 0.92, duration: 110 },
+        { value: 0.9, duration: 110 },
         { value: 1, duration: 160 },
       ],
     })
@@ -221,7 +219,7 @@ export function MaintenanceView({
         width: "100%",
         overflow: "hidden",
         position: "relative",
-        background: "linear-gradient(135deg, #FFFDF8 0%, #FFF6EA 45%, #FEF3C7 100%)",
+        background: "linear-gradient(135deg, #FFFDF8 0%, #FFF7EC 40%, #FEF3C7 100%)",
         fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         display: "flex",
         flexDirection: "column",
@@ -247,8 +245,8 @@ export function MaintenanceView({
             position: "absolute",
             inset: 0,
             backgroundImage: "radial-gradient(#F59E0B 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            opacity: 0.12,
+            backgroundSize: "32px 32px",
+            opacity: 0.14,
           }}
         />
 
@@ -256,34 +254,34 @@ export function MaintenanceView({
         <div
           style={{
             position: "absolute",
-            top: "-5%",
-            left: "5%",
-            width: "32vw",
-            height: "32vw",
+            top: "-8%",
+            left: "10%",
+            width: "40vw",
+            height: "40vw",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(251, 191, 36, 0.24) 0%, transparent 70%)",
           }}
         />
         <div
           style={{
             position: "absolute",
-            bottom: "-5%",
+            bottom: "-8%",
             right: "5%",
-            width: "36vw",
-            height: "36vw",
+            width: "45vw",
+            height: "45vw",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(253, 164, 175, 0.2) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(253, 164, 175, 0.22) 0%, transparent 70%)",
           }}
         />
 
         {/* Floating Emoticons with Hardware CSS Keyframes */}
         {[
-          { top: "12%", left: "7%", icon: "✨", delay: "0s" },
-          { top: "25%", left: "46%", icon: "🐾", delay: "1.2s" },
-          { top: "72%", left: "8%", icon: "🔧", delay: "0.6s" },
-          { top: "82%", left: "44%", icon: "🐱", delay: "1.8s" },
-          { top: "16%", left: "90%", icon: "⚡", delay: "0.3s" },
-          { top: "75%", left: "89%", icon: "☕", delay: "1.5s" },
+          { top: "10%", left: "6%", icon: "✨", delay: "0s" },
+          { top: "24%", left: "48%", icon: "🐾", delay: "1.2s" },
+          { top: "72%", left: "6%", icon: "🔧", delay: "0.6s" },
+          { top: "84%", left: "46%", icon: "🐱", delay: "1.8s" },
+          { top: "14%", left: "92%", icon: "⚡", delay: "0.3s" },
+          { top: "78%", left: "91%", icon: "☕", delay: "1.5s" },
         ].map((item, idx) => (
           <div
             key={idx}
@@ -292,7 +290,7 @@ export function MaintenanceView({
               position: "absolute",
               top: item.top,
               left: item.left,
-              fontSize: "1.2rem",
+              fontSize: "1.25rem",
               animationDelay: item.delay,
               userSelect: "none",
             }}
@@ -307,7 +305,7 @@ export function MaintenanceView({
         style={{
           position: "relative",
           zIndex: 30,
-          padding: "8px 22px",
+          padding: "12px clamp(16px, 3vw, 40px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -318,8 +316,8 @@ export function MaintenanceView({
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               borderRadius: "50%",
               background: "#fff",
               display: "flex",
@@ -333,14 +331,14 @@ export function MaintenanceView({
             <Image
               src="/Logo.png"
               alt="Logo Agrasena"
-              width={26}
-              height={26}
+              width={28}
+              height={28}
               style={{ objectFit: "contain" }}
             />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: "0.9rem", fontWeight: 900, color: "#0F172A", letterSpacing: "-0.01em" }}>
+              <span style={{ fontSize: "0.95rem", fontWeight: 900, color: "#0F172A", letterSpacing: "-0.01em" }}>
                 Agrasena
               </span>
               <span
@@ -349,7 +347,7 @@ export function MaintenanceView({
                   fontWeight: 900,
                   color: "#B45309",
                   background: "#FEF3C7",
-                  padding: "1px 7px",
+                  padding: "2px 7px",
                   borderRadius: 12,
                   border: "1px solid #FCD34D",
                   letterSpacing: "0.04em",
@@ -358,14 +356,14 @@ export function MaintenanceView({
                 DCXXV
               </span>
             </div>
-            <span style={{ fontSize: "0.55rem", color: "#64748B", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.58rem", color: "#64748B", fontWeight: 600 }}>
               Diklat Fungsional Pranata Komputer
             </span>
           </div>
         </div>
 
         {/* Badges / Admin Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {isAdmin && (
             <div
               style={{
@@ -373,15 +371,15 @@ export function MaintenanceView({
                 alignItems: "center",
                 gap: 5,
                 background: "rgba(255, 255, 255, 0.92)",
-                padding: "3px 9px",
+                padding: "4px 10px",
                 borderRadius: 12,
                 border: "1px solid #FCD34D",
                 boxShadow: "0 2px 8px rgba(245, 158, 11, 0.12)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <ShieldCheck size={13} color="#D97706" />
-                <span style={{ fontSize: "0.6rem", fontWeight: 800, color: "#92400E" }}>
+                <ShieldCheck size={14} color="#D97706" />
+                <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#92400E" }}>
                   Admin
                 </span>
               </div>
@@ -389,7 +387,7 @@ export function MaintenanceView({
               <a
                 href="/?bypass=1"
                 style={{
-                  fontSize: "0.6rem",
+                  fontSize: "0.62rem",
                   fontWeight: 700,
                   color: "#B45309",
                   textDecoration: "none",
@@ -403,12 +401,12 @@ export function MaintenanceView({
               <Link
                 href="/admin/dashboard"
                 style={{
-                  fontSize: "0.6rem",
+                  fontSize: "0.62rem",
                   fontWeight: 800,
                   color: "#fff",
                   textDecoration: "none",
-                  padding: "2px 7px",
-                  borderRadius: 6,
+                  padding: "3px 8px",
+                  borderRadius: 7,
                   background: "#D97706",
                 }}
               >
@@ -420,12 +418,12 @@ export function MaintenanceView({
           {isPreview && !isAdmin && (
             <div
               style={{
-                fontSize: "0.6rem",
+                fontSize: "0.62rem",
                 fontWeight: 800,
                 color: "#64748B",
                 background: "#fff",
-                padding: "3px 9px",
-                borderRadius: 10,
+                padding: "4px 10px",
+                borderRadius: 12,
                 border: "1px solid #E2E8F0",
                 display: "flex",
                 alignItems: "center",
@@ -438,7 +436,7 @@ export function MaintenanceView({
         </div>
       </header>
 
-      {/* ═══ MAIN STAGE (1 Screen Fixed Layout, Zero Scroll) ═══ */}
+      {/* ═══ MAIN STAGE (OPEN UNIFIED STAGE — NO ENCLOSING BORDER / BOX) ═══ */}
       <main
         style={{
           position: "relative",
@@ -447,32 +445,25 @@ export function MaintenanceView({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "0 clamp(10px, 2vw, 24px)",
+          padding: "0 clamp(16px, 3vw, 48px)",
           minHeight: 0,
         }}
       >
         <div
-          id="main-stage-card"
+          id="unified-stage-grid"
           style={{
             width: "100%",
-            maxWidth: 1100,
-            maxHeight: "calc(100dvh - 84px)",
+            maxWidth: 1380,
+            height: "100%",
+            maxHeight: "calc(100dvh - 80px)",
             display: "grid",
-            gridTemplateColumns: "1.15fr 1fr",
-            gap: "clamp(14px, 2.5vw, 32px)",
+            gridTemplateColumns: "1.25fr 1fr",
+            gap: "clamp(20px, 3.5vw, 56px)",
             alignItems: "center",
-            background: "rgba(255, 255, 255, 0.84)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            borderRadius: 28,
-            padding: "clamp(12px, 2vh, 24px) clamp(14px, 2.5vw, 30px)",
-            boxShadow: "0 18px 45px -10px rgba(245, 158, 11, 0.16), 0 0 0 2px rgba(253, 230, 138, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.95)",
-            overflow: "hidden",
           }}
         >
           {/* ───────────────────────────────────────────────────────────
-              LEFT COLUMN: BESARKAN GAMBAR ANIME CHIBI + SPEECH BUBBLE
+              LEFT COLUMN: HERO ANIME JAUH LEBIH BESAR & MENYATU PENUH
              ─────────────────────────────────────────────────────────── */}
           <div
             id="chibi-hero-box"
@@ -486,25 +477,25 @@ export function MaintenanceView({
               height: "100%",
             }}
           >
-            {/* Cute Speech Bubble above characters */}
+            {/* Cute Speech Bubble */}
             <div
               id="chibi-speech-bubble"
               style={{
                 position: "relative",
                 background: "#FFFBEB",
                 border: "2px solid #FCD34D",
-                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.15)",
-                borderRadius: "18px",
-                padding: "6px 14px",
-                maxWidth: 340,
+                boxShadow: "0 6px 20px rgba(245, 158, 11, 0.16)",
+                borderRadius: "20px",
+                padding: "8px 16px",
+                maxWidth: 380,
                 textAlign: "center",
-                marginBottom: 6,
+                marginBottom: 8,
                 zIndex: 10,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <span style={{ fontSize: "1rem" }}>🐱💬</span>
-                <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#92400E", lineHeight: 1.3 }}>
+                <span style={{ fontSize: "1.15rem" }}>🐱💬</span>
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#92400E", lineHeight: 1.35 }}>
                   "Sabar ya kak! Mandor kucing lagi ngawasin kabel & server Agrasena! ✨"
                 </span>
               </div>
@@ -512,14 +503,14 @@ export function MaintenanceView({
               <div
                 style={{
                   position: "absolute",
-                  bottom: -7,
+                  bottom: -8,
                   left: "50%",
                   transform: "translateX(-50%)",
                   width: 0,
                   height: 0,
-                  borderLeft: "7px solid transparent",
-                  borderRight: "7px solid transparent",
-                  borderTop: "7px solid #FCD34D",
+                  borderLeft: "8px solid transparent",
+                  borderRight: "8px solid transparent",
+                  borderTop: "8px solid #FCD34D",
                 }}
               />
             </div>
@@ -529,15 +520,15 @@ export function MaintenanceView({
               id="chibi-glow-aura"
               style={{
                 position: "absolute",
-                width: "clamp(240px, 30vw, 380px)",
-                height: "clamp(240px, 30vw, 380px)",
+                width: "clamp(280px, 36vw, 480px)",
+                height: "clamp(280px, 36vw, 480px)",
                 borderRadius: "50%",
-                background: "radial-gradient(circle, rgba(254, 243, 199, 0.9) 0%, rgba(254, 215, 170, 0.38) 60%, transparent 80%)",
+                background: "radial-gradient(circle, rgba(254, 243, 199, 0.95) 0%, rgba(254, 215, 170, 0.4) 60%, transparent 80%)",
                 zIndex: 1,
               }}
             />
 
-            {/* Gambar Dibesarkan — Hero Chibi Anime */}
+            {/* Gambar Anime Chibi Jauh Lebih Besar */}
             <div
               id="chibi-hero-img-wrap"
               className="chibi-hero-gentle-float"
@@ -547,7 +538,7 @@ export function MaintenanceView({
                 position: "relative",
                 zIndex: 2,
                 width: "100%",
-                maxWidth: "clamp(340px, 38vw, 470px)",
+                maxWidth: "clamp(420px, 46vw, 620px)",
                 display: "flex",
                 justifyContent: "center",
                 cursor: "pointer",
@@ -556,15 +547,15 @@ export function MaintenanceView({
               <Image
                 src="/Maintenance.webp"
                 alt="Tim Agrasena sedang perbaikan sistem"
-                width={500}
-                height={350}
+                width={620}
+                height={434}
                 priority
                 style={{
                   width: "100%",
                   height: "auto",
-                  maxHeight: "clamp(190px, 39vh, 340px)",
+                  maxHeight: "clamp(240px, 54vh, 460px)",
                   objectFit: "contain",
-                  filter: "drop-shadow(0 14px 26px rgba(245, 158, 11, 0.22))",
+                  filter: "drop-shadow(0 16px 32px rgba(245, 158, 11, 0.24))",
                 }}
               />
             </div>
@@ -575,21 +566,21 @@ export function MaintenanceView({
               id="badge-cat-mandor"
               style={{
                 position: "absolute",
-                bottom: "4%",
-                left: "2%",
+                bottom: "3%",
+                left: "4%",
                 background: "#fff",
                 border: "2px solid #FBBF24",
                 borderRadius: 14,
-                padding: "4px 9px",
+                padding: "5px 11px",
                 display: "flex",
                 alignItems: "center",
-                gap: 5,
-                boxShadow: "0 4px 12px rgba(26, 35, 64, 0.08)",
+                gap: 6,
+                boxShadow: "0 4px 14px rgba(26, 35, 64, 0.08)",
                 zIndex: 5,
               }}
             >
-              <span style={{ fontSize: "0.85rem" }}>🐾</span>
-              <span style={{ fontSize: "0.6rem", fontWeight: 800, color: "#92400E" }}>
+              <span style={{ fontSize: "0.95rem" }}>🐾</span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#92400E" }}>
                 Mandor Kucing DCXXV
               </span>
             </div>
@@ -600,20 +591,20 @@ export function MaintenanceView({
               style={{
                 position: "absolute",
                 top: "14%",
-                right: "3%",
+                right: "4%",
                 background: "#FEF2F2",
                 border: "2px solid #FCA5A5",
                 borderRadius: 14,
-                padding: "4px 9px",
+                padding: "5px 11px",
                 display: "flex",
                 alignItems: "center",
-                gap: 5,
-                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.1)",
+                gap: 6,
+                boxShadow: "0 4px 14px rgba(239, 68, 68, 0.1)",
                 zIndex: 5,
               }}
             >
-              <span style={{ fontSize: "0.85rem" }}>⚡</span>
-              <span style={{ fontSize: "0.6rem", fontWeight: 800, color: "#991B1B" }}>
+              <span style={{ fontSize: "0.95rem" }}>⚡</span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#991B1B" }}>
                 Optimasi Sistem 100%
               </span>
             </div>
@@ -627,7 +618,7 @@ export function MaintenanceView({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "clamp(6px, 1.2vh, 12px)",
+              gap: "clamp(8px, 1.5vh, 16px)",
               width: "100%",
               minHeight: 0,
             }}
@@ -638,12 +629,12 @@ export function MaintenanceView({
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 5,
+                  gap: 6,
                   background: "#FEF3C7",
                   border: "1.5px solid #FCD34D",
-                  padding: "3px 9px",
+                  padding: "4px 11px",
                   borderRadius: 20,
-                  marginBottom: 4,
+                  marginBottom: 6,
                 }}
               >
                 <div
@@ -658,7 +649,7 @@ export function MaintenanceView({
                 />
                 <span
                   style={{
-                    fontSize: "0.58rem",
+                    fontSize: "0.62rem",
                     fontWeight: 800,
                     color: "#92400E",
                     letterSpacing: "0.05em",
@@ -667,12 +658,12 @@ export function MaintenanceView({
                 >
                   Sedang Pemeliharaan Sistem
                 </span>
-                <span style={{ fontSize: "0.62rem" }}>🛠️</span>
+                <span style={{ fontSize: "0.68rem" }}>🛠️</span>
               </div>
 
               <h1
                 style={{
-                  fontSize: "clamp(1.15rem, 2.1vw, 1.75rem)",
+                  fontSize: "clamp(1.25rem, 2.4vw, 2.1rem)",
                   fontWeight: 900,
                   color: "#0F172A",
                   lineHeight: 1.2,
@@ -685,10 +676,10 @@ export function MaintenanceView({
 
               <p
                 style={{
-                  fontSize: "clamp(0.66rem, 1vw, 0.78rem)",
+                  fontSize: "clamp(0.72rem, 1.1vw, 0.86rem)",
                   color: "#475569",
-                  lineHeight: 1.4,
-                  margin: "3px 0 0",
+                  lineHeight: 1.45,
+                  margin: "4px 0 0",
                   fontWeight: 500,
                 }}
               >
@@ -701,11 +692,11 @@ export function MaintenanceView({
             <div
               className="deck-pop-item"
               style={{
-                background: "#fff",
-                borderRadius: 18,
-                padding: "clamp(6px, 1.2vh, 10px) 14px",
+                background: "rgba(255, 255, 255, 0.95)",
+                borderRadius: 20,
+                padding: "clamp(8px, 1.4vh, 12px) 16px",
                 border: "2px solid #FDE68A",
-                boxShadow: "0 3px 12px rgba(245, 158, 11, 0.08)",
+                boxShadow: "0 4px 16px rgba(245, 158, 11, 0.08)",
               }}
             >
               <div
@@ -713,14 +704,14 @@ export function MaintenanceView({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginBottom: 6,
+                  marginBottom: 8,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Clock size={13} color="#D97706" />
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Clock size={15} color="#D97706" />
                   <span
                     style={{
-                      fontSize: "0.6rem",
+                      fontSize: "0.64rem",
                       fontWeight: 800,
                       color: "#92400E",
                       textTransform: "uppercase",
@@ -732,11 +723,11 @@ export function MaintenanceView({
                 </div>
                 <span
                   style={{
-                    fontSize: "0.54rem",
+                    fontSize: "0.58rem",
                     fontWeight: 700,
                     color: "#64748B",
                     background: "#F1F5F9",
-                    padding: "2px 7px",
+                    padding: "2px 8px",
                     borderRadius: 8,
                   }}
                 >
@@ -749,7 +740,7 @@ export function MaintenanceView({
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: 6,
+                    gap: 8,
                   }}
                 >
                   {[
@@ -764,14 +755,14 @@ export function MaintenanceView({
                       style={{
                         background: unit.bg,
                         border: `1.5px solid ${unit.border}`,
-                        borderRadius: 12,
-                        padding: "5px 2px 3px",
+                        borderRadius: 14,
+                        padding: "6px 2px 4px",
                         textAlign: "center",
                       }}
                     >
                       <div
                         style={{
-                          fontSize: "clamp(1.05rem, 2vw, 1.45rem)",
+                          fontSize: "clamp(1.15rem, 2.2vw, 1.6rem)",
                           fontWeight: 900,
                           color: unit.text,
                           lineHeight: 1,
@@ -782,7 +773,7 @@ export function MaintenanceView({
                       </div>
                       <div
                         style={{
-                          fontSize: "0.48rem",
+                          fontSize: "0.5rem",
                           fontWeight: 800,
                           color: "#64748B",
                           textTransform: "uppercase",
@@ -800,23 +791,23 @@ export function MaintenanceView({
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    padding: "6px 10px",
+                    padding: "8px 12px",
                     background: "#ECFDF5",
                     border: "1.5px solid #A7F3D0",
-                    borderRadius: 10,
+                    borderRadius: 12,
                   }}
                 >
-                  <CheckCircle2 size={16} color="#10B981" />
-                  <span style={{ fontSize: "0.68rem", fontWeight: 800, color: "#065F46" }}>
+                  <CheckCircle2 size={18} color="#10B981" />
+                  <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#065F46" }}>
                     Maintenance dijadwalkan sudah selesai! Silakan klik Segarkan di bawah. 🎉
                   </span>
                 </div>
               ) : (
                 <div
                   style={{
-                    padding: "6px",
+                    padding: "8px",
                     textAlign: "center",
-                    fontSize: "0.72rem",
+                    fontSize: "0.76rem",
                     fontWeight: 800,
                     color: "#92400E",
                   }}
@@ -832,20 +823,20 @@ export function MaintenanceView({
               id="cute-terminal-widget"
               style={{
                 background: "#0F172A",
-                borderRadius: 16,
+                borderRadius: 18,
                 border: "2px solid #334155",
                 overflow: "hidden",
-                boxShadow: "0 6px 16px rgba(15, 23, 42, 0.2)",
+                boxShadow: "0 8px 20px rgba(15, 23, 42, 0.2)",
                 display: "flex",
                 flexDirection: "column",
-                maxHeight: "clamp(75px, 12.5vh, 110px)",
+                maxHeight: "clamp(85px, 14vh, 120px)",
               }}
             >
               {/* Terminal Title Bar */}
               <div
                 style={{
                   background: "#1E293B",
-                  padding: "3px 8px",
+                  padding: "4px 10px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -859,7 +850,7 @@ export function MaintenanceView({
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981" }} />
                   <span
                     style={{
-                      fontSize: "0.52rem",
+                      fontSize: "0.54rem",
                       fontWeight: 700,
                       color: "#94A3B8",
                       marginLeft: 4,
@@ -871,7 +862,7 @@ export function MaintenanceView({
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <Cat size={11} color="#FCD34D" />
-                  <span style={{ fontSize: "0.5rem", color: "#FCD34D", fontWeight: 700 }}>
+                  <span style={{ fontSize: "0.52rem", color: "#FCD34D", fontWeight: 700 }}>
                     Live Loop
                   </span>
                 </div>
@@ -882,11 +873,11 @@ export function MaintenanceView({
                 ref={termScrollRef}
                 style={{
                   flex: 1,
-                  padding: "5px 8px",
+                  padding: "6px 10px",
                   overflowY: "auto",
                   fontFamily: "'Fira Code', 'Consolas', monospace",
-                  fontSize: "clamp(0.5rem, 0.8vw, 0.58rem)",
-                  lineHeight: 1.4,
+                  fontSize: "clamp(0.52rem, 0.85vw, 0.62rem)",
+                  lineHeight: 1.45,
                   color: "#E2E8F0",
                 }}
               >
@@ -918,7 +909,7 @@ export function MaintenanceView({
                   style={{
                     display: "inline-block",
                     width: 5,
-                    height: 10,
+                    height: 11,
                     background: "#F59E0B",
                     verticalAlign: "middle",
                     marginLeft: 2,
@@ -934,7 +925,7 @@ export function MaintenanceView({
               style={{
                 display: "grid",
                 gridTemplateColumns: "1.2fr 1fr",
-                gap: 8,
+                gap: 10,
                 alignItems: "center",
               }}
             >
@@ -948,32 +939,32 @@ export function MaintenanceView({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 7,
-                  padding: "clamp(8px, 1.2vh, 11px) 12px",
+                  gap: 8,
+                  padding: "clamp(9px, 1.3vh, 12px) 16px",
                   background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
-                  borderRadius: 12,
+                  borderRadius: 14,
                   color: "#ffffff",
-                  fontSize: "clamp(0.68rem, 0.95vw, 0.78rem)",
+                  fontSize: "clamp(0.72rem, 1vw, 0.82rem)",
                   fontWeight: 800,
                   textDecoration: "none",
-                  boxShadow: "0 3px 12px rgba(34, 197, 94, 0.3)",
+                  boxShadow: "0 4px 14px rgba(34, 197, 94, 0.3)",
                   transition: "transform 0.15s ease",
                 }}
                 onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.97)")}
                 onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
-                <MessageCircle size={15} />
+                <MessageCircle size={16} />
                 <span>Chat Admin Agrasena</span>
                 <span
                   style={{
                     background: "rgba(255, 255, 255, 0.25)",
                     borderRadius: "50%",
-                    width: 16,
-                    height: 16,
+                    width: 17,
+                    height: 17,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "0.58rem",
+                    fontSize: "0.6rem",
                   }}
                 >
                   ↗
@@ -989,16 +980,16 @@ export function MaintenanceView({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 6,
-                  padding: "clamp(8px, 1.2vh, 11px) 12px",
+                  gap: 7,
+                  padding: "clamp(9px, 1.3vh, 12px) 16px",
                   background: "#ffffff",
-                  borderRadius: 12,
+                  borderRadius: 14,
                   border: "1.5px solid #E2E8F0",
                   color: "#0F172A",
-                  fontSize: "clamp(0.68rem, 0.95vw, 0.78rem)",
+                  fontSize: "clamp(0.72rem, 1vw, 0.82rem)",
                   fontWeight: 800,
                   cursor: isRefreshing ? "not-allowed" : "pointer",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.04)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
                   fontFamily: "inherit",
                   transition: "all 0.15s ease",
                 }}
@@ -1007,7 +998,7 @@ export function MaintenanceView({
               >
                 <RefreshCw
                   id="cute-refresh-spin"
-                  size={14}
+                  size={15}
                   color={isRefreshing ? "#D97706" : "#64748B"}
                 />
                 <span>{isRefreshing ? "Memeriksa..." : "Segarkan"}</span>
@@ -1023,7 +1014,7 @@ export function MaintenanceView({
           position: "relative",
           zIndex: 30,
           textAlign: "center",
-          padding: "4px 16px 6px",
+          padding: "4px 16px 8px",
           flexShrink: 0,
         }}
       >
@@ -1034,15 +1025,15 @@ export function MaintenanceView({
             gap: 5,
             background: "rgba(255, 255, 255, 0.75)",
             backdropFilter: "blur(6px)",
-            padding: "2px 10px",
-            borderRadius: 10,
+            padding: "3px 12px",
+            borderRadius: 12,
             border: "1px solid rgba(245, 158, 11, 0.2)",
           }}
         >
-          <span style={{ fontSize: "0.52rem", fontWeight: 700, color: "#64748B" }}>
+          <span style={{ fontSize: "0.55rem", fontWeight: 700, color: "#64748B" }}>
             © 2025 Agrasena • Diklat Fungsional Pranata Komputer Kejaksaan RI
           </span>
-          <span style={{ fontSize: "0.58rem" }}>💛</span>
+          <span style={{ fontSize: "0.6rem" }}>💛</span>
         </div>
       </footer>
 
@@ -1058,7 +1049,7 @@ export function MaintenanceView({
         }
         @keyframes chibiFloatSlow {
           0% { transform: translate3d(0, 0px, 0); }
-          50% { transform: translate3d(0, -6px, 0); }
+          50% { transform: translate3d(0, -7px, 0); }
           100% { transform: translate3d(0, 0px, 0); }
         }
         @keyframes chibiWobble {
@@ -1085,20 +1076,20 @@ export function MaintenanceView({
           will-change: transform, opacity;
         }
 
-        @media (max-width: 768px) {
-          #main-stage-card {
+        @media (max-width: 820px) {
+          #unified-stage-grid {
             grid-template-columns: 1fr !important;
             max-height: calc(100dvh - 65px) !important;
-            padding: 8px 12px !important;
-            gap: 6px !important;
+            padding: 4px 10px !important;
+            gap: 8px !important;
             overflow: hidden !important;
           }
           #chibi-hero-box {
             height: auto !important;
-            max-height: 130px !important;
+            max-height: 145px !important;
           }
           #chibi-hero-img-wrap img {
-            max-height: 110px !important;
+            max-height: 125px !important;
           }
           #chibi-speech-bubble {
             display: none !important;
@@ -1113,10 +1104,9 @@ export function MaintenanceView({
             max-height: 55px !important;
           }
         }
-        @media (min-width: 769px) and (max-height: 620px) {
-          #main-stage-card {
-            padding: 8px 16px !important;
-            gap: 10px !important;
+        @media (min-width: 821px) and (max-height: 640px) {
+          #unified-stage-grid {
+            gap: 16px !important;
           }
           #chibi-speech-bubble {
             display: none !important;
