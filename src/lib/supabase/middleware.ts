@@ -123,7 +123,7 @@ export async function updateSession(request: NextRequest) {
 
   // If maintenance is active
   if (isMaintenanceActive) {
-    if (!hasAdminBypass && !isAdminRoute && !isExemptApiRoute && !isMaintenanceRoute && request.nextUrl.pathname !== '/error-preview') {
+    if (!hasAdminBypass && !isAdminRoute && !isExemptApiRoute && !isMaintenanceRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/maintenance'
       return NextResponse.redirect(url)

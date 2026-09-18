@@ -1,18 +1,17 @@
-import { AnimatedErrorView } from "@/components/public/error-pages/animated-error-view"
+import { KineticSvgError } from "@/components/public/error-pages/kinetic-svg-error"
 
 export const metadata = {
-  title: "404 • Halaman Tidak Ditemukan | Agrasena 625",
+  title: "404 • Halaman Tidak Ditemukan | Diklat Prakom Batch 3",
   description: "Halaman yang Anda tuju tidak ditemukan atau telah dipindahkan.",
 }
 
 export default function NotFound() {
   return (
-    <AnimatedErrorView
+    <KineticSvgError
       code="404"
-      badgeText="Halaman Tidak Ditemukan • 404"
-      badgeColor="amber"
-      title="Ups! Halaman Nyasar Entah ke Mana"
-      description="Maaf, tautan atau rute yang Anda tuju tidak tersedia, telah dipindahkan, atau alamat URL yang dimasukkan kurang tepat."
+      mainText="TIDAK DITEMUKAN"
+      badgeText="Halaman Tidak Ditemukan"
+      description="Maaf, tautan atau rute yang Anda tuju tidak tersedia, telah dipindahkan, atau alamat URL yang Anda masukkan kurang tepat."
     />
   )
 }
