@@ -17,11 +17,11 @@ export default function Batch4SchedulesPage() {
         {/* Switcher Back to Batch 3 Header Pill */}
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Jadwal Khusus: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong>
+            Jadwal Khusus: <strong className="text-emerald-600 dark:text-emerald-400">Agrasena Batch 4</strong>
           </span>
           <Link
             href="/schedules?batch=batch-3"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
           >
             <span>Buka Jadwal Batch 3</span>
             <ArrowRight className="h-3 w-3" />
