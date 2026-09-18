@@ -15,6 +15,7 @@ import {
   Filter,
 } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 
 export interface AnnouncementItem {
@@ -31,6 +32,8 @@ interface AnnouncementsListProps {
 }
 
 export function AnnouncementsList({ announcements }: AnnouncementsListProps) {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [filterType, setFilterType] = React.useState<"all" | "urgent" | "general">("all")
   const [copiedId, setCopiedId] = React.useState<string | null>(null)
@@ -53,7 +56,7 @@ export function AnnouncementsList({ announcements }: AnnouncementsListProps) {
 
   const handleShareToWA = (item: AnnouncementItem) => {
     const primaryLink = getPrimaryLink(item.content)
-    let text = `📢 *PENGUMUMAN KELAS DIKLAT PRAKOM BATCH 3*\n\n`
+    let text = `📢 *PENGUMUMAN KELAS DIKLAT PRAKOM ${isBatch4 ? "BATCH 4" : "BATCH 3"}*\n\n`
     text += `📌 *${item.title}*\n`
     text += `🗓️ ${new Date(item.created_at).toLocaleDateString("id-ID", {
       day: "numeric",
@@ -85,7 +88,7 @@ export function AnnouncementsList({ announcements }: AnnouncementsListProps) {
       {/* Navigation & Header */}
       <div className="flex items-center justify-between gap-2">
         <Link
-          href="/"
+          href={isBatch4 ? "/batch-4" : "/"}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-[#0D3830] dark:hover:text-emerald-400 transition"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -93,7 +96,7 @@ export function AnnouncementsList({ announcements }: AnnouncementsListProps) {
         </Link>
 
         <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-          Diklat Prakom Batch 3 Kejaksaan RI
+          Diklat Prakom {isBatch4 ? "Batch 4" : "Batch 3"} Kejaksaan RI
         </span>
       </div>
 

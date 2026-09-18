@@ -50,7 +50,7 @@ export default function Batch4Page() {
             </div>
           </div>
           <Link
-            href="/"
+            href="/?batch=batch-3"
             className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:text-indigo-950 dark:hover:text-white underline underline-offset-2 shrink-0 cursor-pointer"
           >
             <span>Beralih ke Batch 3</span>
@@ -134,7 +134,7 @@ export default function Batch4Page() {
               </div>
             </div>
             <Link
-              href="/paper-generator"
+              href="/batch-4/paper-generator"
               className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
             >
               <span>Buka Generator Makalah</span>
@@ -350,7 +350,7 @@ export default function Batch4Page() {
             </Link>
 
             {/* Card 4: Kuis MOOC */}
-            <Link href="/quiz" className="group block">
+            <Link href="/batch-4/quiz" className="group block">
               <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -372,7 +372,7 @@ export default function Batch4Page() {
             </Link>
 
             {/* Card 5: Generator Makalah */}
-            <Link href="/paper-generator" className="group block">
+            <Link href="/batch-4/paper-generator" className="group block">
               <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
@@ -394,7 +394,7 @@ export default function Batch4Page() {
             </Link>
 
             {/* Card 6: Template & DUPAK */}
-            <Link href="/templates" className="group block">
+            <Link href="/batch-4/templates" className="group block">
               <div className="h-full rounded-[16px] bg-white dark:bg-[#141b27] border border-slate-200 dark:border-slate-800 hover:border-indigo-500 p-5 flex flex-col justify-between gap-3 transition-all hover:-translate-y-1 hover:shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">

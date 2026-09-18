@@ -20,7 +20,7 @@ export default function Batch4SchedulesPage() {
             Jadwal Khusus: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong>
           </span>
           <Link
-            href="/schedules"
+            href="/schedules?batch=batch-3"
             className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
           >
             <span>Buka Jadwal Batch 3</span>

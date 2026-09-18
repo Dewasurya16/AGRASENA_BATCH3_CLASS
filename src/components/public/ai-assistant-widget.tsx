@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { getCurrentDiklatDay, RAW_DAYS_DATA } from '@/lib/roadmap-utils'
 import { Spinner } from '@/components/ui/spinner'
+import { usePathname } from 'next/navigation'
 
 interface Message {
   id: string
@@ -258,6 +259,8 @@ function renderInlineFormatted(text: string) {
 }
 
 export function AIAssistantWidget() {
+  const pathname = usePathname() || ''
+  const isBatch4 = pathname.startsWith('/batch-4') || (typeof window !== 'undefined' && localStorage.getItem('prakom_user_batch') === 'batch-4')
   const [isOpen, setIsOpen] = React.useState(false)
   const [messages, setMessages] = React.useState<Message[]>([])
   const [input, setInput] = React.useState('')
@@ -497,7 +500,7 @@ Silakan periksa daftar sesi terperinci beserta dosen pengampu pada menu **[Jadwa
 • **Besok (Hari ${currentDayNum + 1} - ${tomorrowObj.date}):** ${tomorrowObj.stageName} (${tomorrowObj.stageSubtitle})
   Sesi akan berlanjut besok pagi pukul 08:00 WIB.
 
-Untuk rincian seluruh 35 hari, silakan buka menu **[Jadwal](/schedules)**.`
+Untuk rincian seluruh 35 hari, silakan buka menu **[Jadwal](${isBatch4 ? '/batch-4/schedules' : '/schedules'})**.`
       }
     }
 
@@ -580,6 +583,7 @@ Saya siap memberikan penjelasan mendalam serta blok kode solusi siap pakai!`
           userName: userName || 'Rekan Prakom',
           userSatker: userSatker || 'Kejaksaan RI',
           currentDayNumber: currentDayNum,
+          batch: isBatch4 ? 'batch-4' : 'batch-3',
           stream: true,
         }),
       })

@@ -25,7 +25,7 @@ import {
   Calculator,
   Video
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface SearchItem {
   id: string
@@ -270,6 +270,7 @@ export function CommandPalette() {
   const [query, setQuery] = React.useState('')
   const [selectedIndex, setSelectedIndex] = React.useState(0)
   const router = useRouter()
+  const pathname = usePathname() || ''
   const inputRef = React.useRef<HTMLInputElement>(null)
 
   // Listen for keyboard shortcut Ctrl+K / Cmd+K
@@ -338,7 +339,16 @@ export function CommandPalette() {
     if (item.isExternal) {
       window.open(item.href, '_blank', 'noopener,noreferrer')
     } else {
-      router.push(item.href)
+      let targetHref = item.href
+      const isBatch4 = pathname.startsWith('/batch-4') || (typeof window !== 'undefined' && localStorage.getItem('prakom_user_batch') === 'batch-4')
+      if (isBatch4 && targetHref.startsWith('/')) {
+        if (targetHref === '/') {
+          targetHref = '/batch-4'
+        } else if (!targetHref.startsWith('/batch-4') && !targetHref.startsWith('/admin') && !targetHref.startsWith('/auth') && !targetHref.startsWith('/api')) {
+          targetHref = `/batch-4${targetHref}`
+        }
+      }
+      router.push(targetHref)
     }
   }
 

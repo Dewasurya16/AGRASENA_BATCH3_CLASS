@@ -19,6 +19,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
     const checkBatch = () => {
       if (pathname.startsWith("/batch-4")) {
         setUserBatch("batch-4")
+        try {
+          localStorage.setItem("prakom_user_batch", "batch-4")
+        } catch {}
         return
       }
       try {
@@ -158,7 +161,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span>•</span>
             <Link
-              href="/paper-generator"
+              href={isBatch4 ? "/batch-4/paper-generator" : "/paper-generator"}
               className={`transition font-bold ${
                 isBatch4
                   ? "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700"
@@ -169,7 +172,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span>•</span>
             <Link
-              href="/templates"
+              href={isBatch4 ? "/batch-4/templates" : "/templates"}
               className={`transition ${
                 isBatch4
                   ? "hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -180,7 +183,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span>•</span>
             <Link
-              href="/exam-prep"
+              href={isBatch4 ? "/batch-4/exam-prep" : "/exam-prep"}
               className={`transition ${
                 isBatch4
                   ? "hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -191,7 +194,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span>•</span>
             <Link
-              href="/discussions"
+              href={isBatch4 ? "/batch-4/discussions" : "/discussions"}
               className={`transition ${
                 isBatch4
                   ? "hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -202,7 +205,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             </Link>
             <span>•</span>
             <Link
-              href="/faq"
+              href={isBatch4 ? "/batch-4/faq" : "/faq"}
               className={`transition font-bold ${
                 isBatch4
                   ? "text-purple-600 dark:text-purple-400 hover:text-purple-700"

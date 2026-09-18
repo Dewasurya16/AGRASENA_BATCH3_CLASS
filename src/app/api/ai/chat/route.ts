@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { messages, userApiKey, userName, userSatker, currentDayNumber = 3, stream = false } = body
+    const { messages, userApiKey, userName, userSatker, currentDayNumber = 3, stream = false, batch = "batch-3" } = body
 
     const cleanUserName = sanitizeInput(userName, 80)
     const cleanUserSatker = sanitizeInput(userSatker, 100)
@@ -109,7 +109,8 @@ export async function POST(req: NextRequest) {
       .join("\n")
 
     // 3. System Prompt with Complete Ground Truth & General Knowledge Capabilities
-    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI pintar, responsif, berwawasan luas, dan terhubung langsung secara real-time dengan seluruh database & fitur portal Diklat Fungsional Pranata Komputer (Batch 3) Kejaksaan RI X Agrasena.
+    const isBatch4 = batch === "batch-4"
+    const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI pintar, responsif, berwawasan luas, dan terhubung langsung secara real-time dengan seluruh database & fitur portal Diklat Fungsional Pranata Komputer (${isBatch4 ? "Batch 4" : "Batch 3"}) Kejaksaan RI X Agrasena.
 
 PROFIL PENGGUNA:
 - Nama: ${cleanUserName || "Rekan Prakom"}
@@ -133,15 +134,15 @@ ATURAN KRITIS MENGENAI JADWAL HARI INI & BESOK (SANGAT PENTING):
      * DILARANG KERAS mengatakan bahwa hari ini adalah hari Senin atau hari ini ada jadwal aktif!
 
 PETA FITUR & HALAMAN PORTAL WEB KELAS:
-1. Pustaka Modul PDF (120 JP): Menu /materials (bisa baca modul & unduh rangkuman AI)
-2. Jadwal Perkuliahan 35 Hari: Menu /schedules (agenda harian, jam, materi, pengampu, Zoom)
-3. Penugasan & Uji Praktek: Menu /tasks (daftar tugas mandiri, deadline, status)
-4. Pengumuman Resmi: Menu /announcements (info kelas & surat edaran)
-5. Pusat Template BPS & TIK: Menu /templates (template DUPAK, SOP TIK, DDL Database)
-6. Generator Makalah Inovasi Satker: Menu /paper-generator (bantuan penyusunan proposal 5 BAB)
-7. Kesiapan Ujian & Seminar: Menu /exam-prep (checklist kelulusan, kisi-kisi, evaluasi)
-8. Forum Diskusi: Menu /discussions (tanya jawab antar peserta & pengurus)
-9. Pusat Bantuan & Laporan FAQ: Menu /faq (kirim tiket laporan kendala langsung ke Dashboard Admin)
+1. Pustaka Modul PDF (120 JP): Menu ${isBatch4 ? "/batch-4/materials" : "/materials"} (bisa baca modul & unduh rangkuman AI)
+2. Jadwal Perkuliahan 35 Hari: Menu ${isBatch4 ? "/batch-4/schedules" : "/schedules"} (agenda harian, jam, materi, pengampu, Zoom)
+3. Penugasan & Uji Praktek: Menu ${isBatch4 ? "/batch-4/tasks" : "/tasks"} (daftar tugas mandiri, deadline, status)
+4. Pengumuman Resmi: Menu ${isBatch4 ? "/batch-4/announcements" : "/announcements"} (info kelas & surat edaran)
+5. Pusat Template BPS & TIK: Menu ${isBatch4 ? "/batch-4/templates" : "/templates"} (template DUPAK, SOP TIK, DDL Database)
+6. Generator Makalah Inovasi Satker: Menu ${isBatch4 ? "/batch-4/paper-generator" : "/paper-generator"} (bantuan penyusunan proposal 5 BAB)
+7. Kesiapan Ujian & Seminar: Menu ${isBatch4 ? "/batch-4/exam-prep" : "/exam-prep"} (checklist kelulusan, kisi-kisi, evaluasi)
+8. Forum Diskusi: Menu ${isBatch4 ? "/batch-4/discussions" : "/discussions"} (tanya jawab antar peserta & pengurus)
+9. Pusat Bantuan & Laporan FAQ: Menu ${isBatch4 ? "/batch-4/faq" : "/faq"} (kirim tiket laporan kendala langsung ke Dashboard Admin)
 
 ======================================================================
 MASTER JADWAL 35 HARI LENGKAP (SUMBER KEBENARAN UTAMA / GROUND TRUTH):

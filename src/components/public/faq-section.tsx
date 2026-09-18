@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { usePathname } from "next/navigation"
 import {
   HelpCircle,
   Search,
@@ -233,6 +234,8 @@ const FAQ_DATABASE: FAQItem[] = [
 ]
 
 export function FaqSection() {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("Semua")
   const [expandedId, setExpandedId] = React.useState<string | null>("jadwal-1")
@@ -285,7 +288,7 @@ export function FaqSection() {
     const contact = formContact.trim() ? `\n📱 *Kontak/WA:* ${formContact.trim()}` : ""
     const msg = formMessage.trim() || "[Belum ada uraian kendala]"
 
-    return `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM BATCH 3*
+    return `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM ${isBatch4 ? "BATCH 4" : "BATCH 3"}*
 ━━━━━━━━━━━━━━━━━━━━
 👤 *Nama Lengkap:* ${name}
 🏢 *Satuan Kerja:* ${satker}${contact}
@@ -295,7 +298,7 @@ export function FaqSection() {
 ${msg}
 
 ━━━━━━━━━━━━━━━━━━━━
-_Dikirim via Formulir Pusat Bantuan Web Kelas Prakom Batch 3_`
+_Dikirim via Formulir Pusat Bantuan Web Kelas Prakom ${isBatch4 ? "Batch 4" : "Batch 3"}_`
   }
 
   const handleCopyCustomReport = () => {
@@ -359,7 +362,7 @@ _Dikirim via Formulir Pusat Bantuan Web Kelas Prakom Batch 3_`
     }
   }
 
-  const templateAdminMessage = `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM BATCH 3*
+  const templateAdminMessage = `*🚨 LAPORAN KENDALA / SARAN KELAS PRAKOM ${isBatch4 ? "BATCH 4" : "BATCH 3"}*
 ━━━━━━━━━━━━━━━━━━━━
 👤 *Nama Lengkap:* [Tulis Nama Anda]
 🏢 *Satuan Kerja:* [Contoh: Kejaksaan Negeri / Kejaksaan Tinggi]
@@ -369,7 +372,7 @@ _Dikirim via Formulir Pusat Bantuan Web Kelas Prakom Batch 3_`
 [Tuliskan kendala yang dialami secara rinci atau saran perbaikan Anda di sini]
 
 ━━━━━━━━━━━━━━━━━━━━
-_Dikirim via Pusat Bantuan Web Kelas Prakom Batch 3_`
+_Dikirim via Pusat Bantuan Web Kelas Prakom ${isBatch4 ? "Batch 4" : "Batch 3"}_`
 
   const handleCopyTemplate = () => {
     const text = formMessage.trim() ? buildCustomReportMessage() : templateAdminMessage

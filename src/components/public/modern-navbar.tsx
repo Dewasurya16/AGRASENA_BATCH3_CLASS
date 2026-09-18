@@ -53,7 +53,36 @@ export function ModernNavbar() {
     setMoreDropdownOpen(false)
   }, [pathname])
 
-  const isBatch4 = pathname.startsWith("/batch-4")
+  const [userBatch, setUserBatch] = React.useState<"batch-3" | "batch-4">("batch-3")
+
+  React.useEffect(() => {
+    const updateBatch = () => {
+      if (pathname.startsWith("/batch-4")) {
+        setUserBatch("batch-4")
+        try {
+          localStorage.setItem("prakom_user_batch", "batch-4")
+        } catch {}
+        return
+      }
+      try {
+        const saved = localStorage.getItem("prakom_user_batch")
+        if (saved === "batch-4") {
+          setUserBatch("batch-4")
+          return
+        }
+      } catch {}
+      setUserBatch("batch-3")
+    }
+    updateBatch()
+    window.addEventListener("storage", updateBatch)
+    window.addEventListener("prakom-batch-changed", updateBatch as any)
+    return () => {
+      window.removeEventListener("storage", updateBatch)
+      window.removeEventListener("prakom-batch-changed", updateBatch as any)
+    }
+  }, [pathname])
+
+  const isBatch4 = pathname.startsWith("/batch-4") || userBatch === "batch-4"
 
   const primaryLinks = isBatch4
     ? [
@@ -61,8 +90,8 @@ export function ModernNavbar() {
         { label: "Roadmap", href: "/batch-4/schedules" },
         { label: "Materi PDF", href: "/batch-4/materials" },
         { label: "Tugas", href: "/batch-4/tasks" },
-        { label: "Kuis MOOC", href: "/quiz" },
-        { label: "Snippet Lab", href: "/snippets" },
+        { label: "Kuis MOOC", href: "/batch-4/quiz" },
+        { label: "Snippet Lab", href: "/batch-4/snippets" },
       ]
     : [
         { label: "Overview", href: "/" },
@@ -73,17 +102,27 @@ export function ModernNavbar() {
         { label: "Snippet Lab", href: "/snippets" },
       ]
 
-  const moreLinks = [
-    { label: "AI Laporan Lab Prakom", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun laporan laboratorium satker" },
-    { label: "Template & DUPAK", href: "/templates", icon: Layers, desc: "Katalog Butir AK & Template SPT" },
-    { label: "Persiapan Ujian & Seminar", href: "/exam-prep", icon: Clock, desc: "Countdown & 10 checklist kelulusan" },
-    { label: "Forum Diskusi", href: "/discussions", icon: MessageSquare, desc: "Tanya jawab rekan seangkatan" },
-    { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
-    { label: "Pengumuman", href: "/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
-    { label: "Galeri Karya", href: "/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
-  ]
+  const moreLinks = isBatch4
+    ? [
+        { label: "AI Laporan Lab Prakom", href: "/batch-4/paper-generator", icon: GraduationCap, desc: "Penyusun laporan laboratorium satker" },
+        { label: "Template & DUPAK", href: "/batch-4/templates", icon: Layers, desc: "Katalog Butir AK & Template SPT" },
+        { label: "Persiapan Ujian & Seminar", href: "/batch-4/exam-prep", icon: Clock, desc: "Countdown & 10 checklist kelulusan" },
+        { label: "Forum Diskusi", href: "/batch-4/discussions", icon: MessageSquare, desc: "Tanya jawab rekan seangkatan" },
+        { label: "Bantuan & FAQ", href: "/batch-4/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
+        { label: "Pengumuman", href: "/batch-4/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
+        { label: "Galeri Karya", href: "/batch-4/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
+      ]
+    : [
+        { label: "AI Laporan Lab Prakom", href: "/paper-generator", icon: GraduationCap, desc: "Penyusun laporan laboratorium satker" },
+        { label: "Template & DUPAK", href: "/templates", icon: Layers, desc: "Katalog Butir AK & Template SPT" },
+        { label: "Persiapan Ujian & Seminar", href: "/exam-prep", icon: Clock, desc: "Countdown & 10 checklist kelulusan" },
+        { label: "Forum Diskusi", href: "/discussions", icon: MessageSquare, desc: "Tanya jawab rekan seangkatan" },
+        { label: "Bantuan & FAQ", href: "/faq", icon: HelpCircle, desc: "Tanya jawab & formulir lapor kendala" },
+        { label: "Pengumuman", href: "/announcements", icon: BellRing, desc: "Edaran panitia & info Zoom" },
+        { label: "Galeri Karya", href: "/showcase", icon: Award, desc: "Portofolio tugas & lab peserta" },
+      ]
 
-  const isMoreActive = moreLinks.some((l) => pathname.startsWith(l.href))
+  const isMoreActive = moreLinks.some((l) => pathname === l.href || (l.href !== "/" && l.href !== "/batch-4" && pathname.startsWith(l.href)))
 
   const activeAccentColor = isBatch4 ? "bg-indigo-600" : "bg-[#007aff]"
 

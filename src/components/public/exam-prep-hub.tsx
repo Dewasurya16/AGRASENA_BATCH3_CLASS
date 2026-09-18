@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Clock,
@@ -94,6 +95,8 @@ const CHECKLIST_ITEMS = [
 ]
 
 export function ExamPrepHub() {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const [checkedIds, setCheckedIds] = React.useState<Record<string, boolean>>({})
 
   // Target Dates
@@ -215,7 +218,7 @@ export function ExamPrepHub() {
               <span className="block text-[9px] uppercase font-medium text-[#615d59] dark:text-[#94a3b8]">Dtk</span>
             </div>
           </div>
-          <Link href="/quiz">
+          <Link href={isBatch4 ? "/batch-4/quiz" : "/quiz"}>
             <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-semibold rounded-full mt-1">
               Latihan Tryout MOOC
             </Button>
@@ -252,7 +255,7 @@ export function ExamPrepHub() {
               <span className="block text-[9px] uppercase font-medium text-[#615d59] dark:text-[#94a3b8]">Dtk</span>
             </div>
           </div>
-          <Link href="/paper-generator">
+          <Link href={isBatch4 ? "/batch-4/paper-generator" : "/paper-generator"}>
             <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-semibold rounded-full mt-1">
               Buat Draf Proposal
             </Button>
@@ -289,7 +292,7 @@ export function ExamPrepHub() {
               <span className="block text-[9px] uppercase font-medium text-[#615d59] dark:text-[#94a3b8]">Dtk</span>
             </div>
           </div>
-          <Link href="/templates">
+          <Link href={isBatch4 ? "/batch-4/templates" : "/templates"}>
             <Button variant="secondary" size="sm" className="w-full justify-center text-xs font-semibold rounded-full mt-1">
               Template Slide Paparan
             </Button>

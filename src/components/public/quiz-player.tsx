@@ -34,8 +34,12 @@ import { QUIZ_QUESTIONS, QUIZ_PACKAGES, QuizQuestion, QuizPackage } from "@/data
 import { Spinner } from "@/components/ui/spinner"
 import { Modal } from "@/components/ui/modal"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 export function QuizPlayer() {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
+
   // Navigation & Mode States
   const [activeTab, setActiveTab] = React.useState<"packages" | "flash" | "category">("packages")
   const [activePackage, setActivePackage] = React.useState<QuizPackage | null>(null)
@@ -977,7 +981,7 @@ export function QuizPlayer() {
               {/* Header Badge */}
               <div className="space-y-1 border-b border-amber-600/30 pb-3">
                 <div className="text-[10px] font-mono tracking-widest text-amber-700 dark:text-amber-400 uppercase font-black">
-                  DIKLAT FUNGSIONAL PRANATA KOMPUTER BATCH 3 • KEJAKSAAN RI
+                  DIKLAT FUNGSIONAL PRANATA KOMPUTER {isBatch4 ? "BATCH 4" : "BATCH 3"} • KEJAKSAAN RI
                 </div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                   SERTIFIKAT KELULUSAN EVALUASI

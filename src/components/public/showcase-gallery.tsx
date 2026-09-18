@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Trophy, Star, ExternalLink, Users, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { usePathname } from "next/navigation"
 
 export interface ShowcaseItem {
   id: string
@@ -43,6 +44,8 @@ const DEFAULT_SHOWCASES: ShowcaseItem[] = [
 ]
 
 export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const list = showcases && showcases.length > 0 ? showcases : DEFAULT_SHOWCASES
 
   return (
@@ -56,8 +59,12 @@ export function ShowcaseGallery({ showcases }: { showcases?: ShowcaseItem[] }) {
                 <Trophy className="h-3.5 w-3.5 text-[#ff9500]" strokeWidth={2} />
                 <span>Featured Projects & Inovasi</span>
               </span>
-              <span className="rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-2.5 py-0.5 text-xs font-semibold">
-                Prakom Batch 3
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                isBatch4
+                  ? "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30"
+                  : "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/30"
+              }`}>
+                Prakom {isBatch4 ? "Batch 4" : "Batch 3"}
               </span>
             </div>
 

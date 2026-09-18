@@ -20,7 +20,7 @@ export default function Batch4MaterialsPage() {
             Katalog Modul: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong> • Kurikulum 120 JP
           </span>
           <Link
-            href="/materials"
+            href="/materials?batch=batch-3"
             className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
           >
             <span>Lihat Modul Batch 3</span>

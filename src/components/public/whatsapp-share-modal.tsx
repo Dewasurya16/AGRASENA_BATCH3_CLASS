@@ -4,6 +4,7 @@ import * as React from "react"
 import { Copy, Check, ExternalLink, MessageCircle } from "lucide-react"
 import { Modal } from "@/components/ui/modal"
 import { getCurrentDiklatDay, RAW_DAYS_DATA } from "@/lib/roadmap-utils"
+import { usePathname } from "next/navigation"
 
 export interface WhatsAppShareModalProps {
   isOpen: boolean
@@ -20,10 +21,12 @@ export function WhatsAppShareModal({
   onClose,
   dayNumber,
   dayName,
-  currentScheduleTitle = "Tata Kelola TI & SPBE Nasional (120 JP)",
-  activeTaskTitle = "Tugas Mandiri Pembelajaran Diklat",
+  currentScheduleTitle = "Tidak ada sesi kuliah langsung saat ini.",
+  activeTaskTitle = "Tugas Praktikum Mandiri",
   activeTaskDueDate = "Hari Ini, 23:59 WIB",
 }: WhatsAppShareModalProps) {
+  const pathname = usePathname() || ""
+  const isBatch4 = pathname.startsWith("/batch-4") || (typeof window !== "undefined" && localStorage.getItem("prakom_user_batch") === "batch-4")
   const [copied, setCopied] = React.useState(false)
 
   const now = new Date()
@@ -47,8 +50,8 @@ export function WhatsAppShareModal({
 📝 *Tugas:* ${activeTaskTitle}
 ⏳ *Batas Pengumpulan:* ${activeTaskDueDate}`
 
-  const templateMessage = `*📢 INFO REKAP HARIAN DIKLAT PRAKOM BATCH 3*
-*Kejaksaan RI X Agrasena (Prakom 625)*
+  const templateMessage = `*📢 INFO REKAP HARIAN DIKLAT PRAKOM ${isBatch4 ? "BATCH 4" : "BATCH 3"}*
+*Kejaksaan RI X Agrasena (${isBatch4 ? "Batch 4" : "Prakom 625"})*
 ━━━━━━━━━━━━━━━━━━━━
 
 📅 *Status Diklat:* ${activeDayName}
@@ -61,9 +64,9 @@ ${effectiveTaskSection}
 https://pengembangan.kejaksaan.go.id
 
 💻 *Ruang Diklat Virtual Zoom:*
-https://pengembangan.kejaksaan.go.id/course/pelatihan-fungsional-pranata-komputer-kategori-keahlian-batch-3/ruang-diklat
+https://pengembangan.kejaksaan.go.id
 
-_Semangat belajar rekan-rekan Pranata Komputer Batch 3! ✨_`
+_Semangat belajar rekan-rekan Pranata Komputer ${isBatch4 ? "Batch 4" : "Batch 3"}! ✨_`
 
   const handleCopy = () => {
     navigator.clipboard.writeText(templateMessage)

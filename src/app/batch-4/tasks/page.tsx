@@ -71,7 +71,7 @@ export default async function Batch4TasksPage() {
             </div>
           </div>
           <Link
-            href="/tasks"
+            href="/tasks?batch=batch-3"
             className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:text-indigo-950 dark:hover:text-white underline underline-offset-2 shrink-0 cursor-pointer"
           >
             <span>Buka Tugas Batch 3</span>
