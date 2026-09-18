@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Cat,
   Sparkles,
+  Heart,
 } from "lucide-react"
 import { MaintenanceConfig } from "@/lib/maintenance"
 
@@ -38,37 +39,55 @@ export function MaintenanceView({
   const termScrollRef = useRef<HTMLDivElement>(null)
 
   // ══════════════════════════════════════════════════════════
-  // CUTE CONSOLE / TERMINAL LOGS (Lightweight Interval)
+  // CUTE CONSOLE / TERMINAL LOGS — INFINITE LOOPING ANIMATION
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
     const logs = [
-      "🐾 [AGRASENA] Memulai pemeliharaan sistem kelas...",
-      "🔌 [SISTEM] Sinkronisasi server batch 3 & modul...",
-      "🐱 [MANDOR] Kucing teknisi periksa kabel... Aman!",
-      "☕ [ADMIN] Menyeduh kopi agar coding makin fokus...",
-      "⚡ [DATABASE] Mengoptimalkan kueri dan tabel...",
-      "🛡️ [SECURITY] Verifikasi integritas data peserta...",
-      "✨ [POLISH] Menambahkan fitur baru yang seru...",
-      "📊 [STATUS] Progres perbaikan: [█████████░] 90%",
-      "🚀 [SELESAI] Sebentar lagi selesai, terima kasih!",
+      "🐾 [AGRASENA] Memulai pemeliharaan server kelas...",
+      "🔌 [DCXXV] Menghubungkan ke node cluster Agrasena...",
+      "🐱 [MANDOR] Kucing teknisi periksa kabel LAN... Aman!",
+      "🐟 [SNACK] Menyuapkan snack ikan tuna ke kucing lab... Nyam! 🐱",
+      "☕ [ADMIN] Menuang secangkir kopi hitam manis... Sluuurp!",
+      "⚡ [DATABASE] Mengusir bug nakal dari baris kode... Hush! 🧹",
+      "🛡️ [KEAMANAN] Mengaktifkan perisai super DCXXV... 100%!",
+      "📊 [STATUS] Mengoptimalkan modul: [██████████░] 94%",
+      "🚀 [SIAP] Sedikit lagi selesai! Siap meluncur...",
+      "✨ [SIKLUS] Semua tugas beres! Mengulang pemantauan... 🔄",
     ]
-    let current = 0
-    const interval = setInterval(() => {
-      if (current < logs.length) {
-        setTermLines((prev) => [...prev, logs[current]])
-        current++
+
+    let active = true
+    let idx = 0
+
+    const step = () => {
+      if (!active) return
+      if (idx < logs.length) {
+        const nextLine = logs[idx]
+        setTermLines((prev) => [...prev, nextLine])
+        idx++
         if (termScrollRef.current) {
           termScrollRef.current.scrollTop = termScrollRef.current.scrollHeight
         }
+        setTimeout(step, 1100)
       } else {
-        clearInterval(interval)
+        // Jeda 2.2 detik setelah baris terakhir selesai, lalu reset & ulangi lagi (LOOPING)
+        setTimeout(() => {
+          if (!active) return
+          setTermLines([])
+          idx = 0
+          setTimeout(step, 500)
+        }, 2200)
       }
-    }, 1200)
-    return () => clearInterval(interval)
+    }
+
+    const timer = setTimeout(step, 300)
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [])
 
   // ══════════════════════════════════════════════════════════
-  // ANIME.JS — Snappy One-Shot Entrance Animations (GPU-Optimized)
+  // ANIME.JS — Snappy One-Shot Entrance Animations
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
     // 1. Hero illustration elastic bounce entry
@@ -116,8 +135,8 @@ export function MaintenanceView({
     anime({
       targets: e.currentTarget,
       translateY: [
-        { value: -16, duration: 140, easing: "easeOutQuad" },
-        { value: 3, duration: 110, easing: "easeInQuad" },
+        { value: -18, duration: 140, easing: "easeOutQuad" },
+        { value: 4, duration: 110, easing: "easeInQuad" },
         { value: 0, duration: 160, easing: "easeOutBounce" },
       ],
       scaleX: [
@@ -182,7 +201,7 @@ export function MaintenanceView({
 
   const rawPhone = (config.emergencyContact || "6281234567890").replace(/\D/g, "")
   const whatsappUrl = `https://wa.me/${rawPhone}?text=${encodeURIComponent(
-    "Halo Admin Agrasena 625, saya ingin tanya status maintenance Web Kelas saat ini. Terima kasih! 🙏"
+    "Halo Admin Agrasena, saya ingin tanya status maintenance Web Kelas saat ini. Terima kasih! 🙏"
   )}`
 
   const formattedEta = config.estimatedEnd
@@ -211,7 +230,7 @@ export function MaintenanceView({
         boxSizing: "border-box",
       }}
     >
-      {/* ═══ LIGHTWEIGHT ACCELERATED BACKGROUND ═══ */}
+      {/* ═══ LIGHTWEIGHT HARDWARE-ACCELERATED BACKGROUND ═══ */}
       <div
         aria-hidden="true"
         style={{
@@ -233,16 +252,16 @@ export function MaintenanceView({
           }}
         />
 
-        {/* Ambient subtle glow (Optimized) */}
+        {/* Ambient subtle glow */}
         <div
           style={{
             position: "absolute",
             top: "-5%",
             left: "5%",
-            width: "30vw",
-            height: "30vw",
+            width: "32vw",
+            height: "32vw",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(251, 191, 36, 0.22) 0%, transparent 70%)",
           }}
         />
         <div
@@ -250,10 +269,10 @@ export function MaintenanceView({
             position: "absolute",
             bottom: "-5%",
             right: "5%",
-            width: "35vw",
-            height: "35vw",
+            width: "36vw",
+            height: "36vw",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(253, 164, 175, 0.18) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(253, 164, 175, 0.2) 0%, transparent 70%)",
           }}
         />
 
@@ -288,25 +307,25 @@ export function MaintenanceView({
         style={{
           position: "relative",
           zIndex: 30,
-          padding: "8px 20px",
+          padding: "8px 22px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
         }}
       >
-        {/* Brand identity */}
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        {/* Brand identity: Agrasena & DCXXV */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 34,
+              height: 34,
               borderRadius: "50%",
               background: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.2)",
+              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.22)",
               border: "2px solid #FDE68A",
               overflow: "hidden",
             }}
@@ -314,28 +333,29 @@ export function MaintenanceView({
             <Image
               src="/Logo.png"
               alt="Logo Agrasena"
-              width={24}
-              height={24}
+              width={26}
+              height={26}
               style={{ objectFit: "contain" }}
             />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: "0.84rem", fontWeight: 900, color: "#0F172A", letterSpacing: "-0.01em" }}>
-                Agrasena 625
+              <span style={{ fontSize: "0.9rem", fontWeight: 900, color: "#0F172A", letterSpacing: "-0.01em" }}>
+                Agrasena
               </span>
               <span
                 style={{
-                  fontSize: "0.56rem",
-                  fontWeight: 800,
+                  fontSize: "0.58rem",
+                  fontWeight: 900,
                   color: "#B45309",
                   background: "#FEF3C7",
-                  padding: "1px 6px",
+                  padding: "1px 7px",
                   borderRadius: 12,
                   border: "1px solid #FCD34D",
+                  letterSpacing: "0.04em",
                 }}
               >
-                Batch 3
+                DCXXV
               </span>
             </div>
             <span style={{ fontSize: "0.55rem", color: "#64748B", fontWeight: 600 }}>
@@ -435,24 +455,24 @@ export function MaintenanceView({
           id="main-stage-card"
           style={{
             width: "100%",
-            maxWidth: 1060,
+            maxWidth: 1100,
             maxHeight: "calc(100dvh - 84px)",
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "clamp(12px, 2vw, 28px)",
+            gridTemplateColumns: "1.15fr 1fr",
+            gap: "clamp(14px, 2.5vw, 32px)",
             alignItems: "center",
-            background: "rgba(255, 255, 255, 0.82)",
+            background: "rgba(255, 255, 255, 0.84)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
-            borderRadius: 26,
-            padding: "clamp(12px, 2vh, 22px) clamp(14px, 2.5vw, 28px)",
+            borderRadius: 28,
+            padding: "clamp(12px, 2vh, 24px) clamp(14px, 2.5vw, 30px)",
             boxShadow: "0 18px 45px -10px rgba(245, 158, 11, 0.16), 0 0 0 2px rgba(253, 230, 138, 0.6)",
-            border: "1px solid rgba(255, 255, 255, 0.9)",
+            border: "1px solid rgba(255, 255, 255, 0.95)",
             overflow: "hidden",
           }}
         >
           {/* ───────────────────────────────────────────────────────────
-              LEFT COLUMN: ANIME CHIBI ILLUSTRATION + SPEECH BUBBLE
+              LEFT COLUMN: BESARKAN GAMBAR ANIME CHIBI + SPEECH BUBBLE
              ─────────────────────────────────────────────────────────── */}
           <div
             id="chibi-hero-box"
@@ -473,19 +493,19 @@ export function MaintenanceView({
                 position: "relative",
                 background: "#FFFBEB",
                 border: "2px solid #FCD34D",
-                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.14)",
-                borderRadius: "16px",
-                padding: "6px 12px",
-                maxWidth: 310,
+                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.15)",
+                borderRadius: "18px",
+                padding: "6px 14px",
+                maxWidth: 340,
                 textAlign: "center",
-                marginBottom: 4,
+                marginBottom: 6,
                 zIndex: 10,
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                <span style={{ fontSize: "0.95rem" }}>🐱💬</span>
-                <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#92400E", lineHeight: 1.3 }}>
-                  "Lagi diservis dulu ya! Jangan panik, data kelas aman kok!"
+                <span style={{ fontSize: "1rem" }}>🐱💬</span>
+                <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#92400E", lineHeight: 1.3 }}>
+                  "Sabar ya kak! Mandor kucing lagi ngawasin kabel & server Agrasena! ✨"
                 </span>
               </div>
               {/* Bubble Triangle Tail */}
@@ -509,25 +529,25 @@ export function MaintenanceView({
               id="chibi-glow-aura"
               style={{
                 position: "absolute",
-                width: "clamp(200px, 25vw, 320px)",
-                height: "clamp(200px, 25vw, 320px)",
+                width: "clamp(240px, 30vw, 380px)",
+                height: "clamp(240px, 30vw, 380px)",
                 borderRadius: "50%",
-                background: "radial-gradient(circle, rgba(254, 243, 199, 0.85) 0%, rgba(254, 215, 170, 0.35) 60%, transparent 80%)",
+                background: "radial-gradient(circle, rgba(254, 243, 199, 0.9) 0%, rgba(254, 215, 170, 0.38) 60%, transparent 80%)",
                 zIndex: 1,
               }}
             />
 
-            {/* Chibi Anime Hero Image with click bounce & CSS float */}
+            {/* Gambar Dibesarkan — Hero Chibi Anime */}
             <div
               id="chibi-hero-img-wrap"
               className="chibi-hero-gentle-float"
               onClick={handleHeroClick}
-              title="Klik karakter untuk animasi pantul! 🐾"
+              title="Klik karakter untuk animasi pantul lucu! 🐾"
               style={{
                 position: "relative",
                 zIndex: 2,
                 width: "100%",
-                maxWidth: 400,
+                maxWidth: "clamp(340px, 38vw, 470px)",
                 display: "flex",
                 justifyContent: "center",
                 cursor: "pointer",
@@ -535,16 +555,16 @@ export function MaintenanceView({
             >
               <Image
                 src="/Maintenance.webp"
-                alt="Tim Agrasena 625 sedang perbaikan sistem"
-                width={440}
-                height={308}
+                alt="Tim Agrasena sedang perbaikan sistem"
+                width={500}
+                height={350}
                 priority
                 style={{
                   width: "100%",
                   height: "auto",
-                  maxHeight: "clamp(160px, 33vh, 290px)",
+                  maxHeight: "clamp(190px, 39vh, 340px)",
                   objectFit: "contain",
-                  filter: "drop-shadow(0 10px 20px rgba(245, 158, 11, 0.18))",
+                  filter: "drop-shadow(0 14px 26px rgba(245, 158, 11, 0.22))",
                 }}
               />
             </div>
@@ -555,22 +575,22 @@ export function MaintenanceView({
               id="badge-cat-mandor"
               style={{
                 position: "absolute",
-                bottom: "6%",
+                bottom: "4%",
                 left: "2%",
                 background: "#fff",
                 border: "2px solid #FBBF24",
-                borderRadius: 12,
-                padding: "4px 8px",
+                borderRadius: 14,
+                padding: "4px 9px",
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                boxShadow: "0 3px 10px rgba(26, 35, 64, 0.08)",
+                boxShadow: "0 4px 12px rgba(26, 35, 64, 0.08)",
                 zIndex: 5,
               }}
             >
-              <span style={{ fontSize: "0.8rem" }}>🐾</span>
-              <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#92400E" }}>
-                Mandor Kucing Aktif
+              <span style={{ fontSize: "0.85rem" }}>🐾</span>
+              <span style={{ fontSize: "0.6rem", fontWeight: 800, color: "#92400E" }}>
+                Mandor Kucing DCXXV
               </span>
             </div>
 
@@ -580,20 +600,20 @@ export function MaintenanceView({
               style={{
                 position: "absolute",
                 top: "14%",
-                right: "4%",
+                right: "3%",
                 background: "#FEF2F2",
                 border: "2px solid #FCA5A5",
-                borderRadius: 12,
-                padding: "4px 8px",
+                borderRadius: 14,
+                padding: "4px 9px",
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                boxShadow: "0 3px 10px rgba(239, 68, 68, 0.1)",
+                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.1)",
                 zIndex: 5,
               }}
             >
-              <span style={{ fontSize: "0.8rem" }}>⚡</span>
-              <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#991B1B" }}>
+              <span style={{ fontSize: "0.85rem" }}>⚡</span>
+              <span style={{ fontSize: "0.6rem", fontWeight: 800, color: "#991B1B" }}>
                 Optimasi Sistem 100%
               </span>
             </div>
@@ -652,7 +672,7 @@ export function MaintenanceView({
 
               <h1
                 style={{
-                  fontSize: "clamp(1.1rem, 2.1vw, 1.75rem)",
+                  fontSize: "clamp(1.15rem, 2.1vw, 1.75rem)",
                   fontWeight: 900,
                   color: "#0F172A",
                   lineHeight: 1.2,
@@ -660,12 +680,12 @@ export function MaintenanceView({
                   letterSpacing: "-0.025em",
                 }}
               >
-                {config.title || "Ups! Sedang Di-upgrade Nih ☕"}
+                {config.title || "Portal Sedang Dalam Pemeliharaan Sistem ☕"}
               </h1>
 
               <p
                 style={{
-                  fontSize: "clamp(0.65rem, 1vw, 0.78rem)",
+                  fontSize: "clamp(0.66rem, 1vw, 0.78rem)",
                   color: "#475569",
                   lineHeight: 1.4,
                   margin: "3px 0 0",
@@ -673,7 +693,7 @@ export function MaintenanceView({
                 }}
               >
                 {config.message ||
-                  "Tim Agrasena 625 sedang merapikan modul dan database agar makin lancar & seru. Sebentar ya!"}
+                  "Tim Agrasena sedang merapikan modul dan database agar makin lancar & seru. Sebentar ya!"}
               </p>
             </div>
 
@@ -751,7 +771,7 @@ export function MaintenanceView({
                     >
                       <div
                         style={{
-                          fontSize: "clamp(1rem, 2vw, 1.45rem)",
+                          fontSize: "clamp(1.05rem, 2vw, 1.45rem)",
                           fontWeight: 900,
                           color: unit.text,
                           lineHeight: 1,
@@ -806,7 +826,7 @@ export function MaintenanceView({
               )}
             </div>
 
-            {/* 3. Cute Live Terminal Log Widget */}
+            {/* 3. Cute Live Terminal Log Widget — INFINITE LOOPING */}
             <div
               className="deck-pop-item"
               id="cute-terminal-widget"
@@ -818,7 +838,7 @@ export function MaintenanceView({
                 boxShadow: "0 6px 16px rgba(15, 23, 42, 0.2)",
                 display: "flex",
                 flexDirection: "column",
-                maxHeight: "clamp(75px, 12vh, 105px)",
+                maxHeight: "clamp(75px, 12.5vh, 110px)",
               }}
             >
               {/* Terminal Title Bar */}
@@ -846,18 +866,18 @@ export function MaintenanceView({
                       fontFamily: "monospace",
                     }}
                   >
-                    cat-prompt@agrasena-625:~
+                    cat-prompt@agrasena:~
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <Cat size={11} color="#FCD34D" />
                   <span style={{ fontSize: "0.5rem", color: "#FCD34D", fontWeight: 700 }}>
-                    Live Log
+                    Live Loop
                   </span>
                 </div>
               </div>
 
-              {/* Terminal Content Auto-scroll */}
+              {/* Terminal Content Auto-scroll & Continuous Loop */}
               <div
                 ref={termScrollRef}
                 style={{
@@ -876,12 +896,18 @@ export function MaintenanceView({
                     style={{
                       color: line.includes("MANDOR")
                         ? "#FCD34D"
-                        : line.includes("SISTEM")
+                        : line.includes("SNACK")
+                        ? "#FB7185"
+                        : line.includes("DCXXV")
                         ? "#38BDF8"
+                        : line.includes("ADMIN")
+                        ? "#FBBF24"
                         : line.includes("STATUS")
                         ? "#A78BFA"
-                        : line.includes("SELESAI")
+                        : line.includes("SIAP")
                         ? "#4ADE80"
+                        : line.includes("SIKLUS")
+                        ? "#34D399"
                         : "#CBD5E1",
                     }}
                   >
@@ -1014,7 +1040,7 @@ export function MaintenanceView({
           }}
         >
           <span style={{ fontSize: "0.52rem", fontWeight: 700, color: "#64748B" }}>
-            © 2025 Agrasena 625 • Diklat Fungsional Pranata Komputer Kejaksaan RI
+            © 2025 Agrasena • Diklat Fungsional Pranata Komputer Kejaksaan RI
           </span>
           <span style={{ fontSize: "0.58rem" }}>💛</span>
         </div>
@@ -1069,10 +1095,10 @@ export function MaintenanceView({
           }
           #chibi-hero-box {
             height: auto !important;
-            max-height: 120px !important;
+            max-height: 130px !important;
           }
           #chibi-hero-img-wrap img {
-            max-height: 95px !important;
+            max-height: 110px !important;
           }
           #chibi-speech-bubble {
             display: none !important;
