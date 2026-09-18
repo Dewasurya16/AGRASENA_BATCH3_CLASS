@@ -10,8 +10,8 @@ import {
   RefreshCw,
   ShieldCheck,
   CheckCircle2,
-  Sparkles,
   Cat,
+  Sparkles,
 } from "lucide-react"
 import { MaintenanceConfig } from "@/lib/maintenance"
 
@@ -38,19 +38,19 @@ export function MaintenanceView({
   const termScrollRef = useRef<HTMLDivElement>(null)
 
   // ══════════════════════════════════════════════════════════
-  // CUTE CONSOLE / TERMINAL LOGS
+  // CUTE CONSOLE / TERMINAL LOGS (Lightweight Interval)
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
     const logs = [
-      "🐾 [SYSTEM] Inisialisasi maintenance Agrasena 625...",
-      "🔌 [DEV] Menghubungkan ke server batch 3...",
-      "🐱 [CAT] Kucing teknisi periksa kabel LAN... Aman!",
-      "☕ [COFFEE] Admin menyeduh kopi kedua...",
-      "⚡ [SYNC] Merapikan database & modul kelas...",
-      "🛡️ [SECURITY] Mengunci akses & audit keamanan...",
-      "✨ [POLISH] Menambah bumbu kelucuan & performa...",
-      "📊 [STATUS] Progres sistem: [█████████░░] 85%",
-      "🚀 [READY] Sedikit lagi selesai, stay tune ya!",
+      "🐾 [AGRASENA] Memulai pemeliharaan sistem kelas...",
+      "🔌 [SISTEM] Sinkronisasi server batch 3 & modul...",
+      "🐱 [MANDOR] Kucing teknisi periksa kabel... Aman!",
+      "☕ [ADMIN] Menyeduh kopi agar coding makin fokus...",
+      "⚡ [DATABASE] Mengoptimalkan kueri dan tabel...",
+      "🛡️ [SECURITY] Verifikasi integritas data peserta...",
+      "✨ [POLISH] Menambahkan fitur baru yang seru...",
+      "📊 [STATUS] Progres perbaikan: [█████████░] 90%",
+      "🚀 [SELESAI] Sebentar lagi selesai, terima kasih!",
     ]
     let current = 0
     const interval = setInterval(() => {
@@ -63,115 +63,75 @@ export function MaintenanceView({
       } else {
         clearInterval(interval)
       }
-    }, 1100)
+    }, 1200)
     return () => clearInterval(interval)
   }, [])
 
   // ══════════════════════════════════════════════════════════
-  // ANIME.JS PLAYFUL ANIMATIONS
+  // ANIME.JS — Snappy One-Shot Entrance Animations (GPU-Optimized)
   // ══════════════════════════════════════════════════════════
   useEffect(() => {
-    // 1. Hero Image Bounce-in
+    // 1. Hero illustration elastic bounce entry
     anime({
-      targets: "#cute-hero",
+      targets: "#chibi-hero-box",
       scale: [0.75, 1],
       opacity: [0, 1],
-      duration: 1000,
-      easing: "spring(1, 70, 7, 0)",
+      duration: 850,
+      easing: "spring(1, 80, 8, 0)",
     })
 
-    // 2. Continuous gentle float of anime illustration
+    // 2. Speech bubble pop-in
     anime({
-      targets: "#cute-hero-inner",
-      translateY: [-5, 5],
-      duration: 3200,
-      direction: "alternate",
-      loop: true,
-      easing: "easeInOutSine",
-    })
-
-    // 3. Speech Bubble Pop
-    anime({
-      targets: "#speech-bubble",
+      targets: "#chibi-speech-bubble",
       scale: [0, 1],
       opacity: [0, 1],
-      duration: 800,
-      delay: 450,
-      easing: "spring(1, 80, 9, 0)",
-    })
-
-    // 4. Badges Wiggle
-    anime({
-      targets: ".cute-badge-float",
-      translateY: [-4, 4],
-      rotate: [-3, 3],
-      duration: 2200,
-      direction: "alternate",
-      loop: true,
-      easing: "easeInOutSine",
-      delay: anime.stagger(250),
-    })
-
-    // 5. Right Deck Content Fade-in
-    anime({
-      targets: ".deck-fade-item",
-      translateY: [20, 0],
-      opacity: [0, 1],
       duration: 700,
-      delay: anime.stagger(90, { start: 250 }),
+      delay: 350,
+      easing: "spring(1, 80, 8, 0)",
+    })
+
+    // 3. Right control deck entry
+    anime({
+      targets: ".deck-pop-item",
+      translateY: [15, 0],
+      opacity: [0, 1],
+      duration: 600,
+      delay: anime.stagger(80, { start: 250 }),
       easing: "cubicBezier(0.22, 1, 0.36, 1)",
     })
 
-    // 6. Countdown numbers pop
+    // 4. Countdown boxes spring
     anime({
-      targets: ".cd-box",
+      targets: ".cd-pill",
       scale: [0.85, 1],
       opacity: [0, 1],
-      duration: 600,
-      delay: anime.stagger(80, { start: 500 }),
-      easing: "spring(1, 80, 10, 0)",
-    })
-
-    // 7. Background Floating Sparkles
-    anime({
-      targets: ".bg-floating-sparkle",
-      translateY: [-12, 12],
-      translateX: [-8, 8],
-      rotate: () => anime.random(-45, 45),
-      scale: [0.8, 1.2],
-      opacity: () => [anime.random(0.3, 0.6), anime.random(0.7, 1)],
-      duration: () => anime.random(2500, 4500),
-      direction: "alternate",
-      loop: true,
-      delay: anime.stagger(150),
-      easing: "easeInOutQuad",
-    })
-
-    // 8. Background Emoticon Drift
-    anime({
-      targets: ".bg-drift-emoji",
-      translateY: [0, -30],
-      opacity: [0, 0.22, 0],
-      scale: [0.8, 1.2],
-      duration: 4000,
-      loop: true,
-      delay: anime.stagger(400),
-      easing: "easeOutSine",
-    })
-
-    // 9. Pulsing glow on WhatsApp button
-    anime({
-      targets: "#btn-whatsapp-cute",
-      boxShadow: [
-        "0 4px 14px rgba(34, 197, 94, 0.3)",
-        "0 8px 24px rgba(34, 197, 94, 0.55)",
-        "0 4px 14px rgba(34, 197, 94, 0.3)",
-      ],
-      duration: 2000,
-      loop: true,
-      easing: "easeInOutSine",
+      duration: 500,
+      delay: anime.stagger(60, { start: 450 }),
+      easing: "spring(1, 80, 9, 0)",
     })
   }, [])
+
+  // Interactive Squash and Stretch on Click
+  const handleHeroClick = (e: React.MouseEvent<HTMLElement>) => {
+    anime({
+      targets: e.currentTarget,
+      translateY: [
+        { value: -16, duration: 140, easing: "easeOutQuad" },
+        { value: 3, duration: 110, easing: "easeInQuad" },
+        { value: 0, duration: 160, easing: "easeOutBounce" },
+      ],
+      scaleX: [
+        { value: 0.92, duration: 140 },
+        { value: 1.1, duration: 110 },
+        { value: 1, duration: 160 },
+      ],
+      scaleY: [
+        { value: 1.12, duration: 140 },
+        { value: 0.92, duration: 110 },
+        { value: 1, duration: 160 },
+      ],
+    })
+  }
 
   // ══════════════════════════════════════════════════════════
   // COUNTDOWN CALCULATOR
@@ -210,19 +170,19 @@ export function MaintenanceView({
   const handleRefreshClick = () => {
     setIsRefreshing(true)
     anime({
-      targets: "#cute-refresh-icon",
+      targets: "#cute-refresh-spin",
       rotate: [0, 720],
-      duration: 800,
-      easing: "easeInOutCubic",
+      duration: 750,
+      easing: "easeInOutQuad",
     })
     setTimeout(() => {
       window.location.reload()
-    }, 850)
+    }, 700)
   }
 
   const rawPhone = (config.emergencyContact || "6281234567890").replace(/\D/g, "")
   const whatsappUrl = `https://wa.me/${rawPhone}?text=${encodeURIComponent(
-    "Halo Admin Agrasena 625, saya ingin menanyakan informasi terkait status maintenance Web Kelas saat ini. Terima kasih! 🙏"
+    "Halo Admin Agrasena 625, saya ingin tanya status maintenance Web Kelas saat ini. Terima kasih! 🙏"
   )}`
 
   const formattedEta = config.estimatedEnd
@@ -239,18 +199,19 @@ export function MaintenanceView({
     <div
       style={{
         height: "100dvh",
-        width: "100vw",
+        width: "100%",
         overflow: "hidden",
         position: "relative",
-        background: "linear-gradient(135deg, #FFFDF7 0%, #FFF5E6 45%, #FEF3C7 100%)",
+        background: "linear-gradient(135deg, #FFFDF8 0%, #FFF6EA 45%, #FEF3C7 100%)",
         fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        color: "#1E293B",
+        color: "#0F172A",
+        boxSizing: "border-box",
       }}
     >
-      {/* ═══ PLAYFUL BACKGROUND DECORATION ═══ */}
+      {/* ═══ LIGHTWEIGHT ACCELERATED BACKGROUND ═══ */}
       <div
         aria-hidden="true"
         style={{
@@ -261,7 +222,7 @@ export function MaintenanceView({
           zIndex: 1,
         }}
       >
-        {/* Soft anime polka dot grid overlay */}
+        {/* Soft dot pattern (Pure CSS, 0% CPU) */}
         <div
           style={{
             position: "absolute",
@@ -272,70 +233,52 @@ export function MaintenanceView({
           }}
         />
 
-        {/* Ambient colored glowing orbs */}
+        {/* Ambient subtle glow (Optimized) */}
         <div
           style={{
             position: "absolute",
-            top: "-10%",
-            left: "-5%",
+            top: "-5%",
+            left: "5%",
+            width: "30vw",
+            height: "30vw",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-5%",
+            right: "5%",
             width: "35vw",
             height: "35vw",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%)",
-            filter: "blur(40px)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: "-10%",
-            right: "-5%",
-            width: "40vw",
-            height: "40vw",
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(253, 164, 175, 0.2) 0%, transparent 70%)",
-            filter: "blur(50px)",
+            background: "radial-gradient(circle, rgba(253, 164, 175, 0.18) 0%, transparent 70%)",
           }}
         />
 
-        {/* Floating Sparkles */}
+        {/* Floating Emoticons with Hardware CSS Keyframes */}
         {[
-          { top: "12%", left: "10%", size: 16, color: "#F59E0B" },
-          { top: "25%", left: "48%", size: 14, color: "#EC4899" },
-          { top: "68%", left: "8%", size: 20, color: "#8B5CF6" },
-          { top: "82%", left: "42%", size: 18, color: "#F59E0B" },
-          { top: "18%", left: "85%", size: 15, color: "#10B981" },
-          { top: "75%", left: "88%", size: 22, color: "#F97316" },
-        ].map((s, idx) => (
+          { top: "12%", left: "7%", icon: "✨", delay: "0s" },
+          { top: "25%", left: "46%", icon: "🐾", delay: "1.2s" },
+          { top: "72%", left: "8%", icon: "🔧", delay: "0.6s" },
+          { top: "82%", left: "44%", icon: "🐱", delay: "1.8s" },
+          { top: "16%", left: "90%", icon: "⚡", delay: "0.3s" },
+          { top: "75%", left: "89%", icon: "☕", delay: "1.5s" },
+        ].map((item, idx) => (
           <div
             key={idx}
-            className="bg-floating-sparkle"
+            className="chibi-css-float"
             style={{
               position: "absolute",
-              top: s.top,
-              left: s.left,
-              color: s.color,
-              opacity: 0.7,
-            }}
-          >
-            <Sparkles size={s.size} />
-          </div>
-        ))}
-
-        {/* Floating Emojis Drift */}
-        {["🔧", "🐾", "☕", "🐱", "✨", "🔌", "💻", "🎉"].map((emoji, idx) => (
-          <div
-            key={idx}
-            className="bg-drift-emoji"
-            style={{
-              position: "absolute",
-              top: `${20 + ((idx * 11) % 70)}%`,
-              left: `${5 + ((idx * 13) % 90)}%`,
-              fontSize: "1.3rem",
+              top: item.top,
+              left: item.left,
+              fontSize: "1.2rem",
+              animationDelay: item.delay,
               userSelect: "none",
             }}
           >
-            {emoji}
+            {item.icon}
           </div>
         ))}
       </div>
@@ -363,7 +306,7 @@ export function MaintenanceView({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 3px 10px rgba(245, 158, 11, 0.2)",
+              boxShadow: "0 2px 8px rgba(245, 158, 11, 0.2)",
               border: "2px solid #FDE68A",
               overflow: "hidden",
             }}
@@ -388,7 +331,7 @@ export function MaintenanceView({
                   color: "#B45309",
                   background: "#FEF3C7",
                   padding: "1px 6px",
-                  borderRadius: 20,
+                  borderRadius: 12,
                   border: "1px solid #FCD34D",
                 }}
               >
@@ -409,12 +352,11 @@ export function MaintenanceView({
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                background: "rgba(255, 255, 255, 0.9)",
-                backdropFilter: "blur(8px)",
+                background: "rgba(255, 255, 255, 0.92)",
                 padding: "3px 9px",
                 borderRadius: 12,
                 border: "1px solid #FCD34D",
-                boxShadow: "0 2px 8px rgba(245, 158, 11, 0.15)",
+                boxShadow: "0 2px 8px rgba(245, 158, 11, 0.12)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -476,7 +418,7 @@ export function MaintenanceView({
         </div>
       </header>
 
-      {/* ═══ MAIN STAGE (1 Screen Fixed Layout) ═══ */}
+      {/* ═══ MAIN STAGE (1 Screen Fixed Layout, Zero Scroll) ═══ */}
       <main
         style={{
           position: "relative",
@@ -490,30 +432,30 @@ export function MaintenanceView({
         }}
       >
         <div
-          id="main-card-container"
+          id="main-stage-card"
           style={{
             width: "100%",
-            maxWidth: 1080,
-            maxHeight: "calc(100dvh - 82px)",
+            maxWidth: 1060,
+            maxHeight: "calc(100dvh - 84px)",
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
-            gap: "clamp(12px, 2vw, 32px)",
+            gap: "clamp(12px, 2vw, 28px)",
             alignItems: "center",
-            background: "rgba(255, 255, 255, 0.78)",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
+            background: "rgba(255, 255, 255, 0.82)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
             borderRadius: 26,
-            padding: "clamp(12px, 2vh, 24px) clamp(14px, 2.5vw, 30px)",
-            boxShadow: "0 20px 50px -10px rgba(245, 158, 11, 0.15), 0 0 0 2px rgba(253, 230, 138, 0.6)",
+            padding: "clamp(12px, 2vh, 22px) clamp(14px, 2.5vw, 28px)",
+            boxShadow: "0 18px 45px -10px rgba(245, 158, 11, 0.16), 0 0 0 2px rgba(253, 230, 138, 0.6)",
             border: "1px solid rgba(255, 255, 255, 0.9)",
             overflow: "hidden",
           }}
         >
           {/* ───────────────────────────────────────────────────────────
-              LEFT COLUMN: HERO ANIME ILLUSTRATION + SPEECH BUBBLES
+              LEFT COLUMN: ANIME CHIBI ILLUSTRATION + SPEECH BUBBLE
              ─────────────────────────────────────────────────────────── */}
           <div
-            id="cute-hero"
+            id="chibi-hero-box"
             style={{
               position: "relative",
               display: "flex",
@@ -524,17 +466,17 @@ export function MaintenanceView({
               height: "100%",
             }}
           >
-            {/* Cute Speech Bubble above anime characters */}
+            {/* Cute Speech Bubble above characters */}
             <div
-              id="speech-bubble"
+              id="chibi-speech-bubble"
               style={{
                 position: "relative",
                 background: "#FFFBEB",
                 border: "2px solid #FCD34D",
-                boxShadow: "0 4px 16px rgba(245, 158, 11, 0.15)",
+                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.14)",
                 borderRadius: "16px",
                 padding: "6px 12px",
-                maxWidth: 320,
+                maxWidth: 310,
                 textAlign: "center",
                 marginBottom: 4,
                 zIndex: 10,
@@ -542,8 +484,8 @@ export function MaintenanceView({
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                 <span style={{ fontSize: "0.95rem" }}>🐱💬</span>
-                <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#92400E", lineHeight: 1.25 }}>
-                  "Lagi dirapikan dulu ya! Jangan panik, data kelas aman kok!"
+                <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#92400E", lineHeight: 1.3 }}>
+                  "Lagi diservis dulu ya! Jangan panik, data kelas aman kok!"
                 </span>
               </div>
               {/* Bubble Triangle Tail */}
@@ -562,29 +504,33 @@ export function MaintenanceView({
               />
             </div>
 
-            {/* Glowing Backdrop Circle behind image */}
+            {/* Glowing Backdrop Aura */}
             <div
-              id="cute-glow-orb"
+              id="chibi-glow-aura"
               style={{
                 position: "absolute",
-                width: "clamp(200px, 25vw, 340px)",
-                height: "clamp(200px, 25vw, 340px)",
+                width: "clamp(200px, 25vw, 320px)",
+                height: "clamp(200px, 25vw, 320px)",
                 borderRadius: "50%",
                 background: "radial-gradient(circle, rgba(254, 243, 199, 0.85) 0%, rgba(254, 215, 170, 0.35) 60%, transparent 80%)",
                 zIndex: 1,
               }}
             />
 
-            {/* Anime Illustration with floating animation */}
+            {/* Chibi Anime Hero Image with click bounce & CSS float */}
             <div
-              id="cute-hero-inner"
+              id="chibi-hero-img-wrap"
+              className="chibi-hero-gentle-float"
+              onClick={handleHeroClick}
+              title="Klik karakter untuk animasi pantul! 🐾"
               style={{
                 position: "relative",
                 zIndex: 2,
                 width: "100%",
-                maxWidth: 420,
+                maxWidth: 400,
                 display: "flex",
                 justifyContent: "center",
+                cursor: "pointer",
               }}
             >
               <Image
@@ -596,16 +542,16 @@ export function MaintenanceView({
                 style={{
                   width: "100%",
                   height: "auto",
-                  maxHeight: "clamp(160px, 34vh, 300px)",
+                  maxHeight: "clamp(160px, 33vh, 290px)",
                   objectFit: "contain",
-                  filter: "drop-shadow(0 10px 22px rgba(245, 158, 11, 0.2))",
+                  filter: "drop-shadow(0 10px 20px rgba(245, 158, 11, 0.18))",
                 }}
               />
             </div>
 
-            {/* Floating Decorative Badges on left/right of hero */}
+            {/* Floating Decorative Badges */}
             <div
-              className="cute-badge-float"
+              className="chibi-badge-wobble"
               id="badge-cat-mandor"
               style={{
                 position: "absolute",
@@ -618,18 +564,18 @@ export function MaintenanceView({
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                boxShadow: "0 4px 12px rgba(26, 35, 64, 0.08)",
+                boxShadow: "0 3px 10px rgba(26, 35, 64, 0.08)",
                 zIndex: 5,
               }}
             >
               <span style={{ fontSize: "0.8rem" }}>🐾</span>
               <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#92400E" }}>
-                Mandor Kucing On Duty
+                Mandor Kucing Aktif
               </span>
             </div>
 
             <div
-              className="cute-badge-float"
+              className="chibi-badge-wobble"
               id="badge-system-opt"
               style={{
                 position: "absolute",
@@ -642,7 +588,7 @@ export function MaintenanceView({
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.1)",
+                boxShadow: "0 3px 10px rgba(239, 68, 68, 0.1)",
                 zIndex: 5,
               }}
             >
@@ -654,10 +600,10 @@ export function MaintenanceView({
           </div>
 
           {/* ───────────────────────────────────────────────────────────
-              RIGHT COLUMN: STATUS DECK, COUNTDOWN, TERMINAL & CTAs
+              RIGHT COLUMN: STATUS, COUNTDOWN, CAT TERMINAL & CTAs
              ─────────────────────────────────────────────────────────── */}
           <div
-            id="cute-deck"
+            id="chibi-controls-deck"
             style={{
               display: "flex",
               flexDirection: "column",
@@ -666,8 +612,8 @@ export function MaintenanceView({
               minHeight: 0,
             }}
           >
-            {/* 1. Cute Status Tag & Title */}
-            <div className="deck-fade-item">
+            {/* 1. Header & Title */}
+            <div className="deck-pop-item">
               <div
                 style={{
                   display: "inline-flex",
@@ -687,6 +633,7 @@ export function MaintenanceView({
                     borderRadius: "50%",
                     background: "#D97706",
                     boxShadow: "0 0 8px #F59E0B",
+                    animation: "chibiPulse 1.2s infinite ease-in-out",
                   }}
                 />
                 <span
@@ -726,19 +673,19 @@ export function MaintenanceView({
                 }}
               >
                 {config.message ||
-                  "Tim Agrasena 625 sedang merapikan modul dan database agar makin ngebut & seru. Sebentar ya!"}
+                  "Tim Agrasena 625 sedang merapikan modul dan database agar makin lancar & seru. Sebentar ya!"}
               </p>
             </div>
 
             {/* 2. Gamified Countdown Bubble Timer */}
             <div
-              className="deck-fade-item"
+              className="deck-pop-item"
               style={{
                 background: "#fff",
                 borderRadius: 18,
                 padding: "clamp(6px, 1.2vh, 10px) 14px",
                 border: "2px solid #FDE68A",
-                boxShadow: "0 4px 14px rgba(245, 158, 11, 0.08)",
+                boxShadow: "0 3px 12px rgba(245, 158, 11, 0.08)",
               }}
             >
               <div
@@ -793,7 +740,7 @@ export function MaintenanceView({
                   ].map((unit) => (
                     <div
                       key={unit.label}
-                      className="cd-box"
+                      className="cd-pill"
                       style={{
                         background: unit.bg,
                         border: `1.5px solid ${unit.border}`,
@@ -861,17 +808,17 @@ export function MaintenanceView({
 
             {/* 3. Cute Live Terminal Log Widget */}
             <div
-              className="deck-fade-item"
+              className="deck-pop-item"
               id="cute-terminal-widget"
               style={{
                 background: "#0F172A",
                 borderRadius: 16,
                 border: "2px solid #334155",
                 overflow: "hidden",
-                boxShadow: "0 8px 18px rgba(15, 23, 42, 0.2)",
+                boxShadow: "0 6px 16px rgba(15, 23, 42, 0.2)",
                 display: "flex",
                 flexDirection: "column",
-                maxHeight: "clamp(80px, 13vh, 115px)",
+                maxHeight: "clamp(75px, 12vh, 105px)",
               }}
             >
               {/* Terminal Title Bar */}
@@ -927,13 +874,13 @@ export function MaintenanceView({
                   <div
                     key={idx}
                     style={{
-                      color: line.includes("CAT")
+                      color: line.includes("MANDOR")
                         ? "#FCD34D"
-                        : line.includes("DEV")
+                        : line.includes("SISTEM")
                         ? "#38BDF8"
                         : line.includes("STATUS")
                         ? "#A78BFA"
-                        : line.includes("READY")
+                        : line.includes("SELESAI")
                         ? "#4ADE80"
                         : "#CBD5E1",
                     }}
@@ -957,7 +904,7 @@ export function MaintenanceView({
 
             {/* 4. Action Buttons (WhatsApp + Refresh) */}
             <div
-              className="deck-fade-item"
+              className="deck-pop-item"
               style={{
                 display: "grid",
                 gridTemplateColumns: "1.2fr 1fr",
@@ -983,7 +930,7 @@ export function MaintenanceView({
                   fontSize: "clamp(0.68rem, 0.95vw, 0.78rem)",
                   fontWeight: 800,
                   textDecoration: "none",
-                  boxShadow: "0 4px 14px rgba(34, 197, 94, 0.35)",
+                  boxShadow: "0 3px 12px rgba(34, 197, 94, 0.3)",
                   transition: "transform 0.15s ease",
                 }}
                 onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.97)")}
@@ -1033,7 +980,7 @@ export function MaintenanceView({
                 onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
                 <RefreshCw
-                  id="cute-refresh-icon"
+                  id="cute-refresh-spin"
                   size={14}
                   color={isRefreshing ? "#D97706" : "#64748B"}
                 />
@@ -1059,7 +1006,7 @@ export function MaintenanceView({
             display: "inline-flex",
             alignItems: "center",
             gap: 5,
-            background: "rgba(255, 255, 255, 0.7)",
+            background: "rgba(255, 255, 255, 0.75)",
             backdropFilter: "blur(6px)",
             padding: "2px 10px",
             borderRadius: 10,
@@ -1073,49 +1020,82 @@ export function MaintenanceView({
         </div>
       </footer>
 
-      {/* ═══ RESPONSIVE CSS INLINE ═══ */}
+      {/* ═══ HARDWARE ACCELERATED CSS ANIMATIONS (0% CPU Idle) ═══ */}
       <style>{`
         @keyframes cuteBlink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
+        @keyframes chibiPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(1.25); }
+        }
+        @keyframes chibiFloatSlow {
+          0% { transform: translate3d(0, 0px, 0); }
+          50% { transform: translate3d(0, -6px, 0); }
+          100% { transform: translate3d(0, 0px, 0); }
+        }
+        @keyframes chibiWobble {
+          0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+          50% { transform: translate3d(0, -3px, 0) rotate(2.5deg); }
+          100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+        }
+        @keyframes chibiDrift {
+          0% { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0.3; }
+          50% { transform: translate3d(0, -10px, 0) scale(1.1); opacity: 0.8; }
+          100% { transform: translate3d(0, 0, 0) scale(0.9); opacity: 0.3; }
+        }
+
+        .chibi-hero-gentle-float {
+          animation: chibiFloatSlow 3.2s ease-in-out infinite;
+          will-change: transform;
+        }
+        .chibi-badge-wobble {
+          animation: chibiWobble 2.6s ease-in-out infinite;
+          will-change: transform;
+        }
+        .chibi-css-float {
+          animation: chibiDrift 3.5s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+
         @media (max-width: 768px) {
-          #main-card-container {
+          #main-stage-card {
             grid-template-columns: 1fr !important;
             max-height: calc(100dvh - 65px) !important;
             padding: 8px 12px !important;
             gap: 6px !important;
             overflow: hidden !important;
           }
-          #cute-hero {
+          #chibi-hero-box {
             height: auto !important;
             max-height: 120px !important;
           }
-          #cute-hero-inner img {
-            max-height: 100px !important;
+          #chibi-hero-img-wrap img {
+            max-height: 95px !important;
           }
-          #speech-bubble {
+          #chibi-speech-bubble {
             display: none !important;
           }
-          #cute-glow-orb {
+          #chibi-glow-aura {
             display: none !important;
           }
           #badge-cat-mandor, #badge-system-opt {
             display: none !important;
           }
           #cute-terminal-widget {
-            max-height: 60px !important;
+            max-height: 55px !important;
           }
         }
         @media (min-width: 769px) and (max-height: 620px) {
-          #main-card-container {
+          #main-stage-card {
             padding: 8px 16px !important;
-            gap: 12px !important;
+            gap: 10px !important;
           }
-          #speech-bubble {
+          #chibi-speech-bubble {
             display: none !important;
           }
-          .cute-badge-float {
+          .chibi-badge-wobble {
             display: none !important;
           }
         }
