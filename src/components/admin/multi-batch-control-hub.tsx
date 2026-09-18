@@ -16,10 +16,13 @@ import {
   Layers,
   ShieldCheck,
   Laptop,
-  Users
+  Users,
+  Settings,
+  X
 } from "lucide-react"
 import { BATCH3_ZOOM_CONFIG } from "@/data/batch3/zoom-config"
 import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
+import { useBatchZoomConfig } from "@/lib/zoom-config-client"
 
 interface MultiBatchControlHubProps {
   batch3SchedulesCount: number
@@ -49,11 +52,117 @@ export function MultiBatchControlHub({
   onFeedback
 }: MultiBatchControlHubProps) {
   const [copiedBatch, setCopiedBatch] = React.useState<number | null>(null)
+  const { config: b3Zoom, refetch: refetchB3 } = useBatchZoomConfig(3)
+  const { config: b4Zoom, refetch: refetchB4 } = useBatchZoomConfig(4)
+
+  const [isEditingZoomModalOpen, setIsEditingZoomModalOpen] = React.useState(false)
+  const [editingBatchNum, setEditingBatchNum] = React.useState<3 | 4>(4)
+  const [zoomForm, setZoomForm] = React.useState({
+    zoomUrl: "",
+    meetingId: "",
+    passcode: "",
+    sessionScheduleText: "",
+    hostName: "",
+  })
+  const [isSavingZoom, setIsSavingZoom] = React.useState(false)
+
+  const openEditZoomModal = (batchNum: 3 | 4) => {
+    const target = batchNum === 4 ? b4Zoom : b3Zoom
+    setEditingBatchNum(batchNum)
+    setZoomForm({
+      zoomUrl: target.zoomUrl || "",
+      meetingId: target.meetingId || "",
+      passcode: target.passcode || "",
+      sessionScheduleText: target.sessionScheduleText || "",
+      hostName: target.hostName || "",
+    })
+    setIsEditingZoomModalOpen(true)
+  }
+
+  const handleSaveZoom = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSavingZoom(true)
+    try {
+      const res = await fetch("/api/zoom-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          batch: editingBatchNum,
+          ...zoomForm,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        const cacheKey = editingBatchNum === 3 ? "prakom_zoom_config_b3" : "prakom_zoom_config_b4"
+        localStorage.setItem(cacheKey, JSON.stringify(data.config))
+        window.dispatchEvent(
+          new CustomEvent("prakom-zoom-updated", {
+            detail: { batch: editingBatchNum, config: data.config },
+          })
+        )
+        if (editingBatchNum === 4) refetchB4()
+        else refetchB3()
+        onFeedback("success", `Kredensial Zoom Batch ${editingBatchNum} berhasil disimpan!`)
+        setIsEditingZoomModalOpen(false)
+      } else {
+        onFeedback("error", data.error || "Gagal menyimpan link Zoom.")
+      }
+    } catch (err: any) {
+      onFeedback("error", err.message || "Terjadi kesalahan saat menyimpan.")
+    } finally {
+      setIsSavingZoom(false)
+    }
+  }
+
+  const handleClearZoom = async () => {
+    if (!confirm(`Yakin ingin mengosongkan link Zoom Batch ${editingBatchNum}?`)) return
+    setIsSavingZoom(true)
+    try {
+      const emptyData = {
+        zoomUrl: "",
+        meetingId: "",
+        passcode: "",
+        sessionScheduleText: zoomForm.sessionScheduleText,
+        hostName: zoomForm.hostName,
+      }
+      const res = await fetch("/api/zoom-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          batch: editingBatchNum,
+          ...emptyData,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        const cacheKey = editingBatchNum === 3 ? "prakom_zoom_config_b3" : "prakom_zoom_config_b4"
+        localStorage.setItem(cacheKey, JSON.stringify(data.config))
+        window.dispatchEvent(
+          new CustomEvent("prakom-zoom-updated", {
+            detail: { batch: editingBatchNum, config: data.config },
+          })
+        )
+        if (editingBatchNum === 4) refetchB4()
+        else refetchB3()
+        setZoomForm((prev) => ({ ...prev, zoomUrl: "", meetingId: "", passcode: "" }))
+        onFeedback("success", `Kredensial Zoom Batch ${editingBatchNum} dikosongkan.`)
+        setIsEditingZoomModalOpen(false)
+      }
+    } catch (err: any) {
+      onFeedback("error", err.message || "Gagal mengosongkan kredensial Zoom.")
+    } finally {
+      setIsSavingZoom(false)
+    }
+  }
 
   const handleCopyZoomCredentials = (batchNum: 3 | 4) => {
-    const config = batchNum === 4 ? BATCH4_ZOOM_CONFIG : BATCH3_ZOOM_CONFIG
-    const text = `[KREDENSIAL ZOOM RESMI - ${config.batchName.toUpperCase()}]\nMeeting ID: ${config.meetingId}\nPasscode: ${config.passcode}\nTautan Ruang Diklat: ${config.zoomUrl}\nJadwal: ${config.sessionScheduleText}\nHost: ${config.hostName}`
-    
+    const config = batchNum === 4 ? b4Zoom : b3Zoom
+    if (!config.meetingId && !config.zoomUrl) {
+      onFeedback("error", `Kredensial Zoom ${config.batchName} belum diisi oleh Admin.`)
+      return
+    }
+    const text = `[KREDENSIAL ZOOM RESMI - ${config.batchName.toUpperCase()}]\nMeeting ID: ${config.meetingId || "-"}\nPasscode: ${config.passcode || "-"}\nTautan Ruang Diklat: ${config.zoomUrl || "Belum tersedia"}\nJadwal: ${config.sessionScheduleText}\nHost: ${config.hostName}`
+
     navigator.clipboard.writeText(text)
     setCopiedBatch(batchNum)
     onFeedback("success", `Kredensial Zoom ${config.batchName} berhasil disalin ke clipboard!`)
@@ -314,7 +423,7 @@ export function MultiBatchControlHub({
                   <span>Ruang Zoom Batch 4</span>
                 </span>
                 <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
-                  08:00 – 15:30 WIB
+                  {b4Zoom.sessionScheduleText || "08:00 – 15:30 WIB"}
                 </span>
               </div>
 
@@ -322,38 +431,59 @@ export function MultiBatchControlHub({
                 <div className="rounded-lg bg-slate-50 dark:bg-[#171534] p-2.5 border border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] font-semibold text-slate-400 block">Meeting ID</span>
                   <span className="font-mono font-black text-slate-900 dark:text-slate-100 text-sm">
-                    {BATCH4_ZOOM_CONFIG.meetingId}
+                    {b4Zoom.meetingId ? b4Zoom.meetingId : <span className="text-amber-500 text-xs font-bold">Belum Diisi Admin</span>}
                   </span>
                 </div>
                 <div className="rounded-lg bg-slate-50 dark:bg-[#171534] p-2.5 border border-slate-100 dark:border-slate-800">
                   <span className="text-[10px] font-semibold text-slate-400 block">Passcode</span>
                   <span className="font-mono font-black text-slate-900 dark:text-slate-100 text-sm">
-                    {BATCH4_ZOOM_CONFIG.passcode}
+                    {b4Zoom.passcode ? b4Zoom.passcode : <span className="text-amber-500 text-xs font-bold">Belum Diisi Admin</span>}
                   </span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => openEditZoomModal(4)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 text-xs font-bold transition cursor-pointer shadow-xs"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  <span>Atur Link Zoom Batch 4</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleCopyZoomCredentials(4)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-slate-100 dark:bg-[#201d47] hover:bg-slate-200 dark:hover:bg-[#2b275e] text-slate-700 dark:text-slate-200 py-2 text-xs font-bold transition cursor-pointer"
+                  disabled={!b4Zoom.meetingId && !b4Zoom.zoomUrl}
+                  className={`flex items-center justify-center gap-1.5 rounded-lg py-2 px-3 text-xs font-bold transition ${
+                    !b4Zoom.meetingId && !b4Zoom.zoomUrl
+                      ? "bg-slate-100 dark:bg-[#1c1a3a] text-slate-400 cursor-not-allowed opacity-50"
+                      : "bg-slate-100 dark:bg-[#201d47] hover:bg-slate-200 dark:hover:bg-[#2b275e] text-slate-700 dark:text-slate-200 cursor-pointer"
+                  }`}
+                  title="Salin Kredensial Zoom"
                 >
                   {copiedBatch === 4 ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copiedBatch === 4 ? "Tersalin!" : "Salin Kredensial Zoom"}</span>
+                  <span>{copiedBatch === 4 ? "Tersalin!" : "Salin"}</span>
                 </button>
 
-                <a
-                  href={BATCH4_ZOOM_CONFIG.zoomUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-xs font-bold transition cursor-pointer shrink-0 shadow-2xs"
-                >
-                  <Video className="h-3.5 w-3.5" />
-                  <span>Buka Zoom</span>
-                  <ExternalLink className="h-3 w-3 opacity-70" />
-                </a>
+                {b4Zoom.zoomUrl ? (
+                  <a
+                    href={b4Zoom.zoomUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 border border-indigo-400/40 px-3 py-2 text-xs font-bold transition cursor-pointer shrink-0"
+                  >
+                    <Video className="h-3.5 w-3.5" />
+                    <span>Tes Link</span>
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-amber-500 font-semibold italic">
+                    (Link Kosong)
+                  </span>
+                )}
               </div>
             </div>
 
@@ -433,6 +563,137 @@ export function MultiBatchControlHub({
         )}
 
       </div>
+
+      {/* Zoom Configuration Modal */}
+      {isEditingZoomModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#161B26] border border-slate-200 dark:border-[#2A3550] shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                  <Video className="h-4 w-4" />
+                </span>
+                <div>
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                    Pengaturan Zoom {editingBatchNum === 4 ? "Agrasena Batch 4" : "Agrasena Batch 3"}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Kredensial ini akan langsung tampil di portal ruang virtual diklat peserta.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingZoomModalOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveZoom} className="space-y-3.5">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Tautan / URL Zoom Meeting
+                </label>
+                <input
+                  type="url"
+                  value={zoomForm.zoomUrl}
+                  onChange={(e) => setZoomForm({ ...zoomForm, zoomUrl: e.target.value })}
+                  placeholder="https://zoom.us/j/84420264444?pwd=..."
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-indigo-500"
+                />
+                <span className="text-[10px] text-slate-400 block">
+                  Kosongkan jika tautan belum dirilis oleh Widyaiswara/Panitia Diklat.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Meeting ID
+                  </label>
+                  <input
+                    type="text"
+                    value={zoomForm.meetingId}
+                    onChange={(e) => setZoomForm({ ...zoomForm, meetingId: e.target.value })}
+                    placeholder="Contoh: 844 2026 4444"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Passcode Zoom
+                  </label>
+                  <input
+                    type="text"
+                    value={zoomForm.passcode}
+                    onChange={(e) => setZoomForm({ ...zoomForm, passcode: e.target.value })}
+                    placeholder="Contoh: PRAKOM4"
+                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Jadwal & Jam Sesi Perkuliahan
+                </label>
+                <input
+                  type="text"
+                  value={zoomForm.sessionScheduleText}
+                  onChange={(e) => setZoomForm({ ...zoomForm, sessionScheduleText: e.target.value })}
+                  placeholder="Senin – Jumat | 08:00 – 15:30 WIB"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Host / Penyelenggara
+                </label>
+                <input
+                  type="text"
+                  value={zoomForm.hostName}
+                  onChange={(e) => setZoomForm({ ...zoomForm, hostName: e.target.value })}
+                  placeholder="Host Pusdiklat Kejaksaan RI & BPS RI"
+                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-hidden focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={handleClearZoom}
+                  disabled={isSavingZoom}
+                  className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition cursor-pointer"
+                >
+                  Kosongkan Kredensial
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingZoomModalOpen(false)}
+                    disabled={isSavingZoom}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingZoom}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-xs disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSavingZoom ? "Menyimpan..." : "Simpan Kredensial"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   )

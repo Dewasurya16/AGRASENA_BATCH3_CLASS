@@ -16,9 +16,9 @@ export const BATCH4_ZOOM_CONFIG: BatchZoomConfig = {
   batchNumber: 4,
   batchSlug: "batch-4",
   themeColor: "indigo",
-  zoomUrl: "https://zoom.us/j/84420264444?pwd=prakom-batch4-agrasena",
-  meetingId: "844 2026 4444",
-  passcode: "AGRASENA4",
+  zoomUrl: "", // Dikosongkan, menunggu tautan resmi dari Administrator Diklat
+  meetingId: "", // Dikosongkan, menunggu Meeting ID dari Administrator Diklat
+  passcode: "", // Dikosongkan, menunggu Passcode dari Administrator Diklat
   hostName: "Host Pusdiklat Kejaksaan RI & BPS RI",
   sessionScheduleText: "Senin – Jumat | 08:00 – 15:30 WIB",
   guidelines: [

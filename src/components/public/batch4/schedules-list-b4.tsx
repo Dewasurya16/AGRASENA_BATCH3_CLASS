@@ -24,14 +24,18 @@ import {
   Check
 } from "lucide-react"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
-import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
+import { useBatchZoomConfig } from "@/lib/zoom-config-client"
 import { useTimezone } from "@/components/timezone-provider"
 
 export function SchedulesListB4() {
+  const { config: zoomConfig } = useBatchZoomConfig(4)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedStage, setSelectedStage] = React.useState<number>(0) // 0 = Semua, 1 = MOOC, 2 = TMO, 3 = Lab, 4 = Seminar
   const [copied, setCopied] = React.useState(false)
   const { timezone, setTimezone, convertWibTimeToCurrent } = useTimezone()
+
+  const hasZoomLink = Boolean(zoomConfig.zoomUrl && zoomConfig.zoomUrl.trim().length > 0)
+  const hasMeetingId = Boolean(zoomConfig.meetingId && zoomConfig.meetingId.trim().length > 0)
 
   const stages = [
     { id: 0, label: "Semua Sesi", count: 35 },
@@ -66,7 +70,11 @@ export function SchedulesListB4() {
   }, [selectedStage, searchQuery])
 
   const handleCopyZoom = () => {
-    const text = `Zoom Agrasena Batch 4\nMeeting ID: ${BATCH4_ZOOM_CONFIG.meetingId}\nPasscode: ${BATCH4_ZOOM_CONFIG.passcode}\nLink: ${BATCH4_ZOOM_CONFIG.zoomUrl}`
+    if (!hasMeetingId && !hasZoomLink) {
+      alert("Kredensial Zoom Batch 4 belum diatur oleh Administrator Diklat.")
+      return
+    }
+    const text = `Zoom Agrasena Batch 4\nMeeting ID: ${zoomConfig.meetingId || "-"}\nPasscode: ${zoomConfig.passcode || "-"}\nLink: ${zoomConfig.zoomUrl || "Belum tersedia"}`
     navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -100,27 +108,49 @@ export function SchedulesListB4() {
           <div className="rounded-xl bg-slate-50 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 p-3.5 flex items-center justify-between gap-4 shrink-0">
             <div className="text-xs">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">Meeting ID Zoom</span>
-              <span className="font-mono font-bold text-[#18181B] dark:text-white">{BATCH4_ZOOM_CONFIG.meetingId}</span>
-              <span className="text-[10px] text-slate-500 block">Passcode: <strong className="font-mono text-indigo-600 dark:text-indigo-400">{BATCH4_ZOOM_CONFIG.passcode}</strong></span>
+              <span className="font-mono font-bold text-[#18181B] dark:text-white">
+                {hasMeetingId ? zoomConfig.meetingId : <span className="text-amber-500 font-medium text-xs">Belum Tersedia</span>}
+              </span>
+              <span className="text-[10px] text-slate-500 block">
+                Passcode: <strong className="font-mono text-indigo-600 dark:text-indigo-400">
+                  {zoomConfig.passcode ? zoomConfig.passcode : <span className="text-amber-500 font-medium text-[10px]">Menunggu Admin</span>}
+                </strong>
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleCopyZoom}
-                className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2332] text-slate-600 dark:text-slate-300 hover:text-indigo-600 transition cursor-pointer"
-                title="Salin Kredensial Zoom"
+                disabled={!hasMeetingId && !hasZoomLink}
+                className={`p-2 rounded-lg border transition ${
+                  !hasMeetingId && !hasZoomLink
+                    ? "border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed opacity-50"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2332] text-slate-600 dark:text-slate-300 hover:text-indigo-600 cursor-pointer"
+                }`}
+                title={!hasMeetingId && !hasZoomLink ? "Kredensial belum diatur oleh Admin" : "Salin Kredensial Zoom"}
               >
                 {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
               </button>
-              <a
-                href={BATCH4_ZOOM_CONFIG.zoomUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-bold shadow-xs transition"
-              >
-                <Video className="h-3.5 w-3.5" />
-                <span>Buka Zoom</span>
-              </a>
+
+              {hasZoomLink ? (
+                <a
+                  href={zoomConfig.zoomUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-bold shadow-xs transition"
+                >
+                  <Video className="h-3.5 w-3.5" />
+                  <span>Buka Zoom</span>
+                </a>
+              ) : (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 px-3 py-2 text-xs font-semibold select-none cursor-not-allowed"
+                  title="Menunggu link Zoom dari Admin Diklat"
+                >
+                  <Video className="h-3.5 w-3.5 opacity-50" />
+                  <span>Belum Ada Link</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -267,16 +297,23 @@ export function SchedulesListB4() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0">
-                    <a
-                      href={sched.meeting_link || BATCH4_ZOOM_CONFIG.zoomUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer"
-                    >
-                      <Video className="h-3.5 w-3.5" />
-                      <span>Link Zoom</span>
-                      <ExternalLink className="h-3 w-3 opacity-70" />
-                    </a>
+                    {(sched.meeting_link || zoomConfig.zoomUrl) ? (
+                      <a
+                        href={sched.meeting_link || zoomConfig.zoomUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-600 hover:text-white text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 px-3.5 py-1.5 text-xs font-bold transition cursor-pointer"
+                      >
+                        <Video className="h-3.5 w-3.5" />
+                        <span>Link Zoom</span>
+                        <ExternalLink className="h-3 w-3 opacity-70" />
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-800 px-3 py-1 text-[11px] font-semibold select-none">
+                        <Video className="h-3 w-3 opacity-50" />
+                        <span>Link Belum Ada</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.div>

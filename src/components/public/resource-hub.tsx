@@ -314,7 +314,7 @@ export function ResourceHub({
   batchTitle = "Agrasena Batch 3",
   batchSlug = "batch-3"
 }: ResourceHubProps) {
-  const fallbackDataset = defaultDataset && defaultDataset.length > 0 ? defaultDataset : DEFAULT_MATERIALS
+  const fallbackDataset = batchSlug === "batch-4" ? (defaultDataset || []) : (defaultDataset && defaultDataset.length > 0 ? defaultDataset : DEFAULT_MATERIALS)
   const cacheKey = batchSlug === "batch-4" ? "prakom_materials_b4_cache" : "prakom_materials_cache"
 
   // Priority: materials prop -> localStorage cache -> fallbackDataset
@@ -324,9 +324,26 @@ export function ResourceHub({
         const cached = localStorage.getItem(cacheKey)
         if (cached) {
           const parsed = JSON.parse(cached)
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            if (!materials || materials.length === 0 || parsed.length >= materials.length) {
-              return parsed
+          if (Array.isArray(parsed)) {
+            // Isolasi Batch 4: buang modul yang bukan Batch 4 dari cache Batch 4
+            if (batchSlug === "batch-4") {
+              const b4Only = parsed.filter((m: any) => {
+                const text = `${m.title || ""} ${m.subject_name || ""} ${m.description || ""}`.toLowerCase()
+                return (
+                  m.batch === 4 ||
+                  m.batch === "batch-4" ||
+                  text.includes("batch 4") ||
+                  text.includes("batch-4") ||
+                  text.includes("angkatan 4") ||
+                  text.includes("agrasena 4")
+                )
+              })
+              return b4Only
+            }
+            if (parsed.length > 0) {
+              if (!materials || materials.length === 0 || parsed.length >= materials.length) {
+                return parsed
+              }
             }
           }
         }
@@ -353,11 +370,6 @@ export function ResourceHub({
   const [pdfLoadProgress, setPdfLoadProgress] = React.useState(15)
 
   const fetchLatestMaterials = React.useCallback(async (silent = false) => {
-    // Jika batch-4, gunakan kurikulum resmi defaultDataset tanpa ditimpa oleh data API umum
-    if (batchSlug === "batch-4") {
-      return
-    }
-
     if (!silent) setIsSyncing(true)
     try {
       const res = await fetch(`/api/materials?t=${Date.now()}`, {
@@ -369,21 +381,54 @@ export function ResourceHub({
       })
       if (res.ok) {
         const json = await res.json()
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+        if (json.data && Array.isArray(json.data)) {
+          let relevantMaterials: MaterialItem[] = []
+
+          if (batchSlug === "batch-4") {
+            // Hanya ambil berkas yang secara eksplisit untuk Batch 4
+            relevantMaterials = json.data.filter((m: any) => {
+              const text = `${m.title || ""} ${m.subject_name || ""} ${m.description || ""}`.toLowerCase()
+              return (
+                m.batch === 4 ||
+                m.batch === "batch-4" ||
+                text.includes("batch 4") ||
+                text.includes("batch-4") ||
+                text.includes("angkatan 4") ||
+                text.includes("agrasena 4")
+              )
+            })
+          } else {
+            // Batch 3: Jangan masukkan berkas Batch 4
+            relevantMaterials = json.data.filter((m: any) => {
+              const text = `${m.title || ""} ${m.subject_name || ""} ${m.description || ""}`.toLowerCase()
+              const isB4 =
+                m.batch === 4 ||
+                m.batch === "batch-4" ||
+                text.includes("batch 4") ||
+                text.includes("batch-4") ||
+                text.includes("angkatan 4") ||
+                text.includes("agrasena 4")
+              return !isB4
+            })
+            // Jika kosong dari database, fallback ke modul resmi Batch 3
+            if (relevantMaterials.length === 0) {
+              relevantMaterials = DEFAULT_MATERIALS
+            }
+          }
+
           setItems((prev) => {
-            // Check if there are brand new modules
-            if (prev.length > 0 && json.data.length > prev.length) {
-              const diff = json.data.length - prev.length
+            if (prev.length > 0 && relevantMaterials.length > prev.length) {
+              const diff = relevantMaterials.length - prev.length
               setNewlyAddedCount(diff)
               setTimeout(() => setNewlyAddedCount(null), 6000)
             }
-            return json.data
+            return relevantMaterials
           })
           setLastSyncTime(new Date())
 
           // Persist to localStorage
           try {
-            localStorage.setItem(cacheKey, JSON.stringify(json.data))
+            localStorage.setItem(cacheKey, JSON.stringify(relevantMaterials))
             localStorage.setItem(`${cacheKey}_time`, Date.now().toString())
             window.dispatchEvent(new Event("prakom-materials-updated"))
           } catch {}
@@ -872,16 +917,16 @@ export function ResourceHub({
         <div className="rounded-[14px] bg-white dark:bg-[#141b27] p-10 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 space-y-2.5">
           <FileText className="mx-auto h-10 w-10 text-[#615d59] dark:text-slate-500" strokeWidth={1.5} />
           <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white">
-            {materials.length === 0
+            {items.length === 0
               ? `Belum Ada Berkas Modul untuk ${batchTitle || "Angkatan Ini"}`
               : "Tidak Ada Modul yang Sesuai"}
           </h4>
           <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto leading-relaxed">
-            {materials.length === 0
+            {items.length === 0
               ? "Pustaka modul materi kurikulum 120 JP sedang dipersiapkan dan akan segera diunggah oleh Administrator Diklat Kejaksaan RI."
               : "Coba ubah kata kunci pencarian atau reset filter tahapan diklat dan minggu pertemuan."}
           </p>
-          {materials.length > 0 && (
+          {items.length > 0 && (
             <button
               type="button"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#f6f5f4] dark:bg-[#1f283a] px-4 py-2 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-[#e6e6e6] dark:hover:bg-[#28354d] transition cursor-pointer"

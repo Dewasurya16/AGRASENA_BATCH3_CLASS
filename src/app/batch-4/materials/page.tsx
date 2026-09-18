@@ -17,7 +17,7 @@ export default function Batch4MaterialsPage() {
         {/* Switcher notice to Batch 3 */}
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Katalog Modul: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong> (24 Modul Lengkap)
+            Katalog Modul: <strong className="text-indigo-600 dark:text-indigo-400">Agrasena Batch 4</strong> • Kurikulum 120 JP
           </span>
           <Link
             href="/materials"

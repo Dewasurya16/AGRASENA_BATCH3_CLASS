@@ -16,15 +16,19 @@ import {
   HelpCircle,
   Laptop
 } from "lucide-react"
-import { BATCH4_ZOOM_CONFIG } from "@/data/batch4/zoom-config"
+import { useBatchZoomConfig } from "@/lib/zoom-config-client"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
 import { useTimezone } from "@/components/timezone-provider"
 
 export function LiveSessionBannerB4() {
+  const { config: zoomConfig } = useBatchZoomConfig(4)
   const [copied, setCopied] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState<'zoom' | 'guidelines'>('zoom')
   const { timezone, setTimezone, formatCurrentTime } = useTimezone()
   const [timeStr, setTimeStr] = React.useState("")
+
+  const hasZoomLink = Boolean(zoomConfig.zoomUrl && zoomConfig.zoomUrl.trim().length > 0)
+  const hasMeetingId = Boolean(zoomConfig.meetingId && zoomConfig.meetingId.trim().length > 0)
 
   React.useEffect(() => {
     const updateTime = () => {
@@ -36,7 +40,11 @@ export function LiveSessionBannerB4() {
   }, [formatCurrentTime])
 
   const handleCopyCredentials = () => {
-    const text = `Meeting ID: ${BATCH4_ZOOM_CONFIG.meetingId}\nPasscode: ${BATCH4_ZOOM_CONFIG.passcode}\nLink: ${BATCH4_ZOOM_CONFIG.zoomUrl}`
+    if (!hasMeetingId && !hasZoomLink) {
+      alert("Kredensial Zoom belum diatur oleh Administrator Diklat.")
+      return
+    }
+    const text = `Zoom Agrasena Batch 4\nMeeting ID: ${zoomConfig.meetingId || "-"}\nPasscode: ${zoomConfig.passcode || "-"}\nLink: ${zoomConfig.zoomUrl || "Belum tersedia"}`
     navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -108,7 +116,7 @@ export function LiveSessionBannerB4() {
                   <span>Sesi Tatap Muka Virtual Agrasena Batch 4</span>
                 </span>
                 <span className="text-[11px] font-mono text-indigo-300 font-bold bg-indigo-500/20 px-2.5 py-0.5 rounded-full border border-indigo-400/30">
-                  {BATCH4_ZOOM_CONFIG.sessionScheduleText}
+                  {zoomConfig.sessionScheduleText || "Senin – Jumat | 08:00 – 15:30 WIB"}
                 </span>
               </div>
 
@@ -127,19 +135,19 @@ export function LiveSessionBannerB4() {
                 <div className="rounded-xl bg-black/30 border border-white/10 p-2.5">
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Meeting ID</span>
                   <span className="font-mono text-xs sm:text-sm font-bold text-indigo-200">
-                    {BATCH4_ZOOM_CONFIG.meetingId}
+                    {hasMeetingId ? zoomConfig.meetingId : <span className="text-amber-300 font-medium text-xs">Belum Tersedia</span>}
                   </span>
                 </div>
                 <div className="rounded-xl bg-black/30 border border-white/10 p-2.5">
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Passcode</span>
                   <span className="font-mono text-xs sm:text-sm font-bold text-emerald-300">
-                    {BATCH4_ZOOM_CONFIG.passcode}
+                    {zoomConfig.passcode ? zoomConfig.passcode : <span className="text-amber-300 font-medium text-xs">Menunggu Admin</span>}
                   </span>
                 </div>
                 <div className="col-span-2 sm:col-span-1 rounded-xl bg-black/30 border border-white/10 p-2.5">
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Penyelenggara</span>
                   <span className="text-xs font-semibold text-slate-200 truncate block">
-                    Pusdiklat BPS & Kejaksaan
+                    {zoomConfig.hostName || "Pusdiklat BPS & Kejaksaan"}
                   </span>
                 </div>
               </div>
@@ -147,21 +155,36 @@ export function LiveSessionBannerB4() {
 
             {/* Launcher Buttons */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-white/10">
-              <a
-                href={BATCH4_ZOOM_CONFIG.zoomUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white py-2.5 px-5 text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/30 transition cursor-pointer"
-              >
-                <Video className="h-4 w-4" />
-                <span>Masuk ke Zoom Batch 4</span>
-                <ExternalLink className="h-3.5 w-3.5 opacity-80" />
-              </a>
+              {hasZoomLink ? (
+                <a
+                  href={zoomConfig.zoomUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white py-2.5 px-5 text-xs sm:text-sm font-bold shadow-lg shadow-indigo-600/30 transition cursor-pointer"
+                >
+                  <Video className="h-4 w-4" />
+                  <span>Masuk ke Zoom Batch 4</span>
+                  <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+                </a>
+              ) : (
+                <div
+                  className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-full bg-indigo-950/50 border border-indigo-500/30 text-indigo-300 py-2.5 px-5 text-xs sm:text-sm font-semibold select-none shadow-xs"
+                  title="Tautan Zoom akan diisi oleh Administrator Diklat sebelum perkuliahan dimulai"
+                >
+                  <Video className="h-4 w-4 text-indigo-400 opacity-60" />
+                  <span>Tautan Zoom Belum Tersedia (Menunggu Admin)</span>
+                </div>
+              )}
 
               <button
                 type="button"
                 onClick={handleCopyCredentials}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white py-2.5 px-4 text-xs font-bold border border-white/15 transition cursor-pointer"
+                disabled={!hasMeetingId && !hasZoomLink}
+                className={`inline-flex items-center gap-1.5 rounded-full py-2.5 px-4 text-xs font-bold border transition ${
+                  !hasMeetingId && !hasZoomLink
+                    ? "bg-white/5 text-slate-400 border-white/10 cursor-not-allowed opacity-60"
+                    : "bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white border-white/15 cursor-pointer"
+                }`}
               >
                 {copied ? (
                   <>
@@ -186,7 +209,7 @@ export function LiveSessionBannerB4() {
                 <span>Tata Tertib & SOP Sesi</span>
               </div>
               <ul className="space-y-2 text-[11px] text-slate-300 leading-relaxed">
-                {BATCH4_ZOOM_CONFIG.guidelines.map((guide, idx) => (
+                {(zoomConfig.guidelines || []).map((guide, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="h-4 w-4 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
                       {idx + 1}
