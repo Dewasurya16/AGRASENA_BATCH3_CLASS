@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react"
 import {
   Wrench,
-  Power,
   Clock,
   MessageCircle,
   ExternalLink,
@@ -12,9 +11,11 @@ import {
   AlertCircle,
   RefreshCw,
   ShieldCheck,
-  Info,
   Sparkles,
-  Calendar,
+  Layers,
+  Radio,
+  FileText,
+  HelpCircle,
 } from "lucide-react"
 import { DEFAULT_MAINTENANCE_CONFIG, MaintenanceConfig } from "@/lib/maintenance"
 
@@ -60,7 +61,6 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
         setEmergencyContact(c.emergencyContact || DEFAULT_MAINTENANCE_CONFIG.emergencyContact)
 
         if (c.estimatedEnd) {
-          // Convert ISO to datetime-local format: YYYY-MM-DDTHH:mm
           const d = new Date(c.estimatedEnd)
           if (!isNaN(d.getTime())) {
             const offset = d.getTimezoneOffset()
@@ -75,7 +75,7 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
       }
     } catch (err) {
       console.error("Failed to load maintenance config:", err)
-      showNotice("error", "Gagal memuat status konfigurasi maintenance dari server.")
+      showNotice("error", "Gagal memuat status konfigurasi pemeliharaan dari server.")
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +89,6 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
   const setQuickPreset = (hoursToAdd: number, specificHour?: number) => {
     const now = new Date()
     if (specificHour !== undefined) {
-      // Besok Pagi jam specificHour (e.g. 8:00 WIB)
       const tomorrow = new Date(now)
       tomorrow.setDate(tomorrow.getDate() + 1)
       tomorrow.setHours(specificHour, 0, 0, 0)
@@ -104,11 +103,32 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
     }
   }
 
+  // Quick Message Templates
+  const applyTemplate = (type: "server" | "curriculum" | "quick") => {
+    if (type === "server") {
+      setTitle("Pemeliharaan Infrastruktur Server & Basis Data")
+      setMessage(
+        "Mohon maaf atas ketidaknyamanannya. Tim IT Badiklat Kejaksaan RI sedang melakukan peningkatan kapasitas server dan pembaruan sistem keamanan rutin. Seluruh layanan akan segera kembali normal."
+      )
+    } else if (type === "curriculum") {
+      setTitle("Sinkronisasi Jadwal & Modul Pembelajaran")
+      setMessage(
+        "Portal sedang dalam pembaruan kurikulum materi 120 JP dan sinkronisasi ruang kelas Zoom terpadu Angkatan 1 s.d. 6. Silakan periksa kembali beberapa saat lagi."
+      )
+    } else if (type === "quick") {
+      setTitle("Pemeliharaan Sistem Singkat")
+      setMessage(
+        "Kami sedang melakukan pemeliharaan ringan selama kurang lebih 30 menit. Mohon menunggu sejenak sementara sistem kami persiapkan kembali."
+      )
+      setQuickPreset(1)
+    }
+  }
+
   // Handle Save
-  const handleSave = async (overrideEnabled?: boolean) => {
+  const handleSave = async (targetState?: boolean) => {
     setIsSaving(true)
     try {
-      const activeState = overrideEnabled !== undefined ? overrideEnabled : enabled
+      const activeState = targetState !== undefined ? targetState : enabled
 
       let estimatedEndIso: string | null = null
       if (estimatedEndLocal) {
@@ -145,8 +165,8 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
       showNotice(
         "success",
         result.config.enabled
-          ? "Mode Maintenance berhasil DIAKTIFKAN. Pengunjung publik diarahkan ke halaman pemeliharaan."
-          : "Mode Maintenance berhasil DINONAKTIFKAN. Portal kembali terbuka untuk umum."
+          ? "Mode Maintenance BERHASIL DIAKTIFKAN. Pengunjung publik diarahkan ke layar Anime."
+          : "Mode Maintenance BERHASIL DINONAKTIFKAN. Seluruh akses portal kembali dibuka normal."
       )
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Terjadi kesalahan sistem."
@@ -156,28 +176,21 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
     }
   }
 
-  // Quick One-Click Toggle
-  const handleToggleSwitch = async () => {
-    const newState = !enabled
-    setEnabled(newState)
-    await handleSave(newState)
-  }
-
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-3 bg-white dark:bg-[#1B2130] rounded-2xl border border-slate-200 dark:border-slate-800">
-        <RefreshCw className="h-6 w-6 text-emerald-500 animate-spin" />
-        <span className="text-xs font-bold text-slate-500">Memuat status pemeliharaan sistem...</span>
+      <div className="flex flex-col items-center justify-center p-14 space-y-3 bg-white dark:bg-[#1B2130] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <RefreshCw className="h-7 w-7 text-emerald-500 animate-spin" />
+        <span className="text-xs font-bold text-slate-500">Memuat status kendali pemeliharaan...</span>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header Info & Alert */}
+      {/* Toast Feedback Alert */}
       {localFeedback && (
         <div
-          className={`rounded-xl p-4 text-xs font-bold border transition-all flex items-center gap-3 ${
+          className={`rounded-xl p-4 text-xs font-bold border transition-all flex items-center gap-3 shadow-sm ${
             localFeedback.type === "success"
               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60"
               : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800/60"
@@ -192,239 +205,331 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
         </div>
       )}
 
-      {/* MASTER SWITCH CARD */}
+      {/* ========================================================================= */}
+      {/* 1. HERO OPERATIONAL STATUS BANNER (RAPih, BERSIH, TERINTEGRASI)           */}
+      {/* ========================================================================= */}
       <div
         className={`relative overflow-hidden rounded-2xl border p-6 transition-all shadow-sm ${
           enabled
-            ? "bg-gradient-to-br from-amber-500/10 via-amber-950/20 to-slate-900 border-amber-500/40"
-            : "bg-white dark:bg-[#1B2130] border-slate-200 dark:border-[#2A3550]"
+            ? "bg-gradient-to-br from-amber-500/10 via-amber-950/15 to-slate-900 border-amber-500/40"
+            : "bg-gradient-to-br from-emerald-500/10 via-emerald-950/15 to-slate-900 border-emerald-500/30"
         }`}
       >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div className="space-y-1.5 max-w-xl">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+          {/* Status Meta */}
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide ${
+                className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                   enabled
-                    ? "bg-amber-100 text-amber-900 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
-                    : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
+                    ? "bg-amber-100 text-amber-900 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                    : "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
                 }`}
               >
-                <span className={`h-2 w-2 rounded-full ${enabled ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
-                <span>{enabled ? "Mode Maintenance Sedang AKTIF" : "Mode Normal (Portal Terbuka)"}</span>
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${enabled ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`}
+                />
+                <span>{enabled ? "Status: Mode Maintenance Aktif" : "Status: Portal Online Normal"}</span>
+              </span>
+
+              <span className="text-[11px] text-slate-400 font-medium">
+                Terakhir diperbarui:{" "}
+                {config.updatedAt ? new Date(config.updatedAt).toLocaleTimeString("id-ID") : "-"}
               </span>
             </div>
 
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white">
               {enabled
-                ? "Portal Saat Ini Ditutup Untuk Pengunjung Publik"
-                : "Portal Dapat Diakses Penuh Oleh Seluruh Peserta"}
+                ? "Portal Sedang Ditutup Untuk Akses Publik"
+                : "Portal Berjalan Penuh & Terbuka Untuk Seluruh Peserta"}
             </h3>
 
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {enabled
-                ? "Pengunjung publik yang mengakses web kelas akan secara otomatis diarahkan ke halaman /maintenance. Administrator yang sedang login tetap memiliki hak akses penuh untuk melakukan pengujian perbaikan."
-                : "Seluruh halaman beranda, jadwal 35 hari, modul perkuliahan 120 JP, dan penugasan dapat diakses secara normal."}
+                ? "Pengunjung publik otomatis dialihkan ke layar pemeliharaan bergaya Anime chibi Kejaksaan RI. Administrator yang sedang login dapat menguji web menggunakan tautan bypass di samping."
+                : "Semua halaman beranda, jadwal harian, bahan ajar 120 JP, penugasan mandiri, dan modul kuis dapat diakses umum tanpa hambatan."}
             </p>
           </div>
 
-          {/* Master Switch Button */}
-          <div className="flex flex-col items-center sm:items-end gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handleToggleSwitch}
-              disabled={isSaving}
-              className={`relative inline-flex h-12 w-24 items-center rounded-full transition-colors duration-300 cursor-pointer p-1 shadow-inner focus:outline-none disabled:opacity-50 ${
-                enabled ? "bg-amber-600 hover:bg-amber-500" : "bg-slate-300 dark:bg-slate-700 hover:bg-slate-400"
-              }`}
+          {/* Quick Action Navigation Buttons */}
+          <div className="flex flex-row lg:flex-col items-center lg:items-end gap-2.5 shrink-0 w-full lg:w-auto">
+            <a
+              href="/maintenance?preview=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs transition w-full lg:w-auto"
             >
-              <span
-                className={`inline-block h-10 w-10 transform rounded-full bg-white shadow-md transition-transform duration-300 flex items-center justify-center ${
-                  enabled ? "translate-x-12 text-amber-600" : "translate-x-0 text-slate-400"
-                }`}
-              >
-                <Power className="h-5 w-5" />
-              </span>
-            </button>
-            <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
-              {enabled ? "Klik untuk Matikan" : "Klik untuk Aktifkan"}
-            </span>
+              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              <span>Pratinjau Layar Anime</span>
+              <ExternalLink className="h-3 w-3 text-slate-400" />
+            </a>
+
+            <a
+              href="/?bypass=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800/60 shadow-xs transition w-full lg:w-auto"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+              <span>Buka Portal (Bypass Admin)</span>
+              <ExternalLink className="h-3 w-3 text-emerald-500" />
+            </a>
           </div>
         </div>
 
-        {/* Security & Admin Bypass Notice */}
-        <div className="mt-5 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        {/* Informational Sub-Bar */}
+        <div className="mt-5 pt-4 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+            <Radio className="h-3.5 w-3.5 text-emerald-500" />
             <span>
-              <strong>Bypass Administrator:</strong> Sesi admin Anda saat ini aktif, Anda dapat membuka halaman publik secara normal.
+              Perubahan status dieksekusi secara instan di sisi server Edge tanpa perlu restart aplikasi.
             </span>
           </div>
-
-          <a
-            href="/maintenance?preview=true"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 transition"
-          >
-            <span>Pratinjau Layar Maintenance</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
         </div>
       </div>
 
-      {/* FORM PENGATURAN KONTEN MAINTENANCE */}
-      <div className="rounded-2xl border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-6 space-y-5 shadow-xs">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+      {/* ========================================================================= */}
+      {/* 2. PUSAT KONTROL STATUS (SATU SELEKTOR UTAMA TANPA DUPLIKASI SAKLAR)       */}
+      {/* ========================================================================= */}
+      <div className="rounded-2xl border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-6 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
-              <Wrench className="h-5 w-5" />
+            <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+              <Layers className="h-4 w-4" />
             </div>
             <div>
               <h4 className="text-sm font-black text-slate-900 dark:text-white">
-                Kustomisasi Pesan & Waktu Pemeliharaan
+                Pilih Status Operasional Portal
               </h4>
               <p className="text-[11px] text-slate-500">
-                Informasi ini akan ditampilkan secara langsung kepada peserta di halaman /maintenance.
+                Pilih salah satu mode di bawah, lalu klik tombol simpan untuk memberlakukan.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: Mode Normal */}
+          <div
+            onClick={() => setEnabled(false)}
+            className={`relative p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+              !enabled
+                ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 ring-2 ring-emerald-500/20 shadow-sm"
+                : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#141b27]/60 hover:border-slate-300 dark:hover:border-slate-700 opacity-70 hover:opacity-100"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm ${
+                    !enabled
+                      ? "bg-emerald-500 text-white shadow-xs"
+                      : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                  }`}
+                >
+                  🟢
+                </div>
+                <div>
+                  <h5 className="text-sm font-black text-slate-900 dark:text-white">
+                    Mode Normal (Portal Terbuka)
+                  </h5>
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                    Akses Penuh Seluruh Peserta
+                  </span>
+                </div>
+              </div>
+
+              {!enabled && (
+                <div className="h-6 w-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Layanan beroperasi normal. Peserta dari seluruh angkatan (Batch 3 & 4) dapat membuka jadwal,
+              mengunduh materi, mengakses kuis, dan mengumpulkan tugas.
+            </p>
+          </div>
+
+          {/* Card 2: Mode Maintenance */}
+          <div
+            onClick={() => setEnabled(true)}
+            className={`relative p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+              enabled
+                ? "border-amber-500 bg-amber-50/70 dark:bg-amber-950/30 ring-2 ring-amber-500/20 shadow-sm"
+                : "border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#141b27]/60 hover:border-slate-300 dark:hover:border-slate-700 opacity-70 hover:opacity-100"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm ${
+                    enabled
+                      ? "bg-amber-500 text-white shadow-xs animate-pulse"
+                      : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                  }`}
+                >
+                  🔴
+                </div>
+                <div>
+                  <h5 className="text-sm font-black text-slate-900 dark:text-white">
+                    Mode Maintenance (Portal Ditutup)
+                  </h5>
+                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                    Pengalihan Layar Anime Aktif
+                  </span>
+                </div>
+              </div>
+
+              {enabled && (
+                <div className="h-6 w-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                  <CheckCircle2 className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Portal ditutup sementara untuk publik. Pengunjung dialihkan ke layar Anime chibi interaktif
+              yang memuat penjelasan, hitung mundur perkiraan selesai, dan kontak bantuan.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. KUSTOMISASI PESAN & ESTIMASI WAKTU                                     */}
+      {/* ========================================================================= */}
+      <div className="rounded-2xl border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1B2130] p-6 space-y-6 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40">
+              <FileText className="h-4 w-4" />
+            </div>
+            <div>
+              <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                Informasi & Teks Pengumuman Layar Anime
+              </h4>
+              <p className="text-[11px] text-slate-500">
+                Pesan ini tampil di dalam kartu informasi resmi di bawah ilustrasi anime.
               </p>
             </div>
           </div>
 
-          <span className="text-[11px] text-slate-400 font-medium">
-            Terakhir diupdate: {config.updatedAt ? new Date(config.updatedAt).toLocaleTimeString("id-ID") : "-"}
-          </span>
+          {/* Quick Template Chips */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+              Template Cepat:
+            </span>
+            <button
+              type="button"
+              onClick={() => applyTemplate("server")}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition cursor-pointer"
+            >
+              ⚡ Server Rutin
+            </button>
+            <button
+              type="button"
+              onClick={() => applyTemplate("curriculum")}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition cursor-pointer"
+            >
+              📚 Sinkronisasi Modul
+            </button>
+            <button
+              type="button"
+              onClick={() => applyTemplate("quick")}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition cursor-pointer"
+            >
+              ☕ Kilat (30 Mnt)
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">
-          {/* Pilihan Status Operasional Utama */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Pilih Status Operasional Portal:
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Option 1: Normal */}
-              <button
-                type="button"
-                onClick={() => setEnabled(false)}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
-                  !enabled
-                    ? "border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/40 ring-1 ring-emerald-500"
-                    : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#141b27] hover:border-slate-300 opacity-70 hover:opacity-100"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <span>🟢 Mode Normal (Portal Dibuka)</span>
-                  </span>
-                  {!enabled && <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />}
-                </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Layanan aktif penuh. Peserta dapat mengakses beranda, jadwal, materi PDF, dan kuis.
-                </p>
-              </button>
-
-              {/* Option 2: Maintenance */}
-              <button
-                type="button"
-                onClick={() => setEnabled(true)}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between gap-1.5 ${
-                  enabled
-                    ? "border-amber-500 bg-amber-50/80 dark:bg-amber-950/40 ring-1 ring-amber-500"
-                    : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#141b27] hover:border-slate-300 opacity-70 hover:opacity-100"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span>🔴 Mode Maintenance (Portal Ditutup)</span>
-                  </span>
-                  {enabled && <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0" />}
-                </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Portal ditutup sementara. Pengunjung publik otomatis diarahkan ke layar Anime.js.
-                </p>
-              </button>
-            </div>
-          </div>
-
-          {/* Judul Pengumuman Maintenance */}
+          {/* Judul Pemeliharaan */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span>Judul Pemeliharaan:</span>
-              <span className="text-[10px] text-slate-400 font-normal">Maksimal 150 karakter</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <Wrench className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Judul Utama Pengumuman:</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-normal">{title.length} / 150 karakter</span>
+            </div>
             <input
               type="text"
               value={title}
+              maxLength={150}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Portal Sedang Dalam Pemeliharaan Sistem"
-              className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition"
             />
           </div>
 
-          {/* Deskripsi / Alasan Pemeliharaan */}
+          {/* Pesan Penjelasan untuk Peserta */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span>Pesan Penjelasan untuk Peserta:</span>
-              <span className="text-[10px] text-slate-400 font-normal">Maksimal 1500 karakter</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <HelpCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Pesan Penjelasan untuk Peserta:</span>
+              </label>
+              <span className="text-[10px] text-slate-400 font-normal">{message.length} / 1500 karakter</span>
+            </div>
             <textarea
               rows={3}
               value={message}
+              maxLength={1500}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Mohon maaf atas ketidaknyamanannya. Tim teknis sedang melakukan sinkronisasi modul..."
-              className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] p-3 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none leading-relaxed"
+              placeholder="Mohon maaf atas ketidaknyamanannya. Portal Web Kelas Agrasena Diklat Fungsional Pranata Komputer Kejaksaan RI sedang menjalani pemeliharaan rutin..."
+              className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] p-3.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition leading-relaxed"
             />
           </div>
 
-          {/* Estimasi Waktu Selesai */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Perkiraan Waktu Selesai (Opsional):</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">
-                Countdown timer akan muncul jika diisi
-              </span>
-            </label>
+          {/* Grid: Estimasi Waktu & Kontak WhatsApp */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+            {/* Estimasi Waktu Selesai */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Estimasi Selesai (Countdown):</span>
+                </label>
+                <span className="text-[10px] text-slate-400 font-normal">Opsional</span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <input
                 type="datetime-local"
                 value={estimatedEndLocal}
                 onChange={(e) => setEstimatedEndLocal(e.target.value)}
-                className="rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none transition"
               />
 
               {/* Preset Buttons */}
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
                 <button
                   type="button"
                   onClick={() => setQuickPreset(1)}
-                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer"
                 >
                   +1 Jam
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickPreset(3)}
-                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer"
                 >
                   +3 Jam
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickPreset(6)}
-                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition cursor-pointer"
                 >
                   +6 Jam
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickPreset(0, 8)}
-                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 hover:bg-emerald-100 cursor-pointer"
+                  className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 hover:bg-emerald-100 transition cursor-pointer"
                 >
                   Besok 08:00
                 </button>
@@ -432,57 +537,63 @@ export function MaintenanceManager({ onFeedback }: MaintenanceManagerProps) {
                   <button
                     type="button"
                     onClick={() => setEstimatedEndLocal("")}
-                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
                   >
                     Hapus Waktu
                   </button>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Nomor Kontak WhatsApp Panitia */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
+            {/* Nomor Kontak WhatsApp Panitia */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Nomor WhatsApp Bantuan / Panitia:</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">Format: 628123456789 atau 0812...</span>
-            </label>
-            <input
-              type="text"
-              value={emergencyContact}
-              onChange={(e) => setEmergencyContact(e.target.value)}
-              placeholder="6281234567890"
-              className="w-full sm:w-80 rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none"
-            />
+                <span>Nomor WhatsApp Bantuan / PIC Diklat:</span>
+              </label>
+
+              <input
+                type="text"
+                value={emergencyContact}
+                onChange={(e) => setEmergencyContact(e.target.value)}
+                placeholder="6281234567890"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#2A3550] bg-slate-50 dark:bg-[#141b27] px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:border-emerald-500 focus:outline-none transition"
+              />
+
+              <p className="text-[10px] text-slate-400">
+                Tombol bantuan WhatsApp pada layar maintenance akan langsung mengarah ke nomor ini.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Submit & Action Bar */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        {/* Action Bar Footer */}
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Info className="h-4 w-4 text-slate-400 shrink-0" />
-            <span>Perubahan tersimpan otomatis ke database Supabase dan aktif seketika.</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <span>Perubahan status dan pesan langsung disinkronkan ke basis data Supabase.</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => handleSave()}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 text-xs font-bold shadow-md shadow-emerald-900/20 transition cursor-pointer disabled:opacity-50"
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-7 py-2.5 text-xs font-black shadow-md transition cursor-pointer disabled:opacity-50 ${
+                enabled
+                  ? "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-900/20"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-900/20"
+              }`}
             >
               {isSaving ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Menyimpan...</span>
+                  <span>Menyimpan Pengaturan...</span>
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Simpan Peraturan</span>
+                  <span>Simpan & Terapkan Pengaturan</span>
                 </>
               )}
             </button>

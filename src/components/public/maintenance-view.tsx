@@ -5,16 +5,16 @@ import anime from "animejs"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  Wrench,
   Clock,
   MessageCircle,
   RefreshCw,
   ShieldCheck,
-  CheckCircle2,
-  ChevronRight,
-  Lock,
   Sparkles,
-  AlertTriangle,
+  Code2,
+  CheckSquare,
+  Coffee,
+  ExternalLink,
+  Laptop,
 } from "lucide-react"
 import { MaintenanceConfig } from "@/lib/maintenance"
 
@@ -37,78 +37,87 @@ export function MaintenanceView({ config, isPreview = false, isAdmin = false }: 
 
   // 1. ANIME.JS ANIMATIONS SETUP
   useEffect(() => {
-    // A. Initial entrance animation for text and content cards
+    // A. Initial entrance animation for all cards & typography
     anime({
-      targets: ".anime-enter",
-      translateY: [35, 0],
+      targets: ".anime-fade-in",
+      translateY: [25, 0],
       opacity: [0, 1],
-      duration: 900,
-      delay: anime.stagger(80, { start: 150 }),
+      duration: 800,
+      delay: anime.stagger(100, { start: 100 }),
       easing: "easeOutCubic",
     })
 
-    // B. Continuous rotation for the Primary Mechanical Gear
-    const gearMainAnim = anime({
-      targets: "#gear-primary",
-      rotate: 360,
-      duration: 16000,
-      loop: true,
-      easing: "linear",
-    })
-
-    // C. Continuous counter-rotation for the Secondary Interlocking Gear
-    const gearSubAnim = anime({
-      targets: "#gear-secondary",
-      rotate: -360,
-      duration: 10000,
-      loop: true,
-      easing: "linear",
-    })
-
-    // D. Pulsing core glow in the gear center
-    const corePulse = anime({
-      targets: "#gear-core-glow",
-      scale: [0.92, 1.12],
-      opacity: [0.6, 1],
-      duration: 2000,
+    // B. Floating Code Bubble (Left anime character)
+    anime({
+      targets: "#anime-doodle-code",
+      translateY: [-6, 6],
+      rotate: [-3, 3],
+      duration: 3200,
       direction: "alternate",
       loop: true,
       easing: "easeInOutSine",
     })
 
-    // E. Floating ambient particles in background
-    const particlesAnim = anime({
-      targets: ".dust-particle",
-      translateY: () => anime.random(-25, 25),
-      translateX: () => anime.random(-20, 20),
-      opacity: [0.15, 0.85],
-      scale: [0.8, 1.3],
+    // C. Floating Checklist Clipboard (Right anime character)
+    anime({
+      targets: "#anime-doodle-task",
+      translateY: [6, -6],
+      rotate: [3, -3],
+      duration: 3600,
+      direction: "alternate",
+      loop: true,
+      easing: "easeInOutSine",
+    })
+
+    // D. Animated Coffee Steam Wisps
+    anime({
+      targets: ".coffee-steam-path",
+      translateY: [-10, -2],
+      opacity: [0.2, 0.9],
+      strokeDashoffset: [anime.setDashoffset, 0],
+      duration: 1800,
+      direction: "alternate",
+      loop: true,
+      delay: anime.stagger(250),
+      easing: "easeInOutSine",
+    })
+
+    // E. Glowing Loading Progress Bar Shimmer
+    anime({
+      targets: "#anime-progress-shimmer",
+      translateX: ["-100%", "200%"],
+      duration: 2200,
+      loop: true,
+      easing: "easeInOutCubic",
+    })
+
+    // F. Twinkling Ambient Stars & Dust Particles
+    anime({
+      targets: ".anime-star-particle",
+      opacity: () => [anime.random(0.1, 0.3), anime.random(0.7, 1)],
+      scale: () => [anime.random(0.7, 0.9), anime.random(1.2, 1.6)],
+      translateY: () => anime.random(-15, 15),
+      translateX: () => anime.random(-10, 10),
       duration: () => anime.random(2500, 4500),
       direction: "alternate",
       loop: true,
-      delay: anime.stagger(150),
+      delay: anime.stagger(120),
       easing: "easeInOutQuad",
     })
 
-    // F. Energy circuit beam scan animation
-    const beamAnim = anime({
-      targets: "#circuit-beam",
-      strokeDashoffset: [anime.setDashoffset, 0],
-      duration: 2400,
+    // G. Soft Ambient Halo Glow Pulse
+    anime({
+      targets: "#anime-hero-aura",
+      scale: [0.95, 1.06],
+      opacity: [0.35, 0.65],
+      duration: 4000,
+      direction: "alternate",
       loop: true,
       easing: "easeInOutSine",
     })
-
-    return () => {
-      gearMainAnim.pause()
-      gearSubAnim.pause()
-      corePulse.pause()
-      particlesAnim.pause()
-      beamAnim.pause()
-    }
   }, [])
 
-  // 2. REALTIME COUNTDOWN TIMER
+  // 2. REALTIME COUNTDOWN TIMER CALCULATION
   useEffect(() => {
     if (!config.estimatedEnd) {
       setTimeLeft(null)
@@ -116,172 +125,119 @@ export function MaintenanceView({ config, isPreview = false, isAdmin = false }: 
     }
 
     const targetTime = new Date(config.estimatedEnd).getTime()
+    if (isNaN(targetTime)) {
+      setTimeLeft(null)
+      return
+    }
 
-    const calculateTime = () => {
-      const now = Date.now()
+    const updateCountdown = () => {
+      const now = new Date().getTime()
       const diff = targetTime - now
 
       if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isEnded: true })
-        return
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isEnded: true,
+        })
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+        setTimeLeft({
+          days,
+          hours,
+          minutes,
+          seconds,
+          isEnded: false,
+        })
       }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-      setTimeLeft({ days, hours, minutes, seconds, isEnded: false })
     }
 
-    calculateTime()
-    const timer = setInterval(calculateTime, 1000)
+    updateCountdown()
+    const timer = setInterval(updateCountdown, 1000)
     return () => clearInterval(timer)
   }, [config.estimatedEnd])
 
+  // 3. HANDLE LIVE REFRESH
   const handleRefresh = () => {
     setIsRefreshing(true)
-    anime({
-      targets: "#refresh-icon",
-      rotate: "+=720",
-      duration: 900,
-      easing: "easeInOutCubic",
-      complete: () => {
-        window.location.reload()
-      },
-    })
+    setTimeout(() => {
+      window.location.reload()
+    }, 700)
   }
 
-  // Generate 18 background particle coordinates
-  const particles = React.useMemo(() => {
-    return Array.from({ length: 18 }).map((_, i) => ({
-      id: i,
-      top: `${(i * 19) % 95}%`,
-      left: `${(i * 23 + 7) % 95}%`,
-      size: `${(i % 3) * 2 + 3}px`,
-      color: i % 2 === 0 ? "bg-emerald-400" : "bg-teal-300",
-    }))
-  }, [])
-
-  // Clean WhatsApp phone number for wa.me link
-  const rawContact = config.emergencyContact || "6281234567890"
-  const cleanPhone = rawContact.replace(/\D/g, "").replace(/^0/, "62")
-  const waText = encodeURIComponent(
-    `Halo Admin Diklat Prakom Kejaksaan RI, saya peserta diklat ingin menanyakan perihal pemeliharaan portal Web Kelas.`
-  )
-  const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`
+  // Format WhatsApp Link
+  const waNumber = (config.emergencyContact || "6281234567890").replace(/\D/g, "")
+  const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+    `Halo Tim Panitia Diklat Prakom Kejaksaan RI, saya ingin menanyakan perihal status pemeliharaan sistem pada Web Kelas Agrasena.`
+  )}`
 
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[100dvh] w-full flex flex-col items-center justify-between p-4 sm:p-6 lg:p-8 overflow-hidden bg-[#070B12] text-slate-100 select-none"
+      className="relative min-h-screen w-full bg-[#0B0F19] text-white flex flex-col items-center justify-between px-4 py-6 sm:py-10 overflow-x-hidden selection:bg-indigo-500/30 selection:text-indigo-200"
     >
-      {/* Dynamic Background Ambient Gradients */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[20%] w-[550px] h-[550px] rounded-full bg-emerald-500/10 blur-[130px]" />
-        <div className="absolute bottom-[-10%] right-[15%] w-[600px] h-[600px] rounded-full bg-teal-500/10 blur-[140px]" />
-        <div className="absolute top-[40%] right-[-5%] w-[400px] h-[400px] rounded-full bg-emerald-700/10 blur-[120px]" />
-
-        {/* Grid lines overlay */}
+      {/* ========================================================================= */}
+      {/* AMBIENT BACKGROUND COSMIC GLOW & FLOATING PARTICLES                       */}
+      {/* ========================================================================= */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Deep Cosmic Radial Backdrops */}
         <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage: `linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px)`,
-            backgroundSize: "48px 48px",
-          }}
+          id="anime-hero-aura"
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[850px] h-[400px] sm:h-[550px] bg-gradient-to-br from-indigo-900/30 via-purple-900/25 to-cyan-900/20 rounded-full blur-3xl"
         />
 
-        {/* Anime.js Interactive Particles */}
-        {particles.map((p) => (
-          <div
-            key={p.id}
-            className={`dust-particle absolute rounded-full ${p.color} blur-[0.5px] pointer-events-none`}
+        {/* Floating Twinkling Stars (24 Particles) */}
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span
+            key={i}
+            className="anime-star-particle absolute rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]"
             style={{
-              top: p.top,
-              left: p.left,
-              width: p.size,
-              height: p.size,
+              top: `${(i * 37) % 95}%`,
+              left: `${(i * 43) % 96}%`,
+              width: `${(i % 3) + 2}px`,
+              height: `${(i % 3) + 2}px`,
+              opacity: 0.4,
             }}
           />
         ))}
       </div>
 
-      {/* Top Header Bar: Logo Kejaksaan RI & Status Badge */}
-      <header className="anime-enter relative z-10 w-full max-w-5xl flex items-center justify-between gap-4 pt-2">
-        <div className="flex items-center gap-3">
-          <div className="relative h-10 w-10 sm:h-11 sm:w-11 rounded-full p-1 bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-950/40">
-            <Image
-              src="/icon.png"
-              alt="Logo Kejaksaan RI"
-              width={36}
-              height={36}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-black tracking-tight text-white">
-                Kejaksaan Republik Indonesia
-              </span>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 tracking-wider">
-                Agrasena
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Badan Pendidikan dan Pelatihan • Diklat Fungsional Prakom
-            </p>
-          </div>
-        </div>
-
-        {/* Status Mode Badge */}
-        <div className="flex items-center gap-2">
-          {isPreview && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
-              <AlertTriangle className="h-3 w-3 text-amber-400" />
-              <span>Mode Pratinjau Admin</span>
-            </span>
-          )}
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-950/70 border border-emerald-500/30 px-3.5 py-1.5 shadow-md">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
-            </span>
-            <span className="text-[11px] font-bold text-amber-300">
-              Pemeliharaan Aktif
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Hero Card Container */}
-      <main className="relative z-10 w-full max-w-2xl my-auto py-8 sm:py-12 flex flex-col items-center text-center">
-        {/* Admin Session Control Alert */}
+      {/* ========================================================================= */}
+      {/* TOP HEADER: BADIKLAT IDENTITY & OPTIONAL ADMIN BAR                       */}
+      {/* ========================================================================= */}
+      <header className="relative z-20 w-full max-w-4xl flex flex-col items-center gap-3">
+        {/* Admin Session Control Pill */}
         {isAdmin && (
-          <div className="anime-enter w-full max-w-xl mb-6 p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-lg">
+          <div className="anime-fade-in w-full mb-2 p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-3 text-left shadow-lg">
             <div className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-amber-500/25 text-amber-300 flex items-center justify-center shrink-0">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <div>
                 <p className="text-xs font-black text-amber-300">
-                  Sesi Administrator Terdeteksi Aktif
+                  Sesi Administrator Aktif Terdeteksi
                 </p>
                 <p className="text-[11px] text-slate-300">
-                  Pengunjung umum melihat layar ini. Anda dapat menguji portal via bypass atau kembali ke dashboard.
+                  Pengunjung umum melihat layar Anime ini. Anda dapat menguji portal via bypass atau kembali ke dashboard.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <a
                 href="/?bypass=1"
-                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold border border-amber-500/40 transition cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 text-amber-200 text-xs font-bold border border-amber-500/40 transition cursor-pointer"
               >
                 Buka Portal (Bypass)
               </a>
               <Link
                 href="/admin/dashboard"
-                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-black shadow-sm transition cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-black shadow-xs transition cursor-pointer"
               >
                 Dashboard Admin
               </Link>
@@ -289,283 +245,232 @@ export function MaintenanceView({ config, isPreview = false, isAdmin = false }: 
           </div>
         )}
 
-        {/* ===================================================================== */}
-        {/* Anime.js Mechanical Gears & Circuit SVG Illustration                  */}
-        {/* ===================================================================== */}
-        <div className="anime-enter relative w-48 h-48 sm:w-56 sm:h-56 mb-6 flex items-center justify-center">
-          {/* Background Ambient Radial Glow */}
-          <div
-            id="gear-core-glow"
-            className="absolute w-36 h-36 rounded-full bg-emerald-500/25 blur-2xl pointer-events-none"
-          />
-
-          {/* SVG Canvas for Double Gear & Tech Circuit */}
-          <svg
-            viewBox="0 0 200 200"
-            className="w-full h-full overflow-visible drop-shadow-[0_0_25px_rgba(16,185,129,0.35)]"
-          >
-            <defs>
-              <linearGradient id="gearGradPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#047857" />
-              </linearGradient>
-              <linearGradient id="gearGradSecondary" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#2dd4bf" />
-                <stop offset="100%" stopColor="#0f766e" />
-              </linearGradient>
-              <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#34d399" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#064e3b" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* Orbit Circle Track */}
-            <circle
-              cx="100"
-              cy="100"
-              r="86"
-              fill="none"
-              stroke="#064e3b"
-              strokeWidth="1.5"
-              strokeDasharray="4 6"
-              opacity="0.6"
-            />
-
-            {/* Animated Circuit Path */}
-            <path
-              id="circuit-beam"
-              d="M 20,100 A 80,80 0 1,1 180,100 A 80,80 0 1,1 20,100"
-              fill="none"
-              stroke="#34d399"
-              strokeWidth="2"
-              strokeDasharray="30 180"
-              strokeLinecap="round"
-              opacity="0.85"
-            />
-
-            {/* Primary Main Gear (Clockwise Anime.js) */}
-            <g id="gear-primary" transform-origin="100 100">
-              {/* 12 Gear Teeth */}
-              {Array.from({ length: 12 }).map((_, i) => (
-                <rect
-                  key={i}
-                  x="93"
-                  y="28"
-                  width="14"
-                  height="16"
-                  rx="3"
-                  fill="url(#gearGradPrimary)"
-                  transform={`rotate(${i * 30} 100 100)`}
-                />
-              ))}
-              {/* Outer Gear Ring */}
-              <circle
-                cx="100"
-                cy="100"
-                r="64"
-                fill="url(#gearGradPrimary)"
-                stroke="#064e3b"
-                strokeWidth="2"
-              />
-              {/* Hollow Inner Cutout */}
-              <circle cx="100" cy="100" r="44" fill="#070B12" />
-              {/* Inner Rim */}
-              <circle
-                cx="100"
-                cy="100"
-                r="44"
-                fill="none"
-                stroke="#34d399"
-                strokeWidth="1.5"
-                opacity="0.7"
-              />
-            </g>
-
-            {/* Secondary Inner Interlocking Gear (Counter-Clockwise Anime.js) */}
-            <g id="gear-secondary" transform-origin="100 100">
-              {/* 8 Inner Teeth */}
-              {Array.from({ length: 8 }).map((_, i) => (
-                <rect
-                  key={i}
-                  x="94"
-                  y="62"
-                  width="12"
-                  height="12"
-                  rx="2"
-                  fill="url(#gearGradSecondary)"
-                  transform={`rotate(${i * 45} 100 100)`}
-                />
-              ))}
-              {/* Secondary Center Ring */}
-              <circle
-                cx="100"
-                cy="100"
-                r="30"
-                fill="#0e1726"
-                stroke="#2dd4bf"
-                strokeWidth="2"
-              />
-            </g>
-
-            {/* Center Wrench / Tech Core */}
-            <circle cx="100" cy="100" r="20" fill="url(#hubGlow)" />
-            <circle cx="100" cy="100" r="14" fill="#10b981" />
-            <circle cx="100" cy="100" r="7" fill="#ffffff" />
-          </svg>
-
-          {/* Floating Tool Badge Overlay */}
-          <div className="absolute bottom-1 right-2 sm:bottom-2 sm:right-3 p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-lg shadow-emerald-950/60 border border-emerald-300/40">
-            <Wrench className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-        </div>
-
-        {/* Heading & Notification Title */}
-        <div className="anime-enter space-y-3 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Optimalisasi & Sinkronisasi Sistem Berjalan</span>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
-            {config.title || "Portal Sedang Dalam Pemeliharaan"}
-          </h1>
-
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-lg mx-auto">
-            {config.message ||
-              "Mohon maaf atas ketidaknyamanannya. Portal Web Kelas Agrasena Diklat Fungsional Prakom Kejaksaan RI sedang menjalani pemeliharaan infrastruktur rutin. Layanan akan segera kembali aktif."}
-          </p>
-        </div>
-
-        {/* ===================================================================== */}
-        {/* Realtime Countdown Timer Card                                         */}
-        {/* ===================================================================== */}
-        {timeLeft && !timeLeft.isEnded ? (
-          <div className="anime-enter mt-8 w-full max-w-lg p-5 rounded-2xl bg-slate-900/80 border border-emerald-500/20 backdrop-blur-xl shadow-xl shadow-black/40">
-            <div className="flex items-center justify-between mb-3 text-xs">
-              <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Perkiraan Selesai Pemeliharaan:</span>
-              </span>
-              <span className="font-mono text-emerald-400 font-semibold text-[11px]">
-                {new Date(config.estimatedEnd!).toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  timeZoneName: "short",
-                })}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
-                  {String(timeLeft.days).padStart(2, "0")}
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  Hari
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
-                  {String(timeLeft.hours).padStart(2, "0")}
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  Jam
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono">
-                  {String(timeLeft.minutes).padStart(2, "0")}
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  Menit
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                <span className="text-xl sm:text-2xl font-black text-teal-300 font-mono animate-pulse">
-                  {String(timeLeft.seconds).padStart(2, "0")}
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                  Detik
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="anime-enter mt-8 w-full max-w-lg p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/25 flex items-center justify-between gap-3 text-left">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-white">
-                  Tahap Akhir Pengujian Sistem
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  Verifikasi integritas database dan kesiapan modul diklat sedang berlangsung.
-                </p>
-              </div>
-            </div>
-            <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-            </span>
+        {/* Preview Mode Badge */}
+        {isPreview && !isAdmin && (
+          <div className="anime-fade-in inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Mode Pratinjau Administrator</span>
           </div>
         )}
 
-        {/* Action Buttons: WhatsApp Helpdesk & Refresh Status */}
-        <div className="anime-enter mt-7 flex flex-wrap items-center justify-center gap-3 w-full max-w-md">
-          {/* WhatsApp Admin Button */}
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>Kontak Panitia Diklat</span>
-          </a>
+        {/* Top Badiklat Badge */}
+        <div className="anime-fade-in inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-extrabold bg-slate-900/80 border border-slate-700/70 text-slate-300 shadow-sm backdrop-blur-md">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>DIKLAT PRAKOM KEJAKSAAN RI • AGRASENA</span>
+        </div>
+      </header>
 
-          {/* Refresh Page Button */}
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 active:scale-[0.98] text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition-all cursor-pointer disabled:opacity-50"
+      {/* ========================================================================= */}
+      {/* MAIN HERO: ANIME CHIBI ILLUSTRATION & CENTER LOADING HUD (GAMBAR 2)       */}
+      {/* ========================================================================= */}
+      <main className="relative z-10 w-full max-w-4xl my-auto py-4 sm:py-8 flex flex-col items-center text-center">
+        {/* Hero Artwork Wrapper */}
+        <div className="relative w-full max-w-2xl flex flex-col items-center">
+          {/* Floating Anime Doodle: Code Badge (Left side) */}
+          <div
+            id="anime-doodle-code"
+            className="absolute top-6 left-4 sm:left-10 z-20 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-950/80 border border-indigo-500/50 text-indigo-300 text-xs font-mono font-bold shadow-lg shadow-indigo-950/50 backdrop-blur-md"
           >
-            <RefreshCw
-              id="refresh-icon"
-              className={`h-4 w-4 text-emerald-400 ${isRefreshing ? "animate-spin" : ""}`}
+            <Code2 className="h-3.5 w-3.5 text-indigo-400" />
+            <span>&lt;/&gt; sys_update</span>
+          </div>
+
+          {/* Floating Anime Doodle: Task Checklist (Right side) */}
+          <div
+            id="anime-doodle-task"
+            className="absolute top-6 right-4 sm:right-10 z-20 hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/80 border border-purple-500/50 text-purple-300 text-xs font-bold shadow-lg shadow-purple-950/50 backdrop-blur-md"
+          >
+            <CheckSquare className="h-3.5 w-3.5 text-purple-400" />
+            <span>modul_sync: OK</span>
+          </div>
+
+          {/* The High-Resolution Anime Illustration (Gambar 2 Reference) */}
+          <div className="relative w-full aspect-[1024/567] rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 bg-[#0B0F19]">
+            <Image
+              src="/maintenance-anime.png"
+              alt="Aparat Diklat Pranata Komputer Kejaksaan RI sedang bertugas (Anime Chibi Style)"
+              fill
+              priority
+              className="object-contain sm:object-cover transform hover:scale-[1.01] transition-transform duration-500"
             />
-            <span>{isRefreshing ? "Memeriksa..." : "Periksa Status"}</span>
-          </button>
+
+            {/* Subtle Vignette Gradient to blend with page backdrop */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0B0F19] via-transparent to-transparent opacity-60" />
+          </div>
+
+          {/* DYNAMIC CENTER LOADING HUD (MATCHING GAMBAR 2) */}
+          <div className="anime-fade-in -mt-6 sm:-mt-8 z-20 flex flex-col items-center gap-3 px-6 py-4 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-2xl backdrop-blur-xl max-w-md w-full">
+            {/* Steaming Coffee Icon with Anime.js animated steam paths */}
+            <div className="flex flex-col items-center">
+              <svg
+                width="36"
+                height="22"
+                viewBox="0 0 36 22"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="overflow-visible"
+              >
+                <path
+                  d="M10 18 Q12 10 10 4"
+                  stroke="#A5B4FC"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  className="coffee-steam-path"
+                />
+                <path
+                  d="M18 19 Q21 11 18 3"
+                  stroke="#C084FC"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="coffee-steam-path"
+                />
+                <path
+                  d="M26 18 Q24 10 26 4"
+                  stroke="#A5B4FC"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  className="coffee-steam-path"
+                />
+              </svg>
+
+              <div className="mt-0.5 h-8 w-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center border border-indigo-500/30">
+                <Coffee className="h-4 w-4" />
+              </div>
+            </div>
+
+            {/* Loading Title */}
+            <div className="space-y-0.5 text-center">
+              <h2 className="text-xl sm:text-2xl font-black tracking-wide text-white drop-shadow-[0_0_12px_rgba(165,180,252,0.6)]">
+                Loading...
+              </h2>
+              <p className="text-[11px] font-semibold text-slate-400">
+                Please wait a moment • Sedang Pemeliharaan Sistem
+              </p>
+            </div>
+
+            {/* Neon Glowing Shimmer Progress Bar */}
+            <div className="relative w-full h-3 rounded-full bg-slate-800/90 border border-indigo-500/30 overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.25)]">
+              {/* Progress Core */}
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-90 rounded-full" />
+              {/* Animated Light Shimmer Beam */}
+              <div
+                id="anime-progress-shimmer"
+                className="absolute top-0 bottom-0 w-24 bg-gradient-to-r from-transparent via-white/80 to-transparent transform -skew-x-12"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Safe Security Badge */}
-        <div className="anime-enter mt-6 flex items-center gap-2 text-[11px] text-slate-400">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Seluruh berkas tugas, nilai, dan data peserta tersimpan aman di database Kejaksaan RI.</span>
+        {/* ===================================================================== */}
+        {/* INFORMATION CARD & LIVE DIGITAL COUNTDOWN TIMER                       */}
+        {/* ===================================================================== */}
+        <div className="anime-fade-in mt-8 w-full max-w-2xl rounded-3xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6 text-left">
+          {/* Main Title & Message */}
+          <div className="space-y-2 text-center sm:text-left">
+            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">
+              {config.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+              {config.message}
+            </p>
+          </div>
+
+          {/* COUNTDOWN TIMER HUD (IF ESTIMATED END IS PROVIDED) */}
+          {timeLeft && (
+            <div className="space-y-2.5 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-400 flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-indigo-400" />
+                  <span>Perkiraan Waktu Selesai:</span>
+                </span>
+                <span className="text-[11px] text-indigo-300 font-mono">
+                  {timeLeft.isEnded ? "Waktu telah tiba" : "Menghitung mundur..."}
+                </span>
+              </div>
+
+              {timeLeft.isEnded ? (
+                <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs font-bold text-center">
+                  ✨ Estimasi waktu pemeliharaan telah selesai. Silakan klik tombol periksa status di bawah.
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2.5 sm:gap-3 text-center">
+                  {/* Hari */}
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-inner">
+                    <span className="block text-xl sm:text-2xl font-black text-indigo-300 font-mono">
+                      {String(timeLeft.days).padStart(2, "0")}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Hari
+                    </span>
+                  </div>
+
+                  {/* Jam */}
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-inner">
+                    <span className="block text-xl sm:text-2xl font-black text-purple-300 font-mono">
+                      {String(timeLeft.hours).padStart(2, "0")}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Jam
+                    </span>
+                  </div>
+
+                  {/* Menit */}
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-inner">
+                    <span className="block text-xl sm:text-2xl font-black text-pink-300 font-mono">
+                      {String(timeLeft.minutes).padStart(2, "0")}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Menit
+                    </span>
+                  </div>
+
+                  {/* Detik */}
+                  <div className="p-2.5 sm:p-3 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-inner">
+                    <span className="block text-xl sm:text-2xl font-black text-amber-300 font-mono">
+                      {String(timeLeft.seconds).padStart(2, "0")}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Detik
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ACTION BUTTONS: WHATSAPP HELPDESK & REFRESH STATUS */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/40 transition cursor-pointer"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>Hubungi PIC Diklat (WhatsApp)</span>
+              <ExternalLink className="h-3 w-3 text-emerald-200" />
+            </a>
+
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
+              <span>{isRefreshing ? "Memeriksa..." : "Periksa Status Ulang"}</span>
+            </button>
+          </div>
         </div>
       </main>
 
-      {/* Footer & Discreet Administrator Access */}
-      <footer className="anime-enter relative z-10 w-full max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800/80 text-[11px] text-slate-500">
-        <div>
-          © {new Date().getFullYear()} Tim Pengembang Diklat Prakom Kejaksaan RI. Seluruh hak cipta dilindungi.
-        </div>
-
-        {/* Discreet Admin Login Link for technicians and instructors */}
-        <div className="flex items-center gap-4">
-          <span className="text-slate-600">v1.4.0 • Enterprise Edition</span>
-          <Link
-            href="/admin/login"
-            className="inline-flex items-center gap-1 text-slate-400 hover:text-emerald-400 font-medium transition cursor-pointer"
-            title="Pintu Masuk Khusus Administrator"
-          >
-            <Lock className="h-3 w-3" />
-            <span>Akses Admin</span>
-            <ChevronRight className="h-3 w-3" />
-          </Link>
-        </div>
+      {/* ========================================================================= */}
+      {/* FOOTER: BADIKLAT OFFICIAL COPYRIGHT                                      */}
+      {/* ========================================================================= */}
+      <footer className="relative z-10 w-full max-w-4xl text-center py-2 text-[11px] text-slate-500">
+        <p>
+          Badan Pendidikan dan Pelatihan Kejaksaan Republik Indonesia • Tim Pranata Komputer Agrasena
+        </p>
       </footer>
     </div>
   )
