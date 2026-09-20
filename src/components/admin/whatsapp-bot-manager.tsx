@@ -62,7 +62,7 @@ export function WhatsAppBotManager() {
   const fetchQr = React.useCallback(async () => {
     setQrLoading(true)
     try {
-      const res = await fetch("/api/wa-bot?action=qr")
+      const res = await fetch(`/api/wa-bot?action=qr&_t=${Date.now()}`, { cache: "no-store" })
       const data = await res.json()
       if (data.qrImage) {
         setQrImage(data.qrImage)
@@ -80,7 +80,7 @@ export function WhatsAppBotManager() {
   const fetchStatus = React.useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/wa-bot?action=status")
+      const res = await fetch(`/api/wa-bot?action=status&_t=${Date.now()}`, { cache: "no-store" })
       const data = await res.json()
       setBotStatus(data)
       if (data.status?.targetGroupJid) {
@@ -108,7 +108,7 @@ export function WhatsAppBotManager() {
   const fetchGroups = async () => {
     setFetchingGroups(true)
     try {
-      const res = await fetch("/api/wa-bot?action=groups")
+      const res = await fetch(`/api/wa-bot?action=groups&_t=${Date.now()}`, { cache: "no-store" })
       const data = await res.json()
       if (data.groups && Array.isArray(data.groups)) {
         setGroups(data.groups)
@@ -125,6 +125,9 @@ export function WhatsAppBotManager() {
 
   React.useEffect(() => {
     fetchStatus()
+    // Auto-refresh status setiap 15 detik agar sinkron dengan heartbeat bot
+    const interval = setInterval(fetchStatus, 15000)
+    return () => clearInterval(interval)
   }, [fetchStatus])
 
   const showFeedback = (type: "success" | "error", text: string) => {

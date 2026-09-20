@@ -3,6 +3,9 @@ import { cookies } from "next/headers"
 import { verifySuperAdminSessionToken } from "@/lib/security"
 import { createClient } from "@/lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 // URL default bot: bisa diset di .env.local via WA_BOT_URL atau fallback ke http://localhost:5000
 const getBotBaseUrl = () => {
   return (process.env.WA_BOT_URL || "http://localhost:5000").replace(/\/$/, "")
@@ -67,21 +70,27 @@ export async function GET(request: NextRequest) {
     let botData: any = null
     let isOnline = false
 
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 2000)
-      const res = await fetch(`${botUrl}/status`, {
-        headers: { Authorization: `Bearer ${botSecret}` },
-        cache: "no-store",
-        signal: controller.signal,
-      })
-      clearTimeout(timeoutId)
-      if (res.ok) {
-        botData = await res.json()
-        isOnline = true
+    const isLocalUrl = botUrl.includes("localhost") || botUrl.includes("127.0.0.1")
+    const isVercelServer = Boolean(process.env.VERCEL)
+
+    // Jangan coba fetch localhost jika sedang running di Vercel Cloud (karena localhost di cloud bukan laptop user)
+    if (!isVercelServer || !isLocalUrl) {
+      try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 1500)
+        const res = await fetch(`${botUrl}/status`, {
+          headers: { Authorization: `Bearer ${botSecret}` },
+          cache: "no-store",
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+        if (res.ok) {
+          botData = await res.json()
+          isOnline = true
+        }
+      } catch {
+        // Bot service is down / unreachable on direct HTTP
       }
-    } catch {
-      // Bot service is down / unreachable on localhost (e.g. running in Vercel Cloud)
     }
 
     // Ambil konfigurasi & status runtime dari Supabase

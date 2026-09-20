@@ -1,5 +1,22 @@
 const path = require('path')
 const fs = require('fs')
+
+// Filter / redam log noise dari libsignal yang langsung menulis ke console.error
+const _origConsoleError = console.error
+console.error = function (...args) {
+  const msgStr = typeof args[0] === 'string' ? args[0] : (args[0]?.message || '')
+  if (
+    msgStr.includes('Failed to decrypt message') ||
+    msgStr.includes('Session error:') ||
+    msgStr.includes('Bad MAC') ||
+    msgStr.includes('MessageCounterError') ||
+    msgStr.includes('Key used already or never filled')
+  ) {
+    return
+  }
+  _origConsoleError.apply(console, args)
+}
+
 require('dotenv').config({ path: path.join(__dirname, '.env') })
 if (!process.env.SUPABASE_URL) {
   require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') })
@@ -56,6 +73,9 @@ let botStatus = {
   pushName: null,
   connectedAt: null,
 }
+
+// In-memory cache pesan untuk mekanisme retry & validasi dekripsi pesan Baileys
+const msgStore = new Map()
 
 const authFolder = path.join(__dirname, 'auth_info_baileys')
 if (!fs.existsSync(authFolder)) {
@@ -186,6 +206,18 @@ const chatCommandCooldowns = new Map()
  */
 async function handleIncomingMessage(m) {
   if (!m.messages || !m.messages[0]) return
+
+  // Simpan riwayat pesan terbaru untuk keperluan retry validasi Baileys
+  for (const item of m.messages) {
+    if (item.key?.id && item.message) {
+      msgStore.set(item.key.id, item.message)
+      if (msgStore.size > 1500) {
+        const oldestKey = msgStore.keys().next().value
+        msgStore.delete(oldestKey)
+      }
+    }
+  }
+
   const msg = m.messages[0]
   if (msg.key.fromMe) return // Abaikan pesan yang dikirim oleh bot sendiri
 
@@ -519,6 +551,19 @@ async function connectToWhatsApp() {
     defaultQueryTimeoutMs: 60000,
     connectTimeoutMs: 60000,
     keepAliveIntervalMs: 30000,
+    getMessage: async (key) => {
+      if (key?.id && msgStore.has(key.id)) {
+        return msgStore.get(key.id)
+      }
+      return undefined
+    },
+    shouldIgnoreJid: (jid) => {
+      return (
+        jid?.endsWith('@broadcast') ||
+        jid?.endsWith('@newsletter') ||
+        jid === 'status@broadcast'
+      )
+    },
   })
 
   // Simpan kredensial setiap ada pembaruan auth token
