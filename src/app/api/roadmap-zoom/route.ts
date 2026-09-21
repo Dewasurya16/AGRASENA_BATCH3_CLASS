@@ -23,44 +23,53 @@ const NO_CACHE_HEADERS = {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const batchNum = Number(searchParams.get("batch")) === 4 ? 4 : 3
-  const key = batchNum === 4 ? "roadmap_zoom_batch4" : "roadmap_zoom_batch3"
+  let batchNum: 3 | 4 = 3
+  try {
+    const searchParams = req.nextUrl?.searchParams || new URL(req.url, "http://localhost").searchParams
+    batchNum = Number(searchParams.get("batch")) === 4 ? 4 : 3
+  } catch {
+    batchNum = 3
+  }
 
   let resultPayload: RoadmapZoomConfig = getDefaultRoadmapConfig(batchNum)
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  try {
+    const key = batchNum === 4 ? "roadmap_zoom_batch4" : "roadmap_zoom_batch3"
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
-    try {
-      const supabase = await createClient()
-      const { data } = await supabase
-        .from("wa_bot_config")
-        .select("key, value")
-        .eq("key", key)
-        .maybeSingle()
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
+      try {
+        const supabase = await createClient()
+        const { data } = await supabase
+          .from("wa_bot_config")
+          .select("key, value")
+          .eq("key", key)
+          .maybeSingle()
 
-      if (data && data.value && typeof data.value === "object") {
-        const val = data.value
-        resultPayload = {
-          globalPasscode: val.globalPasscode || resultPayload.globalPasscode,
-          classes: Array.isArray(val.classes)
-            ? val.classes.map((item: any, idx: number) => ({
-                id: String(item.id || item.angkatan || idx + 1),
-                name: String(item.name || `Angkatan ${idx + 1}`),
-                badge: String(item.badge || "Ahli Pertama"),
-                meetingId: String(item.meetingId || item.meetingIdDisplay || ""),
-                passcode: String(item.passcode || val.globalPasscode || resultPayload.globalPasscode),
-                url: String(item.url || item.joinUrl || ""),
-                highlight: Boolean(item.highlight ?? item.isHighlight),
-              }))
-            : resultPayload.classes,
+        if (data && data.value && typeof data.value === "object") {
+          const val = data.value
+          resultPayload = {
+            globalPasscode: val.globalPasscode || resultPayload.globalPasscode,
+            classes: Array.isArray(val.classes)
+              ? val.classes.map((item: any, idx: number) => ({
+                  id: String(item.id || item.angkatan || idx + 1),
+                  name: String(item.name || `Angkatan ${idx + 1}`),
+                  badge: String(item.badge || "Ahli Pertama"),
+                  meetingId: String(item.meetingId || item.meetingIdDisplay || ""),
+                  passcode: String(item.passcode || val.globalPasscode || resultPayload.globalPasscode),
+                  url: String(item.url || item.joinUrl || ""),
+                  highlight: Boolean(item.highlight ?? item.isHighlight),
+                }))
+              : resultPayload.classes,
+          }
         }
+      } catch (err) {
+        console.warn("Error fetching roadmap zoom from database:", err)
       }
-    } catch (err) {
-      console.warn("Error fetching roadmap zoom from database:", err)
     }
+  } catch (outerErr) {
+    console.warn("Error in roadmap-zoom GET route:", outerErr)
   }
 
   return NextResponse.json(
