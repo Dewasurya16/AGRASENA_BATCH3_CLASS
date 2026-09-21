@@ -83,7 +83,10 @@ export async function updateSession(request: NextRequest) {
   const isExemptApiRoute =
     request.nextUrl.pathname.startsWith('/api/maintenance') ||
     request.nextUrl.pathname.startsWith('/api/auth') ||
-    request.nextUrl.pathname.startsWith('/api/admin')
+    request.nextUrl.pathname.startsWith('/api/admin') ||
+    request.nextUrl.pathname.startsWith('/api/roadmap-zoom') ||
+    request.nextUrl.pathname.startsWith('/api/zoom-config') ||
+    request.nextUrl.pathname.startsWith('/api/wa-bot')
 
   let isMaintenanceActive = false
 
