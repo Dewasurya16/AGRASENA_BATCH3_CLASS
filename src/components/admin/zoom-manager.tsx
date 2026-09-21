@@ -88,7 +88,7 @@ export function ZoomManager({ onFeedback, selectedBatchFilter = "all" }: ZoomMan
         const data = await res.json()
         if (data.classes && Array.isArray(data.classes)) {
           setRoadmapConfig(data)
-          setTempGlobalPasscode(data.globalPasscode || (batch === 4 ? "AGRASENA4" : "PRAKOM2026"))
+          setTempGlobalPasscode(data.globalPasscode || (batch === 4 ? "AGRASENA4" : "Biropeg-24"))
         }
       }
     } catch (e) {
@@ -149,7 +149,7 @@ export function ZoomManager({ onFeedback, selectedBatchFilter = "all" }: ZoomMan
       name: `Angkatan ${nextId}`,
       badge: "Ahli Pertama",
       meetingId: "",
-      passcode: roadmapConfig.globalPasscode || (roadmapBatch === 4 ? "AGRASENA4" : "PRAKOM2026"),
+      passcode: roadmapConfig.globalPasscode || (roadmapBatch === 4 ? "AGRASENA4" : "Biropeg-24"),
       url: "",
       highlight: false,
     })

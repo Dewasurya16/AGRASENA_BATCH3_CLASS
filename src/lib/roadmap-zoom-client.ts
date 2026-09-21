@@ -19,12 +19,12 @@ export interface RoadmapZoomConfig {
 }
 
 const DEFAULT_BATCH3_CLASSES: RoadmapZoomClass[] = [
-  { id: '1', name: 'Angkatan 1', badge: 'Ahli Pertama', meetingId: '812 3456 7890', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567890', highlight: true },
-  { id: '2', name: 'Angkatan 2', badge: 'Ahli Pertama', meetingId: '812 3456 7891', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567891' },
-  { id: '3', name: 'Angkatan 3', badge: 'Ahli Pertama', meetingId: '812 3456 7892', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567892' },
-  { id: '4', name: 'Angkatan 4', badge: 'Ahli Pertama', meetingId: '812 3456 7893', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567893' },
-  { id: '5', name: 'Angkatan 5', badge: 'Terampil', meetingId: '812 3456 7894', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567894' },
-  { id: '6', name: 'Angkatan 6', badge: 'Terampil', meetingId: '812 3456 7895', passcode: 'PRAKOM2026', url: 'https://zoom.us/j/81234567895' },
+  { id: '1', name: 'Angkatan 1', badge: 'Ahli Pertama', meetingId: '970 1734 2615', passcode: 'Biropeg-24', url: 'https://zoom.us/j/97017342615' },
+  { id: '2', name: 'Angkatan 2', badge: 'Ahli Pertama', meetingId: '915 5650 9491', passcode: 'Biropeg-24', url: 'https://zoom.us/j/91556509491' },
+  { id: '3', name: 'Angkatan 3', badge: 'Ahli Pertama', meetingId: '980 1123 8540', passcode: 'Biropeg-24', url: 'https://zoom.us/j/98011238540' },
+  { id: '4', name: 'Angkatan 4', badge: 'Ahli Pertama', meetingId: '953 8575 8152', passcode: 'Biropeg-24', url: 'https://zoom.us/j/95385758152' },
+  { id: '5', name: 'Angkatan 5', badge: 'Terampil', meetingId: '914 2017 2539', passcode: 'Biropeg-24', url: 'https://zoom.us/j/91420172539', highlight: true },
+  { id: '6', name: 'Angkatan 6', badge: 'Terampil', meetingId: '967 2865 6691', passcode: 'Biropeg-24', url: 'https://zoom.us/j/96728656691' },
 ];
 
 const DEFAULT_BATCH4_CLASSES: RoadmapZoomClass[] = [
@@ -39,7 +39,7 @@ const DEFAULT_BATCH4_CLASSES: RoadmapZoomClass[] = [
 export function getDefaultRoadmapConfig(batchNum: 3 | 4 = 3): RoadmapZoomConfig {
   return {
     classes: batchNum === 4 ? DEFAULT_BATCH4_CLASSES : DEFAULT_BATCH3_CLASSES,
-    globalPasscode: batchNum === 4 ? 'AGRASENA4' : 'PRAKOM2026',
+    globalPasscode: batchNum === 4 ? 'AGRASENA4' : 'Biropeg-24',
   };
 }
 

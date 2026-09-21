@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       : getDefaultRoadmapConfig(batchNum).classes
 
     const payloadToSave: RoadmapZoomConfig = {
-      globalPasscode: cleanGlobalPasscode || (batchNum === 4 ? "AGRASENA4" : "PRAKOM2026"),
+      globalPasscode: cleanGlobalPasscode || (batchNum === 4 ? "AGRASENA4" : "Biropeg-24"),
       classes: cleanClasses,
       updatedAt: new Date().toISOString(),
     }
