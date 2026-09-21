@@ -4,7 +4,7 @@ import {
   RoadmapZoomClass,
   RoadmapZoomConfig,
   getDefaultRoadmapConfig
-} from "@/lib/roadmap-zoom-client"
+} from "@/data/roadmap-zoom"
 import {
   isRequestAdminAuthenticated,
   getClientIp,
