@@ -5896,7 +5896,7 @@ export function AdminDashboardClient({
           onClose={() => setEditingSchedule(null)}
           title="Edit Sesi Jadwal Perkuliahan"
         >
-          <form onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
+          <form key={editingSchedule.id} onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
             <input type="hidden" name="id" value={editingSchedule.id} />
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -5904,7 +5904,12 @@ export function AdminDashboardClient({
                 <select
                   name="day"
                   required
-                  defaultValue={editingSchedule.day}
+                  defaultValue={(() => {
+                    const d = getScheduleDayNumber(editingSchedule)
+                    if (!d) return editingSchedule.day
+                    const names = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
+                    return `Hari ${d} | ${names[(d - 1) % 5]}`
+                  })()}
                   className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-medium text-slate-900 dark:text-slate-100"
                 >
                   {Array.from({ length: 35 }).map((_, i) => {
@@ -6007,6 +6012,7 @@ export function AdminDashboardClient({
           </form>
         </Modal>
       )}
+
 
       {/* Edit Modal: Tasks */}
       {editingTask && (

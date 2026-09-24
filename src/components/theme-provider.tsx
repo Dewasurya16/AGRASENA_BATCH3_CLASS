@@ -38,11 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (stored === 'dark' || stored === 'light') {
         setThemeState(stored)
         applyTheme(stored)
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setThemeState('dark')
-        applyTheme('dark')
       } else {
-        setThemeState('light')
         applyTheme('light')
       }
     } catch {

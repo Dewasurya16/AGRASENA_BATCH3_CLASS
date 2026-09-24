@@ -17,6 +17,8 @@
    - [D. Perseus AUTH-02: Penghapusan Hardcoded Credentials & Timing Attack](#d-perseus-auth-02-penghapusan-hardcoded-credentials--timing-attack)
    - [E. Perseus SSRF-01: Mitigasi SSRF Redirect Chaining pada AI PDF](#e-perseus-ssrf-01-mitigasi-ssrf-redirect-chaining-pada-ai-pdf)
    - [F. Perseus CRYPTO-01: Penguatan Kunci Rahasia HMAC Sesi](#f-perseus-crypto-01-penguatan-kunci-rahasia-hmac-sesi)
+   - [G. Admin Dashboard: Perbaikan Bug Reset Hari Sesi Jadwal (Hari 22 ke Hari 1)](#g-admin-dashboard-perbaikan-bug-reset-hari-sesi-jadwal-hari-22-ke-hari-1)
+   - [H. Theme Provider: Standarisasi Default Tema Terang (Light Mode)](#h-theme-provider-standarisasi-default-tema-terang-light-mode)
 4. [Diagram Alur Keamanan Baru](#4-diagram-alur-keamanan-baru)
 5. [Hasil Uji Validasi & Kompilasi](#5-hasil-uji-validasi--kompilasi)
 
@@ -28,6 +30,8 @@ Laporan ini mendokumentasikan seluruh rangkaian perbaikan yang telah diterapkan 
 1. **Perbaikan UX Layar Intro**: Menghilangkan perilaku *auto-enter* mendadak saat peserta memilih angkatan **Agrasena Batch 3** atau **Agrasena Batch 4**, memberikan kesempatan pratinjau sebelum konfirmasi masuk.
 2. **Penguatan Keamanan Berstandar Enterprise Spring Boot Security**: Menutup celah pengubahan kredensial Zoom tanpa otorisasi.
 3. **Penyelesaian Audit Agen Perseus**: Menutup 4 celah keamanan terverifikasi (1 Kritis, 1 Tinggi, 2 Menengah) pada lapisan autentikasi, SSRF, dan manajemen kriptografi sesi.
+4. **Perbaikan Bug Edit Jadwal Sesi (Admin Dashboard)**: Memperbaiki *form mismatch* pada dropdown pilihan hari perkuliahan, di mana jadwal hari ke-2 s/d ke-35 (misal Hari 22) otomatis ter-reset ke Hari 1 saat admin sekadar mengedit nama coach / link Zoom.
+5. **Standarisasi Default Tema (Light Mode)**: Mengubah inisialisasi default aplikasi menjadi mode terang (*light mode*), meniadakan otomatisasi *dark mode* bawaan OS sistem yang mengabaikan preferensi visual kelas.
 
 ---
 
@@ -41,6 +45,8 @@ Laporan ini mendokumentasikan seluruh rangkaian perbaikan yang telah diterapkan 
 | **Kredensial** | AUTH-02 (Tinggi) | Array kata sandi default statis (`admin`, `admin123`, `prakom625`) | Kredensial statis dihapus; validasi `constantTimeCompare` terhadap environment | ✅ Diamankan |
 | **SSRF** | SSRF-01 (Sedang) | `fetch(pdfUrl)` mengikuti pengalihan (302) ke jaringan internal / loopback | Ditambahkan `redirect: 'error'` untuk membatalkan permintaan jika dialihkan | ✅ Termitigasi |
 | **Kriptografi** | CRYPTO-01 (Sedang)| Kunci rahasia HMAC menggunakan fallback kunci publik browser `NEXT_PUBLIC_*` | Kunci publik dihapus; murni menggunakan secret server privat (`SESSION_SECRET`) | ✅ Diperkuat |
+| **Admin CRUD** | Bug Edit Jadwal | Edit modal memakai `defaultValue={editingSchedule.day}` ("Selasa"), tidak cocok dengan opsi ("Hari 22 \| Selasa") sehingga browser reset ke Hari 1 | Ekstraksi hari dengan `getScheduleDayNumber()`, memformat nilai option yang cocok persis (`Hari 22 \| Selasa`), plus `key={editingSchedule.id}` | ✅ Teratasi |
+| **Visual / Tema**| Default Light Mode | Sistem memeriksa `prefers-color-scheme: dark`, memaksa dark mode jika OS gelap | Default tema diatur mutlak ke 'light'; pengguna tetap bebas toggle ke dark mode sesuai keinginan | ✅ Diterapkan |
 
 ---
 
@@ -243,6 +249,67 @@ Laporan ini mendokumentasikan seluruh rangkaian perbaikan yang telah diterapkan 
 
 ---
 
+### G. Admin Dashboard: Perbaikan Bug Reset Hari Sesi Jadwal (Hari 22 ke Hari 1)
+- **Berkas:** `src/app/admin/dashboard/admin-dashboard-client.tsx`
+- **Tujuan:** Mencegah reset otomatis pemilihan hari sesi perkuliahan dari hari tinggi (misalnya Hari 22) ke Hari 1 saat admin melakukan pembaruan data jadwal (misal menambah nama coach/pengampu).
+
+```diff
+--- BEFORE (src/app/admin/dashboard/admin-dashboard-client.tsx)
++++ AFTER (src/app/admin/dashboard/admin-dashboard-client.tsx)
+@@ -5896,11 +5896,16 @@
+           onClose={() => setEditingSchedule(null)}
+           title="Edit Sesi Jadwal Perkuliahan"
+         >
+-          <form onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
++          <form key={editingSchedule.id} onSubmit={handleUpdateScheduleSubmit} className="space-y-4 pt-2">
+             <input type="hidden" name="id" value={editingSchedule.id} />
+             <div className="grid grid-cols-2 gap-3">
+               <div className="space-y-1.5">
+                 <label className="text-xs font-black text-slate-900 dark:text-slate-100">Hari / Sesi *</label>
+                 <select
+                   name="day"
+                   required
+-                  defaultValue={editingSchedule.day}
++                  defaultValue={(() => {
++                    const d = getScheduleDayNumber(editingSchedule)
++                    if (!d) return editingSchedule.day
++                    const names = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
++                    return `Hari ${d} | ${names[(d - 1) % 5]}`
++                  })()}
+                   className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#161B26] px-3 text-xs font-medium text-slate-900 dark:text-slate-100"
+```
+**Efek Perubahan:**
+- **Before:** Kolom DB `day` hanya berisi `"Selasa"`, sedangkan opsi formulir adalah `"Hari 22 | Selasa"`. Karena tidak cocok, browser otomatis memilih opsi index 0 (`Hari 1 | Senin`). Saat disimpan, jadwal bergeser menjadi Hari 1 dan merusak urutan jadwal roadmap.
+- **After:** Menggunakan fungsi `getScheduleDayNumber()` untuk mengekstrak nomor hari (misal 22), lalu mengonstruksi string persis `"Hari 22 | Selasa"`. Opsi dropdown terpilih dengan tepat sesuai data eksisting. Penambahan `key={editingSchedule.id}` memastikan form selalu me-remount saat membuka jadwal yang berbeda.
+
+---
+
+### H. Theme Provider: Standarisasi Default Tema Terang (Light Mode)
+- **Berkas:** `src/components/theme-provider.tsx`
+- **Tujuan:** Menjadikan mode terang (*light mode*) sebagai tampilan default portal kelas, tidak lagi otomatis mengikuti tema gelap sistem operasi perangkat pengguna (*system dark mode preference*).
+
+```diff
+--- BEFORE (src/components/theme-provider.tsx)
++++ AFTER (src/components/theme-provider.tsx)
+@@ -38,11 +38,7 @@
+       if (stored === 'dark' || stored === 'light') {
+         setThemeState(stored)
+         applyTheme(stored)
+-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+-        setThemeState('dark')
+-        applyTheme('dark')
+       } else {
+-        setThemeState('light')
+         applyTheme('light')
+       }
+     } catch {
+```
+**Efek Perubahan:**
+- **Before:** Jika pengunjung belum menyimpan preferensi di `localStorage`, peramban memeriksa `prefers-color-scheme: dark`. Jika laptop/HP pengguna dalam mode gelap, portal otomatis menjadi gelap tanpa izin pengguna.
+- **After:** Default visual portal selalu *light mode* yang bersih dan seragam untuk perkuliahan. Pengguna yang menginginkan mode gelap tetap dapat mengaktifkannya melalui tombol toggle tema kapan saja, dan pilihannya akan disimpan secara persisten.
+
+---
+
 ## 4. Diagram Alur Keamanan Baru
 
 ```mermaid
@@ -290,4 +357,10 @@ npm notice run tsc --noEmit
 Exit Code: 0
 ```
 
-Semua komponen antarmuka, rute API, dan modul keamanan berhasil diverifikasi tanpa ada *breaking change* atau regresi fungsi.
+Hasil verifikasi menyeluruh:
+1. **TypeScript Typecheck**: Bebas dari eror kompilasi (`tsc --noEmit` sukses 100%).
+2. **Next.js 16.3.3 Dev Server**: Berjalan stabil di `http://localhost:3000` (Status HTTP `200 OK`).
+3. **Data Integrity Test (CRUD Jadwal)**: Pemilihan hari pada modal edit membaca nomor hari eksisting secara akurat via `getScheduleDayNumber()`, mencocokkan `defaultValue` secara presisi ke string opsi formulir (`Hari 22 | Selasa`), dan `key={editingSchedule.id}` mencegah kondisi *stale form state*.
+4. **Theme Provider**: Sesi default pengguna baru selalu terinisialisasi pada mode terang (`'light'`), menghapuskan *flicker* atau *force-dark* dari OS pengguna, dengan retensi preferensi manual via `localStorage`.
+
+Semua komponen antarmuka, rute API, alur CRUD admin, dan modul keamanan berhasil diverifikasi tanpa ada *breaking change* atau regresi fungsi.
