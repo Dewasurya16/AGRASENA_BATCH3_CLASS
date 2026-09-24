@@ -12,46 +12,121 @@ import {
   Search,
   CheckCircle2,
   FileText,
+  Download,
   Sparkles,
+  ArrowRight,
   Layers,
   ChevronRight,
-  BookOpen,
   LayoutGrid,
   List,
-  X,
 } from "lucide-react"
-import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
-import { useTimezone } from "@/components/timezone-provider"
-import { ZoomClassAccess } from "@/components/public/zoom-class-access"
-import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Modal } from "@/components/ui/modal"
 import {
-  getScheduleDayNumber,
-  getItemBatch,
   getAutoRoadmapData,
   RoadmapDayDetail,
+  parseDiklatDate,
   parseTimeToMins,
+  getItemBatch,
+  getScheduleDayNumber,
   getScheduleDate,
   formatIndonesianDate,
 } from "@/lib/roadmap-utils"
-import { Modal } from "@/components/ui/modal"
+import { generateGoogleCalendarUrl, downloadIcsFile } from "@/lib/calendar-utils"
+import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useTimezone } from "@/components/timezone-provider"
+import { ZoomClassAccess } from "@/components/public/zoom-class-access"
 
 export interface SchedulesListB4Props {
   initialSchedules?: any[]
 }
 
+function computeSessionCountdown(dateStr: string, timeRange: string, nowTime: number) {
+  const itemDate = parseDiklatDate(dateStr)
+  if (!itemDate) return null
+
+  // Extract start and end times e.g. "09:30 - 10:15" or "09:30"
+  const parts = timeRange.split("-")
+  const startPart = parts[0]?.trim() || "08:00"
+  const endPart = parts[1]?.trim() || "15:30"
+
+  const startMins = parseTimeToMins(startPart) || (8 * 60)
+  const endMins = parseTimeToMins(endPart) || (startMins + 90)
+
+  const utcYear = itemDate.getFullYear()
+  const utcMonth = itemDate.getMonth()
+  const utcDate = itemDate.getDate()
+  const startH = Math.floor(startMins / 60)
+  const startM = startMins % 60
+  const endH = Math.floor(endMins / 60)
+  const endM = endMins % 60
+
+  // WIB is UTC+7
+  const startMs = Date.UTC(utcYear, utcMonth, utcDate, startH - 7, startM, 0)
+  const endMs = Date.UTC(utcYear, utcMonth, utcDate, endH - 7, endM, 0)
+
+  // 1. Finished
+  if (nowTime >= endMs) {
+    return {
+      status: "completed",
+      label: "✅ Selesai",
+      badgeClass: "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-[#161B26] border border-slate-200/60 dark:border-[#2A3550]",
+    }
+  }
+
+  // 2. Active Now
+  if (nowTime >= startMs && nowTime < endMs) {
+    const remMinutes = Math.max(1, Math.floor((endMs - nowTime) / (1000 * 60)))
+    return {
+      status: "in_class",
+      label: `🟢 Sesi Aktif (${remMinutes}m lagi)`,
+      badgeClass: "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800/60 animate-pulse",
+    }
+  }
+
+  // 3. Upcoming Countdown
+  const diffMs = startMs - nowTime
+  const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const days = Math.floor(totalHours / 24)
+  const remHours = totalHours % 24
+  const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  const remSecs = Math.floor((diffMs % (1000 * 60)) / 1000)
+
+  let label = ""
+  if (days > 0) {
+    label = `⏳ Mulai ${days}h ${remHours}j ${remMins}m`
+  } else if (remHours > 0) {
+    label = `⏳ Mulai ${remHours}j ${remMins}m ${remSecs}d`
+  } else {
+    label = `⏳ Mulai ${remMins}m ${remSecs}d`
+  }
+
+  return {
+    status: "upcoming",
+    label,
+    badgeClass: "text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/80 border border-sky-200/60 dark:border-sky-800/40 font-mono",
+  }
+}
+
 export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props) {
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [selectedStage, setSelectedStage] = React.useState<number>(0) // 0 = Semua, 1 = MOOC, 2 = TMO, 3 = Lab, 4 = Seminar
-  const [viewMode, setViewMode] = React.useState<"list" | "roadmap">("list")
+  const [selectedStage, setSelectedStage] = React.useState<number>(0)
   const [activeModalDay, setActiveModalDay] = React.useState<RoadmapDayDetail | null>(null)
-  const { timezone, setTimezone, convertWibTimeToCurrent } = useTimezone()
+  const [searchQuery, setSearchQuery] = React.useState<string>("")
+  const [viewMode, setViewMode] = React.useState<"roadmap" | "list">("roadmap")
+  const [nowTime, setNowTime] = React.useState<number>(Date.now())
+  const { timezone, setTimezone, convertWibTimeToCurrent, convertTimeRange } = useTimezone()
+  const [liveSchedules, setLiveSchedules] = React.useState<any[]>(
+    initialSchedules && initialSchedules.length > 0 ? initialSchedules : (DEFAULT_BATCH4_SCHEDULES as any[])
+  )
 
-  const [liveSchedules, setLiveSchedules] = React.useState<any[]>(() => {
-    if (initialSchedules && initialSchedules.length > 0) return initialSchedules
-    return DEFAULT_BATCH4_SCHEDULES as any[]
-  })
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setNowTime(Date.now())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
-  // Synchronize with props and fetch latest client-side
   React.useEffect(() => {
     if (initialSchedules && initialSchedules.length > 0) {
       setLiveSchedules(initialSchedules)
@@ -76,48 +151,44 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
     }
   }, [initialSchedules])
 
-  // Hitung jumlah sesi per tahap secara dinamis dari jadwal nyata
-  const stages = React.useMemo(() => {
-    const totalCount = liveSchedules.length
-    const t1 = liveSchedules.filter((s) => {
-      const d = getScheduleDayNumber(s)
-      return d !== null && d >= 1 && d <= 5
-    }).length
-    const t2 = liveSchedules.filter((s) => {
-      const d = getScheduleDayNumber(s)
-      return d !== null && d >= 6 && d <= 15
-    }).length
-    const t3 = liveSchedules.filter((s) => {
-      const d = getScheduleDayNumber(s)
-      return d !== null && d >= 16 && d <= 30
-    }).length
-    const t4 = liveSchedules.filter((s) => {
-      const d = getScheduleDayNumber(s)
-      return d !== null && d >= 31 && d <= 35
-    }).length
+  // Automatic calculation based on 35 days + Live manual sessions from Supabase specifically for Batch 4
+  const { days, summary } = React.useMemo(
+    () => getAutoRoadmapData(undefined, liveSchedules, "batch-4"),
+    [liveSchedules]
+  )
 
-    return [
-      { id: 0, label: "Semua Sesi", count: totalCount },
-      { id: 1, label: "Tahap 1: MOOC (H1-H5)", count: t1 },
-      { id: 2, label: "Tahap 2: TMO (H6-H15)", count: t2 },
-      { id: 3, label: "Tahap 3: Lab Satker (H16-H30)", count: t3 },
-      { id: 4, label: "Tahap 4: Seminar (H31-H35)", count: t4 },
-    ]
-  }, [liveSchedules])
+  // Stage definitions for clean segmented views with Apple dynamic colors (Identical to Batch 3)
+  const stageCategories = [
+    { id: 0, name: "Semua Tahap", range: "Hari 1 - 35" },
+    { id: 1, name: "Tahap 1 • MOOC", range: "Hari 1 - 5" },
+    { id: 2, name: "Tahap 2 • TMO", range: "Hari 6 - 15" },
+    { id: 3, name: "Tahap 3 • Lab Prakom", range: "Hari 16 - 30" },
+    { id: 4, name: "Tahap 4 • Seminar", range: "Hari 31 - 35" },
+  ]
 
-  // Filter schedules berdasarkan stage dan search
+  const filteredDays = days.filter((item) => {
+    const matchStage = selectedStage === 0 || item.stageNumber === selectedStage
+    const q = searchQuery.toLowerCase().trim()
+    const matchQuery =
+      !q ||
+      `Hari ${item.dayNumber}`.toLowerCase().includes(q) ||
+      item.stageName.toLowerCase().includes(q) ||
+      item.dateStr.toLowerCase().includes(q) ||
+      item.sessions.some((s) => s.title.toLowerCase().includes(q) || (s.instructor && s.instructor.toLowerCase().includes(q)))
+    return matchStage && matchQuery
+  })
+
+  // Filtered schedules for optional chronological rundown list view
   const filteredSchedules = React.useMemo(() => {
     return liveSchedules
       .filter((sched) => {
         const dayNum = getScheduleDayNumber(sched) || 1
 
-        // Stage filter
         if (selectedStage === 1 && (dayNum < 1 || dayNum > 5)) return false
         if (selectedStage === 2 && (dayNum < 6 || dayNum > 15)) return false
         if (selectedStage === 3 && (dayNum < 16 || dayNum > 30)) return false
         if (selectedStage === 4 && (dayNum < 31 || dayNum > 35)) return false
 
-        // Search filter
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase()
           const matchesSubject = (sched.subject_name || "").toLowerCase().includes(q)
@@ -126,7 +197,6 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
           const matchesRoom = (sched.room || "").toLowerCase().includes(q)
           return matchesSubject || matchesLecturer || matchesDay || matchesRoom
         }
-
         return true
       })
       .sort((a, b) => {
@@ -137,283 +207,330 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
       })
   }, [liveSchedules, selectedStage, searchQuery])
 
-  // Roadmap 35 Days Data
-  const { days: roadmapDays } = React.useMemo(() => {
-    return getAutoRoadmapData(undefined, liveSchedules, "batch-4")
-  }, [liveSchedules])
-
-  const filteredRoadmapDays = React.useMemo(() => {
-    return roadmapDays.filter((d) => {
-      if (selectedStage !== 0 && d.stageNumber !== selectedStage) return false
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase()
-        const matchesDay = `hari ${d.dayNumber}`.includes(q) || d.stageName.toLowerCase().includes(q)
-        const matchesSession = d.sessions.some(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            (s.instructor && s.instructor.toLowerCase().includes(q))
-        )
-        return matchesDay || matchesSession
-      }
-      return true
-    })
-  }, [roadmapDays, selectedStage, searchQuery])
-
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-8">
       
-      {/* 1. Header Card with Title & Filters */}
-      <div className="rounded-[18px] bg-white dark:bg-[#151c28] border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-xs font-bold shadow-2xs">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Roadmap 35 Hari Sesi</span>
+      {/* 1. Header Banner & Filters (Sama persis seperti Batch 3) */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="rounded-[16px] bg-white dark:bg-[#151c28] p-5 sm:p-7 border border-[#e6e6e6] dark:border-white/10 shadow-xs space-y-4"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-full bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 px-3 py-0.5 text-xs font-semibold">
+                <Calendar className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
+                <span>Roadmap 35 Hari Kerja</span>
               </span>
-              <span className="rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-xs font-bold">
+              <span className="rounded-full bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30 px-2.5 py-0.5 text-xs font-semibold">
+                120 JP Full Kurikulum
+              </span>
+              <span className="rounded-full bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe] border border-[#af52de]/30 px-2.5 py-0.5 text-xs font-semibold">
                 Agrasena Batch 4
               </span>
-              <span className="rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 text-xs font-semibold">
-                {liveSchedules.length} Sesi Terjadwal
-              </span>
             </div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-[#18181B] dark:text-white">
-              Jadwal Lengkap & Rundown Harian Batch 4
+
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#000000] dark:text-white tracking-tight leading-tight">
+              Jadwal & Roadmap Sesi <br className="hidden sm:block" />
+              <span className="text-[#007aff] dark:text-[#60a5fa]">Pelatihan Fungsional Prakom Batch 4</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Pelajari timeline perkuliahan, narasumber pengampu, pembagian jam JP, dan link tatap muka virtual Zoom tiap angkatan.
+
+            <p className="text-xs sm:text-sm text-[#615d59] dark:text-[#94a3b8] leading-relaxed">
+              Panduan lengkap hari perkuliahan, sesi Tatap Muka Online (TMO), praktikum laboratorium satker, hingga seminar akhir klasikal.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start lg:self-center">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800/90 rounded-full p-0.5 border border-slate-200 dark:border-slate-700">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
-                  viewMode === "list"
-                    ? "bg-white dark:bg-emerald-600 text-emerald-700 dark:text-white shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-                title="Tampilan Daftar Sesi Rinci"
-              >
-                <List className="h-3.5 w-3.5" />
-                <span>Daftar Sesi</span>
-              </button>
+          {/* Quick Summary Pill Box */}
+          <div className="flex items-center gap-3 bg-[#f6f5f4] dark:bg-[#141b27] p-3 rounded-[12px] border border-[#e6e6e6] dark:border-white/10 self-start lg:self-auto shadow-2xs">
+            <div className="text-center px-3">
+              <div className="text-xl font-bold text-[#000000] dark:text-white">{summary.completedDays}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#34c759] dark:text-[#4ade80]">Selesai</div>
+            </div>
+            <div className="h-7 w-px bg-[#e6e6e6] dark:border-white/10" />
+            <div className="text-center px-3">
+              <div className="text-xl font-bold text-[#007aff] dark:text-[#60a5fa]">Hari {summary.currentDayNumber}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#007aff] dark:text-[#60a5fa]">
+                {summary.isTodayActive ? "Hari Ini" : "Sesi Berikutnya"}
+              </div>
+            </div>
+            <div className="h-7 w-px bg-[#e6e6e6] dark:border-white/10" />
+            <div className="text-center px-3">
+              <div className="text-xl font-bold text-[#000000] dark:text-white">{summary.totalDays - summary.completedDays}</div>
+              <div className="text-[10px] font-semibold uppercase text-[#615d59] dark:text-[#94a3b8]">Tersisa</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Stage Tabs & Search & Timezone Switcher */}
+        <div className="pt-3.5 border-t border-[#e6e6e6] dark:border-[#333333] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+            {stageCategories.map((tab) => {
+              const isSelected = selectedStage === tab.id
+              let activeColor = "bg-[#0075de] text-white"
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedStage(tab.id)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                    isSelected
+                      ? `${activeColor} shadow-2xs`
+                      : "bg-[#f6f5f4] dark:bg-[#252525] text-[#615d59] dark:text-[#a39e98] hover:bg-[#e6e6e6] dark:hover:bg-[#2c2c2c] hover:text-[#000000] dark:hover:text-white"
+                  }`}
+                >
+                  {tab.name}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* View Mode Toggle Switcher */}
+            <div className="flex items-center bg-[#f6f5f4] dark:bg-[#252525] rounded-full p-0.5 border border-[#e6e6e6] dark:border-[#333333] text-[11px] font-semibold shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode("roadmap")}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
                   viewMode === "roadmap"
-                    ? "bg-white dark:bg-emerald-600 text-emerald-700 dark:text-white shadow-2xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#0075de] text-white shadow-2xs font-semibold"
+                    : "text-[#615d59] dark:text-[#a39e98] hover:text-[#000000] dark:hover:text-white"
                 }`}
-                title="Tampilan Kalender 35 Hari"
+                title="Tampilan Roadmap 35 Hari"
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
+                <LayoutGrid className="h-3 w-3" />
                 <span>35 Hari</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition cursor-pointer ${
+                  viewMode === "list"
+                    ? "bg-[#0075de] text-white shadow-2xs font-semibold"
+                    : "text-[#615d59] dark:text-[#a39e98] hover:text-[#000000] dark:hover:text-white"
+                }`}
+                title="Tampilan Rundown Sesi"
+              >
+                <List className="h-3 w-3" />
+                <span>Rundown Sesi</span>
               </button>
             </div>
 
-            <a
-              href="#zoom-access"
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 px-3 py-1.5 text-xs font-bold hover:bg-emerald-600 hover:text-white transition cursor-pointer"
-            >
-              <Video className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Akses Zoom Angkatan 1–6</span>
-              <span className="sm:hidden">Zoom</span>
-            </a>
+            {/* Timezone Switcher Pill */}
+            <div className="flex items-center gap-0.5 bg-[#f6f5f4] dark:bg-[#252525] rounded-full p-1 border border-[#e6e6e6] dark:border-[#333333] text-[10px] font-semibold shrink-0">
+              {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
+                <button
+                  key={tz}
+                  type="button"
+                  onClick={() => setTimezone(tz)}
+                  className={`px-2.5 py-0.5 rounded-full transition-all cursor-pointer ${
+                    timezone === tz
+                      ? 'bg-[#0075de] text-white font-semibold shadow-2xs'
+                      : 'text-[#615d59] dark:text-[#a39e98] hover:text-[#000000] dark:hover:text-white'
+                  }`}
+                  title={`Tampilkan jam perkuliahan dalam zona ${tz}`}
+                >
+                  {tz}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative flex-1 md:w-52">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#615d59]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari hari / tanggal / sesi..."
+                className="h-8.5 w-full rounded-full border border-[#e6e6e6] dark:border-[#333333] bg-white dark:bg-[#252525] pl-9 pr-3 text-xs font-normal text-[#000000] dark:text-white placeholder-[#a39e98] focus:border-[#0075de] focus:outline-none"
+              />
+            </div>
           </div>
         </div>
+      </motion.div>
 
-        {/* Search & Timezone Switcher */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari materi, pemateri, hari..."
-              className="w-full rounded-full bg-slate-50 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 pl-9 pr-4 py-1.5 text-xs text-[#18181B] dark:text-white placeholder-slate-400 focus:outline-hidden focus:border-emerald-500 transition"
-            />
-          </div>
+      {/* 2. Akses Ruang Zoom Meeting Tiap Angkatan Batch 4 */}
+      <ZoomClassAccess batchNum={4} />
 
-          {/* Timezone Switcher Pill */}
-          <div className="flex items-center gap-1 self-end sm:self-auto">
-            <span className="text-xs font-semibold text-slate-400 mr-1">Zona:</span>
-            {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
-              <button
-                key={tz}
-                type="button"
-                onClick={() => setTimezone(tz)}
-                className={`px-2.5 py-1 rounded-full text-xs font-bold transition cursor-pointer ${
-                  timezone === tz
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-[#18181B] dark:hover:text-white"
-                }`}
-              >
-                {tz}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Stage Tabs with accurate live counts */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-3 pb-1 no-scrollbar">
-          {stages.map((stg) => (
-            <button
-              key={stg.id}
-              type="button"
-              onClick={() => setSelectedStage(stg.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                selectedStage === stg.id
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              <span>{stg.label}</span>
-              <span
-                className={`ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] ${
-                  selectedStage === stg.id
-                    ? "bg-white/20 text-white"
-                    : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
-                }`}
-              >
-                {stg.count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 2. Akses Ruang Zoom Meeting Tiap Angkatan */}
-      <div id="zoom-access">
-        <ZoomClassAccess batchNum={4} />
-      </div>
-
-      {/* 3. TAMPILAN VIEW MODE: LIST ATAU ROADMAP 35 HARI */}
+      {/* 3. TAMPILAN ROADMAP 35 HARI ATAU RUNDOWN LIST */}
       {viewMode === "roadmap" ? (
-        /* ROADMAP 35 DAYS GRID */
+        /* Structured 35 Days Grid (Sama persis seperti Batch 3) */
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm sm:text-base font-bold text-[#18181B] dark:text-white">
-              Kalender Roadmap 35 Hari Batch 4 ({filteredRoadmapDays.length} Hari)
+            <h3 className="text-base sm:text-lg font-bold text-[#000000] dark:text-white">
+              Daftar 35 Hari Pelatihan ({filteredDays.length} Hari Ditampilkan)
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Klik kartu hari untuk rincian sesi & Zoom
+            <span className="text-xs font-semibold text-[#615d59] dark:text-[#94a3b8]">
+              Klik kartu untuk rincian sesi & countdown
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredRoadmapDays.map((item) => {
-              const hasSess = item.sessions.length > 0
-              let stageBadgeColor =
-                "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800"
-              if (item.stageNumber === 2) {
-                stageBadgeColor =
-                  "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-              } else if (item.stageNumber === 3) {
-                stageBadgeColor =
-                  "bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border-teal-200 dark:border-teal-800"
-              } else if (item.stageNumber === 4) {
-                stageBadgeColor =
-                  "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {filteredDays.map((item) => {
+              const isCompleted = item.status === "completed"
+              const isToday = item.isTodayExact
+              const isNextUpcoming = item.isNextUpcoming || (!isToday && item.dayNumber === summary.currentDayNumber && !isCompleted)
+
+              // Calculate live countdown string for the upcoming card
+              let countdownText = ""
+              if (isNextUpcoming && item.targetTimestamp) {
+                const diffMs = item.targetTimestamp - nowTime
+                if (diffMs > 0) {
+                  const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
+                  const daysLeft = Math.floor(totalHours / 24)
+                  const remHours = totalHours % 24
+                  const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+                  const remSecs = Math.floor((diffMs % (1000 * 60)) / 1000)
+
+                  if (daysLeft > 0) {
+                    countdownText = `⏳ Mulai dalam ${daysLeft}h ${remHours}j ${remMins}m (${item.dayOfWeek})`
+                  } else {
+                    countdownText = `⏳ Mulai ${remHours}j ${remMins}m ${remSecs}d (${item.dayOfWeek})`
+                  }
+                } else {
+                  countdownText = `⏳ Mulai ${item.dayOfWeek} Pagi`
+                }
               }
 
-              return (
-                <div
-                  key={item.dayNumber}
-                  onClick={() => setActiveModalDay(item)}
-                  className="rounded-[16px] bg-white dark:bg-[#151c28] border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 p-3.5 sm:p-4.5 transition-all hover:shadow-xs cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageBadgeColor}`}>
-                        {item.stageName}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-2 py-0.5 rounded-full">
-                        <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                        <span>{item.dayOfWeek}, {item.dateStr}</span>
-                      </span>
-                    </div>
+              let headerBg = "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
+              if (item.stageNumber === 1) headerBg = "bg-[#007aff]/10 dark:bg-[#007aff]/20 text-[#007aff] dark:text-[#60a5fa] border-b border-[#007aff]/20"
+              if (item.stageNumber === 2) headerBg = "bg-[#af52de]/10 dark:bg-[#af52de]/20 text-[#8a38b5] dark:text-[#d8b4fe] border-b border-[#af52de]/20"
+              if (item.stageNumber === 3) headerBg = "bg-[#ff2d55]/10 dark:bg-[#ff2d55]/20 text-[#e11d48] dark:text-[#fda4af] border-b border-[#ff2d55]/20"
+              if (item.stageNumber === 4) headerBg = "bg-[#ff9500]/10 dark:bg-[#ff9500]/20 text-[#d97706] dark:text-[#fbbf24] border-b border-[#ff9500]/20"
 
-                    <div className="flex items-center gap-3 pt-1">
-                      <div className="flex flex-col items-center justify-center h-11 w-11 rounded-xl bg-slate-100 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 shrink-0">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">HARI</span>
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                          {item.dayNumber}
+              return (
+                <motion.div
+                  key={item.dayNumber}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  onClick={() => setActiveModalDay(item)}
+                  className={`group cursor-pointer rounded-[14px] bg-white dark:bg-[#141b27] border overflow-hidden flex flex-col justify-between hover:-translate-y-0.5 active:scale-[0.99] transition-[transform,box-shadow,border-color] duration-200 ease-out will-change-transform ${
+                    isToday
+                      ? "border-[#ff9500] ring-2 ring-[#ff9500]/20 shadow-xs"
+                      : isNextUpcoming
+                      ? "border-[#007aff] ring-2 ring-[#007aff]/20 shadow-xs"
+                      : isCompleted
+                      ? "border-[#e6e6e6] dark:border-white/10 hover:border-[#34c759] shadow-2xs hover:shadow-md"
+                      : "border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 shadow-2xs hover:shadow-md"
+                  }`}
+                >
+                  {/* Window Header */}
+                  <div className={`flex items-center justify-between px-3.5 py-2 border-b border-[#e6e6e6] dark:border-white/10 ${headerBg}`}>
+                    <div className="flex items-center gap-1.5 font-bold text-[11px]">
+                      <span>Hari {item.dayNumber}</span>
+                      <span>•</span>
+                      <span className="text-[10px] font-semibold">{item.stageName}</span>
+                    </div>
+                    <span className="font-mono text-[10px] font-semibold opacity-70">_oX</span>
+                  </div>
+
+                  <div className="p-4 space-y-3">
+                    {/* Top Day info + Date */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <h4 className="font-bold text-sm sm:text-base text-[#000000] dark:text-white group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] transition">
+                          Hari ke-{item.dayNumber}
+                        </h4>
+                        <p className="flex items-center gap-1.5 text-xs text-[#615d59] dark:text-[#94a3b8] font-normal">
+                          <Calendar className="h-3 w-3 text-[#615d59]" strokeWidth={2} />
+                          <span>{item.dateStr}</span>
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col items-end">
+                        <span className="font-mono text-[10px] font-semibold text-[#000000] dark:text-white bg-[#f6f5f4] dark:bg-[#101520] px-2.5 py-0.5 rounded-full border border-[#e6e6e6] dark:border-white/10">
+                          {item.sessions.length} Sesi
                         </span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-xs sm:text-sm font-bold text-[#18181B] dark:text-white truncate">
-                          {hasSess ? item.sessions[0].title : item.stageSubtitle}
-                        </h4>
-                        <div className="flex items-center gap-2 pt-0.5">
-                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                            {hasSess ? `${item.sessions.length} Sesi Terjadwal` : "Jadwal Mandiri"}
-                          </span>
-                          {item.isTodayExact && (
-                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-600 text-white uppercase tracking-wider">
-                              Hari Ini
-                            </span>
-                          )}
-                        </div>
-                      </div>
                     </div>
 
-                    {hasSess && (
-                      <div className="space-y-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
-                        {item.sessions.slice(0, 2).map((s, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300 truncate">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold shrink-0">
-                              {convertWibTimeToCurrent(s.time.split(" - ")[0])}
-                            </span>
-                            <span className="truncate">{s.title}</span>
-                          </div>
-                        ))}
-                        {item.sessions.length > 2 && (
-                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                            +{item.sessions.length - 2} sesi lainnya...
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    {/* Sessions Preview with Individual Session Countdown */}
+                    <div className="space-y-2">
+                      {item.sessions.length > 0 ? (
+                        item.sessions.slice(0, 2).map((ses, sIdx) => {
+                          const sesCountdown = computeSessionCountdown(item.dateIso || item.dateStr, ses.time, nowTime)
+                          return (
+                            <div
+                              key={sIdx}
+                              className="rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] p-2.5 border border-[#e6e6e6] dark:border-white/10 text-xs space-y-1"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] font-semibold">
+                                <span className="text-[#007aff] dark:text-[#60a5fa] font-mono font-bold">{convertTimeRange(ses.time)}</span>
+                                {sesCountdown && (
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-tight ${sesCountdown.badgeClass}`}>
+                                    {sesCountdown.label}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-semibold text-[#000000] dark:text-white line-clamp-1">
+                                {ses.title}
+                              </p>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <div className="rounded-[10px] bg-[#f6f5f4] dark:bg-[#101520] p-2.5 text-center border border-dashed border-[#e6e6e6] dark:border-white/10 text-[11px] text-[#615d59]">
+                          Belum ada kegiatan manual yang diisi
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="pt-3 mt-2 flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400 border-t border-slate-100 dark:border-slate-800">
-                    <span>Lihat Rundown Hari {item.dayNumber}</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    {/* Bottom Status Pill */}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-[#e6e6e6] dark:border-white/10 text-xs">
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider tabular-nums ${
+                          isCompleted
+                            ? "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border border-[#34c759]/30"
+                            : isToday
+                            ? "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border border-[#ff9500]/30 animate-pulse"
+                            : isNextUpcoming
+                            ? "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border border-[#007aff]/30 font-mono"
+                            : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10"
+                        }`}
+                      >
+                        {isCompleted
+                          ? "Selesai"
+                          : isToday
+                          ? "Hari Ini"
+                          : isNextUpcoming
+                          ? (countdownText || `⏳ Menjelang (${item.dayOfWeek})`)
+                          : "Mendatang"}
+                      </span>
+
+                      <span className="text-[11px] font-semibold text-[#615d59] group-hover:text-[#007aff] dark:group-hover:text-[#60a5fa] flex items-center gap-0.5 transition">
+                        <span>Detail</span>
+                        <ChevronRight className="h-3 w-3" strokeWidth={2} />
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
         </div>
       ) : (
-        /* DAFTAR SESI RINCI (CHRONOLOGICAL RUNDOWN) */
+        /* DAFTAR SESI RINCI (CHRONOLOGICAL RUNDOWN LIST) */
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm sm:text-base font-bold text-[#18181B] dark:text-white">
+            <h3 className="text-base sm:text-lg font-bold text-[#000000] dark:text-white">
               Daftar Sesi Perkuliahan ({filteredSchedules.length} Sesi)
             </h3>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-[#615d59] dark:text-[#94a3b8]">
               Sesuai urutan hari & jam tayang
             </span>
           </div>
 
           {filteredSchedules.length === 0 ? (
-            <div className="rounded-[18px] bg-white dark:bg-[#151c28] border border-dashed border-slate-300 dark:border-slate-800 p-8 sm:p-12 text-center space-y-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 mx-auto border border-emerald-200 dark:border-emerald-800">
+            <div className="rounded-[16px] bg-white dark:bg-[#151c28] border border-dashed border-[#e6e6e6] dark:border-white/10 p-8 sm:p-12 text-center space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#007aff]/15 text-[#007aff] mx-auto border border-[#007aff]/30">
                 <Calendar className="h-6 w-6" />
               </div>
-              <h3 className="text-base font-bold text-[#18181B] dark:text-white">
+              <h3 className="text-base font-bold text-[#000000] dark:text-white">
                 Tidak Ditemukan Sesi Jadwal
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-[#615d59] dark:text-[#94a3b8] max-w-md mx-auto leading-relaxed">
                 Tidak ada sesi yang sesuai dengan kriteria pencarian atau filter tahap yang dipilih.
               </p>
             </div>
@@ -421,29 +538,24 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
             filteredSchedules.map((sched) => {
               const dayNum = getScheduleDayNumber(sched) || 1
               const sDate = getScheduleDate(sched)
-              const matchedRoadmapDay = roadmapDays.find((d) => d.dayNumber === dayNum)
+              const matchedRoadmapDay = days.find((d) => d.dayNumber === dayNum)
               const schedDateFormatted = sDate
                 ? formatIndonesianDate(sDate, { withDayName: true, shortMonth: true })
                 : matchedRoadmapDay
                 ? `${matchedRoadmapDay.dayOfWeek}, ${matchedRoadmapDay.dateStr}`
                 : sched.day
 
-              // Stage identifier
-              let stageBadge = "Tahap 1: MOOC"
-              let stageBadgeColor =
-                "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border-sky-200 dark:border-sky-800"
+              let stageBadge = "Tahap 1 • MOOC"
+              let stageBadgeColor = "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] border-[#007aff]/30"
               if (dayNum >= 6 && dayNum <= 15) {
-                stageBadge = "Tahap 2: TMO Zoom"
-                stageBadgeColor =
-                  "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                stageBadge = "Tahap 2 • TMO"
+                stageBadgeColor = "bg-[#af52de]/15 text-[#8a38b5] dark:text-[#d8b4fe] border-[#af52de]/30"
               } else if (dayNum >= 16 && dayNum <= 30) {
-                stageBadge = "Tahap 3: Lab Satker"
-                stageBadgeColor =
-                  "bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border-teal-200 dark:border-teal-800"
+                stageBadge = "Tahap 3 • Lab Prakom"
+                stageBadgeColor = "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80] border-[#34c759]/30"
               } else if (dayNum >= 31) {
-                stageBadge = "Tahap 4: Seminar"
-                stageBadgeColor =
-                  "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+                stageBadge = "Tahap 4 • Seminar"
+                stageBadgeColor = "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] border-[#ff9500]/30"
               }
 
               const startTimeDisplay = convertWibTimeToCurrent(sched.start_time)
@@ -454,20 +566,26 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                 .replace(/\[Batch\s*4\]\s*/i, "")
                 .trim()
 
+              const sesCountdown = computeSessionCountdown(
+                matchedRoadmapDay?.dateIso || matchedRoadmapDay?.dateStr || "",
+                `${sched.start_time} - ${sched.end_time}`,
+                nowTime
+              )
+
               return (
                 <motion.div
                   key={sched.id}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="rounded-[16px] bg-white dark:bg-[#151c28] border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 p-3.5 sm:p-4.5 transition-all hover:shadow-xs"
+                  className="rounded-[16px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 hover:border-[#007aff]/50 p-4 transition-all hover:shadow-xs"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       {/* Day Number Pill */}
-                      <div className="flex flex-col items-center justify-center h-12 w-12 rounded-xl bg-slate-100 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 text-[#18181B] dark:text-white shrink-0">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase">HARI</span>
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                      <div className="flex flex-col items-center justify-center h-12 w-12 rounded-xl bg-[#f6f5f4] dark:bg-[#101520] border border-[#e6e6e6] dark:border-white/10 text-[#000000] dark:text-white shrink-0">
+                        <span className="text-[9px] font-bold text-[#615d59] uppercase">HARI</span>
+                        <span className="text-base font-black text-[#007aff] dark:text-[#60a5fa]">
                           {dayNum}
                         </span>
                       </div>
@@ -479,28 +597,34 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                             {stageBadge}
                           </span>
                           
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
-                            <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#f6f5f4] dark:bg-[#101520] text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10">
+                            <Calendar className="h-3 w-3 text-[#007aff]" />
                             <span>{schedDateFormatted}</span>
                           </span>
 
-                          <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
-                            <Clock className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                          <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-[#007aff] dark:text-[#60a5fa] bg-[#007aff]/10 px-2 py-0.5 rounded-full border border-[#007aff]/30">
+                            <Clock className="h-3 w-3 text-[#007aff]" />
                             <span>{startTimeDisplay} – {endTimeDisplay} {timezone}</span>
                           </span>
+
+                          {sesCountdown && (
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-tight ${sesCountdown.badgeClass}`}>
+                              {sesCountdown.label}
+                            </span>
+                          )}
                         </div>
 
-                        <h3 className="text-sm sm:text-base font-bold text-[#18181B] dark:text-white leading-snug">
+                        <h3 className="text-sm sm:text-base font-bold text-[#000000] dark:text-white leading-snug">
                           {cleanTitle || sched.subject_name}
                         </h3>
 
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#615d59] dark:text-[#94a3b8] pt-0.5">
                           <span className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                            <User className="h-3.5 w-3.5 text-[#007aff] shrink-0" />
                             <span>{sched.lecturer || "Fasilitator Diklat"}</span>
                           </span>
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <MapPin className="h-3.5 w-3.5 text-[#615d59] shrink-0" />
                             <span>{sched.room || "Ruang Diklat Virtual"}</span>
                           </span>
                         </div>
@@ -514,7 +638,7 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                           href={sched.meeting_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-3 py-1 text-xs font-bold transition cursor-pointer"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] text-white px-3 py-1 text-xs font-semibold shadow-2xs transition cursor-pointer"
                         >
                           <Video className="h-3.5 w-3.5" />
                           <span>Link Zoom</span>
@@ -523,9 +647,9 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                       ) : (
                         <a
                           href="#zoom-access"
-                          className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 px-3 py-1 text-[11px] font-semibold hover:border-emerald-500 transition"
+                          className="inline-flex items-center gap-1 rounded-full bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8] border border-[#e6e6e6] dark:border-white/10 px-3 py-1 text-[11px] font-semibold hover:border-[#007aff] transition"
                         >
-                          <Video className="h-3 w-3 text-emerald-600" />
+                          <Video className="h-3 w-3 text-[#007aff]" />
                           <span>Zoom Angkatan</span>
                         </a>
                       )}
@@ -538,85 +662,141 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
         </div>
       )}
 
-      {/* 4. MODAL DETAIL HARI (Ketik diklik dari Roadmap 35 Hari) */}
+      {/* Modal Detail Sesi Perkuliahan Hari Tertentu (Sama persis seperti Batch 3) */}
       {activeModalDay && (
         <Modal
-          isOpen={!!activeModalDay}
+          isOpen={Boolean(activeModalDay)}
           onClose={() => setActiveModalDay(null)}
-          title={`Rincian Jadwal Hari ${activeModalDay.dayNumber} • Agrasena Batch 4`}
+          title={`Hari ke-${activeModalDay.dayNumber} — ${activeModalDay.stageName}`}
+          description={`Jadwal Sesi & Bahan Ajar Agrasena Batch 4 • Tanggal: ${activeModalDay.dateStr}`}
+          className="max-w-2xl"
         >
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 flex-wrap">
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                {activeModalDay.stageName} ({activeModalDay.stageSubtitle})
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full">
-                <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>{activeModalDay.dayOfWeek}, {activeModalDay.dateStr}</span>
+          <div className="space-y-4">
+            
+            {/* Status Header */}
+            <div className="flex items-center justify-between p-3.5 rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] border border-[#e6e6e6] dark:border-white/10">
+              <span className="text-xs font-bold text-[#000000] dark:text-white">Status Perkuliahan:</span>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${
+                  activeModalDay.status === "completed"
+                    ? "bg-[#34c759]/15 text-[#16a34a] dark:text-[#4ade80]"
+                    : activeModalDay.isTodayExact
+                    ? "bg-[#ff9500]/15 text-[#d97706] dark:text-[#fbbf24] animate-pulse"
+                    : activeModalDay.isNextUpcoming
+                    ? "bg-[#007aff]/15 text-[#007aff] dark:text-[#60a5fa] font-mono"
+                    : "bg-[#f6f5f4] dark:bg-[#101520] text-[#615d59] dark:text-[#94a3b8]"
+                }`}
+              >
+                {activeModalDay.status === "completed"
+                  ? "Selesai"
+                  : activeModalDay.isTodayExact
+                  ? "Sedang Berjalan Hari Ini"
+                  : activeModalDay.isNextUpcoming
+                  ? `⏳ Sesi Mendatang • ${activeModalDay.dayOfWeek}, ${activeModalDay.dateStr} (${convertWibTimeToCurrent("08:00")} ${timezone})`
+                  : "Jadwal Mendatang"}
               </span>
             </div>
 
-            {activeModalDay.sessions.length === 0 ? (
-              <div className="text-center py-6 space-y-2">
-                <Calendar className="h-8 w-8 text-slate-400 mx-auto" />
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Belum ada sesi spesifik yang diinput untuk hari ini.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
-                {activeModalDay.sessions.map((sess, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#101520] border border-slate-200/80 dark:border-slate-800 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                          {convertWibTimeToCurrent(sess.time.split(" - ")[0])} – {convertWibTimeToCurrent(sess.time.split(" - ")[1])} {timezone}
-                        </span>
-                        {sess.sessionDateFormatted && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300/60 dark:border-emerald-700/60">
-                            <Calendar className="h-3 w-3 text-emerald-600" />
-                            <span>{sess.sessionDateFormatted}</span>
+            {/* Session Items from Supabase with Live Session Countdown */}
+            <div className="space-y-2.5">
+              <h5 className="font-bold text-xs text-[#615d59] dark:text-[#94a3b8] uppercase tracking-wider">
+                Rincian Sesi & Kegiatan ({timezone}):
+              </h5>
+
+              {activeModalDay.sessions && activeModalDay.sessions.length > 0 ? (
+                activeModalDay.sessions.map((ses, sIdx) => {
+                  const sesCountdown = computeSessionCountdown(activeModalDay.dateIso || activeModalDay.dateStr, ses.time, nowTime)
+                  return (
+                    <div
+                      key={sIdx}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] p-3.5 border border-[#e6e6e6] dark:border-white/10 gap-3"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold text-[#007aff] dark:text-[#60a5fa] bg-[#007aff]/15 px-2.5 py-0.5 rounded-full border border-[#007aff]/30">
+                            {convertTimeRange(ses.time)}
                           </span>
+                          {sesCountdown && (
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-tight ${sesCountdown.badgeClass}`}>
+                              {sesCountdown.label}
+                            </span>
+                          )}
+                        </div>
+                        <h6 className="font-bold text-sm text-[#000000] dark:text-white">{ses.title}</h6>
+                        {ses.instructor && (
+                          <p className="text-xs text-[#615d59] dark:text-[#94a3b8]">
+                            Pengampu: <strong className="text-[#000000] dark:text-white font-semibold">{ses.instructor}</strong>
+                          </p>
+                        )}
+                        {ses.room && (
+                          <p className="text-[11px] text-[#615d59] flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-[#615d59]" strokeWidth={2} />
+                            <span>{ses.room}</span>
+                          </p>
                         )}
                       </div>
-                      {sess.zoomUrl && (
+
+                      <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
+                        {/* 1-Click Zoom Link */}
+                        {ses.zoomUrl && (
+                          <a
+                            href={ses.zoomUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#007aff] hover:bg-[#0062cc] active:scale-[0.98] px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
+                          >
+                            <Video className="h-3.5 w-3.5" strokeWidth={2} />
+                            <span>Zoom Kelas</span>
+                          </a>
+                        )}
+
+                        {/* 1-Click Google Calendar */}
                         <a
-                          href={sess.zoomUrl}
+                          href={generateGoogleCalendarUrl({
+                            title: `Hari ke-${activeModalDay.dayNumber}: ${ses.title}`,
+                            description: `Sesi Perkuliahan Diklat Fungsional Prakom Batch 4.\nPengampu: ${ses.instructor || 'Widyaiswara Pusdiklat'}\nModul: ${activeModalDay.stageName}`,
+                            startDate: activeModalDay.dateIso || activeModalDay.dateStr,
+                            startTime: ses.time.split(' - ')[0] || '08:00',
+                            endTime: ses.time.split(' - ')[1] || '16:00'
+                          })}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs"
+                          title="Simpan ke Google Calendar"
                         >
-                          <Video className="h-3 w-3" />
-                          <span>Buka Zoom</span>
+                          <Calendar className="h-3.5 w-3.5 text-[#007aff]" strokeWidth={2} />
+                          <span>Google Cal</span>
                         </a>
-                      )}
-                    </div>
 
-                    <h4 className="text-xs sm:text-sm font-bold text-[#18181B] dark:text-white">
-                      {sess.title}
-                    </h4>
-
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
-                      {sess.instructor && (
-                        <span className="flex items-center gap-1">
-                          <User className="h-3 w-3 text-emerald-600" />
-                          <span>{sess.instructor}</span>
-                        </span>
-                      )}
-                      {sess.room && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          <span>{sess.room}</span>
-                        </span>
-                      )}
+                        {/* Download .ics file */}
+                        <button
+                          type="button"
+                          onClick={() => downloadIcsFile({
+                            title: `Hari ke-${activeModalDay.dayNumber}: ${ses.title}`,
+                            description: `Sesi Perkuliahan Diklat Fungsional Prakom Batch 4.\nPengampu: ${ses.instructor || 'Widyaiswara Pusdiklat'}`,
+                            startDate: activeModalDay.dateIso || activeModalDay.dateStr,
+                            startTime: ses.time.split(' - ')[0] || '08:00',
+                            endTime: ses.time.split(' - ')[1] || '16:00'
+                          })}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1f283a] px-3 py-1.5 text-xs font-semibold text-[#000000] dark:text-white border border-[#e6e6e6] dark:border-white/10 hover:bg-black/5 dark:hover:bg-[#28354d] transition shadow-2xs cursor-pointer"
+                          title="Unduh file .ics (Apple / Outlook)"
+                        >
+                          <Download className="h-3.5 w-3.5 text-[#34c759]" strokeWidth={2} />
+                          <span>.ICS</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  )
+                })
+              ) : (
+                <div className="p-5 text-center space-y-1.5 rounded-[12px] bg-[#f6f5f4] dark:bg-[#101520] border border-dashed border-[#e6e6e6] dark:border-white/10">
+                  <p className="text-xs font-bold text-[#000000] dark:text-white">Belum ada kegiatan manual untuk Hari ke-{activeModalDay.dayNumber}</p>
+                  <p className="text-[11px] text-[#615d59]">
+                    Tambahkan sesi jadwal untuk <strong>Hari {activeModalDay.dayNumber}</strong> melalui Dashboard Pengurus.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </Modal>
       )}

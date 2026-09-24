@@ -499,6 +499,16 @@ export function getAutoRoadmapData(
         }
       }
 
+      let targetTimestamp: number | undefined
+      const resolvedDateObj = resolvedDateIso ? parseDiklatDate(resolvedDateIso) : parseDiklatDate(resolvedDateStr)
+      if (resolvedDateObj) {
+        const firstSessionTime = matchedSessions[0]?.time?.split("-")[0]?.trim() || "08:00"
+        const startMins = parseTimeToMins(firstSessionTime) || (8 * 60)
+        const t = new Date(resolvedDateObj)
+        t.setHours(Math.floor(startMins / 60), startMins % 60, 0, 0)
+        targetTimestamp = t.getTime()
+      }
+
       return {
         dayNumber: item.day,
         stageNumber: item.stage,
@@ -511,6 +521,7 @@ export function getAutoRoadmapData(
         status,
         isTodayExact,
         isNextUpcoming: item.day === currentDay,
+        targetTimestamp,
         badgeLabel1,
         badgeLabel2: item.stageName,
         sessions: matchedSessions,
