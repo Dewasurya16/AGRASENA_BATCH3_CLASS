@@ -60,9 +60,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
       {/* 3. Main Single-Column Fluid Container with Smooth Page Transition */}
       <main className="flex-1 w-full">
-        <div className="mx-auto max-w-6xl px-3.5 sm:px-6 lg:px-8 py-4 sm:py-10 space-y-6 sm:space-y-8 pb-24 sm:pb-12">
+        <div className="mx-auto max-w-6xl px-3 sm:px-5 lg:px-7 py-3.5 sm:py-6 lg:py-7 space-y-4 sm:space-y-6 pb-20 sm:pb-10">
           <PageTransition>
-            <div className="space-y-8">
+            <div className="space-y-5 sm:space-y-6">
               {children}
             </div>
           </PageTransition>

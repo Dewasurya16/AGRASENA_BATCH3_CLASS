@@ -7,7 +7,7 @@ import { AiCompanionCard } from "@/components/public/ai-companion-card"
 import { HomeTaskReminder } from "@/components/public/home-task-reminder"
 import { LearningProgressWidget } from "@/components/public/learning-progress-widget"
 import { SupabaseStatus } from "@/components/supabase-status"
-import { getAutoRoadmapData } from "@/lib/roadmap-utils"
+import { getAutoRoadmapData, getItemBatch } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { DEFAULT_BATCH4_MATERIALS } from "@/data/batch4/materials-data"
 import { DEFAULT_BATCH4_SCHEDULES } from "@/data/batch4/schedules-data"
@@ -100,13 +100,7 @@ export default async function Batch4Page() {
       if (b4Tasks.length > 0) tasks = b4Tasks
 
       const allScheds = schedRes.data || []
-      const b4Scheds = allScheds.filter(
-        (s: any) =>
-          (s.title && s.title.toLowerCase().includes("batch 4")) ||
-          (s.subject_name && s.subject_name.toLowerCase().includes("batch 4")) ||
-          s.batch === 4 ||
-          s.batch === "batch-4"
-      )
+      const b4Scheds = allScheds.filter((s: any) => getItemBatch(s) === "batch-4")
       if (b4Scheds.length > 0) schedules = b4Scheds
     } catch {
       // Offline fallback

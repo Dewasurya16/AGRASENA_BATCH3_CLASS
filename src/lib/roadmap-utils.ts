@@ -205,6 +205,70 @@ export function parseTimeToMins(timeStr?: string | null): number {
   return 0
 }
 
+export function getItemBatch(item: any): "batch-3" | "batch-4" {
+  if (!item) return "batch-3"
+  if (item.batch === 4 || item.batch === "batch-4") return "batch-4"
+  if (item.batch === 3 || item.batch === "batch-3") return "batch-3"
+  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
+  if (
+    text.includes("batch 4") ||
+    text.includes("batch-4") ||
+    text.includes("b4-") ||
+    text.includes("agrasena 4") ||
+    text.includes("agrasena batch 4") ||
+    text.includes("angkatan 06") ||
+    text.includes("angkatan 6") ||
+    text.includes("84420264444") ||
+    text.includes("prakom-batch4")
+  ) {
+    return "batch-4"
+  }
+  return "batch-3"
+}
+
+export const BATCH4_DAYS_DATA = [
+  // TAHAP 1: MOOC (Hari 1 - 5: Pembelajaran Mandiri)
+  { day: 1, stage: 1, stageName: "Tahap 1 • MOOC", stageSubtitle: "Pembelajaran Mandiri", date: "Oktober 2026", dayOfWeek: "Senin", dots: 4 },
+  { day: 2, stage: 1, stageName: "Tahap 1 • MOOC", stageSubtitle: "Pembelajaran Mandiri", date: "Oktober 2026", dayOfWeek: "Selasa", dots: 4 },
+  { day: 3, stage: 1, stageName: "Tahap 1 • MOOC", stageSubtitle: "Pembelajaran Mandiri", date: "Oktober 2026", dayOfWeek: "Rabu", dots: 4 },
+  { day: 4, stage: 1, stageName: "Tahap 1 • MOOC", stageSubtitle: "Pembelajaran Mandiri", date: "Oktober 2026", dayOfWeek: "Kamis", dots: 4 },
+  { day: 5, stage: 1, stageName: "Tahap 1 • MOOC", stageSubtitle: "Pembelajaran Mandiri", date: "Oktober 2026", dayOfWeek: "Jumat", dots: 3 },
+
+  // TAHAP 2: TMO (Hari 6 - 15: Tatap Muka Online Zoom)
+  { day: 6, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "Oktober 2026", dayOfWeek: "Senin", dots: 3 },
+  { day: 7, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "Oktober 2026", dayOfWeek: "Selasa", dots: 4 },
+  { day: 8, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "Oktober 2026", dayOfWeek: "Rabu", dots: 2 },
+  { day: 9, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "Oktober 2026", dayOfWeek: "Kamis", dots: 4 },
+  { day: 10, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "Oktober 2026", dayOfWeek: "Jumat", dots: 2 },
+  { day: 11, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "November 2026", dayOfWeek: "Senin", dots: 4 },
+  { day: 12, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "November 2026", dayOfWeek: "Selasa", dots: 2 },
+  { day: 13, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "November 2026", dayOfWeek: "Rabu", dots: 3 },
+  { day: 14, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "November 2026", dayOfWeek: "Kamis", dots: 4 },
+  { day: 15, stage: 2, stageName: "Tahap 2 • TMO", stageSubtitle: "Tatap Muka Online", date: "November 2026", dayOfWeek: "Jumat", dots: 2 },
+
+  // TAHAP 3: Lab Prakom (Hari 16 - 30: Laboratorium di Satker)
+  ...Array.from({ length: 15 }).map((_, i) => ({
+    day: 16 + i,
+    stage: 3,
+    stageName: "Tahap 3 • Lab Prakom",
+    stageSubtitle: "Laboratorium di Satker",
+    date: "November 2026",
+    dayOfWeek: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][i % 5],
+    dots: 1,
+  })),
+
+  // TAHAP 4: Seminar (Hari 31 - 35: Seminar Akhir Klasikal)
+  ...Array.from({ length: 5 }).map((_, i) => ({
+    day: 31 + i,
+    stage: 4,
+    stageName: "Tahap 4 • Seminar",
+    stageSubtitle: "Seminar Klasikal",
+    date: "Desember 2026",
+    dayOfWeek: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][i % 5],
+    dots: 1,
+  })),
+]
+
 /**
  * Maps live manual schedules from Supabase to the 35 days structure.
  */
@@ -216,69 +280,77 @@ export function getAutoRoadmapData(
   days: RoadmapDayDetail[]
   summary: RoadmapProgressSummary
 } {
-  // KHUSUS AGRASENA BATCH 4: Jika belum memiliki jadwal diinput, set status Periode Persiapan (0% progress)
+  // KHUSUS AGRASENA BATCH 4: Roadmap Mandiri 35 Hari terpisah dari Batch 3
   if (batch === "batch-4") {
-    const hasSchedules = supabaseSchedules && supabaseSchedules.length > 0
+    const effectiveB4Schedules = supabaseSchedules || []
+    const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : 1
     const totalDays = 35
 
-    if (!hasSchedules) {
-      const days: RoadmapDayDetail[] = Array.from({ length: 35 }).map((_, i) => {
-        const dayNum = i + 1
-        let stageNum = 1
-        let stageName = "Tahap 1 • MOOC"
-        let stageSubtitle = "Pembelajaran Mandiri"
-        let dateStr = "Oktober 2026"
-        let dots = 4
+    const days: RoadmapDayDetail[] = BATCH4_DAYS_DATA.map((item) => {
+      const matchedSessions = effectiveB4Schedules
+        .filter((s) => {
+          const explicitDay = getScheduleDayNumber(s)
+          if (explicitDay !== null) return explicitDay === item.day
+          const dayVal = String(s.day || "").toLowerCase().trim()
+          return dayVal === `hari ${item.day}` || dayVal === String(item.day)
+        })
+        .sort((a, b) => parseTimeToMins(a.start_time) - parseTimeToMins(b.start_time))
+        .map((s) => {
+          const cleanTitle = (s.subject_name || "")
+            .replace(/\[Hari\s*\d+\]\s*/i, "")
+            .replace(/\[Batch\s*4\]\s*/i, "")
+            .trim()
+          const start = cleanTimeFormat(s.start_time, "08:00")
+          const end = cleanTimeFormat(s.end_time, "15:30")
+          return {
+            id: s.id,
+            time: `${start} - ${end}`,
+            title: cleanTitle || s.subject_name,
+            instructor: s.lecturer || undefined,
+            room: s.room || undefined,
+            zoomUrl: s.meeting_link || s.zoom_url || undefined,
+          }
+        })
 
-        if (dayNum > 30) {
-          stageNum = 4
-          stageName = "Tahap 4 • Seminar"
-          stageSubtitle = "Seminar Klasikal"
-          dateStr = "Desember 2026"
-          dots = 1
-        } else if (dayNum > 15) {
-          stageNum = 3
-          stageName = "Tahap 3 • Lab Prakom"
-          stageSubtitle = "Laboratorium di Satker"
-          dateStr = "November 2026"
-          dots = 1
-        } else if (dayNum > 5) {
-          stageNum = 2
-          stageName = "Tahap 2 • TMO"
-          stageSubtitle = "Tatap Muka Online"
-          dateStr = "Oktober – November 2026"
-          dots = 3
-        }
-
-        return {
-          dayNumber: dayNum,
-          stageNumber: stageNum,
-          stageName,
-          stageSubtitle,
-          dateStr,
-          dayOfWeek: ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][(dayNum - 1) % 5],
-          dotsCount: dots,
-          status: "upcoming",
-          isTodayExact: false,
-          isNextUpcoming: dayNum === 1,
-          badgeLabel1: "BELUM MULAI",
-          badgeLabel2: "JADWAL MENDATANG",
-          sessions: [],
-        }
-      })
+      const hasSess = matchedSessions.length > 0
+      let status: "completed" | "in_progress" | "upcoming" = "upcoming"
+      if (overrideDay) {
+        if (item.day < overrideDay) status = "completed"
+        else if (item.day === overrideDay) status = "in_progress"
+      }
 
       return {
-        days,
-        summary: {
-          currentDayNumber: 0,
-          totalDays,
-          progressPercentage: 0,
-          completedDays: 0,
-          currentStageName: "Periode Persiapan (Mulai Oktober 2026)",
-          isDiklatFinished: false,
-          isTodayActive: false,
-        },
+        dayNumber: item.day,
+        stageNumber: item.stage,
+        stageName: item.stageName,
+        stageSubtitle: item.stageSubtitle,
+        dateStr: item.date,
+        dayOfWeek: item.dayOfWeek,
+        dotsCount: hasSess ? matchedSessions.length : item.dots,
+        status,
+        isTodayExact: overrideDay ? item.day === overrideDay : item.day === 1,
+        isNextUpcoming: item.day === currentDay,
+        badgeLabel1: hasSess ? `${matchedSessions.length} SESI TERJADWAL` : "JADWAL MENDATANG",
+        badgeLabel2: item.stageName,
+        sessions: matchedSessions,
       }
+    })
+
+    const completedDays = overrideDay ? Math.max(0, overrideDay - 1) : 0
+    const progressPercentage = Math.round((completedDays / totalDays) * 100)
+    const currentStageObj = BATCH4_DAYS_DATA.find((d) => d.day === currentDay) || BATCH4_DAYS_DATA[0]
+
+    return {
+      days,
+      summary: {
+        currentDayNumber: currentDay,
+        totalDays,
+        progressPercentage,
+        completedDays,
+        currentStageName: `${currentStageObj.stageName} (Agrasena Batch 4)`,
+        isDiklatFinished: false,
+        isTodayActive: overrideDay !== undefined,
+      },
     }
   }
 
@@ -294,7 +366,7 @@ export function getAutoRoadmapData(
   const effectiveSchedules =
     supabaseSchedules && supabaseSchedules.length > 0
       ? supabaseSchedules
-      : (batch === "batch-4" ? [] : DEFAULT_SCHEDULES_DATA)
+      : DEFAULT_SCHEDULES_DATA
 
   const now = new Date()
   const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)

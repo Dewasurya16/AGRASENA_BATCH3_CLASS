@@ -122,7 +122,7 @@ export function UrgentAnnouncement({ announcements }: UrgentAnnouncementProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -6 }}
         transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-        className="relative overflow-hidden rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-4 sm:p-5 shadow-2xs transition-all"
+        className="relative overflow-hidden rounded-[14px] bg-white dark:bg-[#141b27] border border-[#e6e6e6] dark:border-white/10 p-3.5 sm:p-4.5 shadow-2xs transition-all"
       >
         <div className="flex items-start gap-3.5">
           {/* Icon Pod */}

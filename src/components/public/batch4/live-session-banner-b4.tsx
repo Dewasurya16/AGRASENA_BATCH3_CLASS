@@ -11,15 +11,15 @@ import {
   Calendar,
   User,
   MapPin,
-  Sun,
-  BookOpen,
   Coffee,
   ArrowRight,
-  Upload,
-  Flame,
+  BookOpen,
 } from 'lucide-react'
 import Link from 'next/link'
-import { RAW_DAYS_DATA, getCurrentDiklatDay, getScheduleDayNumber } from '@/lib/roadmap-utils'
+import {
+  BATCH4_DAYS_DATA,
+  getScheduleDayNumber,
+} from '@/lib/roadmap-utils'
 import { DEFAULT_BATCH4_SCHEDULES } from '@/data/batch4/schedules-data'
 import { useTimezone } from '@/components/timezone-provider'
 
@@ -87,15 +87,17 @@ export function LiveSessionBannerB4({
 }: LiveSessionBannerB4Props) {
   const [mounted, setMounted] = React.useState(false)
   const [currentTimeStr, setCurrentTimeStr] = React.useState("")
-  const hasAnyBatch4Schedules = (todaySchedules && todaySchedules.length > 0) || (DEFAULT_BATCH4_SCHEDULES && DEFAULT_BATCH4_SCHEDULES.length > 0)
-  const [phase, setPhase] = React.useState<DailyPhaseB4>(hasAnyBatch4Schedules ? 'in_class' : 'standby')
-  const [countdownText, setCountdownText] = React.useState(hasAnyBatch4Schedules ? "" : "Masa Persiapan")
-  const { timezone, setTimezone, convertWibTimeToCurrent, formatCurrentTime, getNowInCurrentZone } = useTimezone()
+  const { timezone, setTimezone, convertWibTimeToCurrent, getNowInCurrentZone } = useTimezone()
 
-  const activeDayNum = currentDayNumber || getCurrentDiklatDay()
-  const todayCurriculum = RAW_DAYS_DATA.find((d) => d.day === activeDayNum) || RAW_DAYS_DATA[0]
-  const displayDayName = currentDayName || (hasAnyBatch4Schedules ? `Hari ${activeDayNum} • ${todayCurriculum.stageName}` : `Masa Persiapan • Agrasena Batch 4`)
+  // Batch 4 has its own active day selector (defaults to 1 or currentDayNumber)
+  const [selectedDay, setSelectedDay] = React.useState<number>(currentDayNumber || 1)
+  const activeDayNum = selectedDay
 
+  const todayCurriculum = React.useMemo(() => {
+    return BATCH4_DAYS_DATA.find((d) => d.day === activeDayNum) || BATCH4_DAYS_DATA[0]
+  }, [activeDayNum])
+
+  // Get schedules strictly for activeDayNum
   const daysSchedules = React.useMemo(() => {
     const sourceSchedules =
       todaySchedules && todaySchedules.length > 0
@@ -118,72 +120,35 @@ export function LiveSessionBannerB4({
       })
   }, [todaySchedules, activeDayNum])
 
-  const upcomingDayNum = React.useMemo(() => {
-    const now = new Date()
-    const wibDate = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60 * 1000)
-    const dayOfWeek = wibDate.getDay() // 0 = Minggu, 6 = Sabtu, 5 = Jumat
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return activeDayNum
-    }
-    if (dayOfWeek === 5 && (wibDate.getHours() * 60 + wibDate.getMinutes() >= 16 * 60)) {
-      return Math.min(35, activeDayNum + 1)
-    }
-    if (wibDate.getHours() * 60 + wibDate.getMinutes() >= 16 * 60) {
-      return Math.min(35, activeDayNum + 1)
-    }
-    return activeDayNum
-  }, [activeDayNum])
+  const hasSessionsForDay = daysSchedules.length > 0
 
-  const upcomingCurriculum = RAW_DAYS_DATA.find((d) => d.day === upcomingDayNum) || RAW_DAYS_DATA[0]
-
-  const upcomingDaySchedules = React.useMemo(() => {
-    const sourceSchedules =
-      todaySchedules && todaySchedules.length > 0
-        ? todaySchedules
-        : (DEFAULT_BATCH4_SCHEDULES as any[])
-
-    return sourceSchedules
-      .filter((s) => {
-        const explicitDay = getScheduleDayNumber(s)
-        if (explicitDay !== null) {
-          return explicitDay === upcomingDayNum
-        }
-        const dayVal = String(s.day || "").toLowerCase().trim()
-        return dayVal === `hari ${upcomingDayNum}` || dayVal === String(upcomingDayNum)
-      })
-      .sort((a, b) => {
-        const aStart = parseTimeToMinutes(a.start_time) ?? 0
-        const bStart = parseTimeToMinutes(b.start_time) ?? 0
-        return aStart - bStart
-      })
-  }, [todaySchedules, upcomingDayNum])
-
-  const fallbackSession = React.useMemo(() => ({
-    id: `live-b4-day-${activeDayNum}`,
-    subject_name: `[Hari ${activeDayNum}] Tata Kelola TI & SPBE Nasional (Batch 4)`,
-    start_time: "08:00",
-    end_time: "15:30",
-    lecturer: "Widyaiswara / Tim Pusdiklat Kejaksaan RI",
-    room: "Ruang Diklat Virtual Zoom • Batch 4",
-    zoom_url: "/batch-4/schedules",
-    meeting_link: "/batch-4/schedules"
-  }), [activeDayNum])
-
-  const firstUpcomingSession = React.useMemo(() => {
-    if (upcomingDaySchedules.length > 0) return upcomingDaySchedules[0]
+  // Real fallback based on Batch 4 data, not Batch 3
+  const defaultFirstSession = React.useMemo(() => {
+    if (daysSchedules.length > 0) return daysSchedules[0]
     return {
-      id: `upcoming-b4-day-${upcomingDayNum}`,
-      subject_name: `[Hari ${upcomingDayNum}] Pembelajaran Terstruktur Diklat Prakom Batch 4`,
+      id: `b4-day-${activeDayNum}`,
+      subject_name: `[Hari ${activeDayNum}] Belum Ada Jadwal Khusus`,
       start_time: "08:00",
       end_time: "15:30",
-      lecturer: "Widyaiswara Pusdiklat Kejaksaan RI",
+      lecturer: "Widyaiswara / Panitia Diklat Batch 4",
       room: "Ruang Diklat Virtual Zoom • Batch 4",
       zoom_url: "/batch-4/schedules",
       meeting_link: "/batch-4/schedules"
     }
-  }, [upcomingDaySchedules, upcomingDayNum])
+  }, [daysSchedules, activeDayNum])
 
-  const [activeSession, setActiveSession] = React.useState(fallbackSession)
+  const [activeSession, setActiveSession] = React.useState(defaultFirstSession)
+  const [phase, setPhase] = React.useState<DailyPhaseB4>(hasSessionsForDay ? 'prep_time' : 'standby')
+  const [countdownText, setCountdownText] = React.useState(hasSessionsForDay ? "Jadwal Terdaftar" : "Masa Persiapan")
+
+  // Update active session when day or schedules change
+  React.useEffect(() => {
+    if (daysSchedules.length > 0) {
+      setActiveSession(daysSchedules[0])
+    } else {
+      setActiveSession(defaultFirstSession)
+    }
+  }, [daysSchedules, defaultFirstSession])
 
   React.useEffect(() => {
     setMounted(true)
@@ -203,273 +168,150 @@ export function LiveSessionBannerB4({
       const totalMins = wibHours * 60 + wibMinutes
       const wibDayOfWeek = wibTime.getDay() // 0 = Minggu, 6 = Sabtu
 
-      // 0. Standby Mode Check (Batch 4 schedules have not been inputted yet)
-      if (!hasAnyBatch4Schedules) {
+      if (!hasSessionsForDay) {
         setPhase('standby')
-        setCountdownText("Menunggu Rilis Jadwal Resmi")
+        setCountdownText("Menunggu Rilis Jadwal")
         return
       }
 
-      // 1. Weekend Check
+      // 1. Weekend
       if (wibDayOfWeek === 0 || wibDayOfWeek === 6) {
         setPhase('weekend')
-        setActiveSession(firstUpcomingSession)
-
-        const convertedCleanStart = convertWibTimeToCurrent(cleanTimeDisplay(firstUpcomingSession.start_time, "08:00"))
-        const daysUntilMonday = wibDayOfWeek === 0 ? 1 : 2
-        const mondayWib = new Date(wibTime)
-        mondayWib.setDate(mondayWib.getDate() + daysUntilMonday)
-        mondayWib.setHours(8, 0, 0, 0)
-        const targetUtcMs = mondayWib.getTime() - (7 * 60 * 60 * 1000)
-        const diffMs = targetUtcMs - now.getTime()
-
-        if (diffMs > 0) {
-          const totalHours = Math.floor(diffMs / (1000 * 60 * 60))
-          const days = Math.floor(totalHours / 24)
-          const remHours = totalHours % 24
-          if (days > 0) {
-            setCountdownText(`Sesi dimulai dalam ${days} hari ${remHours} jam (${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone})`)
-          } else {
-            const remMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-            setCountdownText(`Sesi dimulai dalam ${remHours} jam ${remMins} mnt (${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone})`)
-          }
-        } else {
-          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${convertedCleanStart} ${timezone}`)
-        }
+        setActiveSession(daysSchedules[0])
+        const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(daysSchedules[0].start_time, "08:00"))
+        setCountdownText(`Sesi dimulai Senin, ${cleanStart} ${timezone}`)
         return
       }
 
-      // 2. Schedule Check
-      if (daysSchedules.length > 0) {
-        const currentLive = daysSchedules.find((s) => {
-          const start = parseTimeToMinutes(s.start_time) ?? 0
-          const end = parseTimeToMinutes(s.end_time) ?? (start + 90)
-          return totalMins >= start && totalMins < end
-        })
+      // 2. Active Session Detection
+      const currentLive = daysSchedules.find((s) => {
+        const start = parseTimeToMinutes(s.start_time) ?? 0
+        const end = parseTimeToMinutes(s.end_time) ?? (start + 90)
+        return totalMins >= start && totalMins < end
+      })
 
-        if (currentLive) {
-          setPhase('in_class')
-          setActiveSession(currentLive)
-          const endMins = parseTimeToMinutes(currentLive.end_time) ?? (16 * 60)
-          const remaining = Math.max(0, endMins - totalMins)
-          const remH = Math.floor(remaining / 60)
-          const remM = remaining % 60
-          setCountdownText(remH > 0 ? `Selesai dalam ${remH} jam ${remM} mnt` : `Selesai dalam ${remM} mnt`)
-          return
-        }
-
-        const firstStart = parseTimeToMinutes(daysSchedules[0].start_time) ?? (8 * 60)
-        if (totalMins < firstStart) {
-          setPhase('prep_time')
-          setActiveSession(daysSchedules[0])
-          const remaining = Math.max(0, firstStart - totalMins)
-          const remH = Math.floor(remaining / 60)
-          const remM = remaining % 60
-          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(daysSchedules[0].start_time, "08:00"))
-          setCountdownText(`Mulai dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} ${timezone})`)
-          return
-        }
-
-        const nextUpcoming = daysSchedules.find((s) => {
-          const start = parseTimeToMinutes(s.start_time) ?? 0
-          return start > totalMins
-        })
-
-        if (nextUpcoming) {
-          setPhase('in_break')
-          setActiveSession(nextUpcoming)
-          const startMins = parseTimeToMinutes(nextUpcoming.start_time) ?? 0
-          const remaining = Math.max(0, startMins - totalMins)
-          const remH = Math.floor(remaining / 60)
-          const remM = remaining % 60
-          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(nextUpcoming.start_time, "08:00"))
-          setCountdownText(`Sesi berikutnya dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} ${timezone})`)
-          return
-        }
-
-        if (wibDayOfWeek === 5 && totalMins >= 16 * 60) {
-          setPhase('weekend')
-          setActiveSession(firstUpcomingSession)
-          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(firstUpcomingSession.start_time, "08:00"))
-          setCountdownText(`Sesi pekan depan: ${upcomingCurriculum.dayOfWeek}, ${cleanStart} ${timezone}`)
-          return
-        }
-
-        setPhase('task_time')
-        setActiveSession(daysSchedules[daysSchedules.length - 1])
-        const remaining = Math.max(0, (24 * 60) - totalMins)
+      if (currentLive) {
+        setPhase('in_class')
+        setActiveSession(currentLive)
+        const endMins = parseTimeToMinutes(currentLive.end_time) ?? (16 * 60)
+        const remaining = Math.max(0, endMins - totalMins)
         const remH = Math.floor(remaining / 60)
         const remM = remaining % 60
-        const taskDueConverted = convertWibTimeToCurrent("23:59")
-        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (${taskDueConverted} ${timezone})`)
+        setCountdownText(remH > 0 ? `Selesai dalam ${remH}j ${remM}m` : `Selesai dalam ${remM}m`)
         return
       }
 
-      // 3. Fallback
-      if (totalMins >= 8 * 60 && totalMins < 16 * 60) {
-        setPhase('in_class')
-        setActiveSession(fallbackSession)
-        const remainingMinutes = 16 * 60 - totalMins
-        const remH = Math.floor(remainingMinutes / 60)
-        const remM = remainingMinutes % 60
-        setCountdownText(remH > 0 ? `Selesai dalam ${remH} jam ${remM} mnt` : `Selesai dalam ${remM} mnt`)
-        return
-      }
-
-      if (totalMins >= 16 * 60 && totalMins <= 23 * 60 + 59) {
-        if (wibDayOfWeek === 5) {
-          setPhase('weekend')
-          setActiveSession(firstUpcomingSession)
-          const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(firstUpcomingSession.start_time, "08:00"))
-          setCountdownText(`Sesi dimulai ${upcomingCurriculum.dayOfWeek}, ${cleanStart} ${timezone}`)
-          return
-        }
-        setPhase('task_time')
-        setActiveSession(fallbackSession)
-        const remainingMinutes = (24 * 60) - totalMins
-        const remH = Math.floor(remainingMinutes / 60)
-        const remM = remainingMinutes % 60
-        const taskDueConverted = convertWibTimeToCurrent("23:59")
-        setCountdownText(`Tenggat ${remH}j ${remM}m lagi (${taskDueConverted} ${timezone})`)
-        return
-      }
-
-      if (totalMins >= 0 && totalMins < 8 * 60) {
+      const firstStart = parseTimeToMinutes(daysSchedules[0].start_time) ?? (8 * 60)
+      if (totalMins < firstStart) {
         setPhase('prep_time')
-        setActiveSession(fallbackSession)
-        const remainingMinutes = (8 * 60) - totalMins
-        const remH = Math.floor(remainingMinutes / 60)
-        const remM = remainingMinutes % 60
-        const cleanStart = convertWibTimeToCurrent("08:00")
-        setCountdownText(`Mulai dalam ${remH}j ${remM}m (${cleanStart} ${timezone})`)
+        setActiveSession(daysSchedules[0])
+        const remaining = Math.max(0, firstStart - totalMins)
+        const remH = Math.floor(remaining / 60)
+        const remM = remaining % 60
+        const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(daysSchedules[0].start_time, "08:00"))
+        setCountdownText(`Mulai ${remH > 0 ? `${remH}j ` : ''}${remM}m lagi (${cleanStart} ${timezone})`)
         return
       }
+
+      const nextUpcoming = daysSchedules.find((s) => {
+        const start = parseTimeToMinutes(s.start_time) ?? 0
+        return start > totalMins
+      })
+
+      if (nextUpcoming) {
+        setPhase('in_break')
+        setActiveSession(nextUpcoming)
+        const startMins = parseTimeToMinutes(nextUpcoming.start_time) ?? 0
+        const remaining = Math.max(0, startMins - totalMins)
+        const remH = Math.floor(remaining / 60)
+        const remM = remaining % 60
+        const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(nextUpcoming.start_time, "08:00"))
+        setCountdownText(`Sesi berikutnya dalam ${remH > 0 ? `${remH}j ` : ''}${remM}m (${cleanStart} ${timezone})`)
+        return
+      }
+
+      setPhase('task_time')
+      setActiveSession(daysSchedules[daysSchedules.length - 1])
+      setCountdownText(`Sesi hari ini selesai • Mandiri`)
     }
 
     updateTime()
     const timer = setInterval(updateTime, 1000)
     return () => clearInterval(timer)
-  }, [daysSchedules, activeDayNum, firstUpcomingSession, upcomingCurriculum, timezone, convertWibTimeToCurrent, getNowInCurrentZone, fallbackSession])
+  }, [daysSchedules, hasSessionsForDay, getNowInCurrentZone, timezone, convertWibTimeToCurrent])
 
-  const matchedTask = todayTasks.find((t) => {
-    const titleMatch = t.title.toLowerCase().includes(`hari ${activeDayNum}`) ||
-                       t.subject_name.toLowerCase().includes(`hari ${activeDayNum}`)
-    return titleMatch && t.status !== 'completed'
-  }) || todayTasks.find((t) => t.status !== 'completed') || {
-    id: `task-b4-day-${activeDayNum}`,
-    title: `Tugas Mandiri & Praktik Lab Satker Hari ke-${activeDayNum}`,
-    subject_name: activeSession.subject_name,
-    due_date: `${todayCurriculum.date}, ${convertWibTimeToCurrent("23:59")} ${timezone}`,
-    submission_link: '/batch-4/tasks',
-  }
+  const cleanStart = convertWibTimeToCurrent(cleanTimeDisplay(activeSession.start_time, "08:00"))
+  const cleanEnd = convertWibTimeToCurrent(cleanTimeDisplay(activeSession.end_time, "15:30"))
 
-  const rawCleanStart = cleanTimeDisplay(activeSession.start_time, "08:00")
-  const rawCleanEnd = cleanTimeDisplay(activeSession.end_time, "15:30")
-  const rawNextCleanStart = cleanTimeDisplay(firstUpcomingSession.start_time, "08:00")
-  const rawNextCleanEnd = cleanTimeDisplay(firstUpcomingSession.end_time, "15:30")
+  const rawZoomUrl = activeSession.zoom_url || activeSession.meeting_link || ""
+  const isDirectZoom = rawZoomUrl.startsWith("http")
+  const zoomTargetUrl = isDirectZoom ? rawZoomUrl : "#zoom-access"
 
-  const cleanStart = convertWibTimeToCurrent(rawCleanStart)
-  const cleanEnd = convertWibTimeToCurrent(rawCleanEnd)
-  const nextCleanStart = convertWibTimeToCurrent(rawNextCleanStart)
-  const nextCleanEnd = convertWibTimeToCurrent(rawNextCleanEnd)
+  const cleanTitle = (activeSession.subject_name || "")
+    .replace(/\[Hari\s*\d+\]\s*/i, "")
+    .replace(/\[Batch\s*4\]\s*/i, "")
+    .trim()
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="relative overflow-hidden rounded-[20px] bg-[#0f172a] dark:bg-[#0b1120] text-white p-5 sm:p-6 border border-emerald-500/30 shadow-xl shadow-emerald-950/20"
-    >
-      {/* Decorative Emerald Glows */}
-      <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+    <div className="rounded-[18px] bg-gradient-to-br from-[#0c141d] via-[#101924] to-[#122229] border border-emerald-900/60 p-3.5 sm:p-5 text-white shadow-sm transition-all relative overflow-hidden">
+      {/* Ambient background glow */}
+      <div className="absolute -right-20 -top-20 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        
-        {/* Left Side: Dynamic Phase Badges & Title */}
-        <div className="space-y-3 flex-1 min-w-0">
-          
-          {/* Top Pill Badges Row */}
-          <div className="flex flex-wrap items-center gap-2">
-            
-            {/* 0. Standby Mode */}
-            {phase === 'standby' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Masa Persiapan Diklat
-              </span>
-            )}
-
-            {/* 1. Sesi Aktif */}
-            {phase === 'in_class' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500 text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
+      <div className="relative z-10 space-y-3">
+        {/* Top Badges Row */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {/* Status Phase Badge */}
+            {phase === 'in_class' ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-500 text-white px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-2xs">
                 <span className="flex h-1.5 w-1.5 rounded-full bg-white animate-ping" />
                 Sesi Aktif
               </span>
-            )}
-
-            {/* 2. Jeda Istirahat */}
-            {phase === 'in_break' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-600 text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
-                <Coffee className="h-3 w-3 text-white" />
+            ) : phase === 'in_break' ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-600 text-white px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-2xs">
+                <Coffee className="h-3 w-3" />
                 Jeda Istirahat
               </span>
-            )}
-
-            {/* 3. Waktu Tugas */}
-            {phase === 'task_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-teal-600 text-white px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
-                <Clock className="h-3 w-3 text-white" />
-                Waktu Tugas Mandiri
+            ) : phase === 'task_time' ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-teal-600 text-white px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-2xs">
+                <Clock className="h-3 w-3" />
+                Mandiri / Selesai
               </span>
-            )}
-
-            {/* 4. Persiapan Besok */}
-            {phase === 'prep_time' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-white/20 text-white border border-white/20 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide shadow-2xs">
-                <Clock className="h-3 w-3 text-white" />
-                Persiapan Besok
-              </span>
-            )}
-
-            {/* 5. Weekend */}
-            {phase === 'weekend' && (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Libur Akhir Pekan
+            ) : (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-700/80 text-white px-2.5 py-0.5 text-[10px] font-bold tracking-wide shadow-2xs">
+                <Radio className="h-3 w-3 text-emerald-300" />
+                Jadwal Diklat
               </span>
             )}
 
             {/* Day & Stage Tag */}
             <span className="rounded-full bg-white/10 text-slate-200 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold">
-              {phase === 'standby' ? 'Agrasena Batch 4 • Menunggu Rilis Jadwal' : phase === 'weekend' ? `Rehat • Menuju Hari ${upcomingDayNum} (${upcomingCurriculum.dayOfWeek}, ${upcomingCurriculum.date})` : displayDayName}
+              Hari {activeDayNum} • {todayCurriculum.stageName}
             </span>
 
             {/* Batch 4 Badge */}
-            <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold">
+            <span className="rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-bold">
               Batch 4
             </span>
 
-            {/* Realtime Clock & Timezone Switcher */}
+            {/* Timezone Switcher */}
             {mounted && currentTimeStr && (
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-1">
                 <span className="rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-mono text-emerald-300 font-bold border border-white/10 tabular-nums">
-                  ⏰ {currentTimeStr.split(' ')[0]} <span className="text-[9px] opacity-80">{timezone}</span>
+                  ⏰ {currentTimeStr.split(' ')[0]}
                 </span>
                 
-                {/* Timezone Pill Toggle */}
                 <div className="flex items-center gap-0.5 bg-black/40 rounded-full p-0.5 border border-white/10 text-[9px] font-bold">
                   {(['WIB', 'WITA', 'WIT'] as const).map((tz) => (
                     <button
                       key={tz}
                       type="button"
                       onClick={() => setTimezone(tz)}
-                      className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                      className={`px-1.5 py-0.5 rounded-full transition-all cursor-pointer ${
                         timezone === tz
                           ? 'bg-emerald-500 text-white font-black shadow-xs'
-                          : 'text-slate-300 hover:text-white hover:bg-white/10'
+                          : 'text-slate-300 hover:text-white'
                       }`}
-                      title={`Ganti zona waktu ke ${tz}`}
                     >
                       {tz}
                     </button>
@@ -478,289 +320,93 @@ export function LiveSessionBannerB4({
               </div>
             )}
 
-            {/* Dynamic Countdown Pill */}
-            {mounted && countdownText && phase !== 'weekend' && (
-              <span className="rounded-full bg-white/10 text-slate-300 border border-white/10 px-2.5 py-0.5 text-[10px] font-bold">
+            {/* Countdown / Info */}
+            {countdownText && (
+              <span className="rounded-full bg-white/10 text-slate-300 border border-white/10 px-2.5 py-0.5 text-[10px] font-medium hidden sm:inline-block">
                 ⏳ {countdownText}
               </span>
             )}
           </div>
 
-          {/* Main Title & Metadata by Phase */}
-          <div className="space-y-1.5">
-            {phase === 'in_class' && (
-              <>
-                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
-                  {activeSession.subject_name}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
-                  <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Clock className="h-3 w-3 text-amber-400" />
-                    Jam Diklat: {cleanStart} – {cleanEnd} {timezone}
-                  </span>
-                  {activeSession.lecturer && (
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3 text-emerald-300" />
-                      Pengampu: {activeSession.lecturer}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1 text-slate-400">
-                    <MapPin className="h-3 w-3 text-teal-400" />
-                    {activeSession.room || "Ruang Zoom Roadmap • Batch 4"}
-                  </span>
-                </div>
-              </>
-            )}
+          {/* Quick Action Button for Zoom */}
+          <div className="flex items-center gap-2">
+            <a
+              href={zoomTargetUrl}
+              target={isDirectZoom ? "_blank" : undefined}
+              rel={isDirectZoom ? "noopener noreferrer" : undefined}
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-[#0c141d] font-bold px-3 py-1.5 text-xs transition shadow-xs cursor-pointer"
+            >
+              <Video className="h-3.5 w-3.5" />
+              <span>Zoom Roadmap</span>
+              {isDirectZoom && <ExternalLink className="h-3 w-3 opacity-70" />}
+            </a>
+            <Link
+              href="/batch-4/materials"
+              className="inline-flex items-center gap-1 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 border border-white/15 px-3 py-1.5 text-xs font-semibold transition cursor-pointer"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>Bahan Ajar</span>
+            </Link>
+          </div>
+        </div>
 
-            {phase === 'in_break' && (
-              <>
-                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
-                  Jeda Sesi — Sesi Berikutnya: {activeSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
-                  <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Clock className="h-3 w-3 text-amber-400" />
-                    Jadwal Mulai: {cleanStart} – {cleanEnd} {timezone}
-                  </span>
-                  {activeSession.lecturer && (
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3 text-emerald-300" />
-                      Pengampu: {activeSession.lecturer}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1 text-slate-400">
-                    <MapPin className="h-3 w-3 text-teal-400" />
-                    {activeSession.room || "Ruang Zoom Roadmap • Batch 4"}
-                  </span>
-                </div>
-              </>
-            )}
+        {/* Main Title & Session Info */}
+        <div className="space-y-1">
+          <h2 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug">
+            [Hari {activeDayNum}] {cleanTitle || activeSession.subject_name}
+          </h2>
 
-            {phase === 'task_time' && (
-              <>
-                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
-                  Tugas Hari ke-{activeDayNum}: {matchedTask.title}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
-                  <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Flame className="h-3 w-3 text-amber-400 animate-pulse" />
-                    Batas Upload: {matchedTask.due_date || `Malam ini ${convertWibTimeToCurrent("23:59")} ${timezone}`}
-                  </span>
-                  <span className="flex items-center gap-1 text-slate-300">
-                    <BookOpen className="h-3 w-3 text-teal-300" />
-                    Mata Kuliah: {activeSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
-                  </span>
-                </div>
-              </>
-            )}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-300">
+            <span className="flex items-center gap-1 text-amber-300 font-bold">
+              <Clock className="h-3 w-3 text-amber-400 shrink-0" />
+              Jam Diklat: {cleanStart} – {cleanEnd} {timezone}
+            </span>
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3 text-emerald-300 shrink-0" />
+              Pengampu: {activeSession.lecturer || "Fasilitator Diklat"}
+            </span>
+            <span className="flex items-center gap-1 text-slate-400">
+              <MapPin className="h-3 w-3 text-teal-400 shrink-0" />
+              {activeSession.room || "Ruang Diklat Virtual Zoom • Batch 4"}
+            </span>
+          </div>
+        </div>
 
-            {phase === 'prep_time' && (
-              <>
-                <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug">
-                  Persiapan Sesi Hari ke-{activeDayNum}: {activeSession.subject_name}
-                </h3>
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 font-medium">
-                  <span className="flex items-center gap-1 text-emerald-300 font-bold">
-                    <Sun className="h-3 w-3 text-amber-400" />
-                    Perkuliahan Dimulai Pukul {cleanStart} {timezone} (Pagi Ini)
-                  </span>
-                  {activeSession.lecturer && (
-                    <span className="flex items-center gap-1 text-slate-300">
-                      <User className="h-3 w-3 text-emerald-300" />
-                      Pengampu: {activeSession.lecturer}
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Standby Mode */}
-            {phase === 'standby' && (
-              <div className="space-y-2">
-                <div>
-                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug flex items-center gap-1.5">
-                    <span>Selamat Datang & Selamat Belajar, Rekan Agrasena Batch 4! ✨</span>
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-slate-300/80 leading-relaxed">
-                    Jadwal harian perkuliahan (35 hari) sedang dipersiapkan oleh Panitia Badiklat Kejaksaan RI. Sesi tatap muka online dan tautan Zoom tiap angkatan dapat diakses langsung pada ruang kelas online di bawah.
-                  </p>
-                </div>
-
-                <div className="p-2.5 sm:px-3.5 sm:py-2 rounded-[10px] bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="flex flex-wrap items-center gap-2 min-w-0">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 shrink-0">
-                      <Calendar className="h-3 w-3 text-emerald-400" />
-                      Status Jadwal:
-                    </span>
-                    <span className="font-semibold text-slate-200 text-[11px] sm:text-xs">
-                      Belum ada jadwal yang di-input ke sistem. Silakan pelajari Modul Bahan Ajar dan akses Zoom Angkatan 1 s.d. 6 di bawah.
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 shrink-0">
-                    <span className="rounded-full bg-emerald-950/80 text-emerald-300 px-2.5 py-0.5 font-bold border border-emerald-800/60">
-                      Masa Persiapan
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Weekend Mode */}
-            {phase === 'weekend' && (
-              <div className="space-y-2">
-                <div>
-                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight leading-snug flex items-center gap-1.5">
-                    <span>Selamat Berlibur & Selamat Rehat, Rekan Agrasena Batch 4! ✨</span>
-                  </h3>
-                  <p className="text-[11px] sm:text-xs text-slate-300/80 leading-relaxed">
-                    Tidak ada sesi tatap muka online hari ini. Selamat menikmati waktu rehat bersama keluarga.
-                  </p>
-                </div>
-
-                <div className="p-2.5 sm:px-3.5 sm:py-2 rounded-[10px] bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="flex flex-wrap items-center gap-2 min-w-0">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 shrink-0">
-                      <Calendar className="h-3 w-3 text-amber-400" />
-                      {upcomingCurriculum.dayOfWeek}, {upcomingCurriculum.date}:
-                    </span>
-                    <span className="font-mono bg-emerald-950/80 text-emerald-300 px-1.5 py-0.5 rounded text-[10px] font-bold border border-emerald-800/60 shrink-0">
-                      {nextCleanStart} – {nextCleanEnd} {timezone}
-                    </span>
-                    <span className="font-bold text-white text-[11px] sm:text-xs truncate">
-                      {firstUpcomingSession.subject_name.replace(/\[Hari\s*\d+\]\s*/i, "")}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 shrink-0">
-                    {firstUpcomingSession.lecturer && (
-                      <span className="flex items-center gap-1 text-slate-300">
-                        <User className="h-2.5 w-2.5 text-emerald-300" />
-                        <span>{firstUpcomingSession.lecturer}</span>
-                      </span>
-                    )}
-                    <span className="rounded-full bg-emerald-950/80 text-emerald-300 px-2 py-0.5 font-bold border border-emerald-800/60">
-                      Hari ke-{upcomingDayNum}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Day Selector Chips: Allows participant to browse Hari 1 to Hari 22 easily */}
+        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+              Pilih Hari:
+            </span>
+            {Array.from({ length: 22 }).map((_, i) => {
+              const d = i + 1
+              const isSelected = selectedDay === d
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setSelectedDay(d)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition cursor-pointer shrink-0 ${
+                    isSelected
+                      ? "bg-emerald-500 text-[#0c141d] font-black"
+                      : "bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  H{d}
+                </button>
+              )
+            })}
           </div>
 
+          <Link
+            href="/batch-4/schedules"
+            className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 shrink-0 flex items-center gap-1 whitespace-nowrap pl-2"
+          >
+            <span>Semua Jadwal</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
-
-        {/* Right Dynamic Action Buttons (Focus on Roadmap Zoom & Academic Links) */}
-        <div className="flex flex-col sm:flex-row lg:flex-col items-stretch gap-2 shrink-0 w-full lg:w-48">
-          
-          {/* Action on Standby Mode */}
-          {phase === 'standby' && (
-            <>
-              <a
-                href="#zoom-access"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-              >
-                <Video className="h-3.5 w-3.5" />
-                <span>Zoom di Roadmap</span>
-                <ArrowRight className="h-3 w-3" />
-              </a>
-              <Link
-                href="/batch-4/materials"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Modul 120 JP</span>
-              </Link>
-            </>
-          )}
-
-          {/* Action on Active Class or Break */}
-          {(phase === 'in_class' || phase === 'in_break') && (
-            <>
-              <a
-                href="#zoom-access"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-              >
-                <Video className="h-3.5 w-3.5" />
-                <span>Zoom di Roadmap</span>
-                <ExternalLink className="h-3 w-3 opacity-80" />
-              </a>
-              <Link
-                href="/batch-4/materials"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Bahan Ajar</span>
-              </Link>
-            </>
-          )}
-
-          {/* Action on Task Time */}
-          {phase === 'task_time' && (
-            <>
-              <Link
-                href="/batch-4/tasks"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-              >
-                <Upload className="h-3.5 w-3.5" />
-                <span>Kumpulkan Tugas</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-              <Link
-                href="/batch-4/materials"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Bahan Ajar</span>
-              </Link>
-            </>
-          )}
-
-          {/* Action on Prep Time */}
-          {phase === 'prep_time' && (
-            <>
-              <Link
-                href="/batch-4/materials"
-                className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Pelajari Modul</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-              <Link
-                href="/batch-4/schedules"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
-              >
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Jadwal Sesi</span>
-              </Link>
-            </>
-          )}
-
-          {/* Action on Weekend */}
-          {phase === 'weekend' && (
-            <>
-              <a
-                href="#zoom-access"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 text-xs font-semibold shadow-xs transition-all cursor-pointer"
-              >
-                <Video className="h-3.5 w-3.5" />
-                <span>Zoom di Roadmap</span>
-                <ArrowRight className="h-3 w-3" />
-              </a>
-              <Link
-                href="/batch-4/materials"
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-2 text-xs font-semibold text-white transition-all cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>Modul 120 JP</span>
-              </Link>
-            </>
-          )}
-
-        </div>
-
       </div>
-    </motion.div>
+    </div>
   )
 }

@@ -217,6 +217,8 @@ export async function createSchedule(formData: FormData) {
 
   revalidatePath('/', 'layout')
   revalidatePath('/schedules')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4/schedules')
   revalidatePath('/admin/dashboard')
   return { success: 'Sesi kegiatan berhasil disimpan ke database Supabase!' }
 }
@@ -258,6 +260,8 @@ export async function updateSchedule(formData: FormData) {
 
   revalidatePath('/', 'layout')
   revalidatePath('/schedules')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4/schedules')
   revalidatePath('/admin/dashboard')
   return { success: 'Jadwal sesi perkuliahan berhasil diperbarui!' }
 }
@@ -272,6 +276,8 @@ export async function deleteSchedule(id: string) {
   if (error) return { error: error.message }
   revalidatePath('/', 'layout')
   revalidatePath('/schedules')
+  revalidatePath('/batch-4')
+  revalidatePath('/batch-4/schedules')
   revalidatePath('/admin/dashboard')
   return { success: 'Jadwal berhasil dihapus.' }
 }
