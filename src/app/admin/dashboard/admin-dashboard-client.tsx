@@ -89,7 +89,7 @@ import {
 } from "lucide-react"
 import { WhatsAppShareModal } from "@/components/public/whatsapp-share-modal"
 import { WhatsAppBotManager } from "@/components/admin/whatsapp-bot-manager"
-import { getScheduleDayNumber } from "@/lib/roadmap-utils"
+import { getScheduleDayNumber, getScheduleDate, formatIndonesianDate } from "@/lib/roadmap-utils"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
 import { renderContentWithLinks, getPrimaryLink } from "@/components/public/urgent-announcement"
 import { MultiBatchControlHub } from "@/components/admin/multi-batch-control-hub"
@@ -4252,6 +4252,15 @@ export function AdminDashboardClient({
                                     Agrasena 3
                                   </span>
                                 )}
+                                {(() => {
+                                  const sDate = getScheduleDate(s)
+                                  if (!sDate) return null
+                                  return (
+                                    <span className="rounded-[4px] bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 px-1.5 py-0.5 text-[9px] font-bold text-emerald-800 dark:text-emerald-300">
+                                      📅 {formatIndonesianDate(sDate, { withDayName: false, shortMonth: true })}
+                                    </span>
+                                  )
+                                })()}
                               </div>
                               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                                 {s.start_time} - {s.end_time} WIB
@@ -5611,14 +5620,28 @@ export function AdminDashboardClient({
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Ruangan / Platform *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black text-slate-900 dark:text-slate-100">Tanggal Sesi (Pelaksanaan)</label>
+                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+                  Roadmap Sync
+                </span>
+              </div>
               <Input
-                name="room"
-                required
-                defaultValue="Zoom Diklat & LMS Badiklat"
+                name="session_date"
+                type="date"
                 className="text-xs rounded-[8px]"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-slate-900 dark:text-slate-100">Ruangan / Platform *</label>
+            <Input
+              name="room"
+              required
+              defaultValue="Zoom Diklat & LMS Badiklat"
+              className="text-xs rounded-[8px]"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -5925,14 +5948,29 @@ export function AdminDashboardClient({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-black text-slate-900 dark:text-slate-100">Ruangan / Platform *</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-slate-900 dark:text-slate-100">Tanggal Sesi (Pelaksanaan)</label>
+                  <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+                    Roadmap Sync
+                  </span>
+                </div>
                 <Input
-                  name="room"
-                  required
-                  defaultValue={editingSchedule.room}
+                  name="session_date"
+                  type="date"
+                  defaultValue={getScheduleDate(editingSchedule) || ""}
                   className="text-xs rounded-[8px]"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Ruangan / Platform *</label>
+              <Input
+                name="room"
+                required
+                defaultValue={editingSchedule.room}
+                className="text-xs rounded-[8px]"
+              />
             </div>
 
             <div className="space-y-1.5">

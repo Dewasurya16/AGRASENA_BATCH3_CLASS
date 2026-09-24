@@ -30,6 +30,8 @@ import {
   getAutoRoadmapData,
   RoadmapDayDetail,
   parseTimeToMins,
+  getScheduleDate,
+  formatIndonesianDate,
 } from "@/lib/roadmap-utils"
 import { Modal } from "@/components/ui/modal"
 
@@ -333,8 +335,9 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageBadgeColor}`}>
                         {item.stageName}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {item.dayOfWeek}
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-2 py-0.5 rounded-full">
+                        <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                        <span>{item.dayOfWeek}, {item.dateStr}</span>
                       </span>
                     </div>
 
@@ -349,9 +352,16 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                         <h4 className="text-xs sm:text-sm font-bold text-[#18181B] dark:text-white truncate">
                           {hasSess ? item.sessions[0].title : item.stageSubtitle}
                         </h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          {hasSess ? `${item.sessions.length} Sesi Terjadwal` : item.dateStr}
-                        </p>
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                            {hasSess ? `${item.sessions.length} Sesi Terjadwal` : "Jadwal Mandiri"}
+                          </span>
+                          {item.isTodayExact && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-600 text-white uppercase tracking-wider">
+                              Hari Ini
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -410,6 +420,13 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
           ) : (
             filteredSchedules.map((sched) => {
               const dayNum = getScheduleDayNumber(sched) || 1
+              const sDate = getScheduleDate(sched)
+              const matchedRoadmapDay = roadmapDays.find((d) => d.dayNumber === dayNum)
+              const schedDateFormatted = sDate
+                ? formatIndonesianDate(sDate, { withDayName: true, shortMonth: true })
+                : matchedRoadmapDay
+                ? `${matchedRoadmapDay.dayOfWeek}, ${matchedRoadmapDay.dateStr}`
+                : sched.day
 
               // Stage identifier
               let stageBadge = "Tahap 1: MOOC"
@@ -446,26 +463,29 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                   className="rounded-[16px] bg-white dark:bg-[#151c28] border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 p-3.5 sm:p-4.5 transition-all hover:shadow-xs"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
                       {/* Day Number Pill */}
-                      <div className="flex flex-col items-center justify-center h-11 w-11 rounded-xl bg-slate-100 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 text-[#18181B] dark:text-white shrink-0">
+                      <div className="flex flex-col items-center justify-center h-12 w-12 rounded-xl bg-slate-100 dark:bg-[#101520] border border-slate-200 dark:border-slate-800 text-[#18181B] dark:text-white shrink-0">
                         <span className="text-[9px] font-bold text-slate-400 uppercase">HARI</span>
-                        <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">
+                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
                           {dayNum}
                         </span>
                       </div>
 
                       {/* Schedule Content */}
-                      <div className="space-y-1">
+                      <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${stageBadgeColor}`}>
                             {stageBadge}
                           </span>
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                            {sched.day}
+                          
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80">
+                            <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                            <span>{schedDateFormatted}</span>
                           </span>
-                          <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                            <Clock className="h-3 w-3" />
+
+                          <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/60">
+                            <Clock className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                             <span>{startTimeDisplay} – {endTimeDisplay} {timezone}</span>
                           </span>
                         </div>
@@ -526,12 +546,13 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
           title={`Rincian Jadwal Hari ${activeModalDay.dayNumber} • Agrasena Batch 4`}
         >
           <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 flex-wrap">
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                 {activeModalDay.stageName} ({activeModalDay.stageSubtitle})
               </span>
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                {activeModalDay.dayOfWeek} • {activeModalDay.dateStr}
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 px-2.5 py-0.5 rounded-full">
+                <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>{activeModalDay.dayOfWeek}, {activeModalDay.dateStr}</span>
               </span>
             </div>
 
@@ -547,12 +568,20 @@ export function SchedulesListB4({ initialSchedules = [] }: SchedulesListB4Props)
                 {activeModalDay.sessions.map((sess, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-[#101520] border border-slate-200/80 dark:border-slate-800 space-y-1.5"
+                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#101520] border border-slate-200/80 dark:border-slate-800 space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {convertWibTimeToCurrent(sess.time.split(" - ")[0])} – {convertWibTimeToCurrent(sess.time.split(" - ")[1])} {timezone}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {convertWibTimeToCurrent(sess.time.split(" - ")[0])} – {convertWibTimeToCurrent(sess.time.split(" - ")[1])} {timezone}
+                        </span>
+                        {sess.sessionDateFormatted && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/60 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300/60 dark:border-emerald-700/60">
+                            <Calendar className="h-3 w-3 text-emerald-600" />
+                            <span>{sess.sessionDateFormatted}</span>
+                          </span>
+                        )}
+                      </div>
                       {sess.zoomUrl && (
                         <a
                           href={sess.zoomUrl}

@@ -6,6 +6,7 @@ export interface RoadmapDayDetail {
   stageName: string
   stageSubtitle: string
   dateStr: string
+  dateIso?: string
   dayOfWeek: string
   dotsCount: number
   status: "completed" | "in_progress" | "upcoming"
@@ -21,6 +22,8 @@ export interface RoadmapDayDetail {
     instructor?: string
     room?: string
     zoomUrl?: string
+    sessionDate?: string
+    sessionDateFormatted?: string
   }>
 }
 
@@ -102,8 +105,83 @@ const MONTH_MAP: Record<string, number> = {
   dec: 11,
 }
 
+export function getScheduleDate(s: any): string | null {
+  if (!s) return null
+  if (s.date && /^\d{4}-\d{2}-\d{2}$/.test(String(s.date).trim())) return String(s.date).trim()
+  if (s.session_date && /^\d{4}-\d{2}-\d{2}$/.test(String(s.session_date).trim())) return String(s.session_date).trim()
+  if (s.color && /^\d{4}-\d{2}-\d{2}$/.test(String(s.color).trim())) return String(s.color).trim()
+  const str = `${s.subject_name || ""} ${s.title || ""}`
+  const isoMatch = str.match(/\[(\d{4}-\d{2}-\d{2})\]/)
+  if (isoMatch) return isoMatch[1]
+  return null
+}
+
+export function formatIndonesianDate(
+  dateInput: string | Date,
+  options: { withDayName?: boolean; shortMonth?: boolean } = { withDayName: true, shortMonth: true }
+): string {
+  if (!dateInput) return ""
+  let d: Date
+  if (typeof dateInput === "string") {
+    const trimmed = dateInput.trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, day] = trimmed.split("-").map(Number)
+      d = new Date(y, m - 1, day)
+    } else {
+      d = new Date(trimmed)
+    }
+  } else {
+    d = dateInput
+  }
+  if (isNaN(d.getTime())) return String(dateInput)
+
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+  const monthNamesShort = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+  const monthNamesFull = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ]
+
+  const dayName = dayNames[d.getDay()]
+  const dayNum = d.getDate()
+  const monthName = options.shortMonth ? monthNamesShort[d.getMonth()] : monthNamesFull[d.getMonth()]
+  const year = d.getFullYear()
+
+  if (options.withDayName) {
+    return `${dayName}, ${dayNum} ${monthName} ${year}`
+  }
+  return `${dayNum} ${monthName} ${year}`
+}
+
+export function addWorkingDays(startDate: Date, daysToAdd: number): Date {
+  const result = new Date(startDate.getTime())
+  let added = 0
+  while (added < daysToAdd) {
+    result.setDate(result.getDate() + 1)
+    const day = result.getDay()
+    if (day !== 0 && day !== 6) {
+      added++
+    }
+  }
+  return result
+}
+
+export function toIsoDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 export function parseDiklatDate(dateStr: string): Date | null {
-  const parts = dateStr.trim().split(/\s+/)
+  if (!dateStr) return null
+  const trimmed = dateStr.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const [y, m, d] = trimmed.split("-").map(Number)
+    return new Date(y, m - 1, d, 0, 0, 0, 0)
+  }
+  const cleanStr = trimmed.replace(/^[A-Za-z]+,\s*/, "")
+  const parts = cleanStr.trim().split(/\s+/)
   if (parts.length < 3) return null
   const day = parseInt(parts[0], 10)
   const monthKey = parts[1].toLowerCase().slice(0, 3)
@@ -283,10 +361,91 @@ export function getAutoRoadmapData(
   // KHUSUS AGRASENA BATCH 4: Roadmap Mandiri 35 Hari terpisah dari Batch 3
   if (batch === "batch-4") {
     const effectiveB4Schedules = supabaseSchedules || []
-    const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : 1
     const totalDays = 35
 
+    // 1. Gather all explicit schedule dates from Supabase for Batch 4
+    const scheduleDatesByDay = new Map<number, string>()
+    effectiveB4Schedules.forEach((s) => {
+      const dayNum = getScheduleDayNumber(s)
+      const d = getScheduleDate(s)
+      if (dayNum !== null && d) {
+        if (!scheduleDatesByDay.has(dayNum)) {
+          scheduleDatesByDay.set(dayNum, d)
+        }
+      }
+    })
+
+    // 2. Determine anchor start date (Day 1)
+    let anchorDate: Date
+    if (scheduleDatesByDay.has(1)) {
+      const [y, m, d] = scheduleDatesByDay.get(1)!.split("-").map(Number)
+      anchorDate = new Date(y, m - 1, d, 0, 0, 0, 0)
+    } else {
+      // Find earliest known day or default to 28 September 2026
+      let foundDay: number | null = null
+      let earliestDateStr: string | null = null
+      for (const [dayNum, dStr] of scheduleDatesByDay.entries()) {
+        if (foundDay === null || dayNum < foundDay) {
+          foundDay = dayNum
+          earliestDateStr = dStr
+        }
+      }
+      if (foundDay !== null && earliestDateStr) {
+        const [y, m, d] = earliestDateStr.split("-").map(Number)
+        // Subtract working days back to Day 1
+        const dt = new Date(y, m - 1, d, 0, 0, 0, 0)
+        let daysToBack = foundDay - 1
+        while (daysToBack > 0) {
+          dt.setDate(dt.getDate() - 1)
+          if (dt.getDay() !== 0 && dt.getDay() !== 6) {
+            daysToBack--
+          }
+        }
+        anchorDate = dt
+      } else {
+        anchorDate = new Date(2026, 8, 28, 0, 0, 0, 0)
+      }
+    }
+
+    const now = new Date()
+    const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+    const todayIso = toIsoDateString(todayAtMidnight)
+
+    // Detect if today matches any day's date
+    let autoCurrentDay = 1
+    for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
+      let dIso: string
+      if (scheduleDatesByDay.has(dayNum)) {
+        dIso = scheduleDatesByDay.get(dayNum)!
+      } else {
+        dIso = toIsoDateString(addWorkingDays(anchorDate, dayNum - 1))
+      }
+      if (dIso === todayIso) {
+        autoCurrentDay = dayNum
+        break
+      }
+    }
+
+    const currentDay = overrideDay && overrideDay >= 1 && overrideDay <= 35 ? overrideDay : autoCurrentDay
+
     const days: RoadmapDayDetail[] = BATCH4_DAYS_DATA.map((item) => {
+      // Resolve exact date for this day
+      let resolvedDateIso = ""
+      let resolvedDateStr = item.date
+      let resolvedDayOfWeek = item.dayOfWeek
+
+      if (scheduleDatesByDay.has(item.day)) {
+        resolvedDateIso = scheduleDatesByDay.get(item.day)!
+        resolvedDateStr = formatIndonesianDate(resolvedDateIso, { withDayName: false, shortMonth: true })
+        resolvedDayOfWeek = formatIndonesianDate(resolvedDateIso, { withDayName: true, shortMonth: true }).split(",")[0]
+      } else {
+        const calculatedDate = addWorkingDays(anchorDate, item.day - 1)
+        resolvedDateIso = toIsoDateString(calculatedDate)
+        resolvedDateStr = formatIndonesianDate(calculatedDate, { withDayName: false, shortMonth: true })
+        const dNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+        resolvedDayOfWeek = dNames[calculatedDate.getDay()]
+      }
+
       const matchedSessions = effectiveB4Schedules
         .filter((s) => {
           const explicitDay = getScheduleDayNumber(s)
@@ -302,6 +461,7 @@ export function getAutoRoadmapData(
             .trim()
           const start = cleanTimeFormat(s.start_time, "08:00")
           const end = cleanTimeFormat(s.end_time, "15:30")
+          const sDate = getScheduleDate(s) || resolvedDateIso
           return {
             id: s.id,
             time: `${start} - ${end}`,
@@ -309,14 +469,34 @@ export function getAutoRoadmapData(
             instructor: s.lecturer || undefined,
             room: s.room || undefined,
             zoomUrl: s.meeting_link || s.zoom_url || undefined,
+            sessionDate: sDate,
+            sessionDateFormatted: sDate ? formatIndonesianDate(sDate, { withDayName: true, shortMonth: true }) : undefined,
           }
         })
 
       const hasSess = matchedSessions.length > 0
+      const isTodayExact = resolvedDateIso === todayIso || (overrideDay !== undefined && item.day === overrideDay)
+      const isPast = resolvedDateIso < todayIso
+
       let status: "completed" | "in_progress" | "upcoming" = "upcoming"
+      let badgeLabel1 = hasSess ? `${matchedSessions.length} SESI TERJADWAL` : "JADWAL MENDATANG"
+
       if (overrideDay) {
-        if (item.day < overrideDay) status = "completed"
-        else if (item.day === overrideDay) status = "in_progress"
+        if (item.day < overrideDay) {
+          status = "completed"
+          badgeLabel1 = "SELESAI"
+        } else if (item.day === overrideDay) {
+          status = "in_progress"
+          badgeLabel1 = "BERJALAN"
+        }
+      } else {
+        if (isTodayExact) {
+          status = "in_progress"
+          badgeLabel1 = "HARI INI"
+        } else if (isPast) {
+          status = "completed"
+          badgeLabel1 = "SELESAI"
+        }
       }
 
       return {
@@ -324,19 +504,20 @@ export function getAutoRoadmapData(
         stageNumber: item.stage,
         stageName: item.stageName,
         stageSubtitle: item.stageSubtitle,
-        dateStr: item.date,
-        dayOfWeek: item.dayOfWeek,
+        dateStr: resolvedDateStr,
+        dateIso: resolvedDateIso,
+        dayOfWeek: resolvedDayOfWeek,
         dotsCount: hasSess ? matchedSessions.length : item.dots,
         status,
-        isTodayExact: overrideDay ? item.day === overrideDay : item.day === 1,
+        isTodayExact,
         isNextUpcoming: item.day === currentDay,
-        badgeLabel1: hasSess ? `${matchedSessions.length} SESI TERJADWAL` : "JADWAL MENDATANG",
+        badgeLabel1,
         badgeLabel2: item.stageName,
         sessions: matchedSessions,
       }
     })
 
-    const completedDays = overrideDay ? Math.max(0, overrideDay - 1) : 0
+    const completedDays = overrideDay ? Math.max(0, overrideDay - 1) : Math.max(0, currentDay - 1)
     const progressPercentage = Math.round((completedDays / totalDays) * 100)
     const currentStageObj = BATCH4_DAYS_DATA.find((d) => d.day === currentDay) || BATCH4_DAYS_DATA[0]
 
@@ -349,7 +530,7 @@ export function getAutoRoadmapData(
         completedDays,
         currentStageName: `${currentStageObj.stageName} (Agrasena Batch 4)`,
         isDiklatFinished: false,
-        isTodayActive: overrideDay !== undefined,
+        isTodayActive: overrideDay !== undefined || days.some((d) => d.isTodayExact),
       },
     }
   }

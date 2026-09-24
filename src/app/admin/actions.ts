@@ -192,12 +192,23 @@ export async function createSchedule(formData: FormData) {
   const lecturer = (formData.get('lecturer') as string)?.trim()
   const room = (formData.get('room') as string)?.trim()
   const meeting_link = formData.get('meeting_link') as string
+  const sessionDate = (formData.get('session_date') as string)?.trim()
 
   if (!subject_name || !rawDaySelection || !start_time || !end_time || !lecturer || !room) {
     return { error: 'Semua kolom bertanda bintang wajib diisi.' }
   }
 
-  const { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
+  let { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
+  if (sessionDate && /^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) {
+    const [y, m, d] = sessionDate.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const calculatedDay = dayNames[dt.getDay()]
+    if (['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].includes(calculatedDay)) {
+      dayOfWeek = calculatedDay
+    }
+  }
+
   const finalMeetingLink = meeting_link?.trim() || RUANG_DIKLAT_URL
 
   const supabase = await createClient()
@@ -209,6 +220,7 @@ export async function createSchedule(formData: FormData) {
     lecturer,
     room,
     meeting_link: finalMeetingLink,
+    color: sessionDate || 'indigo',
   })
 
   if (error) {
@@ -232,26 +244,42 @@ export async function updateSchedule(formData: FormData) {
   const lecturer = (formData.get('lecturer') as string)?.trim()
   const room = (formData.get('room') as string)?.trim()
   const meeting_link = formData.get('meeting_link') as string
+  const sessionDate = (formData.get('session_date') as string)?.trim()
 
   if (!id || !subject_name || !rawDaySelection || !start_time || !end_time || !lecturer || !room) {
     return { error: 'Semua kolom bertanda bintang wajib diisi.' }
   }
 
-  const { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
+  let { formattedSubject, dayOfWeek } = formatSubjectWithDay(subject_name, rawDaySelection)
+  if (sessionDate && /^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) {
+    const [y, m, d] = sessionDate.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const calculatedDay = dayNames[dt.getDay()]
+    if (['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'].includes(calculatedDay)) {
+      dayOfWeek = calculatedDay
+    }
+  }
+
   const finalMeetingLink = meeting_link?.trim() || RUANG_DIKLAT_URL
+
+  const updatePayload: any = {
+    subject_name: formattedSubject,
+    day: dayOfWeek as any,
+    start_time,
+    end_time,
+    lecturer,
+    room,
+    meeting_link: finalMeetingLink,
+  }
+  if (sessionDate) {
+    updatePayload.color = sessionDate
+  }
 
   const supabase = await createClient()
   const { error } = await supabase
     .from('schedules')
-    .update({
-      subject_name: formattedSubject,
-      day: dayOfWeek as any,
-      start_time,
-      end_time,
-      lecturer,
-      room,
-      meeting_link: finalMeetingLink,
-    })
+    .update(updatePayload)
     .eq('id', id)
 
   if (error) {

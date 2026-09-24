@@ -19,6 +19,9 @@ import Link from 'next/link'
 import {
   BATCH4_DAYS_DATA,
   getScheduleDayNumber,
+  getScheduleDate,
+  formatIndonesianDate,
+  addWorkingDays,
 } from '@/lib/roadmap-utils'
 import { DEFAULT_BATCH4_SCHEDULES } from '@/data/batch4/schedules-data'
 import { useTimezone } from '@/components/timezone-provider'
@@ -97,6 +100,16 @@ export function LiveSessionBannerB4({
     return BATCH4_DAYS_DATA.find((d) => d.day === activeDayNum) || BATCH4_DAYS_DATA[0]
   }, [activeDayNum])
 
+  // Set of day numbers that have scheduled sessions in database
+  const scheduledDaysSet = React.useMemo(() => {
+    const set = new Set<number>()
+    todaySchedules.forEach((s) => {
+      const d = getScheduleDayNumber(s)
+      if (d !== null) set.add(d)
+    })
+    return set
+  }, [todaySchedules])
+
   // Get schedules strictly for activeDayNum
   const daysSchedules = React.useMemo(() => {
     const sourceSchedules =
@@ -119,6 +132,39 @@ export function LiveSessionBannerB4({
         return aStart - bStart
       })
   }, [todaySchedules, activeDayNum])
+
+  // Compute exact date for activeDayNum
+  const activeDayDateStr = React.useMemo(() => {
+    for (const s of daysSchedules) {
+      const d = getScheduleDate(s)
+      if (d) return formatIndonesianDate(d, { withDayName: true, shortMonth: false })
+    }
+    for (const s of todaySchedules) {
+      const dayNum = getScheduleDayNumber(s)
+      const d = getScheduleDate(s)
+      if (dayNum !== null && d) {
+        const [y, m, dayVal] = d.split('-').map(Number)
+        const anchor = new Date(y, m - 1, dayVal, 0, 0, 0, 0)
+        const diff = activeDayNum - dayNum
+        let targetDate: Date
+        if (diff >= 0) {
+          targetDate = addWorkingDays(anchor, diff)
+        } else {
+          const dt = new Date(anchor.getTime())
+          let back = Math.abs(diff)
+          while (back > 0) {
+            dt.setDate(dt.getDate() - 1)
+            if (dt.getDay() !== 0 && dt.getDay() !== 6) back--
+          }
+          targetDate = dt
+        }
+        return formatIndonesianDate(targetDate, { withDayName: true, shortMonth: false })
+      }
+    }
+    const baseAnchor = new Date(2026, 8, 28, 0, 0, 0, 0)
+    const calcDate = addWorkingDays(baseAnchor, activeDayNum - 1)
+    return formatIndonesianDate(calcDate, { withDayName: true, shortMonth: false })
+  }, [daysSchedules, todaySchedules, activeDayNum])
 
   const hasSessionsForDay = daysSchedules.length > 0
 
@@ -351,7 +397,19 @@ export function LiveSessionBannerB4({
         </div>
 
         {/* Main Title & Session Info */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 text-[11px] font-bold">
+              <Calendar className="h-3 w-3 text-emerald-400" />
+              <span>{activeDayDateStr}</span>
+            </span>
+            {hasSessionsForDay && (
+              <span className="text-[11px] text-slate-300 font-semibold bg-white/10 px-2 py-0.5 rounded-full border border-white/10">
+                {daysSchedules.length} Sesi Terjadwal
+              </span>
+            )}
+          </div>
+
           <h2 className="text-sm sm:text-base font-bold text-white tracking-tight leading-snug">
             [Hari {activeDayNum}] {cleanTitle || activeSession.subject_name}
           </h2>
@@ -372,27 +430,34 @@ export function LiveSessionBannerB4({
           </div>
         </div>
 
-        {/* Day Selector Chips: Allows participant to browse Hari 1 to Hari 22 easily */}
+        {/* Day Selector Chips: Allows participant to browse all 35 days with scheduled session indicator */}
         <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 scroll-smooth">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
               Pilih Hari:
             </span>
-            {Array.from({ length: 22 }).map((_, i) => {
+            {Array.from({ length: 35 }).map((_, i) => {
               const d = i + 1
               const isSelected = selectedDay === d
+              const hasSched = scheduledDaysSet.has(d)
               return (
                 <button
                   key={d}
                   type="button"
                   onClick={() => setSelectedDay(d)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition cursor-pointer shrink-0 ${
+                  title={`Hari ${d}${hasSched ? " (Ada Sesi Terjadwal)" : ""}`}
+                  className={`relative px-2 py-1 rounded-md text-[10px] font-bold transition cursor-pointer shrink-0 ${
                     isSelected
-                      ? "bg-emerald-500 text-[#0c141d] font-black"
-                      : "bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white"
+                      ? "bg-emerald-500 text-[#0c141d] font-black shadow-xs"
+                      : hasSched
+                      ? "bg-white/15 text-white hover:bg-white/25"
+                      : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"
                   }`}
                 >
-                  H{d}
+                  <span>H{d}</span>
+                  {hasSched && !isSelected && (
+                    <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400 ring-1 ring-slate-900" />
+                  )}
                 </button>
               )
             })}
