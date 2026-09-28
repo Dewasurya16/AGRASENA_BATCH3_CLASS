@@ -80,18 +80,21 @@ function isBatch4Task(t) {
   if (!t) return false
   if (t.batch === 4 || t.batch === 'batch-4' || t.batch === '4') return true
   if (t.batch === 3 || t.batch === 'batch-3' || t.batch === '3') return false
-  const text = `${t.title || ''} ${t.subject_name || ''} ${t.description || ''}`.toLowerCase()
+  const text = `${t.subject_name || ''} ${t.title || ''} ${t.description || ''}`.toLowerCase()
   if (
     text.includes('batch 4') ||
     text.includes('batch-4') ||
-    text.includes('b4-') ||
+    text.includes('agrasena 4') ||
+    text.includes('agrasena batch 4') ||
+    text.includes('angkatan 06') ||
+    text.includes('angkatan 6') ||
     text.includes('angkatan 4') ||
-    text.includes('angkatan iv')
+    text.includes('angkatan iv') ||
+    text.includes('84420264444') ||
+    text.includes('prakom-batch4') ||
+    (typeof t.id === 'string' && (t.id.startsWith('b4-') || t.id.includes('batch4')))
   ) {
     return true
-  }
-  if (text.includes('batch 3') || text.includes('batch-3')) {
-    return false
   }
   return false
 }
@@ -107,8 +110,9 @@ function isBatch4Material(m) {
 
 /**
  * Kalender Kurikulum 35 Hari Diklat Fungsional Prakom Batch 4
+ * Default tanggal mulai: 28 September 2026 (Senin)
  */
-function buildCurriculumDays(startDateStr = process.env.BATCH4_START_DATE || '2026-10-05') {
+function buildCurriculumDays(startDateStr = process.env.BATCH4_START_DATE || '2026-09-28') {
   const days = []
   const [y, m, d] = startDateStr.split('-').map(Number)
   const cur = new Date(y, m - 1, d, 8, 0, 0)
@@ -136,7 +140,84 @@ function buildCurriculumDays(startDateStr = process.env.BATCH4_START_DATE || '20
   return days
 }
 
-const CURRICULUM_DAYS = buildCurriculumDays()
+let CURRICULUM_DAYS = buildCurriculumDays()
+
+/**
+ * Ekstraksi tanggal jadwal secara akurat dari kolom date, session_date, color,
+ * ataupun pola ISO [YYYY-MM-DD] pada subject_name.
+ */
+function getScheduleDate(s) {
+  if (!s) return null
+  if (s.date && /^\d{4}-\d{2}-\d{2}/.test(String(s.date).trim())) return String(s.date).trim().slice(0, 10)
+  if (s.session_date && /^\d{4}-\d{2}-\d{2}/.test(String(s.session_date).trim())) return String(s.session_date).trim().slice(0, 10)
+  if (s.color && /^\d{4}-\d{2}-\d{2}/.test(String(s.color).trim())) return String(s.color).trim().slice(0, 10)
+  const text = `${s.subject_name || ''} ${s.title || ''}`
+  const match = text.match(/\[(\d{4}-\d{2}-\d{2})\]/)
+  if (match) return match[1]
+  return null
+}
+
+/**
+ * Ekstraksi nomor hari diklat (1-35) secara strict agar Hari 1 tidak tertukar dengan Hari 10-19.
+ */
+function getScheduleDayNumber(s) {
+  if (!s) return null
+  const subject = String(s.subject_name || s.title || '').trim()
+  const dayStr = String(s.day || '').trim()
+
+  const tagMatch = subject.match(/\[\s*hari\s*(\d+)\s*\]/i)
+  if (tagMatch) {
+    const num = parseInt(tagMatch[1], 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  const dayFieldMatch = dayStr.match(/hari\s*(?:ke[-\s]*)?(\d+)/i)
+  if (dayFieldMatch) {
+    const num = parseInt(dayFieldMatch[1], 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  if (/^\d+$/.test(dayStr)) {
+    const num = parseInt(dayStr, 10)
+    if (num >= 1 && num <= 35) return num
+  }
+
+  return null
+}
+
+/**
+ * Sinkronisasi dinamis kalender 35 hari dengan data aktual di Supabase
+ */
+async function syncCurriculumWithDatabase(supabase) {
+  if (!supabase) return
+  try {
+    const { data: allSchedules } = await supabase
+      .from('schedules')
+      .select('*')
+    if (allSchedules && allSchedules.length > 0) {
+      const b4 = allSchedules.filter((s) => isBatch4Item(s))
+      b4.forEach((s) => {
+        const dayNum = getScheduleDayNumber(s)
+        const sDate = getScheduleDate(s)
+        if (dayNum !== null && sDate) {
+          const existing = CURRICULUM_DAYS.find((c) => c.day === dayNum)
+          if (existing) {
+            existing.date = sDate
+          } else {
+            let stage = 'Tahap 1 • MOOC'
+            if (dayNum > 5 && dayNum <= 15) stage = 'Tahap 2 • TMO'
+            else if (dayNum > 15 && dayNum <= 30) stage = 'Tahap 3 • Lab Prakom'
+            else if (dayNum > 30) stage = 'Tahap 4 • Seminar'
+            CURRICULUM_DAYS.push({ day: dayNum, stage, date: sDate })
+          }
+        }
+      })
+      CURRICULUM_DAYS.sort((a, b) => a.day - b.day)
+    }
+  } catch (e) {
+    console.warn('[Scheduler] Gagal sinkronisasi kalender dari DB:', e.message)
+  }
+}
 
 /**
  * Untaian Motivasi Pagi
@@ -193,7 +274,7 @@ function getDiklatDayInfo(date = new Date()) {
   const dayOfWeek = d.getDay()
   return {
     day: null,
-    stage: 'Hari Libur / Akhir Pekan',
+    stage: dayOfWeek === 0 || dayOfWeek === 6 ? 'Akhir Pekan' : 'Hari Libur Diklat',
     date: dateStr,
     isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
   }
@@ -426,39 +507,56 @@ async function getSessionsForDate(supabase, targetDate = new Date(), dayInfo = n
     const { data: allSchedules } = await supabase
       .from('schedules')
       .select('*')
-      .order('created_at', { ascending: true })
+      .order('start_time', { ascending: true })
 
     if (allSchedules && allSchedules.length > 0) {
       // 1. Isolasi: Hanya ambil data yang berelasi dengan Batch 4
       const b4Schedules = allSchedules.filter((s) => isBatch4Item(s))
 
       if (b4Schedules.length > 0) {
+        // Sinkronisasi otomatis tanggal kurikulum dari data yang ditemukan di DB
+        b4Schedules.forEach((s) => {
+          const dayNum = getScheduleDayNumber(s)
+          const sDate = getScheduleDate(s)
+          if (dayNum !== null && sDate) {
+            const existing = CURRICULUM_DAYS.find((c) => c.day === dayNum)
+            if (existing && existing.date !== sDate) {
+              existing.date = sDate
+            }
+          }
+        })
+
         const targetDateStr = getJakartaDateStr(targetDate)
+
+        // 2. Cocokkan tanggal pasti (via date, session_date, color, atau pola [YYYY-MM-DD])
         const dateMatched = b4Schedules.filter((s) => {
-          const sDate = s.date || s.session_date
-          if (sDate && String(sDate).startsWith(targetDateStr)) return true
-          const text = `${s.subject_name || ''} ${s.title || ''}`
-          return text.includes(`[${targetDateStr}]`)
+          const sDate = getScheduleDate(s)
+          return sDate === targetDateStr
         })
 
         if (dateMatched.length > 0) {
           sessions = dateMatched
         } else if (dayInfo && dayInfo.day) {
+          // 3. Cocokkan nomor hari secara strict ([Hari X], hari ke-X)
           sessions = b4Schedules.filter((s) => {
-            const title = s.subject_name || s.title || ''
-            return (
-              title.toLowerCase().includes(`[hari ${dayInfo.day}]`) ||
-              title.toLowerCase().includes(`hari ke-${dayInfo.day}`) ||
-              title.toLowerCase().includes(`hari ${dayInfo.day}`)
-            )
+            const explicitDay = getScheduleDayNumber(s)
+            return explicitDay === dayInfo.day
           })
         }
 
         if (sessions.length === 0) {
+          // 4. Fallback ke nama hari hanya jika jadwal tidak memiliki tanggal spesifik
           const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
           const currentDayName = dayNames[new Date(targetDate).getDay()]
-          sessions = b4Schedules.filter((s) => (s.day || '').toLowerCase() === currentDayName.toLowerCase())
+          sessions = b4Schedules.filter((s) => {
+            const sDate = getScheduleDate(s)
+            if (sDate) return false
+            return (s.day || '').toLowerCase() === currentDayName.toLowerCase()
+          })
         }
+
+        // Urutkan sesi secara kronologis berdasarkan jam mulai
+        sessions.sort((a, b) => String(a.start_time || '').localeCompare(String(b.start_time || '')))
       }
     }
   } catch (e) {
@@ -473,7 +571,10 @@ function formatSessionsText(sessions, dayInfo) {
     text += `▫️ Sesi pembelajaran berlangsung sesuai kurikulum *${dayInfo?.stage || 'Pusdiklat'}*.\n\n`
   } else {
     sessions.forEach((s, idx) => {
-      let cleanTitle = (s.subject_name || s.title || 'Mata Diklat').replace(/\[Hari\s+\d+\]\s*/i, '').trim()
+      let cleanTitle = (s.subject_name || s.title || 'Mata Diklat')
+        .replace(/\[Hari\s*\d+\]\s*/gi, '')
+        .replace(/\[Batch\s*4\]\s*/gi, '')
+        .trim()
       const timeStr = s.start_time && s.end_time
         ? `${s.start_time.slice(0, 5)} - ${s.end_time.slice(0, 5)} WIB`
         : s.time_slot || '08:00 WIB'
@@ -576,9 +677,24 @@ function formatZoomAccessSection() {
 }
 
 async function generateScheduleMessage(supabase, date = new Date(), options = {}) {
-  const dayInfo = getDiklatDayInfo(date)
+  let dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
   const { isMorningCron = false } = options
+
+  // Ambil Jadwal Sesi dari Database terlebih dahulu
+  const sessions = await getSessionsForDate(supabase, date, dayInfo)
+
+  // Jika dayInfo.day belum terdefinisi namun ada sesi di DB, deteksi nomor hari dari sesi
+  if (!dayInfo.day && sessions.length > 0) {
+    const detectedDay = getScheduleDayNumber(sessions[0])
+    if (detectedDay) {
+      let stage = 'Tahap 1 • MOOC'
+      if (detectedDay > 5 && detectedDay <= 15) stage = 'Tahap 2 • TMO'
+      else if (detectedDay > 15 && detectedDay <= 30) stage = 'Tahap 3 • Lab Prakom'
+      else if (detectedDay > 30) stage = 'Tahap 4 • Seminar'
+      dayInfo = { ...dayInfo, day: detectedDay, stage }
+    }
+  }
 
   let msg = isMorningCron
     ? `🔔 *PENGINGAT KELAS PAGI & JADWAL PEMBELAJARAN*\n`
@@ -604,9 +720,10 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
     }
   }
 
-  if (dayInfo.isWeekend || !dayInfo.day) {
+  // Jika Akhir Pekan (Sabtu/Minggu) dan memang tidak ada sesi
+  if (dayInfo.isWeekend && sessions.length === 0) {
     msg += `☕ *Agenda Hari Ini:*\n`
-    msg += `Hari libur pembelajaran tatap muka. Selamat beristirahat bersama keluarga! 🌿\n\n`
+    msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga! 🌿\n\n`
     msg += `🌐 *Portal Web Kelas & Materi:*\n`
     msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
     msg += `────────────────────────\n`
@@ -618,8 +735,20 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
     return { text: msg, count: 0, dayInfo }
   }
 
-  // Ambil Jadwal Sesi dari Database
-  const sessions = await getSessionsForDate(supabase, date, dayInfo)
+  // Jika hari kerja tetapi tidak ada jadwal sesi dan bukan hari diklat
+  if (!dayInfo.day && sessions.length === 0) {
+    msg += `☕ *Agenda Hari Ini:*\n`
+    msg += `Tidak ada agenda perkuliahan tatap muka terjadwal hari ini. Selamat melanjutkan tugas mandiri! 🌿\n\n`
+    msg += `🌐 *Portal Web Kelas & Materi:*\n`
+    msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+    msg += `────────────────────────\n`
+    msg += `💡 *Perintah Cepat:*\n`
+    msg += `• *!jadwal besok* : Jadwal pembelajaran esok hari\n`
+    msg += `• *!tugas* : Cek status tugas mandiri aktif\n`
+    msg += `• *!pengumuman* : Cek info penting mendesak\n`
+    msg += `• *!help* : Daftar panduan perintah`
+    return { text: msg, count: 0, dayInfo }
+  }
 
   msg += `📚 *Mata Diklat Hari Ini:*\n`
   msg += formatSessionsText(sessions, dayInfo)
@@ -648,8 +777,20 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
 
     const tomorrow = new Date(date)
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const tomorrowInfo = getDiklatDayInfo(tomorrow)
+    let tomorrowInfo = getDiklatDayInfo(tomorrow)
     const tomorrowFormatted = formatIndonesianDate(tomorrow)
+    const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
+
+    if (!tomorrowInfo.day && tomorrowSessions.length > 0) {
+      const detectedDay = getScheduleDayNumber(tomorrowSessions[0])
+      if (detectedDay) {
+        let stage = 'Tahap 1 • MOOC'
+        if (detectedDay > 5 && detectedDay <= 15) stage = 'Tahap 2 • TMO'
+        else if (detectedDay > 15 && detectedDay <= 30) stage = 'Tahap 3 • Lab Prakom'
+        else if (detectedDay > 30) stage = 'Tahap 4 • Seminar'
+        tomorrowInfo = { ...tomorrowInfo, day: detectedDay, stage }
+      }
+    }
 
     let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI*\n`
     msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
@@ -671,7 +812,13 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
     }
     msg += `\n────────────────────────\n\n`
 
-    if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
+    if (tomorrowSessions.length > 0) {
+      msg += `📚 *Mata Diklat Besok:*\n`
+      msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
+
+      msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n`
+      msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n\n`
+    } else if (tomorrowInfo.isWeekend) {
       msg += `☕ *Agenda Besok:*\n`
       msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga! 🌿\n\n`
 
@@ -685,12 +832,8 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
         msg += formatSessionsText(nextSessions, nextActive.dayInfo)
       }
     } else {
-      const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
-      msg += `📚 *Mata Diklat Besok:*\n`
-      msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
-
-      msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n`
-      msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n\n`
+      msg += `☕ *Agenda Besok:*\n`
+      msg += `Tidak ada agenda tatap muka terjadwal esok hari. Selamat beristirahat atau belajar mandiri! 🌿\n\n`
     }
 
     msg += formatZoomAccessSection()
@@ -768,8 +911,20 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   // 1. DIKLAT LANJUT BESOK (JADWAL ESOK HARI)
   const tomorrow = new Date(date)
   tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowInfo = getDiklatDayInfo(tomorrow)
+  let tomorrowInfo = getDiklatDayInfo(tomorrow)
   const tomorrowFormatted = formatIndonesianDate(tomorrow)
+  const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
+
+  if (!tomorrowInfo.day && tomorrowSessions.length > 0) {
+    const detectedDay = getScheduleDayNumber(tomorrowSessions[0])
+    if (detectedDay) {
+      let stage = 'Tahap 1 • MOOC'
+      if (detectedDay > 5 && detectedDay <= 15) stage = 'Tahap 2 • TMO'
+      else if (detectedDay > 15 && detectedDay <= 30) stage = 'Tahap 3 • Lab Prakom'
+      else if (detectedDay > 30) stage = 'Tahap 4 • Seminar'
+      tomorrowInfo = { ...tomorrowInfo, day: detectedDay, stage }
+    }
+  }
 
   msg += `⏩ *DIKLAT BERLANJUT BESOK:*\n`
   msg += `📅 *Tanggal:* ${tomorrowFormatted}`
@@ -779,7 +934,11 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   }
   msg += `\n────────────────────────\n\n`
 
-  if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
+  if (tomorrowSessions.length > 0) {
+    msg += `📚 *Mata Diklat Besok:*\n`
+    msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
+    msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n\n`
+  } else if (tomorrowInfo.isWeekend) {
     msg += `☕ *Agenda Besok:*\n`
     msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga! 🌿\n\n`
 
@@ -789,10 +948,8 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
       msg += `📅 *${formatIndonesianDate(nextActive.date)}* | Hari ke-${nextActive.dayInfo.day} (${nextActive.dayInfo.stage})\n\n`
     }
   } else {
-    const tomorrowSessions = await getSessionsForDate(supabase, tomorrow, tomorrowInfo)
-    msg += `📚 *Mata Diklat Besok:*\n`
-    msg += formatSessionsText(tomorrowSessions, tomorrowInfo)
-    msg += `⏰ *Waktu Siaga Besok:* Pukul *07:40 WIB*\n\n`
+    msg += `☕ *Agenda Besok:*\n`
+    msg += `Tidak ada agenda tatap muka terjadwal esok hari. Selamat beristirahat atau belajar mandiri! 🌿\n\n`
   }
 
   // 2. TUGAS MANDIRI AKTIF (HANYA YANG BELUM SELESAI & MASIH ADA DEADLINE)
@@ -1161,6 +1318,9 @@ module.exports = {
   getTaskDeadlineTimestamp,
   isPastAfternoonCutoff,
   getNextActiveDiklatDay,
+  syncCurriculumWithDatabase,
+  getScheduleDate,
+  getScheduleDayNumber,
   CURRICULUM_DAYS,
   ZOOM_CONFIG,
 }

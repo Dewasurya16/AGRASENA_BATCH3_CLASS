@@ -144,7 +144,7 @@ export default async function Batch4Page() {
         {announcements.length > 0 && <UrgentAnnouncement announcements={announcements} />}
 
         {/* 3. Live Session Banner & Quick Schedule Khusus Batch 4 (Gambar 2 Layout) */}
-        <LiveSessionBannerB4 todaySchedules={schedules} todayTasks={tasks} />
+        <LiveSessionBannerB4 todaySchedules={schedules} todayTasks={tasks} currentDayNumber={summary.currentDayNumber} />
 
         {/* 4. Hero Banner Batch 4 (Emerald Theme) */}
         <TwinkleHeroB4 />

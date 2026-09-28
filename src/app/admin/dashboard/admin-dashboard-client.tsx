@@ -234,16 +234,21 @@ function PaginationControls({
 
 export function getItemBatch(item: any): "batch-3" | "batch-4" {
   if (!item) return "batch-3"
-  if (item.batch === 4 || item.batch === "batch-4") return "batch-4"
-  if (item.batch === 3 || item.batch === "batch-3") return "batch-3"
-  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
+  if (item.batch === 4 || item.batch === "batch-4" || item.batch === "4") return "batch-4"
+  if (item.batch === 3 || item.batch === "batch-3" || item.batch === "3") return "batch-3"
+  const text = `${item.subject_name || ""} ${item.title || ""} ${item.description || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
   if (
     text.includes("batch 4") ||
     text.includes("batch-4") ||
-    text.includes("b4-") ||
+    text.includes("agrasena 4") ||
+    text.includes("agrasena batch 4") ||
     text.includes("angkatan 06") ||
+    text.includes("angkatan 6") ||
+    text.includes("angkatan 4") ||
+    text.includes("angkatan iv") ||
     text.includes("84420264444") ||
-    text.includes("prakom-batch4")
+    text.includes("prakom-batch4") ||
+    (typeof item.id === "string" && (item.id.startsWith("b4-") || item.id.includes("batch4")))
   ) {
     return "batch-4"
   }
@@ -1944,6 +1949,18 @@ export function AdminDashboardClient({
     setIsLoading(true)
     try {
       const formData = new FormData(e.currentTarget)
+      const batchSelection = formData.get("batch_selection") as string
+      let currentTitle = ((formData.get("title") as string) || "").trim()
+
+      if (batchSelection === "batch-4") {
+        if (!currentTitle.toLowerCase().includes("batch 4")) {
+          currentTitle = `[Batch 4] ${currentTitle}`
+        }
+      } else if (batchSelection === "batch-3") {
+        currentTitle = currentTitle.replace(/^\[Batch\s*4\]\s*/i, "").trim()
+      }
+      formData.set("title", currentTitle)
+
       const res = await updateTask(formData)
 
       if (res?.error) {
@@ -6061,6 +6078,20 @@ export function AdminDashboardClient({
         >
           <form onSubmit={handleUpdateTaskSubmit} className="space-y-4 pt-2">
             <input type="hidden" name="id" value={editingTask.id} />
+
+            {/* Batch Selector */}
+            <div className="space-y-1.5 rounded-[10px] bg-slate-50 dark:bg-[#161B26] p-3 border border-slate-200 dark:border-[#2A3550]">
+              <label className="text-xs font-black text-slate-900 dark:text-slate-100">Target Angkatan Penugasan *</label>
+              <select
+                name="batch_selection"
+                defaultValue={getItemBatch(editingTask)}
+                className="h-9 w-full rounded-[8px] border border-slate-200 dark:border-[#2A3550] bg-white dark:bg-[#1C2433] px-3 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="batch-3">Agrasena Batch 3 (Web Utama)</option>
+                <option value="batch-4">Agrasena Batch 4 (Web Batch 4)</option>
+              </select>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-black text-slate-900 dark:text-slate-100">Judul Penugasan *</label>
               <Input

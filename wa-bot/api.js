@@ -238,11 +238,13 @@ function createApiServer({
       setTargetJid(targetGroupJid)
       // Simpan ke Supabase jika tersedia
       try {
+        const { data: cur } = await supabase.from('wa_bot_config').select('value').eq('key', 'general_settings').single()
+        const mergedVal = { ...(cur?.value || {}), target_group_jid: targetGroupJid }
         await supabase.from('wa_bot_config').upsert({
           key: 'general_settings',
-          value: { target_group_jid: targetGroupJid },
+          value: mergedVal,
           updated_at: new Date().toISOString(),
-        })
+        }, { onConflict: 'key' })
       } catch (e) {
         console.warn('[API Config] Catatan: Gagal upsert konfigurasi ke Supabase:', e.message)
       }

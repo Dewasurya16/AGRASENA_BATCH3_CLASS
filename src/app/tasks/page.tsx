@@ -3,6 +3,7 @@ import { PublicShell } from "@/components/public/public-shell"
 import { HeroCountdown } from "@/components/public/hero-countdown"
 import { TaskBoard, TaskRecord } from "@/components/public/task-board"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
+import { getItemBatch } from "@/lib/roadmap-utils"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
@@ -34,13 +35,8 @@ export default async function TasksPage() {
     }
   }
 
-  // Filter out any tasks specifically assigned to Batch 4
-  const batch3Tasks = allTasks.filter((t: any) =>
-    !t.title?.toLowerCase().includes("batch 4") &&
-    !t.subject_name?.toLowerCase().includes("batch 4") &&
-    t.batch !== 4 &&
-    t.batch !== "batch-4"
-  )
+  // Filter tasks specifically for Batch 3 using unified batch detector
+  const batch3Tasks = allTasks.filter((t: any) => getItemBatch(t) === "batch-3")
 
   const now = new Date().getTime()
   const activeTasks = batch3Tasks.filter((t) => t.status !== "completed")

@@ -285,19 +285,21 @@ export function parseTimeToMins(timeStr?: string | null): number {
 
 export function getItemBatch(item: any): "batch-3" | "batch-4" {
   if (!item) return "batch-3"
-  if (item.batch === 4 || item.batch === "batch-4") return "batch-4"
-  if (item.batch === 3 || item.batch === "batch-3") return "batch-3"
-  const text = `${item.subject_name || ""} ${item.title || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.id || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
+  if (item.batch === 4 || item.batch === "batch-4" || item.batch === "4") return "batch-4"
+  if (item.batch === 3 || item.batch === "batch-3" || item.batch === "3") return "batch-3"
+  const text = `${item.subject_name || ""} ${item.title || ""} ${item.description || ""} ${item.room || ""} ${item.meeting_link || ""} ${item.author || ""} ${item.content || ""}`.toLowerCase()
   if (
     text.includes("batch 4") ||
     text.includes("batch-4") ||
-    text.includes("b4-") ||
     text.includes("agrasena 4") ||
     text.includes("agrasena batch 4") ||
     text.includes("angkatan 06") ||
     text.includes("angkatan 6") ||
+    text.includes("angkatan 4") ||
+    text.includes("angkatan iv") ||
     text.includes("84420264444") ||
-    text.includes("prakom-batch4")
+    text.includes("prakom-batch4") ||
+    (typeof item.id === "string" && (item.id.startsWith("b4-") || item.id.includes("batch4")))
   ) {
     return "batch-4"
   }

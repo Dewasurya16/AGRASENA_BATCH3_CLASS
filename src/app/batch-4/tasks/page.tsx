@@ -4,6 +4,7 @@ import { HeroCountdown } from "@/components/public/hero-countdown"
 import { TaskBoard, TaskRecord } from "@/components/public/task-board"
 import { DEFAULT_BATCH4_TASKS } from "@/data/batch4/tasks-data"
 import { getTaskDeadlineTimestamp } from "@/lib/utils"
+import { getItemBatch } from "@/lib/roadmap-utils"
 import Link from "next/link"
 import { ArrowRight, Sparkles, BookOpen } from "lucide-react"
 
@@ -30,13 +31,8 @@ export default async function Batch4TasksPage() {
         .order("due_date", { ascending: true })
 
       if (data && data.length > 0) {
-        // Filter tasks explicitly for Batch 4
-        dbTasks = data.filter((t: any) =>
-          (t.title && t.title.toLowerCase().includes("batch 4")) ||
-          (t.subject_name && t.subject_name.toLowerCase().includes("batch 4")) ||
-          t.batch === 4 ||
-          t.batch === "batch-4"
-        )
+        // Filter tasks explicitly for Batch 4 using unified batch detector
+        dbTasks = data.filter((t: any) => getItemBatch(t) === "batch-4")
       }
     } catch {
       // Fallback to default Batch 4 tasks

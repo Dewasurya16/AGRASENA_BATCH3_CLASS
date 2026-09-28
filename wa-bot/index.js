@@ -45,6 +45,7 @@ const {
   searchMaterialsMessage,
   generateAnnouncementMessage,
   formatIndonesianDate,
+  syncCurriculumWithDatabase,
   ZOOM_CONFIG,
 } = require('./scheduler')
 const { askAiAssistant } = require('./ai')
@@ -59,6 +60,9 @@ let supabase = null
 if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-supabase-project')) {
   supabase = createClient(supabaseUrl, supabaseKey)
   console.log('[Database] Supabase client berhasil diinisialisasi:', supabaseUrl)
+  syncCurriculumWithDatabase(supabase).catch((err) => {
+    console.warn('[Database] Peringatan sinkronisasi kalender:', err.message)
+  })
 } else {
   console.warn('[Database] Peringatan: Supabase URL/Key belum dikonfigurasi lengkap di .env!')
 }
@@ -205,7 +209,7 @@ const chatCommandCooldowns = new Map()
  * Handle Pesan Perintah Interaktif di Grup atau DM
  */
 async function handleIncomingMessage(m) {
-  if (!m.messages || !m.messages[0]) return
+  if (!m.messages || !m.messages.length) return
 
   // Simpan riwayat pesan terbaru untuk keperluan retry validasi Baileys
   for (const item of m.messages) {
@@ -218,16 +222,37 @@ async function handleIncomingMessage(m) {
     }
   }
 
-  const msg = m.messages[0]
-  if (msg.key.fromMe) return // Abaikan pesan yang dikirim oleh bot sendiri
+  // Cari pesan yang memiliki isi teks (termasuk ephemeral, view once, dan caption media)
+  let msg = null
+  let body = ''
+
+  for (const item of m.messages) {
+    if (!item.message) continue
+
+    const rawMsg =
+      item.message?.ephemeralMessage?.message ||
+      item.message?.viewOnceMessage?.message ||
+      item.message?.viewOnceMessageV2?.message ||
+      item.message?.documentWithCaptionMessage?.message ||
+      item.message
+
+    const text =
+      rawMsg?.conversation ||
+      rawMsg?.extendedTextMessage?.text ||
+      rawMsg?.imageMessage?.caption ||
+      rawMsg?.videoMessage?.caption ||
+      ''
+
+    if (text) {
+      msg = item
+      body = text
+      break
+    }
+  }
+
+  if (!msg || !body) return
 
   const from = msg.key.remoteJid
-  const body =
-    msg.message?.conversation ||
-    msg.message?.extendedTextMessage?.text ||
-    msg.message?.imageMessage?.caption ||
-    ''
-
   const cleanBody = body.trim()
   if (!cleanBody.startsWith('!')) return // Hanya proses teks yang diawali tanda seru
 
@@ -242,7 +267,7 @@ async function handleIncomingMessage(m) {
 
   const command = cleanBody.toLowerCase().split(/\s+/)[0]
   const args = cleanBody.slice(command.length).trim()
-  console.log(`[Command Masuk] Dari: ${from} | Teks: "${cleanBody}"`)
+  console.log(`[Command Masuk] Dari: ${from} | Teks: "${cleanBody}" | fromMe: ${Boolean(msg.key.fromMe)}`)
 
   try {
     // 1. Perintah !id / !jid (Mengetahui ID Obrolan ini secara instan)
@@ -291,6 +316,8 @@ async function handleIncomingMessage(m) {
             value: val,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'key' })
+          await syncStatusToSupabase(true)
+          console.log(`[Config] Target Group JID berhasil diperbarui ke: ${from}`)
         } catch (e) {
           console.error('[Config Save Error]', e)
         }

@@ -87,9 +87,10 @@ export async function POST(req: NextRequest) {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
     const calendarTodayStr = `${dayNames[dayOfWeekIdx]}, ${wibDate.getDate()} ${monthNames[wibDate.getMonth()]} ${wibDate.getFullYear()}`
 
-    const roadmapData = getAutoRoadmapData(currentDayNumber, rawSchedules)
+    const isBatch4 = batch === "batch-4"
+    const roadmapData = getAutoRoadmapData(currentDayNumber, rawSchedules, isBatch4 ? "batch-4" : "batch-3")
     const todayDetail = roadmapData.days.find((d) => d.dayNumber === currentDayNumber) || roadmapData.days[0]
-    const nextDiklatDay = roadmapData.days.find((d) => d.dayNumber === 6) || roadmapData.days[5] || todayDetail
+    const nextDiklatDay = roadmapData.days.find((d) => d.dayNumber === (currentDayNumber < 35 ? currentDayNumber + 1 : 35)) || todayDetail
 
     const all35DaysScheduleText = roadmapData.days
       .map((d) => {
@@ -109,7 +110,6 @@ export async function POST(req: NextRequest) {
       .join("\n")
 
     // 3. System Prompt with Complete Ground Truth & General Knowledge Capabilities
-    const isBatch4 = batch === "batch-4"
     const systemPrompt = `Anda adalah "AI Widyaiswara & Copilot Prakom 625", asisten AI pintar, responsif, berwawasan luas, dan terhubung langsung secara real-time dengan seluruh database & fitur portal Diklat Fungsional Pranata Komputer (${isBatch4 ? "Batch 4" : "Batch 3"}) Kejaksaan RI X Agrasena.
 
 PROFIL PENGGUNA:
@@ -120,18 +120,16 @@ PROFIL PENGGUNA:
 WAKTU & KALENDER REAL-TIME SAAT INI (WIB):
 - Tanggal Kalender Nyata Hari Ini: ${calendarTodayStr} (Hari ${dayNames[dayOfWeekIdx]})
 - Status Jadwal Hari Ini: ${isWeekend ? `LIBUR AKHIR PEKAN (${dayNames[dayOfWeekIdx]}) — TIDAK ADA PERKULIAHAN / SESI ZOOM HARI INI!` : `HARI KERJA DIKLAT AKTIF (${todayDetail.stageName})`}
-- Status Jadwal Besok: ${isSaturday ? "LIBUR AKHIR PEKAN (Hari Minggu) — TIDAK ADA SESI / PERKULIAHAN" : isSunday ? `Hari ke-6 (Senin, 31 Agu 2026) — Tahap 2 • TMO Dimulai` : `Hari ke-${currentDayNumber + 1}`}
+- Status Jadwal Besok: ${isSaturday ? "LIBUR AKHIR PEKAN (Hari Minggu) — TIDAK ADA SESI / PERKULIAHAN" : isSunday ? `Hari ke-${nextDiklatDay.dayNumber} (${nextDiklatDay.dayOfWeek}, ${nextDiklatDay.dateStr}) — ${nextDiklatDay.stageName}` : `Hari ke-${Math.min(35, currentDayNumber + 1)}`}
 - Sesi Perkuliahan Mendatang Terdekat: Hari ke-${nextDiklatDay.dayNumber} (${nextDiklatDay.dayOfWeek}, ${nextDiklatDay.dateStr} — ${nextDiklatDay.stageName})
-  * 09:30 – 10:15 WIB: Building Learning Commitment (Tiyar Tunjungsari, S.Kom., M.T.I.)
-  * 13:00 – 13:45 WIB: PRE TEST (Pusdiklat BPS)
 - Jam Belajar Resmi Diklat: 08:00 - 15:30 WIB (Hanya pada hari kerja: Senin s.d. Jumat)
 
 ATURAN KRITIS MENGENAI JADWAL HARI INI & BESOK (SANGAT PENTING):
 1. JIKA HARI INI SABTU ATAU MINGGU:
    - Jika pengguna bertanya: "hari ini ada jadwal ga?", "hari ini ada ga?", "jadwal hari ini apa?", "hari ini kuliah ga?", "besok ada jadwal ga?":
      * WAJIB MENJAWAB DENGAN JELAS & TEGAS: "Hari ini (${dayNames[dayOfWeekIdx]}, ${wibDate.getDate()} ${monthNames[wibDate.getMonth()]} ${wibDate.getFullYear()}) **TIDAK ADA JADWAL PERKULIAHAN** karena merupakan **HARI LIBUR AKHIR PEKAN**."
-     * Jelaskan bahwa besok (${isSaturday ? "hari Minggu juga masih libur" : "hari Senin perkuliahan dimulai kembali"}), dan sesi perkuliahan aktif baru akan dimulai pada **${isSaturday ? "LUSA (Senin, 31 Agustus 2026)" : "BESOK (Senin, 31 Agustus 2026)"}** untuk **Hari ke-6 (Tahap 2 • TMO)**.
-     * DILARANG KERAS mengatakan bahwa hari ini adalah hari Senin atau hari ini ada jadwal aktif!
+     * Jelaskan bahwa besok (${isSaturday ? "hari Minggu juga masih libur" : "perkuliahan dimulai kembali"}), dan sesi perkuliahan aktif berlanjut pada **${nextDiklatDay.dayOfWeek}, ${nextDiklatDay.dateStr}** untuk **Hari ke-${nextDiklatDay.dayNumber} (${nextDiklatDay.stageName})**.
+     * DILARANG KERAS mengatakan bahwa hari ini ada jadwal aktif jika akhir pekan!
 
 PETA FITUR & HALAMAN PORTAL WEB KELAS:
 1. Pustaka Modul PDF (120 JP): Menu ${isBatch4 ? "/batch-4/materials" : "/materials"} (bisa baca modul & unduh rangkuman AI)
