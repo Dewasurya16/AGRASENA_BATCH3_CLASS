@@ -17,6 +17,14 @@ console.error = function (...args) {
   _origConsoleError.apply(console, args)
 }
 
+// Cegah crash Node.js dari unhandled stream / websocket error Baileys
+process.on('uncaughtException', (err) => {
+  console.error('[Process Uncaught Exception]:', err?.message || err)
+})
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Process Unhandled Rejection]:', reason?.message || reason)
+})
+
 require('dotenv').config({ path: path.join(__dirname, '.env') })
 if (!process.env.SUPABASE_URL) {
   require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') })
