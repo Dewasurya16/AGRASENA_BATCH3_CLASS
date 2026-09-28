@@ -76,7 +76,7 @@ export default async function Batch4TasksPage() {
         </div>
 
         {/* Hero Countdown Target Batch 4 */}
-        <HeroCountdown targetTask={closestTask} />
+        <HeroCountdown targetTask={closestTask} batch="batch-4" />
 
         {/* Task Board Component */}
         <TaskBoard tasks={allBatch4Tasks} />

@@ -70,7 +70,7 @@ export default async function TasksPage() {
           </Link>
         </div>
 
-        <HeroCountdown targetTask={closestTask} />
+        <HeroCountdown targetTask={closestTask} batch="batch-3" />
         <TaskBoard tasks={batch3Tasks} />
       </div>
     </PublicShell>
