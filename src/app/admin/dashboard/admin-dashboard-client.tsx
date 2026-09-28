@@ -1705,7 +1705,14 @@ export function AdminDashboardClient({
           }),
         })
 
-        const data = await res.json()
+        const contentType = res.headers.get("content-type") || ""
+        let data: any = null
+        if (contentType.includes("application/json")) {
+          data = await res.json()
+        } else {
+          const rawText = await res.text()
+          throw new Error(`Respon server bukan JSON (${res.status}): ${rawText.slice(0, 100)}`)
+        }
         if (data.success) {
           setUploadProgressPercent(100)
           showFeedback("success", data.message || "Modul PDF berhasil diunggah!")

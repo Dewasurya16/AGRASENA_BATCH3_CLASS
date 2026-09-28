@@ -84,9 +84,12 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/maintenance') ||
     request.nextUrl.pathname.startsWith('/api/auth') ||
     request.nextUrl.pathname.startsWith('/api/admin') ||
+    request.nextUrl.pathname.startsWith('/api/materials') ||
     request.nextUrl.pathname.startsWith('/api/roadmap-zoom') ||
     request.nextUrl.pathname.startsWith('/api/zoom-config') ||
-    request.nextUrl.pathname.startsWith('/api/wa-bot')
+    request.nextUrl.pathname.startsWith('/api/wa-bot') ||
+    request.nextUrl.pathname.startsWith('/api/reports') ||
+    request.nextUrl.pathname.startsWith('/api/discussions')
 
   let isMaintenanceActive = false
 
@@ -108,11 +111,12 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Explicit Admin Bypass handling (only active if admin explicitly requests it via ?bypass=1 or bypass cookie)
   const wantsBypass = request.nextUrl.searchParams.get('bypass') === '1'
   const wantsResetBypass = request.nextUrl.searchParams.get('bypass') === '0'
   const hasBypassCookie = !wantsResetBypass && request.cookies.get('admin_maint_bypass')?.value === '1'
-  const hasAdminBypass = hasValidAdminSession && (wantsBypass || hasBypassCookie)
+
+  // Authenticated administrators or active session holders automatically bypass maintenance
+  const hasAdminBypass = Boolean(hasValidAdminSession || isAuthenticated || hasBypassCookie)
 
   if (wantsResetBypass) {
     supabaseResponse.cookies.delete('admin_maint_bypass')
@@ -127,6 +131,17 @@ export async function updateSession(request: NextRequest) {
   // If maintenance is active
   if (isMaintenanceActive) {
     if (!hasAdminBypass && !isAdminRoute && !isExemptApiRoute && !isMaintenanceRoute) {
+      // API routes should ALWAYS return JSON, never a 307 redirect to an HTML page!
+      if (request.nextUrl.pathname.startsWith('/api')) {
+        return NextResponse.json(
+          {
+            error: "Layanan sedang dalam pemeliharaan sistem.",
+            maintenance: true,
+          },
+          { status: 503 }
+        )
+      }
+
       const url = request.nextUrl.clone()
       url.pathname = '/maintenance'
       return NextResponse.redirect(url)

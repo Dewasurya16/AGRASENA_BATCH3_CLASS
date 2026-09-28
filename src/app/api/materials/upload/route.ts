@@ -20,7 +20,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Security Gate: Only authenticated admins can upload materials
-    if (!isRequestAdminAuthenticated(req)) {
+    let isAuthed = isRequestAdminAuthenticated(req)
+    if (!isAuthed) {
+      try {
+        const supabase = await createClient()
+        const { data } = await supabase.auth.getUser()
+        if (data?.user) isAuthed = true
+      } catch {}
+    }
+
+    if (!isAuthed) {
       return NextResponse.json(
         { error: "Akses ditolak. Mengunggah modul materi memerlukan hak akses pengurus terautentikasi." },
         { status: 401 }
