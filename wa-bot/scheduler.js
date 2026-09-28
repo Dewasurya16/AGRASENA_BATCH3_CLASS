@@ -1,66 +1,142 @@
 const cron = require('node-cron')
 
 /**
- * Konfigurasi Akses Resmi Zoom Tatap Muka Online (TMO) Angkatan 3 Agrasena
+ * Konfigurasi Akses Resmi Zoom Tatap Muka Online (TMO) Angkatan 4 Agrasena
  */
 const ZOOM_CONFIG = {
-  angkatan: 3,
-  batchName: 'Agrasena Batch 3 Kejaksaan RI',
-  meetingIdDisplay: '980 1123 8540',
-  meetingId: '98011238540',
-  passcode: 'Biropeg-24',
-  joinUrl: 'https://zoom.us/j/98011238540',
-  lmsUrl: 'https://pengembangan.kejaksaan.go.id/dashboard',
-  portalUrl: 'https://agrasena-batch-3-class.vercel.app',
+  angkatan: 4,
+  batchName: 'Agrasena Batch 4 Kejaksaan RI',
+  meetingIdDisplay: process.env.ZOOM_MEETING_ID_DISPLAY || process.env.ZOOM_MEETING_ID || '',
+  meetingId: process.env.ZOOM_MEETING_ID || '',
+  passcode: process.env.ZOOM_PASSCODE || '',
+  joinUrl: process.env.ZOOM_JOIN_URL || '',
+  lmsUrl: process.env.LMS_URL || 'https://pengembangan.kejaksaan.go.id/dashboard',
+  portalUrl: process.env.PORTAL_URL || 'https://agrasena-batch-3-class.vercel.app/batch-4',
 }
 
 /**
- * Kalender Kurikulum 35 Hari Diklat Fungsional Prakom
+ * Filter & Isolasi Dataset Khusus Agrasena Batch 4 (Mengecualikan Batch 3)
  */
-const CURRICULUM_DAYS = [
-  // TAHAP 1: MOOC (Hari 1 - 5)
-  { day: 1, stage: 'Tahap 1 • MOOC', date: '2026-08-24' },
-  { day: 2, stage: 'Tahap 1 • MOOC', date: '2026-08-25' },
-  { day: 3, stage: 'Tahap 1 • MOOC', date: '2026-08-26' },
-  { day: 4, stage: 'Tahap 1 • MOOC', date: '2026-08-27' },
-  { day: 5, stage: 'Tahap 1 • MOOC', date: '2026-08-28' },
+function isBatch4Item(item) {
+  if (!item) return false
+  if (item.batch === 4 || item.batch === 'batch-4' || item.batch === '4') return true
+  if (item.batch === 3 || item.batch === 'batch-3' || item.batch === '3') return false
+  const text = `${item.subject_name || ''} ${item.title || ''} ${item.room || ''} ${item.meeting_link || ''} ${item.id || ''} ${item.author || ''} ${item.content || ''}`.toLowerCase()
+  if (
+    text.includes('batch 4') ||
+    text.includes('batch-4') ||
+    text.includes('b4-') ||
+    text.includes('agrasena 4') ||
+    text.includes('agrasena batch 4') ||
+    text.includes('angkatan 06') ||
+    text.includes('angkatan 6') ||
+    text.includes('angkatan iv') ||
+    text.includes('angkatan 4') ||
+    text.includes('prakom-batch4')
+  ) {
+    return true
+  }
+  if (
+    text.includes('batch 3') ||
+    text.includes('batch-3') ||
+    text.includes('angkatan 5') ||
+    text.includes('kelas 6') ||
+    text.includes('sobat prakom 625')
+  ) {
+    return false
+  }
+  return false
+}
 
-  // TAHAP 2: TMO (Hari 6 - 15)
-  { day: 6, stage: 'Tahap 2 • TMO', date: '2026-08-31' },
-  { day: 7, stage: 'Tahap 2 • TMO', date: '2026-09-01' },
-  { day: 8, stage: 'Tahap 2 • TMO', date: '2026-09-02' },
-  { day: 9, stage: 'Tahap 2 • TMO', date: '2026-09-03' },
-  { day: 10, stage: 'Tahap 2 • TMO', date: '2026-09-04' },
-  { day: 11, stage: 'Tahap 2 • TMO', date: '2026-09-07' },
-  { day: 12, stage: 'Tahap 2 • TMO', date: '2026-09-08' },
-  { day: 13, stage: 'Tahap 2 • TMO', date: '2026-09-09' },
-  { day: 14, stage: 'Tahap 2 • TMO', date: '2026-09-10' },
-  { day: 15, stage: 'Tahap 2 • TMO', date: '2026-09-11' },
+function isBatch4Announcement(a) {
+  if (!a) return false
+  if (a.batch === 4 || a.batch === 'batch-4' || a.batch === '4') return true
+  if (a.batch === 3 || a.batch === 'batch-3' || a.batch === '3') return false
+  const text = `${a.title || ''} ${a.content || ''} ${a.author || ''}`.toLowerCase()
+  if (
+    text.includes('batch 4') ||
+    text.includes('batch-4') ||
+    text.includes('angkatan 4') ||
+    text.includes('angkatan iv')
+  ) {
+    return true
+  }
+  if (
+    text.includes('batch 3') ||
+    text.includes('batch-3') ||
+    text.includes('angkatan 5') ||
+    text.includes('kelas 6') ||
+    text.includes('sobat prakom 625')
+  ) {
+    return false
+  }
+  if (a.batch === 'all' || text.includes('semua batch') || text.includes('seluruh peserta')) {
+    return true
+  }
+  return false
+}
 
-  // TAHAP 3: Lab Prakom (Hari 16 - 30)
-  { day: 16, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-14' },
-  { day: 17, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-15' },
-  { day: 18, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-16' },
-  { day: 19, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-17' },
-  { day: 20, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-18' },
-  { day: 21, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-21' },
-  { day: 22, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-22' },
-  { day: 23, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-23' },
-  { day: 24, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-24' },
-  { day: 25, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-25' },
-  { day: 26, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-28' },
-  { day: 27, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-29' },
-  { day: 28, stage: 'Tahap 3 • Lab Prakom', date: '2026-09-30' },
-  { day: 29, stage: 'Tahap 3 • Lab Prakom', date: '2026-10-01' },
-  { day: 30, stage: 'Tahap 3 • Lab Prakom', date: '2026-10-02' },
+function isBatch4Task(t) {
+  if (!t) return false
+  if (t.batch === 4 || t.batch === 'batch-4' || t.batch === '4') return true
+  if (t.batch === 3 || t.batch === 'batch-3' || t.batch === '3') return false
+  const text = `${t.title || ''} ${t.subject_name || ''} ${t.description || ''}`.toLowerCase()
+  if (
+    text.includes('batch 4') ||
+    text.includes('batch-4') ||
+    text.includes('b4-') ||
+    text.includes('angkatan 4') ||
+    text.includes('angkatan iv')
+  ) {
+    return true
+  }
+  if (text.includes('batch 3') || text.includes('batch-3')) {
+    return false
+  }
+  return false
+}
 
-  // TAHAP 4: Seminar (Hari 31 - 35)
-  { day: 31, stage: 'Tahap 4 • Seminar', date: '2026-10-05' },
-  { day: 32, stage: 'Tahap 4 • Seminar', date: '2026-10-06' },
-  { day: 33, stage: 'Tahap 4 • Seminar', date: '2026-10-07' },
-  { day: 34, stage: 'Tahap 4 • Seminar', date: '2026-10-08' },
-  { day: 35, stage: 'Tahap 4 • Seminar', date: '2026-10-09' },
-]
+function isBatch4Material(m) {
+  if (!m) return false
+  if (m.batch === 4 || m.batch === 'batch-4' || m.batch === '4') return true
+  if (m.batch === 3 || m.batch === 'batch-3' || m.batch === '3') return false
+  const text = `${m.title || ''} ${m.subject_name || ''} ${m.description || ''} ${m.category || ''}`.toLowerCase()
+  if (text.includes('batch 3') || text.includes('batch-3')) return false
+  return true
+}
+
+/**
+ * Kalender Kurikulum 35 Hari Diklat Fungsional Prakom Batch 4
+ */
+function buildCurriculumDays(startDateStr = process.env.BATCH4_START_DATE || '2026-10-05') {
+  const days = []
+  const [y, m, d] = startDateStr.split('-').map(Number)
+  const cur = new Date(y, m - 1, d, 8, 0, 0)
+  let dayNum = 1
+  while (dayNum <= 35) {
+    const dayOfWeek = cur.getDay()
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      let stage = 'Tahap 1 • MOOC'
+      if (dayNum > 5 && dayNum <= 15) stage = 'Tahap 2 • TMO'
+      else if (dayNum > 15 && dayNum <= 30) stage = 'Tahap 3 • Lab Prakom'
+      else if (dayNum > 30) stage = 'Tahap 4 • Seminar'
+
+      const yStr = cur.getFullYear()
+      const mStr = String(cur.getMonth() + 1).padStart(2, '0')
+      const dStr = String(cur.getDate()).padStart(2, '0')
+      days.push({
+        day: dayNum,
+        stage,
+        date: `${yStr}-${mStr}-${dStr}`,
+      })
+      dayNum++
+    }
+    cur.setDate(cur.getDate() + 1)
+  }
+  return days
+}
+
+const CURRICULUM_DAYS = buildCurriculumDays()
 
 /**
  * Untaian Motivasi Pagi
@@ -343,7 +419,7 @@ function parseDateQuery(query) {
 // 2. GENERATOR JADWAL PEMBELAJARAN (RAPI, MENARIK & TIDAK PANJANG)
 // =========================================================================
 
-async function getSessionsForDate(supabase, targetDate, dayInfo) {
+async function getSessionsForDate(supabase, targetDate = new Date(), dayInfo = null) {
   if (!supabase) return []
   let sessions = []
   try {
@@ -353,21 +429,40 @@ async function getSessionsForDate(supabase, targetDate, dayInfo) {
       .order('created_at', { ascending: true })
 
     if (allSchedules && allSchedules.length > 0) {
-      if (dayInfo && dayInfo.day) {
-        sessions = allSchedules.filter((s) => {
-          const title = s.subject_name || s.title || ''
-          return title.toLowerCase().includes(`[hari ${dayInfo.day}]`)
-        })
-      }
+      // 1. Isolasi: Hanya ambil data yang berelasi dengan Batch 4
+      const b4Schedules = allSchedules.filter((s) => isBatch4Item(s))
 
-      if (sessions.length === 0) {
-        const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-        const currentDayName = dayNames[new Date(targetDate).getDay()]
-        sessions = allSchedules.filter((s) => (s.day || '').toLowerCase() === currentDayName.toLowerCase())
+      if (b4Schedules.length > 0) {
+        const targetDateStr = getJakartaDateStr(targetDate)
+        const dateMatched = b4Schedules.filter((s) => {
+          const sDate = s.date || s.session_date
+          if (sDate && String(sDate).startsWith(targetDateStr)) return true
+          const text = `${s.subject_name || ''} ${s.title || ''}`
+          return text.includes(`[${targetDateStr}]`)
+        })
+
+        if (dateMatched.length > 0) {
+          sessions = dateMatched
+        } else if (dayInfo && dayInfo.day) {
+          sessions = b4Schedules.filter((s) => {
+            const title = s.subject_name || s.title || ''
+            return (
+              title.toLowerCase().includes(`[hari ${dayInfo.day}]`) ||
+              title.toLowerCase().includes(`hari ke-${dayInfo.day}`) ||
+              title.toLowerCase().includes(`hari ${dayInfo.day}`)
+            )
+          })
+        }
+
+        if (sessions.length === 0) {
+          const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+          const currentDayName = dayNames[new Date(targetDate).getDay()]
+          sessions = b4Schedules.filter((s) => (s.day || '').toLowerCase() === currentDayName.toLowerCase())
+        }
       }
     }
   } catch (e) {
-    console.error('[Scheduler Error] Gagal mengambil jadwal:', e.message)
+    console.error('[Scheduler Error] Gagal mengambil jadwal Batch 4:', e.message)
   }
   return sessions
 }
@@ -386,7 +481,11 @@ function formatSessionsText(sessions, dayInfo) {
 
       text += `*${idx + 1}. ${cleanTitle}*\n`
       text += `   ⏰ Waktu   : *${timeStr}*\n`
-      text += `   👤 Pemateri: ${lecturer}\n\n`
+      text += `   👤 Pemateri: ${lecturer}\n`
+      if (s.room || s.meeting_link) {
+        text += `   📍 Ruang   : ${s.room || s.meeting_link}\n`
+      }
+      text += `\n`
     })
   }
   return text
@@ -405,6 +504,9 @@ async function getActiveDeadlineTasks(supabase) {
 
     if (dbTasks && dbTasks.length > 0) {
       tasks = dbTasks.filter((t) => {
+        // Hanya tugas Batch 4
+        if (!isBatch4Task(t)) return false
+
         const status = (t.status || '').toLowerCase().trim()
         // Jangan tampilkan yang berstatus selesai
         if (status === 'completed' || status === 'selesai' || status === 'done') return false
@@ -415,7 +517,7 @@ async function getActiveDeadlineTasks(supabase) {
       })
     }
   } catch (e) {
-    console.error('[Scheduler Error] Gagal mengambil tugas:', e.message)
+    console.error('[Scheduler Error] Gagal mengambil tugas Batch 4:', e.message)
   }
   return tasks
 }
@@ -457,6 +559,22 @@ function formatTasksText(tasks) {
   return text
 }
 
+function formatZoomAccessSection() {
+  let text = `🎥 *Akses Ruang Virtual Zoom (Angkatan 4):*\n`
+  if (ZOOM_CONFIG.meetingId && ZOOM_CONFIG.passcode) {
+    text += `• Meeting ID : *${ZOOM_CONFIG.meetingIdDisplay || ZOOM_CONFIG.meetingId}*\n`
+    text += `• Passcode   : *${ZOOM_CONFIG.passcode}*\n`
+    if (ZOOM_CONFIG.joinUrl) {
+      text += `• Link Zoom  : ${ZOOM_CONFIG.joinUrl}\n`
+    }
+  } else {
+    text += `Tautan Zoom resmi selalu dapat diakses melalui Portal Kelas:\n`
+    text += `👉 ${ZOOM_CONFIG.portalUrl}\n`
+  }
+  text += `\n`
+  return text
+}
+
 async function generateScheduleMessage(supabase, date = new Date(), options = {}) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
@@ -465,7 +583,7 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   let msg = isMorningCron
     ? `🔔 *PENGINGAT KELAS PAGI & JADWAL PEMBELAJARAN*\n`
     : `🏛️ *JADWAL PEMBELAJARAN*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
   msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n`
   msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}\n`
@@ -488,15 +606,15 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
 
   if (dayInfo.isWeekend || !dayInfo.day) {
     msg += `☕ *Agenda Hari Ini:*\n`
-    msg += `Hari libur pembelajaran tatap muka. Selamat berakhir pekan dan beristirahat bersama keluarga! 🌿\n\n`
+    msg += `Hari libur pembelajaran tatap muka. Selamat beristirahat bersama keluarga! 🌿\n\n`
     msg += `🌐 *Portal Web Kelas & Materi:*\n`
     msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
     msg += `────────────────────────\n`
     msg += `💡 *Perintah Cepat:*\n`
-    msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
-    msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
-    msg += `• *!pengumuman* — Cek info penting mendesak\n`
-    msg += `• *!help* — Daftar panduan perintah`
+    msg += `• *!jadwal besok* : Jadwal pembelajaran esok hari\n`
+    msg += `• *!tugas* : Cek status tugas mandiri aktif\n`
+    msg += `• *!pengumuman* : Cek info penting mendesak\n`
+    msg += `• *!help* : Daftar panduan perintah`
     return { text: msg, count: 0, dayInfo }
   }
 
@@ -506,16 +624,14 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   msg += `📚 *Mata Diklat Hari Ini:*\n`
   msg += formatSessionsText(sessions, dayInfo)
 
-  msg += `🎥 *Akses Ruang Virtual Zoom:*\n`
-  msg += `Tautan Zoom resmi selalu dapat diakses melalui Portal Kelas:\n`
-  msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+  msg += formatZoomAccessSection()
 
   msg += `────────────────────────\n`
   msg += `💡 *Perintah Cepat:*\n`
-  msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
-  msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
-  msg += `• *!pengumuman* — Cek info penting mendesak\n`
-  msg += `• *!help* — Panduan bot lengkap`
+  msg += `• *!jadwal besok* : Jadwal pembelajaran esok hari\n`
+  msg += `• *!tugas* : Cek status tugas mandiri aktif\n`
+  msg += `• *!pengumuman* : Cek info penting mendesak\n`
+  msg += `• *!help* : Panduan bot lengkap`
 
   return { text: msg, count: sessions.length, dayInfo }
 }
@@ -536,7 +652,7 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
     const tomorrowFormatted = formatIndonesianDate(tomorrow)
 
     let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI*\n`
-    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
     msg += `*Kejaksaan Republik Indonesia 2026*\n`
     msg += `────────────────────────\n`
     msg += `📅 *Hari Ini:* ${todayFormatted}`
@@ -557,7 +673,7 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
 
     if (tomorrowInfo.isWeekend || !tomorrowInfo.day) {
       msg += `☕ *Agenda Besok:*\n`
-      msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat berakhir pekan bersama keluarga! 🌿\n\n`
+      msg += `Hari libur pembelajaran tatap muka (Akhir Pekan). Selamat beristirahat bersama keluarga! 🌿\n\n`
 
       const nextActive = getNextActiveDiklatDay(date)
       if (nextActive) {
@@ -577,16 +693,14 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
       msg += `📌 _Pengingat persiapan kelas: Mohon rekan-rekan bersiap di Zoom & mengisi presensi harian tepat waktu esok pagi._\n\n`
     }
 
-    msg += `🎥 *Akses Ruang Virtual Zoom:*\n`
-    msg += `Tautan Zoom resmi selalu dapat diakses melalui Portal Kelas:\n`
-    msg += `👉 ${ZOOM_CONFIG.portalUrl}\n\n`
+    msg += formatZoomAccessSection()
 
     msg += `────────────────────────\n`
     msg += `💡 *Perintah Cepat:*\n`
-    msg += `• *!jadwal hari ini* — Tetap melihat rekap sesi hari ini\n`
-    msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
-    msg += `• *!pengumuman* — Cek info penting mendesak\n`
-    msg += `• *!help* — Menu panduan lengkap`
+    msg += `• *!jadwal hari ini* : Tetap melihat rekap sesi hari ini\n`
+    msg += `• *!tugas* : Cek status tugas mandiri aktif\n`
+    msg += `• *!pengumuman* : Cek info penting mendesak\n`
+    msg += `• *!help* : Menu panduan lengkap`
 
     return { text: msg, count: 0, dayInfo: todayInfo, tomorrowInfo, isAfterCutoff: true }
   }
@@ -604,12 +718,12 @@ async function generateScheduleForQuery(supabase, query) {
   const parsed = parseDateQuery(query)
   if (!parsed.success) {
     let msg = `⚠️ *FORMAT TANGGAL BELUM SESUAI*\n`
-    msg += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+    msg += `*Diklat Prakom Batch 4 • Agrasena Kejaksaan RI*\n`
     msg += `────────────────────────\n\n`
     msg += `Silakan gunakan salah satu format berikut:\n`
-    msg += `• *!jadwal 15 Sep* atau *!jadwal 15 September*\n`
+    msg += `• *!jadwal 15 Okt* atau *!jadwal 15 Oktober*\n`
     msg += `• *!jadwal 12* (Cek jadwal Diklat Hari ke-12)\n`
-    msg += `• *!jadwal 15-09-2026* atau *!jadwal 15/9*\n`
+    msg += `• *!jadwal 15-10-2026* atau *!jadwal 15/10*\n`
     msg += `• *!jadwal besok* (Jadwal esok hari)\n\n`
     msg += `────────────────────────\n`
     msg += `💡 _Ketik *!jadwal* tanpa tanggal untuk melihat jadwal hari ini._`
@@ -636,7 +750,7 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const fullDateFormatted = formatIndonesianDate(date)
 
   let msg = `🏁 *NOTIFIKASI KELAS SELESAI & TUGAS SORE*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
   msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n`
   msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}`
@@ -687,10 +801,10 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
 
   msg += `────────────────────────\n`
   msg += `💡 *Perintah Cepat:*\n`
-  msg += `• *!jadwal besok* — Jadwal pembelajaran esok hari\n`
-  msg += `• *!tugas* — Cek status tugas mandiri aktif\n`
-  msg += `• *!pengumuman* — Cek info penting mendesak\n`
-  msg += `• *!help* — Menu panduan lengkap`
+  msg += `• *!jadwal besok* : Jadwal pembelajaran esok hari\n`
+  msg += `• *!tugas* : Cek status tugas mandiri aktif\n`
+  msg += `• *!pengumuman* : Cek info penting mendesak\n`
+  msg += `• *!help* : Menu panduan lengkap`
 
   return { text: msg, count: tasks.length, dayInfo }
 }
@@ -703,7 +817,7 @@ async function generateTaskListMessage(supabase, date = new Date()) {
   const fullDateFormatted = formatIndonesianDate(date)
 
   let msg = `📝 *STATUS TUGAS MANDIRI AKTIF*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
   msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n`
   msg += `📅 *Per Tanggal:* ${fullDateFormatted}`
@@ -718,10 +832,10 @@ async function generateTaskListMessage(supabase, date = new Date()) {
 
   msg += `────────────────────────\n`
   msg += `💡 *Perintah Cepat:*\n`
-  msg += `• *!jadwal* — Cek jadwal perkuliahan\n`
-  msg += `• *!modul* — Cari modul & materi diklat\n`
-  msg += `• *!pengumuman* — Cek info penting mendesak\n`
-  msg += `• *!help* — Menu panduan lengkap`
+  msg += `• *!jadwal* : Cek jadwal perkuliahan\n`
+  msg += `• *!modul* : Cari modul & materi diklat\n`
+  msg += `• *!pengumuman* : Cek info penting mendesak\n`
+  msg += `• *!help* : Menu panduan lengkap`
 
   return { text: msg, count: tasks.length }
 }
@@ -843,29 +957,31 @@ function generateProgressMessage() {
   const dayInfo = getDiklatDayInfo(new Date())
   const fullDateFormatted = formatIndonesianDate(new Date())
   const totalDays = 35
-  const dayNum = dayInfo.day || 14
+  const dayNum = dayInfo.day || 1
   const pct = ((dayNum / totalDays) * 100).toFixed(1)
   const barLen = 12
   const filled = Math.min(barLen, Math.max(1, Math.round((dayNum / totalDays) * barLen)))
   const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled)
   const sisa = Math.max(0, totalDays - dayNum)
 
-  let nextStageInfo = 'Tahap 3 • Lab Prakom (Mulai 14 Sep 2026)'
-  if (dayNum > 15 && dayNum <= 30) {
-    nextStageInfo = 'Tahap 4 • Seminar Proyek (Mulai 05 Okt 2026)'
+  let nextStageInfo = 'Tahap 2 • TMO (Tatap Muka Online Zoom)'
+  if (dayNum > 5 && dayNum <= 15) {
+    nextStageInfo = 'Tahap 3 • Lab Prakom (Laboratorium di Satker)'
+  } else if (dayNum > 15 && dayNum <= 30) {
+    nextStageInfo = 'Tahap 4 • Seminar Proyek Inovasi'
   } else if (dayNum > 30) {
     nextStageInfo = 'Penyusunan Laporan Akhir & Penutupan Diklat'
   }
 
   let msg = `📊 *TRACKER PROGRES DIKLAT PRAKOM*\n`
-  msg += `*Diklat Agrasena Batch 3 • Kejaksaan RI 2026*\n`
+  msg += `*Diklat Agrasena Batch 4 • Kejaksaan RI 2026*\n`
   msg += `────────────────────────\n`
   msg += `📅 *Waktu Pantau:* ${fullDateFormatted}\n`
   msg += `────────────────────────\n\n`
   msg += `📌 *Indikator Progres Diklat:*\n`
   msg += `• Hari Berjalan : *Ke-${dayNum}* dari ${totalDays} Hari Kerja\n`
   msg += `• Persentase    : [${bar}] *${pct}%*\n`
-  msg += `• Tahap Aktif   : *${dayInfo.stage || 'Tahap 2 • TMO'}*\n`
+  msg += `• Tahap Aktif   : *${dayInfo.stage || 'Tahap 1 • MOOC'}*\n`
   msg += `• Tahap Lanjutan: ${nextStageInfo}\n`
   msg += `• Sisa Pelatihan: *${sisa} hari kerja lagi*\n\n`
   msg += `────────────────────────\n`
@@ -890,12 +1006,11 @@ async function searchMaterialsMessage(supabase, query) {
         .from('materials')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(3)
-      materials = data || []
+      materials = (data || []).filter((m) => isBatch4Material(m)).slice(0, 3)
     } catch {}
 
     let msg = `📚 *PUSTAKA MODUL DIKLAT (120 JP)*\n`
-    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
     msg += `────────────────────────\n\n`
     msg += `📖 *Modul Pembelajaran Tersedia:*\n\n`
 
@@ -923,16 +1038,15 @@ async function searchMaterialsMessage(supabase, query) {
       .from('materials')
       .select('*')
       .or(`title.ilike.%${cleanQuery}%,subject_name.ilike.%${cleanQuery}%,description.ilike.%${cleanQuery}%`)
-      .limit(4)
 
-    results = data || []
+    results = (data || []).filter((m) => isBatch4Material(m)).slice(0, 4)
   } catch (err) {
     console.error('[Search Materials Error]', err.message)
   }
 
   if (results.length === 0) {
     let msg = `📚 *PENCARIAN MODUL DIKLAT*\n`
-    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
     msg += `────────────────────────\n\n`
     msg += `🔍 Kata kunci: *"${cleanQuery}"*\n\n`
     msg += `⚠️ *Modul tidak ditemukan.* Tidak ada materi yang cocok dengan kata kunci tersebut.\n\n`
@@ -943,7 +1057,7 @@ async function searchMaterialsMessage(supabase, query) {
   }
 
   let msg = `📚 *HASIL PENCARIAN MODUL DIKLAT*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
   msg += `────────────────────────\n`
   msg += `🔍 Kata kunci: *"${cleanQuery}"*\n`
   msg += `────────────────────────\n\n`
@@ -978,9 +1092,8 @@ async function generateAnnouncementMessage(supabase) {
       .eq('is_active', true)
       .eq('is_urgent', true)
       .order('created_at', { ascending: false })
-      .limit(3)
 
-    announcements = data || []
+    announcements = (data || []).filter((a) => isBatch4Announcement(a)).slice(0, 3)
   } catch (err) {
     console.error('[Announcement Fetch Error]', err.message)
   }
@@ -988,11 +1101,11 @@ async function generateAnnouncementMessage(supabase) {
   // Jika TIDAK ADA pengumuman urgent, beri tahu & arahkan langsung untuk akses web
   if (announcements.length === 0) {
     let msg = `📢 *PENGUMUMAN RESMI DIKLAT*\n`
-    msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
     msg += `*Kejaksaan Republik Indonesia 2026*\n`
     msg += `────────────────────────\n\n`
     msg += `ℹ️ *Status Pengumuman:*\n`
-    msg += `Saat ini *tidak ada pengumuman mendesak (urgent)* dari panitia atau widyaiswara.\n\n`
+    msg += `Saat ini *tidak ada pengumuman mendesak (urgent)* dari panitia atau widyaiswara untuk Batch 4.\n\n`
     msg += `Untuk melihat seluruh daftar pengumuman berkala, surat edaran panitia, dan informasi kegiatan diklat secara lengkap, silakan kunjungi website kelas:\n\n`
     msg += `🌐 *Portal Pengumuman Resmi:*\n`
     msg += `👉 ${ZOOM_CONFIG.portalUrl}/announcements\n\n`
@@ -1003,10 +1116,10 @@ async function generateAnnouncementMessage(supabase) {
 
   // Jika ADA pengumuman urgent, tampilkan rincian urgent-nya
   let msg = `🚨 *PENGUMUMAN MENDESAK (URGENT)*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
   msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n\n`
-  msg += `⚠️ *PERHATIAN:* Terdapat pengumuman penting yang memerlukan atensi segera dari seluruh rekan peserta:\n\n`
+  msg += `⚠️ *PERHATIAN:* Terdapat pengumuman penting yang memerlukan atensi segera dari seluruh rekan peserta Batch 4:\n\n`
 
   announcements.forEach((a, idx) => {
     const dateFormatted = formatIndonesianDate(a.created_at)

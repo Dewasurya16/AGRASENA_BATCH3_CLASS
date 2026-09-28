@@ -1,5 +1,5 @@
-# 🤖 Bot WhatsApp Pengingat & Notifikasi Diklat Agrasena Batch 3
-**Pusdiklat Kejaksaan RI x Pusdiklat BPS RI — Tahun 2026**
+# 🤖 Bot WhatsApp Pengingat & Notifikasi Diklat Agrasena Batch 4
+**Pusdiklat Kejaksaan RI x Pusdiklat BPS RI • Tahun 2026**
 
 Bot WhatsApp otomatis ini bertugas mengirimkan **rekap jadwal harian**, **peringatan tenggat waktu tugas mandiri**, **siaran pengumuman penting**, dan **merespons perintah peserta di grup**.
 

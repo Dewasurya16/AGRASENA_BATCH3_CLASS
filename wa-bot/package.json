@@ -1,7 +1,7 @@
 {
   "name": "agrasena-wa-bot",
   "version": "1.0.0",
-  "description": "WhatsApp Reminder & Notification Bot for Diklat Agrasena Batch 3 Kejaksaan RI",
+  "description": "WhatsApp Reminder & Notification Bot for Diklat Agrasena Batch 4 Kejaksaan RI",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,9 +13,10 @@
     "baileys",
     "kejaksaan",
     "diklat",
-    "agrasena"
+    "agrasena",
+    "batch4"
   ],
-  "author": "Agrasena Batch 3 Tech Team",
+  "author": "Agrasena Batch 4 Tech Team",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.48.0",

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# Script Aktivasi Bot WhatsApp Agrasena Batch 3 Kejaksaan RI Tahun 2026
+# Script Aktivasi Bot WhatsApp Agrasena Batch 4 Kejaksaan RI Tahun 2026
 # Kompatibel: Linux / macOS / WSL / Git Bash (Windows)
 # ==============================================================================
 
@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${CYAN}============================================================${NC}"
-echo -e "${GREEN}  🤖 AKTIVASI BOT WHATSAPP DIKLAT PRAKOM AGRASENA BATCH 3  ${NC}"
+echo -e "${GREEN}  🤖 AKTIVASI BOT WHATSAPP DIKLAT PRAKOM AGRASENA BATCH 4  ${NC}"
 echo -e "${CYAN}  Kejaksaan Republik Indonesia x Pusdiklat BPS RI (2026)    ${NC}"
 echo -e "${CYAN}============================================================${NC}"
 

@@ -1,9 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
-title WhatsApp Bot Agrasena Batch 3
+title WhatsApp Bot Agrasena Batch 4
 
 echo ============================================================
-echo   AKTIVASI BOT WHATSAPP DIKLAT PRAKOM AGRASENA BATCH 3
+echo   AKTIVASI BOT WHATSAPP DIKLAT PRAKOM AGRASENA BATCH 4
 echo   Kejaksaan Republik Indonesia x Pusdiklat BPS RI (2026)
 echo ============================================================
 echo.

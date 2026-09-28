@@ -249,7 +249,7 @@ async function handleIncomingMessage(m) {
     if (command === '!id' || command === '!jid') {
       const isGroup = from.endsWith('@g.us')
       let reply = `🆔 *IDENTITAS OBROLAN WHATSAPP*\n`
-      reply += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+      reply += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
       reply += `────────────────────────\n`
       reply += `• *Tipe Obrolan:* ${isGroup ? 'Grup WhatsApp' : 'Obrolan Pribadi (DM)'}\n`
       reply += `• *ID / JID    :* \`${from}\`\n`
@@ -297,7 +297,7 @@ async function handleIncomingMessage(m) {
       }
 
       let reply = `✅ *GRUP TARGET BERHASIL DISETEL*\n`
-      reply += `*Diklat Fungsional Prakom • Agrasena Batch 3*\n`
+      reply += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
       reply += `────────────────────────\n`
       reply += `Grup ini resmi ditetapkan sebagai penerima pengingat otomatis & siaran diklat.\n\n`
       reply += `📋 *Rincian Konfigurasi:*\n`
@@ -314,7 +314,7 @@ async function handleIncomingMessage(m) {
     // 1c. Perintah !status
     if (command === '!status') {
       let reply = `🤖 *STATUS SISTEM BOT AGRASENA*\n`
-      reply += `*Diklat Prakom Batch 3 • Kejaksaan RI 2026*\n`
+      reply += `*Diklat Prakom Batch 4 • Kejaksaan RI 2026*\n`
       reply += `────────────────────────\n`
       reply += `• *Koneksi Bot :* 🟢 Aktif & Terhubung\n`
       reply += `• *Nama Akun   :* ${botStatus.pushName || 'Bot Kelas Agrasena'}\n`
@@ -330,7 +330,7 @@ async function handleIncomingMessage(m) {
 
     // 2. Perintah !help / !menu / !petunjuk / !panduan
     if (command === '!help' || command === '!menu' || command === '!petunjuk' || command === '!panduan') {
-      let reply = `🤖 *PANDUAN BOT KELAS AGRASENA BATCH 3*\n`
+      let reply = `🤖 *PANDUAN BOT KELAS AGRASENA BATCH 4*\n`
       reply += `*Diklat Fungsional Prakom • Kejaksaan RI 2026*\n`
       reply += `────────────────────────\n`
       reply += `Berikut daftar perintah yang dapat digunakan di grup:\n\n`
@@ -341,7 +341,7 @@ async function handleIncomingMessage(m) {
       reply += `• *!besok*\n`
       reply += `  └ Jadwal perkuliahan esok hari\n`
       reply += `• *!jadwal <tgl/hari>*\n`
-      reply += `  └ Cek jadwal per tanggal (cth: *!jadwal 15 Sep* atau *!jadwal 16*)\n\n`
+      reply += `  └ Cek jadwal per tanggal (cth: *!jadwal 15 Okt* atau *!jadwal 16*)\n\n`
 
       reply += `📝 *TUGAS & PENGUMUMAN*\n`
       reply += `• *!tugas*\n`
@@ -464,9 +464,9 @@ async function handleIncomingMessage(m) {
           return
         }
 
-        const customNote = args ? args : 'Perhatian seluruh rekan peserta Diklat Agrasena Batch 3!'
+        const customNote = args ? args : 'Perhatian seluruh rekan peserta Diklat Agrasena Batch 4!'
         let tagText = `📢 *PANGGILAN SELURUH PESERTA KELAS*\n`
-        tagText += `*Diklat Prakom Batch 3 • Agrasena Kejaksaan RI*\n`
+        tagText += `*Diklat Prakom Batch 4 • Agrasena Kejaksaan RI*\n`
         tagText += `────────────────────────\n\n`
         tagText += `📝 *Pesan Panitia / Rekan:*\n`
         tagText += `"${customNote}"\n\n`
@@ -491,7 +491,7 @@ async function handleIncomingMessage(m) {
 
     // 5. Perintah !link / !zoom / !portal (Daftar Tautan Resmi Portal & Diklat)
     if (command === '!link' || command === '!zoom' || command === '!portal') {
-      let reply = `🔗 *TAUTAN RESMI DIKLAT AGRASENA BATCH 3*\n`
+      let reply = `🔗 *TAUTAN RESMI DIKLAT AGRASENA BATCH 4*\n`
       reply += `*Prakom Kejaksaan Republik Indonesia 2026*\n`
       reply += `────────────────────────\n\n`
       reply += `🌐 *Portal Utama Kelas (Zoom & Jadwal):*\n`
@@ -515,7 +515,7 @@ async function handleIncomingMessage(m) {
     // 6. Perintah !info
     if (command === '!info') {
       let reply = `🏛️ *DIKLAT FUNGSIONAL PRANATA KOMPUTER*\n`
-      reply += `*ANGKATAN III (AGRASENA) KEJAKSAAN RI 2026*\n`
+      reply += `*ANGKATAN IV (AGRASENA BATCH 4) KEJAKSAAN RI 2026*\n`
       reply += `────────────────────────\n\n`
       reply += `• *Pelatihan   :* 35 Hari Kerja (120 Jam Pelajaran)\n`
       reply += `• *Penyelenggara:* Badan Diklat Kejaksaan RI & Pusdiklat BPS RI\n`
