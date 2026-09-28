@@ -220,25 +220,142 @@ async function syncCurriculumWithDatabase(supabase) {
 }
 
 /**
- * Untaian Motivasi Pagi
+ * Koleksi Untaian Penyemangat Pagi Wibu / Anime (Agrasena Batch 4)
+ * Berisi 30 variasi berbeda agar pesan pagi selalu segar, kocak, dan tidak monoton.
  */
-const MORNING_QUOTES = [
-  'Kecakapan teknologi adalah lentera transformasi. Setiap baris ilmu yang dipelajari hari ini adalah langkah nyata memajukan SPBE Kejaksaan RI.',
-  'Ilmu tanpa integritas laksana kompas tanpa arah. Jadilah insan Prakom Adhyaksa yang cerdas, tangguh, dan berintegritas tinggi.',
-  'Transformasi digital berawal dari komitmen insan aparatur dalam memberikan pelayanan hukum yang transparan dan akuntabel.',
-  'Keberhasilan besar tersusun dari ketekunan harian. Awali pagi ini dengan rasa syukur, fokus, dan semangat menyerap ilmu dari Widyaiswara.',
-  'Teruslah mengasah keahlian. Di tangan rekan-rekan sekalian, keandalan sistem informasi Kejaksaan Agung RI dipercayakan.',
+const ANIME_MORNING_QUOTES = [
+  'Ohayou gozaimasu, Nakama Agrasena 4! ☀️ Kopi hitam +100 Mana sudah diseduh? Bangunkan kage bunshin kalian, jangan biarkan rasa kantuk menghentikan grinding EXP ilmu TI hari ini!',
+  'Panggilan darurat dari Markas Besar Adhyaksa! 🚨 Aktifkan mode Super Saiyan! Jangan biarkan koneksi internet nge-lag saat Sensei Widyaiswara mulai menjelaskan arsitektur SPBE!',
+  'Bahkan Frieren saja belajar sihir ribuan tahun tanpa mengeluh, masa kita diklat 35 hari udah pengen jadi slime? Bangkit, para calon arsitek digital Kejaksaan RI! 🧝‍♀️✨',
+  'Selamat pagi para pejuang ranking S! 🎮 Daily Quest telah aktif: Buka Zoom, pasang kemeja putih, dan isi presensi LMS sebelum kena penalti debuff dari panitia!',
+  'Ohayou sekai, Good Morning World! 🧪 Senku pernah bilang: sains dan pemrograman itu 10 miliar persen butuh ketelitian. Siapkan laptop dan mari taklukkan materi hari ini!',
+  'Bankai! Tensa Zangetsu! ⚔️ Tebas tuntas rasa mager pagi ini! Zoom sudah menunggu, jangan sampai nama kalian dipanggil pemateri pas lagi ngunyah sarapan!',
+  'Bangun wahai keturunan klan Adhyaksa! 🍥 Kumpulkan chakra di ujung jari, siapkan notepad, dan jangan lupa nyalakan webcam biar dikira murid teladan di anime shounen!',
+  'Ehe te nandayo?! Jangan tarik selimut lagi setelah alarm bunyi! 🧚 Panitia dan Widyaiswara sudah standby di lobby. Waktunya push rank pengetahuan!',
+  'Sasageyo! Sasageyo! Shinzou wo sasageyo! ✊ Persembahkan fokus dan konsentrasi terbaik kalian di layar monitor demi masa depan digitalisasi Kejaksaan yang gemilang!',
+  'Ingat kata Gojo Satoru: "Daijoubu, boku saikyou dakara" (Tenang, aku kan yang terkuat). Materi sesulit apa pun hari ini pasti bisa kalian libas. Ganbatte kudasai! 🕶️🔥',
+  'Pagi-pagi minum kopi, siang-siang makan onigiri. Presensi LMS jangan sampai lupa diisi, biar lulus diklat tanpa drama di kemudian hari! 🍙✨',
+  'Arise! Bangkit dari kasur wahai Shadow Monarch! 🗡️ Tingkatkan stat INT dan WIS kalian di kelas hari ini. Dungeon pembelajaran akan segera dibuka pukul 08:00 WIB!',
+  'Kimi no Na wa? Nama kalian sudah terdaftar di log presensi belum? 🌌 Cek LMS sekarang juga sebelum sistem mengunci gerbang kehadiran!',
+  'Di dunia isekai mungkin kita jadi petualang biasa, tapi di dunia nyata kita adalah garda terdepan teknologi Kejaksaan RI! Semangat pagi, minna-san! 🛡️💻',
+  'Tatake! Tatake! Maju terus pantang mundur! 🦅 Jangan biarkan rasa kantuk menguasai alam bawah sadar. Segera seduh ramuan penambah stamina!',
+  'Konnichiwa... eh masih Ohayou! ☕ Apakah buff sarapan pagi sudah terpasang sempurna? Jangan sampai pas sesi tanya-jawab suara perut kalian masuk ke microphone Zoom!',
+  'Pagi ini cerah secerah senyuman waifu/husbando kalian! 🌸 Jadikan itu motivasi untuk belajar tekun hari ini. Ingat, tiket konser dan figure anime butuh SK Prakom!',
+  'Rasengan fokus telah diisi penuh! 🌀 Siapkan dua layar monitor bila perlu: satu buat slide materi, satu buat buka portal kelas. Jangan buat buka tab anime dulu ya!',
+  'Level Up Loading: [████████▒▒] 80%. Sedikit lagi menuju insan Prakom paripurna. Awali pagi ini dengan bismillah dan semangat pantang menyerah!',
+  'Selamat pagi para pilar Adhyaksa! ⚔️ Tanjiro saja berlatih pernapasan air sampai pedangnya patah. Kita cukup berlatih pernapasan sabar saat menyimak materi 120 JP!',
+  'Alert: Sinyal titan mendekat! 🏃‍♂️ Cepat masuk ke Wall Maria (ruang Zoom) sebelum jam 07:40 WIB. Kenakan seragam rapi dan senyum penuh optimisme!',
+  'Okaeri... eh Ohayou! Selamat datang kembali di petualangan Agrasena 4! 🌿 Hari baru, modul baru, dan kesempatan emas meng-upgrade skill jadi programmer dewa!',
+  'Jadilah seperti Luffy yang pantang menyerah mencari One Piece! 👒 Cari ilmu sebanyak-banyaknya hari ini sampai menemukan harta karun arsitektur TI yang hakiki!',
+  'Pagi yang indah untuk tidak terkena mental breakdown oleh coding dan subnetting! ☕ Tarik napas dalam-dalam, hembuskan perlahan, dan mari mulai hari dengan senyuman!',
+  'Zetsubou (keputusasaan) bukan bagian dari kamus Agrasena 4! ⚡ Kalahkan semua rintangan materi hari ini bagaikan Saitama mengalahkan monster dalam satu pukulan!',
+  'Dunia digital Kejaksaan memanggil para ksatria terbaiknya! 🚀 Pastikan koneksi Wi-Fi stabil, headset terpasang, dan fokus 100% pada paparan pemateri!',
+  'Jangan biarkan diri kalian terkena "Tsukuyomi Tak Terbatas" alias ketiduran di depan laptop! 👁️ Tetap melek, catat poin penting, dan aktif berdiskusi di kelas!',
+  'Senyum Pagi: "Gak ada error yang gak bisa di-fix, gak ada materi yang gak bisa dipahami asal ada niat dan kopi!" Ganbatte ne, minna! ☕💻',
+  'Pagi ini kita grinding bareng satu guild Agrasena 4! 🛡️ Saling support antar rekan, yang ngerti bantu yang bingung, biar lulus bareng sampai wisuda akhir!',
+  'Detik-detik menuju kelas dimulai! ⏳ Pasang headset, rapikan rambut, dan siapkan senyum terbaik. Saatnya menunjukkan pesona Prakom berintegritas tinggi!',
 ]
 
 /**
- * Untaian Motivasi Penutup & Tugas Sore
+ * Status Buff Pagi Anime Lucu
  */
-const CLOSING_QUOTES = [
-  'Ilmu yang dipelajari baru akan berakar kuat saat diwujudkan dalam analisis dan kerja nyata. Selamat beristirahat sejenak, lalu luangkan waktu menuntaskan tugas mandiri dengan teliti dan penuh dedikasi.',
-  'Penugasan mandiri adalah cermin profesionalisme dan kesiapan rekan-rekan sebagai arsitek digital Kejaksaan RI. Kerjakan dengan sepenuh hati.',
-  'Kedisiplinan menyelesaikan tugas tepat waktu adalah cerminan integritas abdi negara. Manfaatkan waktu malam dengan bijak dan raih hasil terbaik.',
-  'Setiap tantangan teknis yang berhasil dituntaskan hari ini adalah bekal berharga bagi satuan kerja masing-masing. Tetap semangat!',
+const ANIME_MORNING_BUFFS = [
+  'Buff Aktif: Kopi Hitam Panas (+100 Mana, +50 Resilience Kantuk) ☕',
+  'Buff Aktif: Sarapan Bergizi (+200 Stamina, +50 Konsentrasi Menyimak) 🍙',
+  'Buff Aktif: Mode Senpai (+100 Charisma, +75 Kemampuan Coding) ✨',
+  'Buff Aktif: Domain Expansion: Ruang Zoom (+150 Aura Mahasiswa Teladan) 🌐',
+  'Buff Aktif: Spirit of Adhyaksa (+500 Integritas, +100 Dedikasi Pelayanan) ⚖️',
+  'Buff Aktif: Ultra Instinct (+80 Kecepatan Mengetik Catatan Materi) ⚡',
+  'Buff Aktif: Koneksi Wi-Fi Dewa (Ping 5ms, Anti-Disconnect di Tengah Kuliah) 📶',
+  'Buff Aktif: Perisai Anti-AFK (+100 Kesiapsiagaan Pas Ditunjuk Pemateri) 🛡️',
+  'Buff Aktif: Ramuan Elixir Pagi (+150 Fokus Mata, -99% Mata Panda) 🧪',
+  'Buff Aktif: Kage Bunshin Mandiri (Mata fokus ke slide, jari aktif catat materi) 🍥',
 ]
+
+/**
+ * Koleksi Untaian Penutup Sore Wibu / Anime (Agrasena Batch 4)
+ * Berisi 30 variasi berbeda agar pesan sore selalu segar, kocak, dan tidak monoton.
+ */
+const ANIME_CLOSING_QUOTES = [
+  'Otsukaresama deshita, Minna-san! 🍵 Sesi grinding materi hari ini resmi kelar! Silakan rebahan dan regen HP, tapi awas... Boss Quest bernama Tugas Mandiri menanti di LMS!',
+  'Misi harian selesai dengan predikat S-Rank! 🏆 Kalian semua berhasil bertahan hidup sampai jam 15:00 WIB. Saatnya santai, nonton anime, tapi jangan lupa cicil tugas ya!',
+  'Bel pulang telah berbunyi seperti ending anime slice-of-life di kala senja! 🌅 Terima kasih atas perjuangan hebat kalian hari ini, nakama. Sampai jumpa di episode besok!',
+  'Bahkan Levi Ackerman pun bakal hormat melihat ketahanan mental kalian menyimak materi dari pagi! ⚔️ Istirahatlah prajurit, kalian layak mendapatkan waktu santai!',
+  'Mana habis? Stamina bar warna merah? 🧪 Segera kembali ke save point (kasur/meja makan). Tapi ingat wasiat leluhur: "Tugas yang dicicil hari ini menjauhkan overthinking tengah malam"!',
+  'Pukul 15:00 WIB: Safe Zone telah diaktifkan! 🛡️ Kalian terbebas dari paparan slide presentasi. Saatnya makan enak, minum boba, dan charge jiwa wibu sampai penuh!',
+  'Konoha aman berkat para shinobi yang tekun berlatih! 🍃 Terima kasih partisipasinya hari ini. Jangan lupa save as tugas kalian, jangan sampai file-nya hilang kena jutsu!',
+  'Isekai boleh fiksi, tapi tenggat tugas LMS itu nyata, kawan! 📖 Selesaikan quest penugasan sebelum monster deadline muncul pukul 23:59 WIB!',
+  'Yare yare daze... 🧢 Materi hari ini lumayan menguras chakra ya? Tapi rekan-rekan Agrasena 4 memang bermental baja. Selamat menikmati waktu istirahat sore!',
+  'Mission Cleared! 🎉 EXP bertambah +9999. Jangan lupa upload laporan ke LMS biar reward kelulusan cair sempurna. Sampai jumpa di medan tempur esok hari!',
+  'Anya Forger bilang: Belajar selesai itu "Waku Waku"! 🥜 Renggangkan otot leher dan istirahatkan mata dari radiasi monitor. Selamat menikmati sore hari!',
+  'Arigatou gozaimashita untuk kebersamaan hari ini! 🙏 Kalian bukan sekadar peserta diklat biasa, kalian adalah pilar transformasi digital Kejaksaan RI masa depan!',
+  'Akhirnya sesi Zoom ditutup! 🚪 Tarik napas lega, lepaskan kemeja formal, ganti baju santai, dan nikmati sisa hari dengan bahagia bersama orang-orang tercinta!',
+  'Kalian berhasil melewati hari ini tanpa kena debuff kantuk berat! ⭐ Beri tepuk tangan untuk diri sendiri. Besok kita lanjutkan grinding ke level yang lebih tinggi!',
+  'Perut keroncongan? Saatnya berburu kuliner ramen atau nasi goreng! 🍜 Isi ulang energi fisik kalian sebelum mulai mengetik laporan penugasan malam nanti!',
+  'Sesi perkuliahan hari ini tamat! 🎬 Jangan lupa tulis rangkuman materi selagi memorinya masih fresh di kepala. Sedikit usaha sore ini, hasil maksimal esok hari!',
+  'Pahlawan juga butuh tidur! 🛌 Rehatkan otak dari algoritma dan regulasi SPBE. Besok pagi kita sambut lagi dengan semangat membara ala anime shounen!',
+  'Ingat prinsip Edward Elric: "Hukum Pertukaran Setara"! ⚙️ Waktu belajar yang kalian curahkan hari ini akan terbayar lunas dengan kompetensi hebat di masa depan!',
+  'Kelas bubar jalan! 🏃‍♂️ Terima kasih kepada Widyaiswara dan seluruh nakama kelas. Tetap jaga kesehatan, minum air putih yang banyak, dan tetap tersenyum!',
+  'Dungeon hari ini cleared! 🎮 Tinggalkan ruang Zoom dengan kepala tegak. Jangan biarkan tugas menumpuk sampai jadi hutang peradaban!',
+  'Selamat menikmati sore yang syahdu! 🌇 Putar lagu opening anime favorit, seduh teh hangat, dan biarkan pikiran kalian rileks sejenak!',
+  'Kalian semua adalah MVP hari ini! 🏅 Bertahan menyimak materi teknis selama berjam-jam bukanlah hal mudah. Kalian luar biasa, Agrasena 4!',
+  'Saatnya logout dari Zoom, tapi jangan logout dari tanggung jawab tugas! 📝 Cek portal LMS, pastikan file PDF sudah terunggah dengan format nama yang benar!',
+  'Waktu siaga sore berakhir! 🕊️ Nikmati senja yang tenang. Semoga ilmu yang didapat hari ini berkah dan bermanfaat untuk satuan kerja masing-masing!',
+  'Bahkan Naruto butuh waktu makan ramen di Ichiraku setelah misi berat! 🍥 Nikmati makanan favorit kalian sore ini, rekan-rekan!',
+  'Sesi hari ini selesai dengan aman dan tertib! 👏 Terima kasih atas kekompakan seluruh peserta Agrasena Batch 4. Kalian memang tim terbaik!',
+  'Jangan biarkan deadline tugas menatapmu dari kegelapan! 🕶️ Selesaikan lebih awal, tidur lebih nyenyak, dan bangun besok pagi tanpa beban!',
+  'Kalian telah mengumpulkan banyak exp poin hari ini! 📈 Setiap hari selangkah lebih dekat menuju gelar Pranata Komputer yang kompeten dan berintegritas!',
+  'Sayonara untuk hari ini! 👋 Persiapkan mental dan semangat untuk materi esok pagi. Kita bertemu lagi di jam 07:40 WIB!',
+  'Tutup laptop sejenak, hirup udara segar di luar. Rehat yang berkualitas adalah kunci performa belajar yang tahan lama. Otsukaresama!',
+]
+
+/**
+ * Punchline Sore Anime Lucu
+ */
+const ANIME_CLOSING_PUNCHLINES = [
+  'Dungeon Selesai: EXP +10,000, Koin Lelah +50, Status: Siap Rebahan! 🎮',
+  'Mode Santai Diaktifkan: Silakan streaming anime atau push rank sampai tugas memanggil! ⚔️',
+  'Peringatan Sistem: Kapasitas memori otak 99% penuh, disarankan reboot dengan segelas kopi es! ☕',
+  'Pencapaian Unlocked: "Selamat Dari Kuliah Seharian Tanpa Tertidur Pulas" 🏆',
+  'HP & MP sedang dipulihkan di save point terdekat. Jangan diganggu kecuali urusan tugas! 🛌',
+  'Sensei Widyaiswara telah pamit undur diri, murid teladan Agrasena 4 dipersilakan bubar! 🌸',
+]
+
+/**
+ * Generator Pesan Pagi Anime Dinamis (Berotasi Harian Sehingga Tidak Monoton)
+ */
+function getDailyAnimeMorning(date = new Date(), dayInfo = {}) {
+  const d = new Date(date)
+  const startOfYear = new Date(d.getFullYear(), 0, 1)
+  const dayOfYear = Math.floor((d - startOfYear) / (1000 * 60 * 60 * 24))
+  const dayNum = dayInfo.day || (dayOfYear > 0 ? dayOfYear : 1)
+
+  const quoteIdx = Math.abs((dayNum * 7 + dayOfYear * 3) % ANIME_MORNING_QUOTES.length)
+  const buffIdx = Math.abs((dayNum * 13 + dayOfYear * 5) % ANIME_MORNING_BUFFS.length)
+
+  return {
+    quote: ANIME_MORNING_QUOTES[quoteIdx],
+    buff: ANIME_MORNING_BUFFS[buffIdx],
+  }
+}
+
+/**
+ * Generator Pesan Sore Anime Dinamis (Berotasi Harian Sehingga Tidak Monoton)
+ */
+function getDailyAnimeClosing(date = new Date(), dayInfo = {}) {
+  const d = new Date(date)
+  const startOfYear = new Date(d.getFullYear(), 0, 1)
+  const dayOfYear = Math.floor((d - startOfYear) / (1000 * 60 * 60 * 24))
+  const dayNum = dayInfo.day || (dayOfYear > 0 ? dayOfYear : 1)
+
+  const quoteIdx = Math.abs((dayNum * 11 + dayOfYear * 7) % ANIME_CLOSING_QUOTES.length)
+  const punchlineIdx = Math.abs((dayNum * 17 + dayOfYear * 2) % ANIME_CLOSING_PUNCHLINES.length)
+
+  return {
+    quote: ANIME_CLOSING_QUOTES[quoteIdx],
+    punchline: ANIME_CLOSING_PUNCHLINES[punchlineIdx],
+  }
+}
 
 // =========================================================================
 // ANTI-SPAM & DATE HELPERS
@@ -696,11 +813,12 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
     }
   }
 
+  const animeMorning = getDailyAnimeMorning(date, dayInfo)
+
   let msg = isMorningCron
-    ? `🔔 *PENGINGAT KELAS PAGI & JADWAL PEMBELAJARAN*\n`
-    : `🏛️ *JADWAL PEMBELAJARAN*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
-  msg += `*Kejaksaan Republik Indonesia 2026*\n`
+    ? `⚔️ *OHAYOU GOZAIMASU! PENGINGAT KELAS PAGI* ⚔️\n`
+    : `🏛️ *JADWAL PEMBELAJARAN AGRASENA BATCH 4*\n`
+  msg += `*Diklat Fungsional Prakom • Kejaksaan RI 2026* 🌸\n`
   msg += `────────────────────────\n`
   msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}\n`
   if (dayInfo.day) {
@@ -711,12 +829,12 @@ async function generateScheduleMessage(supabase, date = new Date(), options = {}
   msg += `────────────────────────\n\n`
 
   if (isMorningCron) {
-    const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % MORNING_QUOTES.length : 0
-    msg += `💬 *Untaian Motivasi Pagi:*\n`
-    msg += `_"${MORNING_QUOTES[quoteIndex]}"_\n\n`
+    msg += `🎌 *Penyemangat Pagi Shinobi Adhyaksa:*\n`
+    msg += `_"${animeMorning.quote}"_\n\n`
+    msg += `🎮 *${animeMorning.buff}*\n\n`
     if (!dayInfo.isWeekend && dayInfo.day) {
-      msg += `⏰ *Waktu Siaga:* Pukul *07:40 WIB*\n`
-      msg += `📌 _Mohon rekan-rekan bersiap di ruang Zoom dan mengisi presensi harian di LMS tepat waktu._\n\n`
+      msg += `⏰ *Waktu Siaga Zoom:* Pukul *07:40 WIB*\n`
+      msg += `📌 _Peringatan Guild: Mohon rekan nakama segera login LMS & presensi tepat waktu sebelum di-domain expansion oleh panitia!_ 🛡️\n\n`
     }
   }
 
@@ -792,8 +910,10 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
       }
     }
 
-    let msg = `🏁 *SESI DIKLAT HARI INI TELAH SELESAI*\n`
-    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
+    const animeClosing = getDailyAnimeClosing(date, todayInfo)
+
+    let msg = `🏁 *OTSUKARESAMA DESHITA! SESI DIKLAT TELAH SELESAI* 🍵✨\n`
+    msg += `*Diklat Fungsional Prakom • Agrasena Batch 4* 🌸\n`
     msg += `*Kejaksaan Republik Indonesia 2026*\n`
     msg += `────────────────────────\n`
     msg += `📅 *Hari Ini:* ${todayFormatted}`
@@ -802,7 +922,10 @@ async function generateDailyScheduleMessage(supabase, date = new Date(), options
       if (todayInfo.stage) msg += ` (${todayInfo.stage})`
     }
     msg += `\n────────────────────────\n\n`
-    msg += `Alhamdulillah, sesi perkuliahan tatap muka hari ini telah selesai pada pukul *15:00 WIB*. Selamat beristirahat sejenak rekan-rekan sekalian! 👏\n\n`
+    msg += `💬 *Pesan Rehat Shinobi Adhyaksa:*\n`
+    msg += `_"${animeClosing.quote}"_\n\n`
+    msg += `🎮 *Status Quest:* ${animeClosing.punchline}\n\n`
+    msg += `Sesi tatap muka hari ini resmi rampung pukul *15:00 WIB*. Selamat me-regen HP & MP rekan-rekan nakama sekalian! 👏\n\n`
 
     msg += `⏩ *DIKLAT BERLANJUT BESOK:*\n`
     msg += `📅 *Tanggal:* ${tomorrowFormatted}`
@@ -892,8 +1015,10 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   const dayInfo = getDiklatDayInfo(date)
   const fullDateFormatted = formatIndonesianDate(date)
 
-  let msg = `🏁 *NOTIFIKASI KELAS SELESAI & TUGAS SORE*\n`
-  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4*\n`
+  const animeClosing = getDailyAnimeClosing(date, dayInfo)
+
+  let msg = `🏁 *OTSUKARESAMA DESHITA! KELAS SELESAI & QUEST SORE* 🍵✨\n`
+  msg += `*Diklat Fungsional Prakom • Agrasena Batch 4* 🌸\n`
   msg += `*Kejaksaan Republik Indonesia 2026*\n`
   msg += `────────────────────────\n`
   msg += `📅 *Hari/Tanggal:* ${fullDateFormatted}`
@@ -902,11 +1027,11 @@ async function generateClosingAndTaskMessage(supabase, date = new Date()) {
   }
   msg += `\n────────────────────────\n\n`
 
-  const quoteIndex = dayInfo.day ? (dayInfo.day - 1) % CLOSING_QUOTES.length : 0
-  msg += `💬 *Untaian Motivasi Sore:*\n`
-  msg += `_"${CLOSING_QUOTES[quoteIndex]}"_\n\n`
+  msg += `💬 *Pesan Rehat Shinobi Adhyaksa:*\n`
+  msg += `_"${animeClosing.quote}"_\n\n`
+  msg += `🎮 *Laporan Guild Sore:* ${animeClosing.punchline}\n\n`
 
-  msg += `Alhamdulillah, sesi perkuliahan tatap muka hari ini telah rampung pada pukul *15:00 WIB*. Selamat beristirahat sejenak dan melanjutkan aktivitas rekan-rekan sekalian! 👏\n\n`
+  msg += `Sesi perkuliahan tatap muka hari ini resmi rampung pukul *15:00 WIB*. Selamat me-regen HP & MP kalian, nakama sekalian! 👏\n\n`
 
   // 1. DIKLAT LANJUT BESOK (JADWAL ESOK HARI)
   const tomorrow = new Date(date)

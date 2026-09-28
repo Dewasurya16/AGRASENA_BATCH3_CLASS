@@ -347,6 +347,7 @@ async function handleIncomingMessage(m) {
       reply += `• *Nama Akun   :* ${botStatus.pushName || 'Bot Kelas Agrasena'}\n`
       reply += `• *Nomor WA    :* ${botStatus.phoneNumber ? '+' + botStatus.phoneNumber : '-'}\n`
       reply += `• *Target Grup :* ${targetGroupJid ? '✅ Terhubung' : '⚠️ Belum Disetel'}\n`
+      reply += `• *Engine AI   :* 🟢 Groq 120B / Qwen 27B (Multi-Key Anti-Limit)\n`
       reply += `• *Waktu Server:* ${new Date().toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB\n`
       reply += `────────────────────────\n\n`
       reply += `🌐 *Portal Kelas:* ${ZOOM_CONFIG.portalUrl}\n`
