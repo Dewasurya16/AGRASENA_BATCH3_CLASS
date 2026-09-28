@@ -100,6 +100,16 @@ echo -e "${YELLOW}💡 Tekan Ctrl + C kapan saja untuk menghentikan bot.${NC}"
 echo -e "${CYAN}============================================================${NC}"
 echo ""
 
-trap 'echo -e "\n${YELLOW}[INFO] Bot WhatsApp telah dihentikan secara aman.${NC}"; exit 0' SIGINT SIGTERM
+trap 'echo -e "\n${YELLOW}[INFO] Bot WhatsApp telah dihentikan oleh pengguna.${NC}"; exit 0' SIGINT SIGTERM
 
-exec node index.js "$@"
+# Loop Auto-Restart: Menjaga bot tetap hidup secara persisten
+while true; do
+  node index.js "$@"
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -eq 0 ]; then
+    echo -e "${YELLOW}[INFO] Bot dihentikan secara normal.${NC}"
+    break
+  fi
+  echo -e "\n${YELLOW}⚠️ Bot berhenti (Exit Code: $EXIT_CODE). Menghubungkan ulang dalam 3 detik... (Tekan Ctrl+C untuk keluar)${NC}\n"
+  sleep 3
+done

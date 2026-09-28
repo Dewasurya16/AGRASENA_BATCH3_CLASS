@@ -31,5 +31,9 @@ echo Tekan Ctrl + C untuk menghentikan bot.
 echo ============================================================
 echo.
 
+:loop
 node index.js
-pause
+echo.
+echo [WARNING] Bot terhenti. Mengulang kembali dalam 3 detik... (Tekan Ctrl+C untuk keluar)
+timeout /t 3 >nul
+goto loop
